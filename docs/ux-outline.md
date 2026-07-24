@@ -87,9 +87,12 @@ Three-pane desktop layout, left to right:
   **References**, is reserved for later — see §9.) The Outline tab shows two
   renderings of one tree: an indented list (default) and a **mindmap**. Nodes
   display live progress: word count vs target, written/unwritten, current.
-- The **Draft** pane is a **structured editor**: it renders the outline as a
-  sequence of sections, each with its heading (from the node title) and its own
-  editing region. See §7.1 for why this is the load-bearing choice.
+- The **Draft** pane is one continuous editor with **section landmarks**:
+  headings rendered from node titles, subtle boundary indicators between
+  sections, and **transition spans** that can live between sections without
+  belonging to either. Boundaries are soft by default and affirmed only when an
+  operation needs them — see §7.1 for this model, which is the load-bearing
+  choice of the product.
 - The **Lexicon** is not a fourth pane. It lives behind a global entry point and
   surfaces contextually as chips wherever its terms appear (tone tab, guidance
   notes, chat).
@@ -141,12 +144,23 @@ is used that isn't in the Lexicon, the guide states the interpretation it's
 checking against and offers a one-tap "save to Lexicon" — the main loop by which
 the Lexicon grows.
 
-### 4.4 Draft section
+### 4.4 Draft section, transition, and boundary
 
-One editing region per outline node, bound by node ID, holding user-authored
-text. Tracks live word count (shown against the node's target) and completion
-state. All prose is the user's; the guide never edits it (see §5.2 for the one
-narrow exception, which is opt-in and on-demand).
+The Draft is one continuous, user-authored text with a mapping onto the outline:
+
+- a **section** is the span of text mapped to an outline node (by node ID),
+  tracking live word count against the node's target and completion state,
+- a **transition** is a span between two sections that is *not required to
+  belong to either* — connective tissue, first-class. A transition is
+  **invalidated** when the section on either side is moved or substantially
+  changed, which produces a divergence note ("this transition connected
+  'the promise' to 'historical accounts'; 'historical accounts' moved"),
+- a **boundary** (where one span ends and the next begins) is either **soft**
+  — provisional, computed lazily by the agent — or **affirmed** — confirmed by
+  the user. See §7.1; this two-state model is central.
+
+All prose is the user's; the guide never edits it (see §5.2 for the one narrow
+exception, which is opt-in and on-demand).
 
 ### 4.5 Guidance note
 
@@ -271,11 +285,16 @@ A guidance note may carry a **skill offer** when a skill's trigger hints match:
 dismissing it is costless and counts as signal like any other dismissal.
 
 ### F3 — Restructure ("actually, move this before that")
-Via drag in the Outline (list or mindmap) or via chat. The tree changes →
-sections re-order in the Draft immediately, carrying their text (lossless, by
-node-ID binding) → the guide posts divergence notes where the new order breaks
-flow ("the transition at the end of §3 still points at 'the close'"). Fixing
-the seams is the user's writing work; the guide just points at them.
+Via drag in the Outline (list or mindmap) or via chat. Because moving text
+requires certain boundaries (§7.1), the flow is: tree change requested →
+**bound-and-confirm** on the affected spans (agent proposes exact boundaries
+and transition designations; user adjusts, confirms) → sections re-order in
+the Draft carrying their text (lossless, by node-ID binding) → transitions
+adjacent to any moved or substantially changed section are **invalidated**,
+each producing a divergence note — the seams are now explicit objects, not
+vibes → the user rewrites the seams (their work; the guide just points) → the
+agent offers to release the affirmed boundaries back to soft (per the user's
+boundary style, §7.1).
 
 ### F4 — Plan divergence, both directions
 - **Prose drifts from plan:** the guide flags it (guidance note) and offers a
@@ -311,19 +330,47 @@ prose in v1. Skills also arrive via proactive offers (F2).
 
 This is the heart of the product and deserves its own section in the build plan.
 
-### 7.1 Binding: the structured editor
-Every Draft section is bound to an outline node ID, and **the editor is
-structured by the outline** — one editing region per node, heading rendered from
-the node title. This is the load-bearing choice: it means the app always knows
-*exactly* which section the user is writing (no inference), per-section word
-counts are free, reordering is lossless, and every guidance note has a precise
-anchor. The alternative — one freeform text field with AI inferring section
-boundaries — makes every feature above probabilistic, and is rejected for v1.
+### 7.1 Binding: soft boundaries, affirmed on demand
 
-Consequences to design for: creating a node creates an empty section; deleting
-a node with text prompts — delete, or move the text to a **cut-material**
-holding area (default: cut material; nothing is silently destroyed); merging
-nodes concatenates their text for the user to smooth.
+The invariant: every span of prose is either mapped to an outline node (by
+stable node ID) or is a transition between two nodes — and **no structural
+operation ever executes on guessed boundaries.** Within that invariant,
+boundaries live in two states:
+
+- **Soft (the default while writing).** The user just writes; the agent
+  computes provisional boundaries lazily — when a span is first encountered by
+  guidance, when counts are needed — and never forces the writer to slot prose
+  into sections mid-flow. Everything ambient (word counts, "you are here,"
+  drift notes) runs happily on soft boundaries and is presented as approximate
+  ("≈240 words") until affirmed. Inference is fine for glanceable guidance; it
+  is never fine for moving text.
+- **Affirmed (on demand).** Operations that relocate text — moving, merging, or
+  deleting a node; extracting cut material — require certainty. They trigger a
+  **bound-and-confirm** step: the agent proposes exact boundaries for the
+  affected spans, including which parts are transitions ("the last two
+  sentences here are connective — mark them as the transition?"), the user
+  adjusts and confirms, and the operation proceeds on affirmed boundaries.
+
+**Releasing affirmations.** After the structural operation, affirmed boundaries
+can be released back to soft in one action (the agent offers this). This is a
+matter of taste, so it's a per-user **boundary style** preference:
+
+- *flowing* (recommended default): soft everywhere; boundaries are computed
+  and re-affirmed only on the rare occasions of a major pitch/outline-level
+  restructure, then released again. For writers who find locks un-fun.
+- *structured*: boundaries affirm as you go and stay affirmed; the editor
+  feels like one region per section. For writers who like the rails.
+
+**Boundary refinement offers.** When the user exits editing a transition (or on
+a pause), the guide may scan it and propose a refinement: "merge the first
+paragraph into the section above, and keep just the last two sentences as the
+transition?" One tap applies it; same interruption rules as all guidance.
+
+Consequences to design for: creating a node creates an empty (planned) span;
+deleting a node with text prompts — delete, or move the text to a
+**cut-material** holding area (default: cut material; nothing is silently
+destroyed); merging nodes concatenates their text and invalidates the
+transition between them.
 
 ### 7.2 Divergence, not staleness
 When Brief and Draft disagree — prose wandering off-plan, a reordered tree
@@ -419,3 +466,14 @@ guides, and skill/lexicon scoping (see §9).
    over target by N%") or prose the guide interprets? Recommendation: prose in
    v1 — the guide reads the hint and judges; structured predicates only if
    prose proves too noisy or too timid.
+8. **Exactly which operations require affirmed boundaries.** Node move, merge,
+   and delete, plus cut-material extraction, clearly do. Do scoped skill runs
+   ("/shorten §3")? Recommendation: no — read-only skills run on soft
+   boundaries and say so ("≈"), since their findings are suggestions the user
+   applies by hand anyway; only text-relocating operations pay the
+   bound-and-confirm toll.
+9. **Transition word-count attribution.** Transitions belong to neither
+   section — do their words count toward the piece total only, split between
+   neighbors, or shown as their own line? Recommendation: piece total only,
+   with transitions listed separately in the Brief's progress view if they
+   grow large (a fat transition is itself a signal worth surfacing).
