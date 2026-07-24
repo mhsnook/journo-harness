@@ -40,18 +40,23 @@ style opinions, no house aesthetic, and no assuming that the voice of one
 hard-won section generalizes to the rest of the piece unless the Brief says
 so. Its aesthetic judgments are always *relative to what the writer declared.*
 
-A fourth layer sits outside any single article, with two halves:
+A fourth layer sits outside any single article, with three parts:
 
 - a **Lexicon** — a personal vocabulary where the user teaches the agent what
   words like "passionate" and "professional" mean to them, so guidance in those
-  terms means something, and
+  terms means something,
+- **Rules** — standing norms written as a few sentences of the writer's own
+  prose, always-on, the way a coding agent reads a config file of house style
+  ("the bibliography keeps one flat, plain register no matter the tone of the
+  piece — citations are apparatus, not prose"). Rules are how the writer says
+  things once instead of correcting them every article, and
 - **Skills** — invocable editorial routines encoded as editable instruction
   files, in the way a coding agent's skills/slash-commands work. `/shorten`
   knows what shortening *means* here: look for repetition and suggest removing
   one instance; point out where a page was spent on what should be a paragraph
   and ask; use the target length the Brief already knows. In v1 there is one
   user, so "the user" and "the developer" are deliberately the same person —
-  skills are just files that person edits.
+  skills and rules are just files that person edits.
 
 ## 2. The four layers
 
@@ -60,14 +65,15 @@ A fourth layer sits outside any single article, with two halves:
 | 1 | Conversation | **Chat** | per article | Dialogue with the guide; planning talk, questions, on-demand reviews |
 | 2 | Context stash | **Brief** | per article | Outline/mindmap, tone decisions, word-count targets, (later) pinned references |
 | 3 | Output | **Draft** | per article | The article text, written by the user, sectioned to match the outline |
-| 4 | User's voice & moves | **Lexicon + Skills** | per user, cross-article | Lexicon: definitions of tone/style shorthands. Skills: invocable editorial routines (`/shorten`, …) encoded as editable instruction files |
+| 4 | User's voice & moves | **Lexicon + Rules + Skills** | per user, cross-article | Lexicon: definitions of tone/style shorthands. Rules: standing norms in the writer's prose, always-on. Skills: invocable editorial routines (`/shorten`, …) encoded as editable instruction files |
 
 Mental model: the Chat is how you talk, the Brief is what you've agreed, the
 Draft is what you're making, and layer 4 is who you are as a writer — the
-Lexicon holds your adjectives (what "punchy" means), the Skills hold your verbs
-(what `/shorten` does). The guide's whole v1 job is noticing divergence between
-layers 2 and 3 and saying so well — and Skills are how we encode the *repeatable*
-ways of doing that.
+Lexicon holds your adjectives (what "punchy" means), the Rules hold your
+sentences (the norms you'd otherwise repeat to every new editor), the Skills
+hold your verbs (what `/shorten` does). The guide's whole v1 job is noticing
+divergence between layers 2 and 3 and saying so well — and Rules and Skills are
+how we encode the *standing* and *repeatable* ways of doing that.
 
 The Brief plays the same role as a "plan" in an agentic coding tool: work starts
 by writing it, it governs execution, and changing it mid-flight is a deliberate,
@@ -194,7 +200,9 @@ The guide's unit of output while the user writes. Each note has:
   lives in the middle, but the last three paragraphs of the opening are data —
   the pacing reads more like a report than the build you described"), plan
   divergence ("what you're writing isn't what this node says it's for — update
-  the plan or the prose?"),
+  the plan or the prose?"), rule breach ("your rule says citations stay in a
+  plain register — entry 3 of the bibliography has picked up the piece's wry
+  tone"),
 - a **body** — one or two sentences, specific, referencing Brief objects by name,
 - a lifecycle — active → dismissed / resolved / superseded. Dismissing is
   one tap and is signal (a repeatedly dismissed class of note should quiet
@@ -230,7 +238,8 @@ coding agent. A skill has:
 - **trigger hints** — optional conditions under which the guide may *offer* the
   skill proactively ("section ≥40% over its target → offer /shorten on it"),
   subject to the same interruption rules as any guidance (§6, F2),
-- read access to all three article layers (Brief, Draft, Chat) and the Lexicon.
+- read access to all three article layers (Brief, Draft, Chat), the Lexicon,
+  and the Rules.
 
 **Skills are mode-agnostic by contract.** A skill run produces **findings** —
 anchored observations, questions, and proposed actions. What happens to
@@ -244,6 +253,48 @@ developers" stay undifferentiated: skills live as plain files in one global
 set, edited directly, hot-reloaded. No per-article/per-user/per-publication
 scoping or inheritance — that's a later problem to solve with experience in
 hand (§9).
+
+### 4.8 Rule
+
+A standing norm, written as one or a few sentences of the writer's own prose —
+statement plus rationale, the way a good style-guide entry reads:
+
+> "The bibliography keeps one flat, plain register regardless of the tone of
+> the piece — citations are apparatus, not prose, and a wry article does not
+> get a wry works-cited."
+
+> "Don't stage a wrong idea just to knock it down — if we reasoned through a
+> misconception together and landed on the right answer, the piece starts at
+> the right answer. The reader may never have held the wrong model;
+> introducing it only to refute it wastes them and can plant it."
+
+A rule has:
+
+- a **body** — prose, in the writer's words. The rationale is part of the
+  rule, not decoration: it's what lets the guide apply the norm to cases the
+  writer never enumerated,
+- a **scope** — what text it governs: everything the writer writes (default),
+  a register ("bibliography," "captions," "headlines," "pull quotes"), or a
+  single article. Scope is prose the guide interprets, not a structured
+  selector — the same choice as skill trigger hints (§10.7). The point of
+  register scope is **insulation**: a register-scoped rule holds *regardless
+  of* the piece's tone decisions. A global "wry" tone chip does not reach
+  inside the bibliography when a bibliography rule says plain — the rule wins
+  within its register,
+- **enforcement** — always-on. Active rules are part of the guide's contract,
+  read alongside intent notes and tone decisions; a breach produces a guidance
+  note (type: rule breach), never an edit. Skills read the rules too — a
+  `/shorten` run doesn't propose cuts a rule forbids,
+- a **maturity** — where the rule sits on the promotion ladder (§8.1):
+  scratch, standing, or (later) promoted.
+
+How rules differ from their layer-4 neighbors: a **Lexicon entry** defines a
+word so guidance in that word means something; a **Rule** states a norm the
+guide checks continuously; a **Skill** is a routine that runs when invoked.
+Adjectives, sentences, verbs. A rule is also the natural *source* for a
+compiled check (§9): once the model has genuinely understood "the bibliography
+stays plain," that understanding can be compiled into a cheap deterministic
+watcher that never needs the model again.
 
 ## 5. Modes
 
@@ -358,6 +409,19 @@ of findings: anchored guidance notes in the margins plus a chat summary ("found
 finding is individually actionable or dismissible; a skill run never edits
 prose in v1. Skills also arrive via proactive offers (F2).
 
+### F8 — Writing (and retiring) a rule
+The writer opens a rules file and adds a sentence — that is the whole
+authoring UX in v1; hot reload makes it live immediately. The first time a new
+rule fires, the guide states the interpretation it checked ("reading the
+bibliography against 'citations stay plain' — flagged the aside in entry 3"),
+so a badly worded rule reveals itself on first contact instead of misfiring
+silently for weeks. From there the standard signals govern: notes acted on
+are evidence the rule earns its keep; a rule whose notes keep getting
+dismissed quiets itself and eventually prompts "rewrite or retire?" Rules are
+also born from feedback, exactly like Lexicon entries (F6): when the user
+keeps making the same correction in chat, the guide offers "want this as a
+standing rule?" — opt-in, never silent.
+
 ## 7. The tracking model (Brief ⇄ Draft)
 
 This is the heart of the product and deserves its own section in the build plan.
@@ -417,7 +481,7 @@ in-progress / current / empty), so the outline doubles as a progress map of the
 piece. The status strip surfaces the same data for the current section plus the
 piece total.
 
-## 8. Layer 4 (Lexicon + Skills) — v1 scope
+## 8. Layer 4 (Lexicon + Rules + Skills) — v1 scope
 
 v1 ships the Lexicon small but real:
 
@@ -438,8 +502,48 @@ And Skills equally small but real:
 - ship with 2–3 exemplar skills (`/shorten` first) that double as documentation
   of the format.
 
-Explicitly later for both: categories, per-publication voices, importable style
-guides, and skill/lexicon scoping (see §9).
+And Rules the same way:
+
+- rule files living next to the skill files (markdown, a few sentences per
+  rule, an optional prose scope line), edited directly, hot-reloaded — writing
+  a rule is config tweaking, not form filling,
+- enforced through guidance notes under the standard interruption rules, with
+  state-the-interpretation on a rule's first firing (F8),
+- per-rule quieting on repeated dismissal, with an eventual "rewrite or
+  retire?" prompt,
+- agent-proposed rules distilled from repeated feedback, opt-in (F8),
+- ship with 2–3 exemplar rules that double as documentation of the register
+  idea (a bibliography rule first).
+
+Explicitly later for all three: categories, per-publication voices, importable
+style guides, and scoping/inheritance (see §9).
+
+### 8.1 The promotion ladder
+
+Everything in layer 4 is designed to **start as the writer's private config
+tweaking and earn its way inward**. The ladder:
+
+1. **Scratch** — a line the writer just added to a rule file (or accepted from
+   a guide proposal). Costs nothing to write, nothing to delete, takes effect
+   immediately. Most rules should die here, and that's healthy.
+2. **Standing** — a rule that has survived contact with real pieces: it fired,
+   and its notes were acted on rather than dismissed. The guide may propose
+   the promotion ("this rule has held across three pieces — keep it as
+   standing?"), but the move is always the writer's. In v1 the distinction is
+   little more than which file the line lives in; what matters is building
+   the habit of consciously keeping or killing rules rather than accreting
+   them.
+3. **Promoted into the app** (later, §9) — a rule, lexicon entry, or skill
+   that stops being a personal file and becomes a first-class product object:
+   shared across users or a publication, given UI, possibly compiled into a
+   deterministic check. Promotion is how the app itself grows — v1's built-in
+   behaviors are best understood as rules that were promoted before there was
+   a product.
+
+The one v1 obligation this imposes: rule bodies stay portable prose (statement
+plus rationale, no references to file paths or app internals), so a rule can
+climb the ladder without being rewritten — the same contract that keeps skills
+mode-agnostic (§4.7).
 
 ## 9. Later features (design for, don't build)
 
@@ -459,7 +563,10 @@ guides, and skill/lexicon scoping (see §9).
   non-LLM watchers* derived from it — "§5's intent note says the three
   anecdotes return: watch that the closing section mentions each of them,"
   "the arc note says data lives in the middle: flag if the opening runs
-  data-heavy past N words." The user accepts a proposed check, and from then
+  data-heavy past N words." Standing rules (§4.8) are the other prime source
+  of compilable intent — a register rule like "the bibliography stays plain"
+  is exactly the kind of norm a one-time comprehension pass can turn into a
+  mechanical watcher. The user accepts a proposed check, and from then
   on it runs as pure code on every edit — instant, free, no model in the
   loop. The model's comprehension is used once, at compile time, to turn a
   prose intent into a cheap mechanical watcher; the watcher then never needs
@@ -472,13 +579,16 @@ guides, and skill/lexicon scoping (see §9).
   destination).
 - **Copy-edit pass** (tracked suggestions the user accepts one by one — a
   gentler sibling of ghostwriter mode).
-- **Skill & Lexicon scoping/inheritance:** per-article, per-user,
+- **Skill, Rule & Lexicon scoping/inheritance:** per-article, per-user,
   per-publication layers with overrides, once multiple users (or multiple
   distinct voices) exist and real usage has shown which axes matter. v1's flat
-  file set is the deliberate placeholder for this.
-- **Skill-authoring UX:** in-app editing, a "turn this chat instruction into a
-  skill" affordance (you keep asking for the same review — save it as
-  `/my-review`?), sharing skills between users.
+  file set is the deliberate placeholder for this. This is also where the top
+  rung of the promotion ladder (§8.1) becomes real: publication-level rule
+  sets, importable style guides expressed as rules, and standing rules
+  compiling into compiled checks (above).
+- **Skill- and rule-authoring UX:** in-app editing, a "turn this chat
+  instruction into a skill" affordance (you keep asking for the same review —
+  save it as `/my-review`?), sharing skills and rule sets between users.
 - Multi-document/series awareness, collaboration, publishing integrations.
 
 ## 10. Open questions for the build plan
@@ -524,3 +634,18 @@ guides, and skill/lexicon scoping (see §9).
    neighbors, or shown as their own line? Recommendation: piece total only,
    with transitions listed separately in the Brief's progress view if they
    grow large (a fat transition is itself a signal worth surfacing).
+10. **Register detection for scoped rules.** A register-scoped rule ("the
+    bibliography stays plain") needs to know which spans are bibliography.
+    Recommendation: no new machinery in v1 — the guide infers register from
+    the outline (node titles and intent notes), the same prose-interpretation
+    stance as skill trigger hints (§10.7) and rule scopes (§4.8), and states
+    what it inferred when it flags; structured region types only if inference
+    proves unreliable.
+11. **Rule precedence beyond insulation.** §4.8 settles register-vs-tone (the
+    register rule wins inside its register). What about two rules that
+    collide, or a rule vs an article's Brief? Recommendation: don't build a
+    precedence system — the guide surfaces the conflict as a note ("your
+    standing rule says X; this article's Brief says Y — which governs here?")
+    and the writer's answer can be saved as an article-scoped exception. The
+    Brief, being the more deliberate and more local contract, is the sensible
+    default winner.
