@@ -28,9 +28,18 @@ The middle layer is what makes that guidance possible: because structure, tone,
 and targets live as explicit objects, the guide can compare *what you're writing*
 against *what you agreed to write* and say something specific.
 
-A fourth layer sits outside any single article: a personal vocabulary where the
-user teaches the agent what words like "passionate" and "professional" mean to
-them, so guidance in those terms means something.
+A fourth layer sits outside any single article, with two halves:
+
+- a **Lexicon** — a personal vocabulary where the user teaches the agent what
+  words like "passionate" and "professional" mean to them, so guidance in those
+  terms means something, and
+- **Skills** — invocable editorial routines encoded as editable instruction
+  files, in the way a coding agent's skills/slash-commands work. `/shorten`
+  knows what shortening *means* here: look for repetition and suggest removing
+  one instance; point out where a page was spent on what should be a paragraph
+  and ask; use the target length the Brief already knows. In v1 there is one
+  user, so "the user" and "the developer" are deliberately the same person —
+  skills are just files that person edits.
 
 ## 2. The four layers
 
@@ -39,11 +48,14 @@ them, so guidance in those terms means something.
 | 1 | Conversation | **Chat** | per article | Dialogue with the guide; planning talk, questions, on-demand reviews |
 | 2 | Context stash | **Brief** | per article | Outline/mindmap, tone decisions, word-count targets, (later) pinned references |
 | 3 | Output | **Draft** | per article | The article text, written by the user, sectioned to match the outline |
-| 4 | User's voice | **Lexicon** | per user, cross-article | Definitions of tone/style shorthands; the user's taught vocabulary |
+| 4 | User's voice & moves | **Lexicon + Skills** | per user, cross-article | Lexicon: definitions of tone/style shorthands. Skills: invocable editorial routines (`/shorten`, …) encoded as editable instruction files |
 
 Mental model: the Chat is how you talk, the Brief is what you've agreed, the
-Draft is what you're making, the Lexicon is who you are as a writer. The guide's
-whole v1 job is noticing divergence between layers 2 and 3 and saying so well.
+Draft is what you're making, and layer 4 is who you are as a writer — the
+Lexicon holds your adjectives (what "punchy" means), the Skills hold your verbs
+(what `/shorten` does). The guide's whole v1 job is noticing divergence between
+layers 2 and 3 and saying so well — and Skills are how we encode the *repeatable*
+ways of doing that.
 
 The Brief plays the same role as a "plan" in an agentic coding tool: work starts
 by writing it, it governs execution, and changing it mid-flight is a deliberate,
@@ -162,6 +174,39 @@ examples, and provenance (taught explicitly, or distilled from feedback and
 saved with the user's consent). Entries are injected into the guide's context
 whenever the term is invoked — in tone decisions, in guidance notes, in chat.
 
+### 4.7 Skill
+
+An invocable editorial routine, authored as an editable instruction file
+(markdown with a small frontmatter), the way skills/slash-commands work in a
+coding agent. A skill has:
+
+- a **name** (`/shorten`, `/tighten-transitions`, `/fact-check-flags`, …),
+  discoverable via autocomplete in the chat composer,
+- a **scope argument** — a section, a selection, or the whole piece (default),
+  plus optional free-form args ("cut 70", "aim for 1,800"),
+- a **body** — natural-language instructions encoding what the operation means.
+  The canonical example, `/shorten`: read the target length from the Brief;
+  look for repetition and suggest removing one instance; point out where a page
+  was spent on what should have been a paragraph and *ask the user* rather than
+  deciding; prefer cuts that don't touch user-flagged keeper passages,
+- **trigger hints** — optional conditions under which the guide may *offer* the
+  skill proactively ("section ≥40% over its target → offer /shorten on it"),
+  subject to the same interruption rules as any guidance (§6, F2),
+- read access to all three article layers (Brief, Draft, Chat) and the Lexicon.
+
+**Skills are mode-agnostic by contract.** A skill run produces **findings** —
+anchored observations, questions, and proposed actions. What happens to
+findings depends on the mode the product is in: in guide-v1 they render as
+guidance notes and chat questions ("¶2 of §4 restates ¶1 of §2 — cut one?");
+in later ghostwriter mode the very same findings can carry concrete edits to
+accept. Skills therefore never need rewriting when ghostwriter mode arrives.
+
+**v1 keeps authorship flat.** One user means "we the user" and "we the
+developers" stay undifferentiated: skills live as plain files in one global
+set, edited directly, hot-reloaded. No per-article/per-user/per-publication
+scoping or inheritance — that's a later problem to solve with experience in
+hand (§9).
+
 ## 5. Modes
 
 ### 5.1 Plan mode (default for a new article)
@@ -220,6 +265,11 @@ note reads *"This restates the argument from §2 ('the promise'). Your plan has
 you pivoting to §5 ('historical accounts') and closing. You're at 1,850 of
 2,000 words."*
 
+A guidance note may carry a **skill offer** when a skill's trigger hints match:
+*"This section is 250 words against a 180 target — try cutting ~70? [Run
+/shorten on §3]"*. One tap runs the skill scoped to that section; ignoring or
+dismissing it is costless and counts as signal like any other dismissal.
+
 ### F3 — Restructure ("actually, move this before that")
 Via drag in the Outline (list or mindmap) or via chat. The tree changes →
 sections re-order in the Draft immediately, carrying their text (lossless, by
@@ -246,6 +296,16 @@ From the Lexicon page (add/define/exemplify), from any chip in context ("edit
 what this means"), or from feedback: when the guide's tone-drift notes keep
 getting dismissed, or the user's reactions reveal a meaning, the agent proposes
 an entry — always opt-in, never silent.
+
+### F7 — Running a skill
+The user types `/shorten` in the chat composer (autocomplete lists skills with
+their one-line descriptions), optionally scoped and parameterized ("/shorten §3,
+cut 70"); a section's context menu offers "Run skill…" for the pointer-first
+path. The run executes against the current Brief + Draft and lands as a batch
+of findings: anchored guidance notes in the margins plus a chat summary ("found
+3 repetitions, 1 page-that-should-be-a-paragraph — notes in §2, §4, §6"). Each
+finding is individually actionable or dismissible; a skill run never edits
+prose in v1. Skills also arrive via proactive offers (F2).
 
 ## 7. The tracking model (Brief ⇄ Draft)
 
@@ -278,7 +338,7 @@ in-progress / current / empty), so the outline doubles as a progress map of the
 piece. The status strip surfaces the same data for the current section plus the
 piece total.
 
-## 8. The Lexicon (layer 4) — v1 scope
+## 8. Layer 4 (Lexicon + Skills) — v1 scope
 
 v1 ships the Lexicon small but real:
 
@@ -287,8 +347,20 @@ v1 ships the Lexicon small but real:
 - state-the-interpretation + offer-to-save when an unknown term is used,
 - agent-proposed entries from observed feedback, opt-in.
 
-Explicitly later: categories, per-publication voices, importable style guides,
-hook-like triggers.
+And Skills equally small but real:
+
+- a flat global set of skill files (markdown + small frontmatter for name,
+  description, trigger hints), edited directly by the user-developer,
+  hot-reloaded — no in-app authoring UI required in v1,
+- slash invocation with autocomplete and scope/args (F7), plus section context
+  menu,
+- proactive offers via trigger hints, governed by the interruption rules,
+- findings-based output only (notes + chat) — no prose edits,
+- ship with 2–3 exemplar skills (`/shorten` first) that double as documentation
+  of the format.
+
+Explicitly later for both: categories, per-publication voices, importable style
+guides, and skill/lexicon scoping (see §9).
 
 ## 9. Later features (design for, don't build)
 
@@ -308,6 +380,13 @@ hook-like triggers.
   destination).
 - **Copy-edit pass** (tracked suggestions the user accepts one by one — a
   gentler sibling of ghostwriter mode).
+- **Skill & Lexicon scoping/inheritance:** per-article, per-user,
+  per-publication layers with overrides, once multiple users (or multiple
+  distinct voices) exist and real usage has shown which axes matter. v1's flat
+  file set is the deliberate placeholder for this.
+- **Skill-authoring UX:** in-app editing, a "turn this chat instruction into a
+  skill" affordance (you keep asking for the same review — save it as
+  `/my-review`?), sharing skills between users.
 - Multi-document/series awareness, collaboration, publishing integrations.
 
 ## 10. Open questions for the build plan
@@ -330,3 +409,13 @@ hook-like triggers.
 5. **Word-count targets: required or optional?** Guidance like "near your
    target" needs targets to exist. Recommendation: optional per node, but Plan
    mode proposes a distribution automatically when an overall length is given.
+6. **Skill file format and location.** Frontmatter fields (name, description,
+   trigger hints, default scope?) and where the files live so the single
+   user-developer can edit them with zero ceremony. Recommendation: a `skills/`
+   directory of markdown files in the app's data folder, hot-reloaded; keep
+   frontmatter minimal (name + description + optional triggers) and let the
+   body carry everything else in prose.
+7. **Trigger-hint expressiveness.** Are hints structured conditions ("section
+   over target by N%") or prose the guide interprets? Recommendation: prose in
+   v1 — the guide reads the hint and judges; structured predicates only if
+   prose proves too noisy or too timid.
