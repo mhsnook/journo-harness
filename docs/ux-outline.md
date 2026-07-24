@@ -295,8 +295,11 @@ sections, and on explicit request. Its output obeys interruption rules:
   focus or moving the text the user is typing into. New-note indicators are
   subtle (a dot on the section, a badge on a collapsed pane).
 - **Never modal, never auto-correcting.** The guide has no affordance that
-  interrupts typing. At most one new note per pause-evaluation; repetitive
-  observations get merged into the existing note, not repeated.
+  interrupts typing. There is **no cap on notes** — everything relevant gets
+  said; the writer decides what to ignore. The only pruning is hygiene:
+  an observation that repeats an existing active note merges into it instead
+  of duplicating, and dismissals are signal (a repeatedly dismissed class of
+  note quiets itself).
 
 The example to build to: the user finishes a paragraph, pauses, and a margin
 note reads *"This restates the argument from §2 ('the promise'). Your plan has
@@ -452,6 +455,19 @@ guides, and skill/lexicon scoping (see §9).
   stable node IDs with everything bound to them — already in §4.2. In guide-v1
   this also enables notes like "you haven't used the pinned quote for this
   section."
+- **Compiled checks:** the guide reads the Brief and *proposes deterministic,
+  non-LLM watchers* derived from it — "§5's intent note says the three
+  anecdotes return: watch that the closing section mentions each of them,"
+  "the arc note says data lives in the middle: flag if the opening runs
+  data-heavy past N words." The user accepts a proposed check, and from then
+  on it runs as pure code on every edit — instant, free, no model in the
+  loop. The model's comprehension is used once, at compile time, to turn a
+  prose intent into a cheap mechanical watcher; the watcher then never needs
+  the model again. **Per-node word targets (v1, §4.2) are the first member of
+  this family** — hand-authored rather than compiled, but the same shape:
+  a deterministic check derived from the Brief, evaluated in Tier-1 code.
+  Design the check as a first-class object now (id, source-intent reference,
+  predicate, status) so compiled ones slot in later.
 - **Cut-material drawer** as a browsable space (v1 only needs it as a safe
   destination).
 - **Copy-edit pass** (tracked suggestions the user accepts one by one — a
@@ -469,9 +485,11 @@ guides, and skill/lexicon scoping (see §9).
 
 1. **Guidance cadence and thresholds.** How long a typing lull triggers
    evaluation; how near a word target triggers a pacing note; how aggressively
-   repetition is flagged. Recommendation: ship conservative defaults (lull
-   ~3–5s, budget note at 90% of target, at most one new note per evaluation)
-   and a per-article "coaching intensity" setting (quiet / normal / active).
+   repetition is flagged. Recommendation: ship conservative trigger defaults
+   (lull ~3–5s, budget note at 90% of target) and a per-article "coaching
+   intensity" setting (quiet / normal / active). Notes themselves are
+   uncapped — everything relevant shows (F2); intensity tunes *when the guide
+   looks*, never how much it may say.
 2. **Mindmap fidelity in v1.** List view is required; mindmap is a rendering of
    the same tree. Recommendation: list-only v1, mindmap fast-follow.
 3. **Where notes live long-term.** Do dismissed/resolved notes leave a
