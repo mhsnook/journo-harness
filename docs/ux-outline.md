@@ -7,277 +7,326 @@ objects, modes, and key flows — not the tech stack.
 
 ## 1. Product concept
 
-A harness for writing long-form pieces with an AI agent. It looks like a standard
-chat app, but the chat is only the *control surface*. The real product is the two
-surfaces to its right:
+A harness for writing long-form pieces **where the user writes the prose and the
+AI acts as a guide**. It looks like a standard chat app, but with two more
+surfaces to the right:
 
 - a **context-management layer** in the middle (the plan for the piece: outline,
-  tone decisions), co-constructed by the user and the agent, and
-- the **article itself** on the right, continuously updated as the conversation
-  proceeds.
+  tone decisions, word-count targets), co-constructed by the user and the agent
+  during planning, and
+- the **article itself** on the right — an editor the user types in, continuously
+  watched by the guide.
 
-The middle layer is what makes instructions like *"re-arrange it like this and
-write it more passionately"* cheap and reliable: structure and tone live as
-explicit, editable objects rather than being implied by chat history.
+In v1 the AI does not write the article. Its job is editorial awareness the
+writer can't cheaply maintain while in flow:
 
-A fourth layer sits *outside* any single article: a personal vocabulary where the
+> "You're repeating points from section 2, but you're supposed to be pivoting to
+> section 5 ('historical accounts') and then moving to close — and you're getting
+> near your word-count target."
+
+The middle layer is what makes that guidance possible: because structure, tone,
+and targets live as explicit objects, the guide can compare *what you're writing*
+against *what you agreed to write* and say something specific.
+
+A fourth layer sits outside any single article: a personal vocabulary where the
 user teaches the agent what words like "passionate" and "professional" mean to
-them, so those shorthands get more useful over time.
+them, so guidance in those terms means something.
 
 ## 2. The four layers
 
 | # | Layer | Name | Scope | Contents |
 |---|-------|------|-------|----------|
-| 1 | Conversation | **Chat** | per article | The turn-by-turn dialogue; the control surface |
-| 2 | Context stash | **Brief** | per article | Outline/mindmap, tone decisions, (later) pinned references |
-| 3 | Output | **Draft** | per article | The article text, section-by-section, always current |
+| 1 | Conversation | **Chat** | per article | Dialogue with the guide; planning talk, questions, on-demand reviews |
+| 2 | Context stash | **Brief** | per article | Outline/mindmap, tone decisions, word-count targets, (later) pinned references |
+| 3 | Output | **Draft** | per article | The article text, written by the user, sectioned to match the outline |
 | 4 | User's voice | **Lexicon** | per user, cross-article | Definitions of tone/style shorthands; the user's taught vocabulary |
 
-Mental model: the Chat is how you talk, the Brief is what you've agreed, the Draft
-is what exists, the Lexicon is who you are as a writer.
+Mental model: the Chat is how you talk, the Brief is what you've agreed, the
+Draft is what you're making, the Lexicon is who you are as a writer. The guide's
+whole v1 job is noticing divergence between layers 2 and 3 and saying so well.
 
 The Brief plays the same role as a "plan" in an agentic coding tool: work starts
 by writing it, it governs execution, and changing it mid-flight is a deliberate,
-visible act — not something that drifts silently in chat history.
+visible act — not something that drifts silently.
 
 ## 3. Layout
 
 Three-pane desktop layout, left to right:
 
 ```
-┌────────────┬─────────────────┬──────────────────────┐
-│   CHAT     │      BRIEF      │        DRAFT         │
-│            │                 │                      │
-│ messages   │ [Outline|Tone]  │  the article,        │
-│ + composer │                 │  live-updating,      │
-│            │ outline as list │  sectioned to match  │
-│            │ or mindmap      │  the outline         │
-└────────────┴─────────────────┴──────────────────────┘
+┌────────────┬─────────────────┬──────────────────────────┐
+│   CHAT     │      BRIEF      │         DRAFT            │
+│            │                 │ ┌──────────────────────┐ │
+│ guide      │ [Outline|Tone]  │ │ status strip (HUD)   │ │
+│ messages   │                 │ ├──────────────────────┤ │
+│ + composer │ outline as list │ │ sectioned editor     │ │
+│            │ or mindmap,     │ │ (user types here)    │ │
+│            │ with targets &  │ │  · margin notes      │ │
+│            │ progress        │ │  · per-section counts│ │
+└────────────┴─────────────────┴──────────────────────────┘
 ```
 
-- Panes are resizable; each can collapse to a rail. Sensible default ratio is
-  roughly 1 : 1 : 1.5 (the Draft gets the most room).
+- The **Draft is the primary surface** — the user lives there while writing. It
+  gets the most room by default (roughly 1 : 1 : 2); Chat and Brief can each
+  collapse to a rail. This is the reverse of a chat-first app, and the design
+  should feel like an editor with a coach attached, not a chatbot with an editor
+  attached.
 - The **Brief** pane has two tabs in v1: **Outline** and **Tone**. (A third,
-  **References**, is reserved for later — see §9.)
-- The **Outline** tab offers two views of the same data: an indented list (fast,
-  keyboard-friendly, default) and a **mindmap** (spatial, good for restructuring).
-  They are strictly two renderings of one tree — no separate state.
-- The **Lexicon** is not a fourth pane. It lives behind a global entry point
-  (e.g. a header icon / settings-level page), because it is cross-article. It
-  *surfaces into* the article UI contextually: when a lexicon term is used in
-  chat or in a tone decision, it renders as a recognizable chip the user can
-  hover/tap to see the definition being applied.
+  **References**, is reserved for later — see §9.) The Outline tab shows two
+  renderings of one tree: an indented list (default) and a **mindmap**. Nodes
+  display live progress: word count vs target, written/unwritten, current.
+- The **Draft** pane is a **structured editor**: it renders the outline as a
+  sequence of sections, each with its heading (from the node title) and its own
+  editing region. See §7.1 for why this is the load-bearing choice.
+- The **Lexicon** is not a fourth pane. It lives behind a global entry point and
+  surfaces contextually as chips wherever its terms appear (tone tab, guidance
+  notes, chat).
 - Narrow screens: panes become swipeable tabs (Chat / Brief / Draft) with badge
-  indicators when a non-visible pane changed this turn.
+  indicators when a non-visible pane has new activity.
 
 ## 4. Core objects
-
-These are the nouns the whole UX is built on. Getting their identity model right
-is the single most load-bearing implementation concern.
 
 ### 4.1 Article (project)
 
 The container: one chat thread, one brief, one draft, plus metadata (title,
-status, created/updated). A home screen lists articles; "New article" starts one
-in Plan mode (§5).
+status, overall word-count target). A home screen lists articles; "New article"
+starts one in Plan mode (§5).
 
 ### 4.2 Outline node
 
 The unit of structure. A tree of nodes, each with:
 
-- a **stable ID** (survives moves, renames, re-parenting — this is what everything
-  else binds to),
-- a title and an optional intent note ("what this section must accomplish"),
+- a **stable ID** (survives moves, renames, re-parenting — everything else binds
+  to it),
+- a title and an optional intent note ("what this section must accomplish" —
+  in a guide-first product this note is the guide's rubric, so Plan mode should
+  encourage filling it in),
+- an optional **word-count target** (per node; the article total can be
+  distributed across nodes during planning),
 - an optional **tone override** (§4.3),
 - a binding to a **Draft section** (§7),
 - (later) pinned references and anecdotes (§9).
 
 Both the user and the agent can create, edit, reorder, re-parent, merge, and
 delete nodes. Direct manipulation (drag in list or mindmap, inline rename) and
-chat instruction ("move the anecdote before the argument") are equivalent — both
-mutate the same tree and both are logged the same way.
+chat instruction ("move 'historical accounts' before the close") are equivalent —
+both mutate the same tree.
 
 ### 4.3 Tone decision
 
 The Tone tab holds:
 
-- a **global tone** for the piece — a short set of terms (chips), each either a
-  Lexicon term or a free-form word, plus an optional free-text note ("write like
-  a letter to a smart friend"), and
-- **per-node overrides** — e.g. the intro is "warm, personal" while the analysis
-  section is "professional". Overrides show on the node in the Outline view as a
-  small chip, so the tone map of the article is visible at a glance.
+- a **global tone** — a short set of terms (chips), each either a Lexicon term or
+  a free-form word, plus an optional free-text note ("like a letter to a smart
+  friend"), and
+- **per-node overrides** — the intro is "warm, personal," the analysis section is
+  "professional." Overrides show as small chips on nodes in the Outline view, so
+  the tone map of the piece is visible at a glance.
 
-When the user says "more passionate," the agent's first move is to resolve the
-word: if "passionate" exists in the Lexicon, apply that definition and show the
-chip; if not, apply its best guess **and offer to save the interpretation to the
-Lexicon** (a one-tap accept). This is the main loop by which the Lexicon grows.
+In v1 the guide uses tone decisions to **detect drift**: "section 4 is marked
+'professional' but the last two paragraphs read conversational." When a tone word
+is used that isn't in the Lexicon, the guide states the interpretation it's
+checking against and offers a one-tap "save to Lexicon" — the main loop by which
+the Lexicon grows.
 
 ### 4.4 Draft section
 
-The Draft is not one blob of text: it is a sequence of sections, each bound to an
-outline node by ID. This binding is what makes restructuring work (§7). The user
-can edit draft text directly in the pane; user edits are first-class (§7.3).
+One editing region per outline node, bound by node ID, holding user-authored
+text. Tracks live word count (shown against the node's target) and completion
+state. All prose is the user's; the guide never edits it (see §5.2 for the one
+narrow exception, which is opt-in and on-demand).
 
-### 4.5 Lexicon entry
+### 4.5 Guidance note
 
-A named term ("passionate", "professional", "punchy") with:
+The guide's unit of output while the user writes. Each note has:
 
-- a definition in the user's words and/or the agent's distilled description,
-- optionally, do/don't examples ("passionate ≠ exclamation points; it means
-  conviction, first person, shorter sentences"),
-- provenance: taught explicitly, or distilled from feedback ("last time you said
-  'punchier' you liked it when I cut qualifiers — save that as the meaning?").
+- an **anchor** — a section (and optionally a paragraph range) it's about,
+- a **type** — structure ("this belongs in section 5"), repetition ("you made
+  this point in section 2"), pacing/budget ("300 words over target with two
+  sections to go"), tone drift, plan divergence ("what you're writing isn't what
+  this node says it's for — update the plan or the prose?"),
+- a **body** — one or two sentences, specific, referencing Brief objects by name,
+- a lifecycle — active → dismissed / resolved / superseded. Dismissing is
+  one tap and is signal (a repeatedly dismissed class of note should quiet
+  itself).
 
-Entries behave like skills/hooks in a coding agent: they are injected into the
-agent's context whenever the term is invoked. Editable from the Lexicon page and
-from any chip in context.
+Notes render in the Draft margin at their anchor, with the current section's most
+important note also reflected in the status strip. They are quiet by default —
+see §6, F2 for the interruption rules.
+
+### 4.6 Lexicon entry
+
+A named term ("passionate", "professional", "punchy") with a definition in the
+user's words and/or the agent's distilled description, optional do/don't
+examples, and provenance (taught explicitly, or distilled from feedback and
+saved with the user's consent). Entries are injected into the guide's context
+whenever the term is invoked — in tone decisions, in guidance notes, in chat.
 
 ## 5. Modes
-
-An article moves through explicit modes; the current mode is always visible and
-mode changes are deliberate user actions.
 
 ### 5.1 Plan mode (default for a new article)
 
 - The Draft pane is empty/placeholder; the Brief is the star.
-- Conversation is about the piece: what it's for, who it's for, structure, tone.
-  The agent builds the outline and proposes tone decisions live in the Brief as
-  the conversation goes; the user edits directly or by chat.
-- Exit is explicit: a **"Start drafting"** action (with the agent able to suggest
-  it: "I think the plan's ready — start drafting?"). Nothing is written to the
-  Draft before this.
+- The conversation is collaborative in the fullest sense here — the agent *is*
+  a co-author of the plan: it interviews (topic, audience, angle, length),
+  proposes structure, drafts intent notes, suggests a word-count distribution
+  and tone map. The user edits everything directly or by chat.
+- Exit is explicit: a **"Start writing"** action (the agent may suggest it:
+  "I think the plan's ready — start writing?").
 
-### 5.2 Draft mode
+### 5.2 Write mode
 
-- The main loop. Each turn, the agent writes/rewrites Draft sections per the
-  Brief. The Brief stays fully editable — but a Brief change during Draft mode is
-  a **conscious decision** with visible consequences: affected sections are
-  marked stale (§7.2), and the agent confirms structural changes before
-  executing rewrites ("Moving 'the anecdote' above 'the argument' — rewrite both
-  transitions?").
-- There is no separate "revise mode"; revision is just more turns in Draft mode.
-  (A distinct polish/copy-edit mode is a candidate for later, not v1.)
+- The main loop: the user types in the Draft; the guide watches and produces
+  guidance notes and status updates (F2). Chat remains available for questions
+  and on-demand reviews (F5).
+- The guide **never writes into the Draft**. The one narrow exception: the user
+  may explicitly ask for a suggestion ("give me three ways to open this
+  section") — the answer arrives in chat as copyable text, never as an edit.
+- The Brief stays editable — changing it mid-write is a conscious decision with
+  visible consequences: progress recalculates, and sections whose plan changed
+  get a divergence note rather than a rewrite (§7.2).
 
 ### 5.3 Done
 
-- A lightweight terminal state: article marked complete, export (markdown /
-  copy / clipboard-rich-text), and a natural moment for the agent to propose
-  Lexicon updates learned during the piece ("You steered me toward shorter
-  intros twice — save as a preference?").
+- Article marked complete; export (markdown / copy / rich text); a natural
+  moment for the guide to propose Lexicon updates learned during the piece
+  ("You cut qualifiers every time I flagged 'punchy' — save that as the
+  meaning?").
 
 ## 6. Key flows
 
 ### F1 — New article
-Home → New article → Plan mode. Agent opens with a short interview (topic,
-audience, angle, rough length). Outline materializes in the Brief as they talk.
-User tweaks nodes directly. Tone chips get set. User hits **Start drafting**.
+Home → New article → Plan mode. Agent interviews, outline materializes in the
+Brief with intent notes, targets, and tone chips. User tweaks directly. User
+hits **Start writing**.
 
-### F2 — The drafting turn
-User sends a message → agent responds in chat (brief, conversational) while its
-actual work lands in the panes: Draft sections update with **change highlighting**
-(what changed this turn is tinted until the next turn or until dismissed), and
-any Brief mutations it made are listed as a compact "plan changes" line in its
-chat message. The chat message summarizes *what it did and why*, not the prose
-itself — the prose lives on the right.
+### F2 — The writing loop (the core of the product)
+User types in a section. The guide evaluates on **pauses and boundaries, never
+on keystrokes**: after a typing lull (a few seconds), when the user switches
+sections, and on explicit request. Its output obeys interruption rules:
 
-### F3 — Restructure ("re-arrange it like this…")
-Via chat or via dragging nodes in the Outline. Either way: tree changes →
-sections re-order in the Draft immediately (cheap, lossless) → sections whose
-*context* changed (new neighbors, new parent) get a **stale** marker → user or
-agent triggers "smooth the seams" rewrites of transitions. Moving a node never
-loses its text.
+- **Ambient, always-on:** the status strip — current section vs plan position,
+  per-section and total word count vs targets. Glanceable, never animated,
+  never demands attention.
+- **Passive, anchored:** guidance notes appear in the margin without stealing
+  focus or moving the text the user is typing into. New-note indicators are
+  subtle (a dot on the section, a badge on a collapsed pane).
+- **Never modal, never auto-correcting.** The guide has no affordance that
+  interrupts typing. At most one new note per pause-evaluation; repetitive
+  observations get merged into the existing note, not repeated.
 
-### F4 — Tone change ("…and write it more passionately")
-Term resolves against the Lexicon (§4.3) → tone chip updates (global or on the
-targeted nodes) → affected sections marked stale → agent rewrites them, change-
-highlighted. If the term was unknown, the agent's chat reply includes its
-interpretation and a one-tap "save to Lexicon".
+The example to build to: the user finishes a paragraph, pauses, and a margin
+note reads *"This restates the argument from §2 ('the promise'). Your plan has
+you pivoting to §5 ('historical accounts') and closing. You're at 1,850 of
+2,000 words."*
 
-### F5 — Direct edit by the user
-User types in the Draft pane. The edit is attributed to the user and treated as
-signal: the agent must preserve user-authored phrasing in later rewrites unless
-told otherwise, and may ask "you rewrote the lede — want me to match that voice
-in the rest?" — which is also a Lexicon-teaching moment.
+### F3 — Restructure ("actually, move this before that")
+Via drag in the Outline (list or mindmap) or via chat. The tree changes →
+sections re-order in the Draft immediately, carrying their text (lossless, by
+node-ID binding) → the guide posts divergence notes where the new order breaks
+flow ("the transition at the end of §3 still points at 'the close'"). Fixing
+the seams is the user's writing work; the guide just points at them.
 
-### F6 — Teaching the Lexicon deliberately
-From the Lexicon page: add a term, define it, add do/don't examples. From
-context: click any tone chip → "edit what this means". From feedback: agent
-proposes entries after observing corrections (always opt-in, never silent).
+### F4 — Plan divergence, both directions
+- **Prose drifts from plan:** the guide flags it (guidance note) and offers a
+  choice — "get back on plan, or update the plan to match?" If the user picks
+  the latter, the agent edits the Brief (visible change) and guidance
+  recalibrates. The plan is a living contract, but changing it is always a
+  conscious, visible act.
+- **Plan edited mid-write:** affected sections get divergence notes (not
+  rewrites — there's nothing for the AI to rewrite in v1).
 
-## 7. The sync model (Brief ⇄ Draft)
+### F5 — On-demand review
+The user asks in chat: "read section 3 — am I actually making the point?" The
+guide answers in chat with specifics, referencing the node's intent note and
+tone. This is also where "give me three openings" style requests land (§5.2).
+
+### F6 — Teaching the Lexicon
+From the Lexicon page (add/define/exemplify), from any chip in context ("edit
+what this means"), or from feedback: when the guide's tone-drift notes keep
+getting dismissed, or the user's reactions reveal a meaning, the agent proposes
+an entry — always opt-in, never silent.
+
+## 7. The tracking model (Brief ⇄ Draft)
 
 This is the heart of the product and deserves its own section in the build plan.
 
-### 7.1 Binding
-Every Draft section is bound to an outline node ID. Node order = section order.
-Creating a node creates an (empty, planned) section; deleting a node prompts —
-delete the text, or detach it to a "cut material" holding area (default: cut
-material, so nothing is ever silently destroyed).
+### 7.1 Binding: the structured editor
+Every Draft section is bound to an outline node ID, and **the editor is
+structured by the outline** — one editing region per node, heading rendered from
+the node title. This is the load-bearing choice: it means the app always knows
+*exactly* which section the user is writing (no inference), per-section word
+counts are free, reordering is lossless, and every guidance note has a precise
+anchor. The alternative — one freeform text field with AI inferring section
+boundaries — makes every feature above probabilistic, and is rejected for v1.
 
-### 7.2 Staleness
-Any Brief change that invalidates existing prose (reorder, tone change, intent
-note edit) marks the affected sections **stale** — a visible per-section badge in
-the Draft, with a one-line reason ("tone changed to 'passionate'", "moved after
-'the argument'"). Stale ≠ auto-rewritten: rewrites happen when the user asks, or
-when the agent proposes and the user accepts. Stale badges are the UI's honesty
-mechanism — the Draft never pretends to reflect a Brief it doesn't.
+Consequences to design for: creating a node creates an empty section; deleting
+a node with text prompts — delete, or move the text to a **cut-material**
+holding area (default: cut material; nothing is silently destroyed); merging
+nodes concatenates their text for the user to smooth.
 
-### 7.3 Attribution
-Every section tracks who last touched it (user / agent). User-touched text gets
-gentle protection: the agent rewrites it only with explicit instruction, and the
-UI can show a subtle marker on user-authored passages.
+### 7.2 Divergence, not staleness
+When Brief and Draft disagree — prose wandering off-plan, a reordered tree
+breaking transitions, a tone override no longer matching the text — the result
+is always a **guidance note**, never an automatic change to the user's prose.
+The set of active divergence notes is effectively the guide's honest diff
+between "what we agreed" and "what exists."
 
-### 7.4 Change review
-Agent edits to the Draft are highlighted per turn (F2). v1 keeps this
-lightweight: highlight + a per-section "revert to before this turn" action.
-Full diff-review/approve-each-change is deliberately **not** v1 — it would slow
-the loop down; the revert affordance is the safety net.
+### 7.3 Progress
+The Brief shows live progress per node (word count vs target, written /
+in-progress / current / empty), so the outline doubles as a progress map of the
+piece. The status strip surfaces the same data for the current section plus the
+piece total.
 
 ## 8. The Lexicon (layer 4) — v1 scope
 
 v1 ships the Lexicon small but real:
 
 - a flat list of terms with free-text definitions and optional examples,
-- chips wherever terms are used (tone tab, chat),
-- resolve-on-use + offer-to-save (§4.3),
-- agent-proposed entries from feedback, opt-in.
+- chips wherever terms are used (tone tab, guidance notes, chat),
+- state-the-interpretation + offer-to-save when an unknown term is used,
+- agent-proposed entries from observed feedback, opt-in.
 
-Explicitly later: term categories, per-publication voices, importable style
-guides, hook-like triggers ("always do X when drafting an intro").
+Explicitly later: categories, per-publication voices, importable style guides,
+hook-like triggers.
 
 ## 9. Later features (design for, don't build)
 
-- **Pinned references:** attach links, quotes, anecdotes, and notes to specific
-  outline nodes. Because everything binds to node IDs, moving a node carries its
-  pinned material with it, and the agent knows which evidence belongs to which
-  point. UI: a References tab in the Brief plus pin affordances on nodes. The
-  v1 requirement this imposes: **node IDs must be stable and everything must
-  bind to them** — that's already in §4.2.
-- **Cut-material drawer** as a browsable space (v1 only needs it to exist as a
-  safe destination for deleted sections).
-- **Polish mode** (copy-edit pass with tracked suggestions).
-- **Multi-document / series awareness**, collaboration, publishing integrations.
+- **Ghostwriter mode:** the AI drafts and rewrites prose per the Brief — the
+  full agentic-writing loop (change highlighting, per-section revert, user-text
+  protection). Everything in this document is designed so that mode can be added
+  without remodeling: the Brief already carries intent, tone, and targets; the
+  Draft is already sectioned and node-bound. v1 deliberately ships the harness
+  and the guide first, so the plan-and-track layer earns trust before the AI
+  ever writes a word.
+- **Pinned references:** links, quotes, anecdotes attached to outline nodes;
+  moving a node carries its pinned material. Imposes one v1 requirement —
+  stable node IDs with everything bound to them — already in §4.2. In guide-v1
+  this also enables notes like "you haven't used the pinned quote for this
+  section."
+- **Cut-material drawer** as a browsable space (v1 only needs it as a safe
+  destination).
+- **Copy-edit pass** (tracked suggestions the user accepts one by one — a
+  gentler sibling of ghostwriter mode).
+- Multi-document/series awareness, collaboration, publishing integrations.
 
 ## 10. Open questions for the build plan
 
-1. **Mindmap fidelity in v1.** The list view is required; is the mindmap view v1
-   or fast-follow? Recommendation: v1 ships list-only with the data model ready
-   for the mindmap, mindmap ships immediately after. (The tree is the product;
-   the mindmap is a rendering.)
-2. **Granularity of sections.** One draft section per leaf node, or per any
-   node? Recommendation: prose attaches to leaves; parent nodes render as
-   headings only. Keeps the binding model simple.
-3. **How much the agent auto-rewrites.** After a Brief change, does the agent
-   rewrite stale sections automatically in the same turn when the user's message
-   clearly requested it ("rearrange and rewrite"), asking only when ambiguous?
-   Recommendation: yes — infer intent from the instruction, confirm only for
-   large blast radii (>N sections stale).
-4. **Streaming into the Draft.** Sections should stream in as they're written
-   (the pane feels alive) — confirm this constraint reaches the build plan since
-   it shapes the agent-to-UI protocol.
-5. **Where chat shorthand meets the Brief.** If the user gives a tone
-   instruction in chat but it never lands as a tone chip, the Brief lies. Rule
-   to enforce: durable instructions must be reified into the Brief (agent does
-   this automatically and notes it); one-off instructions ("fix that typo")
-   don't. The build plan needs a crisp heuristic for which is which.
+1. **Guidance cadence and thresholds.** How long a typing lull triggers
+   evaluation; how near a word target triggers a pacing note; how aggressively
+   repetition is flagged. Recommendation: ship conservative defaults (lull
+   ~3–5s, budget note at 90% of target, at most one new note per evaluation)
+   and a per-article "coaching intensity" setting (quiet / normal / active).
+2. **Mindmap fidelity in v1.** List view is required; mindmap is a rendering of
+   the same tree. Recommendation: list-only v1, mindmap fast-follow.
+3. **Where notes live long-term.** Do dismissed/resolved notes leave a
+   browsable history (a "notebook" of the piece's editorial record)?
+   Recommendation: keep a simple history behind a disclosure, don't build UI
+   around it yet.
+4. **Does the guide speak in chat unprompted?** Margin notes are the default
+   channel; chat is user-initiated. Recommendation: the guide posts to chat
+   unprompted only for piece-level observations that have no section anchor
+   (e.g. "you've now written past your total target"), and rarely.
+5. **Word-count targets: required or optional?** Guidance like "near your
+   target" needs targets to exist. Recommendation: optional per node, but Plan
+   mode proposes a distribution automatically when an overall length is given.
