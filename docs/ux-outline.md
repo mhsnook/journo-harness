@@ -28,6 +28,18 @@ The middle layer is what makes that guidance possible: because structure, tone,
 and targets live as explicit objects, the guide can compare *what you're writing*
 against *what you agreed to write* and say something specific.
 
+**The guide's taste is borrowed.** The Brief and Lexicon carry the writer's
+aesthetic and emotional intent in the writer's own words — "open exciting,"
+"the data lives mostly in the middle but threads throughout," "close by
+bringing the three anecdotes back with the update on pending action" — and the
+guide is expected to genuinely understand that intent and notice when the
+prose diverges from it ("you said the pacing would be X; what you're writing
+reads more like Y"). That is real aesthetic comprehension and it is the
+product. What the guide never does is substitute its own taste: no unsolicited
+style opinions, no house aesthetic, and no assuming that the voice of one
+hard-won section generalizes to the rest of the piece unless the Brief says
+so. Its aesthetic judgments are always *relative to what the writer declared.*
+
 A fourth layer sits outside any single article, with two halves:
 
 - a **Lexicon** — a personal vocabulary where the user teaches the agent what
@@ -113,9 +125,11 @@ The unit of structure. A tree of nodes, each with:
 
 - a **stable ID** (survives moves, renames, re-parenting — everything else binds
   to it),
-- a title and an optional intent note ("what this section must accomplish" —
-  in a guide-first product this note is the guide's rubric, so Plan mode should
-  encourage filling it in),
+- a title and an optional intent note — "what this section must accomplish,"
+  in the writer's own words, emotional and aesthetic intent included ("open
+  hot," "slow down here, let it breathe," "this is where the data lives").
+  In a guide-first product this note is the guide's rubric, so Plan mode
+  should encourage filling it in,
 - an optional **word-count target** (per node; the article total can be
   distributed across nodes during planning),
 - an optional **tone override** (§4.3),
@@ -133,10 +147,17 @@ The Tone tab holds:
 
 - a **global tone** — a short set of terms (chips), each either a Lexicon term or
   a free-form word, plus an optional free-text note ("like a letter to a smart
-  friend"), and
+  friend"),
 - **per-node overrides** — the intro is "warm, personal," the analysis section is
   "professional." Overrides show as small chips on nodes in the Outline view, so
-  the tone map of the piece is visible at a glance.
+  the tone map of the piece is visible at a glance, and
+- an **arc note** — an optional piece-level free-text description of the pacing
+  and emotional shape of the whole article, in the writer's words: "start
+  exciting; the data lives mostly in the middle but threads throughout; finish
+  by bringing the three personal anecdotes back with the update about pending
+  action." The arc note is a first-class contract term: the guide reads the
+  draft against it the same way it reads sections against intent notes, and
+  Plan mode co-writes it like everything else in the Brief.
 
 In v1 the guide uses tone decisions to **detect drift**: "section 4 is marked
 'professional' but the last two paragraphs read conversational." When a tone word
@@ -168,9 +189,12 @@ The guide's unit of output while the user writes. Each note has:
 
 - an **anchor** — a section (and optionally a paragraph range) it's about,
 - a **type** — structure ("this belongs in section 5"), repetition ("you made
-  this point in section 2"), pacing/budget ("300 words over target with two
-  sections to go"), tone drift, plan divergence ("what you're writing isn't what
-  this node says it's for — update the plan or the prose?"),
+  this point in section 2"), budget ("300 words over target with two sections
+  to go"), tone drift, **arc/pacing divergence** ("the arc note says the data
+  lives in the middle, but the last three paragraphs of the opening are data —
+  the pacing reads more like a report than the build you described"), plan
+  divergence ("what you're writing isn't what this node says it's for — update
+  the plan or the prose?"),
 - a **body** — one or two sentences, specific, referencing Brief objects by name,
 - a lifecycle — active → dismissed / resolved / superseded. Dismissing is
   one tap and is signal (a repeatedly dismissed class of note should quiet
@@ -301,7 +325,12 @@ boundary style, §7.1).
   choice — "get back on plan, or update the plan to match?" If the user picks
   the latter, the agent edits the Brief (visible change) and guidance
   recalibrates. The plan is a living contract, but changing it is always a
-  conscious, visible act.
+  conscious, visible act. This flow exists to catch drift *early* — the
+  failure mode it prevents is the thrash spiral where the writer grows more
+  attached to the prose than the plan, quietly rewrites the plan around it,
+  then writes more prose that breaks the new plan too. Surfacing the fork
+  ("plan or prose?") at the first divergence makes that a decision instead of
+  a drift.
 - **Plan edited mid-write:** affected sections get divergence notes (not
   rewrites — there's nothing for the AI to rewrite in v1).
 
