@@ -16,7 +16,7 @@ objects, modes, and key flows (but not the tech stack).
 A harness for writing long-form pieces **where the user writes the prose and the
 AI acts as a guide**. It looks like a standard chat app where you chat on the left
 and the article you're writing is on the right, but with an additional layer for
-**context-management*. This is where you and your editor-guide robot friend will
+**context-management**. This is where you and your editor-guide robot friend will
 co-construct an outline in the planning phase (editable any time), where you'll
 outline or mind-map your piece, perhaps provide length targets overall or per
 section, or leave notes on how you want the prose to feel at different points.
@@ -41,7 +41,7 @@ you mean, like with writing samples of what you consider happy and sad writing t
 works or doesn't work.
 
 Put together, this layer 2 (the planning/pitch doc) and layer 4 (house styles & moods),
-allow the harness to act like a little clippy that can help you stay on track, with
+allow the harness to act like a little clippy that can help you stay on track while
 you draft, remember to include your best quotes and references, and in the end, suggest
 what to ✂️✂️✂️.
 
@@ -49,8 +49,8 @@ what to ✂️✂️✂️.
 
 The fourth layer sits outside any single article as the writer's _general_ style:
 everything the app knows about how this writer writes, kept in the app
-and editable with almost no ceremony. This sections is deliberately flat, not
-specifying and data types to design up front. The kinds of things it holds:
+and editable with almost no ceremony. This section is deliberately flat, not
+specifying any data types to design up front. The kinds of things it holds:
 
 - what the writer's tone words mean to them ("passionate," "professional,"
   "punchy"), so guidance in those terms means something — we call this the
@@ -124,17 +124,16 @@ shape the piece they'll be in 2+3 and not even really chat anymore.)
   attached.
 - The **Brief** pane manages to find space for both the Outline/Mindmap, and the
   notes on length and tone of different sections (maybe all together! IDK!).
-  A third, References, is reserved for later — see §9.) Nodes
+  (A References area is reserved for later — see §9.) Nodes
   display live progress: word count vs target, written/unwritten, current.
 - The **Draft** pane is one continuous editor with **section landmarks**:
-  headings rendered from node titles, subtle boundary indicators between
-  sections, and **transition spans** that can live between sections without
-  belonging to either. Boundaries are soft by default and affirmed only when an
-  operation needs them — see §7.1 for this model, which is the load-bearing
-  choice of the product.
+  headings rendered from node titles and subtle indicators between sections.
+  Exact boundaries stay loose in v1 — the guide infers them well enough for
+  approximate counts and anchored notes (§4.4); the formal tracking model is
+  later work (§7).
 - The writer's house style (layer 4) is not a fourth pane. It lives behind a
   global entry point and surfaces contextually — Lexicon terms as chips
-  wherever they appear (tone tab, guidance notes, chat).
+  wherever they appear (tone notes, guidance notes, chat).
 - Narrow screens: panes become swipeable tabs (Chat / Brief / Draft) with badge
   indicators when a non-visible pane has new activity.
 
@@ -160,7 +159,8 @@ The unit of structure. A tree of nodes, each with:
 - an optional **word-count target** (per node; the article total can be
   distributed across nodes during planning),
 - an optional **tone override** (§4.3),
-- a binding to a **Draft section** (§7),
+- a loose association with the stretch of Draft where the section is being
+  written (§4.4),
 - (later) pinned references and anecdotes (§9).
 
 Both the user and the agent can create, edit, reorder, re-parent, merge, and
@@ -170,7 +170,7 @@ both mutate the same tree.
 
 ### 4.3 Tone decision
 
-The Tone tab holds:
+Tone decisions, wherever the Brief pane ends up putting them (§3), include:
 
 - a **global tone** — a short set of terms (chips), each either a Lexicon term or
   a free-form word, plus an optional free-text note ("like a letter to a smart
@@ -182,9 +182,9 @@ The Tone tab holds:
   and emotional shape of the whole article, in the writer's words: "start
   exciting; the data lives mostly in the middle but threads throughout; finish
   by bringing the three personal anecdotes back with the update about pending
-  action." The arc note is a first-class contract term: the guide reads the
-  draft against it the same way it reads sections against intent notes, and
-  Plan mode co-writes it like everything else in the Brief.
+  action." The guide reads the draft against the arc note the same way it
+  reads sections against intent notes, and Plan mode co-writes it like
+  everything else in the Brief.
 
 In v1 the guide uses tone decisions to **detect drift**: "section 4 is marked
 'professional' but the last two paragraphs read conversational." When a tone word
@@ -192,20 +192,17 @@ is used that isn't in the Lexicon, the guide states the interpretation it's
 checking against and offers a one-tap "save to Lexicon" — the main loop by which
 the Lexicon grows.
 
-### 4.4 Draft section, transition, and boundary
+### 4.4 Draft section
 
-The Draft is one continuous, user-authored text with a mapping onto the outline:
+The Draft is one continuous, user-authored text. The guide keeps a loose,
+inferred sense of which stretch of it is serving which outline node — enough
+for per-section counts and anchored notes, always presented as approximate
+("≈240 words"), and never forcing the writer to slot prose into sections
+while in flow.
 
-- a **section** is the span of text mapped to an outline node (by node ID),
-  tracking live word count against the node's target and completion state,
-- a **transition** is a span between two sections that is *not required to
-  belong to either* — connective tissue, first-class. A transition is
-  **invalidated** when the section on either side is moved or substantially
-  changed, which produces a divergence note ("this transition connected
-  'the promise' to 'historical accounts'; 'historical accounts' moved"),
-- a **boundary** (where one span ends and the next begins) is either **soft**
-  — provisional, computed lazily by the agent — or **affirmed** — confirmed by
-  the user. See §7.1; this two-state model is central.
+The formal version of this mapping — transitions as first-class spans, soft
+vs affirmed boundaries, structural moves that carry text safely — is the
+tracking model (§7), which is future work.
 
 All prose is the user's; the guide never edits it (see §5.2 for the one narrow
 exception, which is opt-in and on-demand).
@@ -215,13 +212,13 @@ exception, which is opt-in and on-demand).
 The guide's unit of output while the user writes. Each note has:
 
 - an **anchor** — a section (and optionally a paragraph range) it's about,
-- a **type** — structure ("this belongs in section 5"), repetition ("you made
-  this point in section 2"), budget ("300 words over target with two sections
-  to go"), tone drift, **arc/pacing divergence** ("the arc note says the data
-  lives in the middle, but the last three paragraphs of the opening are data —
-  the pacing reads more like a report than the build you described"), plan
-  divergence ("what you're writing isn't what this node says it's for — update
-  the plan or the prose?"),
+- a **kind** — illustrative, not a fixed taxonomy: structure ("this belongs in
+  section 5"), repetition ("you made this point in section 2"), budget ("300
+  words over target with two sections to go"), tone drift, arc/pacing
+  divergence ("the arc note says the data lives in the middle, but the last
+  three paragraphs of the opening are data"), plan divergence ("what you're
+  writing isn't what this node says it's for — update the plan or the
+  prose?"),
 - a **body** — one or two sentences, specific, referencing Brief objects by name,
 - a lifecycle — active → dismissed / resolved / superseded. Dismissing is
   one tap and is signal (a repeatedly dismissed class of note should quiet
@@ -260,12 +257,10 @@ agent. A skill has:
 - read access to all three article layers (Brief, Draft, Chat) and the
   writer's material (layer 4).
 
-**Skills are mode-agnostic by contract.** A skill run produces **findings** —
-anchored observations, questions, and proposed actions. What happens to
-findings depends on the mode the product is in: in guide-v1 they render as
-guidance notes and chat questions ("¶2 of §4 restates ¶1 of §2 — cut one?");
-in later ghostwriter mode the very same findings can carry concrete edits to
-accept. Skills therefore never need rewriting when ghostwriter mode arrives.
+A skill run produces **findings** — anchored observations, questions, and
+proposed actions. In v1 they render as guidance notes and chat questions
+("¶2 of §4 restates ¶1 of §2 — cut one?"); if a ghostwriter mode exists
+someday, the same findings could carry concrete edits to accept.
 
 **v1 keeps authorship flat.** One user means "we the user" and "we the
 developers" stay undifferentiated: one flat global set of skills, edited
@@ -339,16 +334,14 @@ A guidance note may carry a **skill offer** when a skill's trigger hints match:
 dismissing it is costless and counts as signal like any other dismissal.
 
 ### F3 — Restructure ("actually, move this before that")
-Via drag in the Outline (list or mindmap) or via chat. Because moving text
-requires certain boundaries (§7.1), the flow is: tree change requested →
-**bound-and-confirm** on the affected spans (agent proposes exact boundaries
-and transition designations; user adjusts, confirms) → sections re-order in
-the Draft carrying their text (lossless, by node-ID binding) → transitions
-adjacent to any moved or substantially changed section are **invalidated**,
-each producing a divergence note — the seams are now explicit objects, not
-vibes → the user rewrites the seams (their work; the guide just points) → the
-agent offers to release the affirmed boundaries back to soft (per the user's
-boundary style, §7.1).
+Via drag in the Outline (list or mindmap) or via chat — both mutate the same
+tree. v1 keeps the app's part simple: the outline reorders, and the guide
+leaves notes on the affected seams ("this passage led into 'historical
+accounts', which just moved — check the join"); moving the prose itself is
+the writer's cut-and-paste, with the guide pointing at anything that looks
+stranded. Never move text on a guessed boundary — when in doubt, ask. The
+fuller version, where sections carry their text automatically, is the
+tracking model (§7), later.
 
 ### F4 — Plan divergence, both directions
 - **Prose drifts from plan:** the guide flags it (guidance note) and offers a
@@ -514,9 +507,9 @@ per-publication sets (§9). Decide that from usage, not in advance.
    evaluation; how near a word target triggers a pacing note; how aggressively
    repetition is flagged. Answer: ship conservative trigger defaults
    (lull ~3–5s, or once in 10 minutes of sustained activity, budget note at 90%
-	of target) and a per-article "coaching intensity" setting (quiet / normal /
-	active). Notes themselves are uncapped — everything relevant shows (F2);
-	intensity tunes *when the guide looks*, never how much it may say.
+   of target) and a per-article "coaching intensity" setting (quiet / normal /
+   active). Notes themselves are uncapped — everything relevant shows (F2);
+   intensity tunes *when the guide looks*, never how much it may say.
 2. **Mindmap fidelity in v1.** List view is required; mindmap is a rendering of
    the same tree. Answer: list-only v1, mindmap fast-follow.
 3. **Where notes live long-term.** Do dismissed/resolved notes leave a
@@ -536,9 +529,11 @@ per-publication sets (§9). Decide that from usage, not in advance.
    until prose proves insufficient.
 7. **Trigger-hint expressiveness.** Are hints structured conditions ("section
    over target by N%") or prose the guide interprets? Answer: only word counts
-	are structured; everything else in v1 — the guide reads the hint and judges;
-	structured predicates only if prose proves too noisy or too timid.
-8. **Exactly which operations require affirmed boundaries.** Node move, merge,
+   are structured; everything else is prose in v1 — the guide reads the hint
+   and judges; structured predicates only if prose proves too noisy or too
+   timid.
+8. **Exactly which operations require affirmed boundaries** (for whenever the
+   tracking model, §7, lands). Node move, merge,
    and delete, plus cut-material extraction, clearly do. Do scoped skill runs
    ("/shorten §3")? Answer: no — read-only skills run on soft
    boundaries and say so ("≈"), since their findings are suggestions the user
