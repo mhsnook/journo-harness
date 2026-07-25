@@ -127,10 +127,10 @@ shape the piece they'll be in 2+3 and not even really chat anymore.)
   (A References area is reserved for later — see §9.) Nodes
   display live progress: word count vs target, written/unwritten, current.
 - The **Draft** pane is one continuous editor with **section landmarks**:
-  headings rendered from node titles and subtle indicators between sections.
-  Exact boundaries stay loose in v1 — the guide infers them well enough for
-  approximate counts and anchored notes (§4.4); the formal tracking model is
-  later work (§7).
+  headings rendered from node titles and subtle indicators between sections,
+  with transitions living between sections without belonging to either
+  (§4.4). Boundaries stay loose in v1 — inferred well enough for approximate
+  counts and anchored notes; the formal tracking model is later work (§7).
 - The writer's house style (layer 4) is not a fourth pane. It lives behind a
   global entry point and surfaces contextually — Lexicon terms as chips
   wherever they appear (tone notes, guidance notes, chat).
@@ -192,17 +192,22 @@ is used that isn't in the Lexicon, the guide states the interpretation it's
 checking against and offers a one-tap "save to Lexicon" — the main loop by which
 the Lexicon grows.
 
-### 4.4 Draft section
+### 4.4 Draft section, transition, and boundary
 
-The Draft is one continuous, user-authored text. The guide keeps a loose,
-inferred sense of which stretch of it is serving which outline node — enough
-for per-section counts and anchored notes, always presented as approximate
-("≈240 words"), and never forcing the writer to slot prose into sections
-while in flow.
+The Draft is one continuous, user-authored text, and the guide reads it in
+three concepts: a **section** is the stretch of text serving an outline node;
+a **transition** is the connective tissue between two sections, belonging to
+neither; a **boundary** is where one span ends and the next begins. In v1
+these are things the guide *perceives and talks about*, not things the app
+operates on: boundaries are inferred lazily and stay approximate ("≈240
+words"), and the writer is never forced to slot prose into sections while in
+flow.
 
-The formal version of this mapping — transitions as first-class spans, soft
-vs affirmed boundaries, structural moves that carry text safely — is the
-tracking model (§7), which is future work.
+Nothing re-orders text programmatically. When the structure changes, the
+writer moves the prose themselves and can ask the guide to review the
+reworking (F3). The heavier machinery — affirmed boundaries, structural
+operations that carry text safely — is the tracking model (§7), for much
+later.
 
 All prose is the user's; the guide never edits it (see §5.2 for the one narrow
 exception, which is opt-in and on-demand).
@@ -279,6 +284,11 @@ inheritance — that's a later problem to solve with experience in hand (§9).
 - Exit is explicit: a **"Start writing"** action (the agent may suggest it:
   "I think the plan's ready — start writing?").
 
+Plan mode is also where the build should start: co-writing a good Brief is
+useful on its own, before any draft-watching exists. Rough build order:
+planning first, then the writing loop's ambient guidance, and the formal
+tracking model (§7) last.
+
 ### 5.2 Write mode
 
 - The main loop: the user types in the Draft; the guide watches and produces
@@ -335,13 +345,13 @@ dismissing it is costless and counts as signal like any other dismissal.
 
 ### F3 — Restructure ("actually, move this before that")
 Via drag in the Outline (list or mindmap) or via chat — both mutate the same
-tree. v1 keeps the app's part simple: the outline reorders, and the guide
-leaves notes on the affected seams ("this passage led into 'historical
-accounts', which just moved — check the join"); moving the prose itself is
-the writer's cut-and-paste, with the guide pointing at anything that looks
-stranded. Never move text on a guessed boundary — when in doubt, ask. The
-fuller version, where sections carry their text automatically, is the
-tracking model (§7), later.
+tree, which is the plan. The prose is the writer's to move: nothing re-orders
+text programmatically at this stage. The guide's part is noticing ("this
+transition led into 'historical accounts', which just moved — check the
+join") and, on request, reviewing the reworking: "I've moved it — read my
+seams?" gets a specific look at the joins and anything left stranded. The
+version where sections carry their text automatically is the tracking model
+(§7), later.
 
 ### F4 — Plan divergence, both directions
 - **Prose drifts from plan:** the guide flags it (guidance note) and offers a
