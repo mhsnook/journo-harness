@@ -3,55 +3,77 @@
 This document is the UX plan for the writing harness. It is written for the next
 planning pass (the build plan), which will turn it into an implementation plan for
 other agents to execute. It describes the product's conceptual model, layout, core
-objects, modes, and key flows — not the tech stack.
+objects, modes, and key flows (but not the tech stack).
+
+> A note on register: this document records decisions made on purpose and the
+> kinds of things the product should support. Where it sketches a mechanism or
+> names an object, treat that as illustration, not schema — the build plan and
+> the agents executing it are expected to read the requirements and design well,
+> including making different choices where they see better ones.
 
 ## 1. Product concept
 
 A harness for writing long-form pieces **where the user writes the prose and the
-AI acts as a guide**. It looks like a standard chat app, but with two more
-surfaces to the right:
+AI acts as a guide**. It looks like a standard chat app where you chat on the left
+and the article you're writing is on the right, but with an additional layer for
+**context-management**. This is where you and your editor-guide robot friend will
+co-construct an outline in the planning phase (editable any time), where you'll
+outline or mind-map your piece, perhaps provide length targets overall or per
+section, or leave notes on how you want the prose to feel at different points.
 
-- a **context-management layer** in the middle (the plan for the piece: outline,
-  tone decisions, word-count targets), co-constructed by the user and the agent
-  during planning, and
-- the **article itself** on the right — an editor the user types in, continuously
-  watched by the guide.
+This is the real *cognitive* support that the robot provides. It lets it watch
+as you write and offer nudges like this:
 
-In v1 the AI does not write the article. Its job is editorial awareness the
-writer can't cheaply maintain while in flow:
+> "Hi there human, I see you're repeating points from section 2, but you're supposed
+> to be pivoting to section 5 ('historical accounts') and then moving to close —
+> you're just 450 words from your target, time to wrap up!"
 
-> "You're repeating points from section 2, but you're supposed to be pivoting to
-> section 5 ('historical accounts') and then moving to close — and you're getting
-> near your word-count target."
+The middle layer is what makes that guidance possible: because you write a plan for
+every piece, and when you say things like "I want the second half to be fast-paced"
+it doesn't have to be as brilliant of a writer as you are to still say "Did you
+want to punch this section up a bit? You said this part should be faster."
 
-The middle layer is what makes that guidance possible: because structure, tone,
-and targets live as explicit objects, the guide can compare *what you're writing*
-against *what you agreed to write* and say something specific.
+But we have another layer to offer as well: **lexicon, skills, rules**. Just like in
+Claude code, a writer should be able to write skills like, "when I ask you to
+/shorten a section, I want you to: ...". Or if you want to write a plan that
+says, "The article will start sad and end happy," it helps to be able to tell it what
+you mean, like with writing samples of what you consider happy and sad writing that
+works or doesn't work.
 
-**The guide's taste is borrowed.** The Brief and Lexicon carry the writer's
-aesthetic and emotional intent in the writer's own words — "open exciting,"
-"the data lives mostly in the middle but threads throughout," "close by
-bringing the three anecdotes back with the update on pending action" — and the
-guide is expected to genuinely understand that intent and notice when the
-prose diverges from it ("you said the pacing would be X; what you're writing
-reads more like Y"). That is real aesthetic comprehension and it is the
-product. What the guide never does is substitute its own taste: no unsolicited
-style opinions, no house aesthetic, and no assuming that the voice of one
-hard-won section generalizes to the rest of the piece unless the Brief says
-so. Its aesthetic judgments are always *relative to what the writer declared.*
+Put together, this layer 2 (the planning/pitch doc) and layer 4 (house styles & moods),
+allow the harness to act like a little clippy that can help you stay on track while
+you draft, remember to include your best quotes and references, and in the end, suggest
+what to ✂️✂️✂️.
 
-A fourth layer sits outside any single article, with two halves:
+### More on the 4th Layer (writing styles)
 
-- a **Lexicon** — a personal vocabulary where the user teaches the agent what
-  words like "passionate" and "professional" mean to them, so guidance in those
-  terms means something, and
-- **Skills** — invocable editorial routines encoded as editable instruction
-  files, in the way a coding agent's skills/slash-commands work. `/shorten`
-  knows what shortening *means* here: look for repetition and suggest removing
-  one instance; point out where a page was spent on what should be a paragraph
-  and ask; use the target length the Brief already knows. In v1 there is one
-  user, so "the user" and "the developer" are deliberately the same person —
-  skills are just files that person edits.
+The fourth layer sits outside any single article as the writer's _general_ style:
+everything the app knows about how this writer writes, kept in the app
+and editable with almost no ceremony. This section is deliberately flat, not
+specifying any data types to design up front. The kinds of things it holds:
+
+- what the writer's tone words mean to them ("passionate," "professional,"
+  "punchy"), so guidance in those terms means something — we call this the
+  **Lexicon**,
+- standing writing rules in the writer's own prose — the things they'd
+  otherwise repeat to every new editor: "the bibliography keeps one flat,
+  plain register no matter the tone of the piece," "don't stage a wrong idea
+  just to knock it down, unless the narrative arc is frustration"
+- repeatable editorial moves the writer can invoke by name — we call these
+  **Skills**. `/shorten` knows what shortening means *to this writer*: look
+  for repetition and suggest removing one instance; point out where a page
+  was spent on what should be a paragraph and ask; use the target length the
+  Brief already knows,
+- writing samples of the writer's own that they like and want to sound like,
+- perhaps saved notes from chats where the writer explains their favourite
+  writers and influences, and the agent can chat with them about what they
+  like about those things. (This is bringing in preferences by conversation,
+  not ingesting the other writer's work.)
+- and whatever else turns out to deserve encoding, in the same spirit.
+
+All of it is the user's house style, all the way down — this layer is where
+that lives, and it is the only place taste comes from (see above: the guide's
+taste is borrowed, never its own).
 
 ## 2. The four layers
 
@@ -60,22 +82,22 @@ A fourth layer sits outside any single article, with two halves:
 | 1 | Conversation | **Chat** | per article | Dialogue with the guide; planning talk, questions, on-demand reviews |
 | 2 | Context stash | **Brief** | per article | Outline/mindmap, tone decisions, word-count targets, (later) pinned references |
 | 3 | Output | **Draft** | per article | The article text, written by the user, sectioned to match the outline |
-| 4 | User's voice & moves | **Lexicon + Skills** | per user, cross-article | Lexicon: definitions of tone/style shorthands. Skills: invocable editorial routines (`/shorten`, …) encoded as editable instruction files |
+| 4 | The writer's own material | **Lexicon, rules, skills, samples, …** | per user, cross-article | A flat, growing collection: what tone words mean, standing writing rules, invocable editorial moves, writing samples — the user's house style in the user's words |
 
-Mental model: the Chat is how you talk, the Brief is what you've agreed, the
-Draft is what you're making, and layer 4 is who you are as a writer — the
-Lexicon holds your adjectives (what "punchy" means), the Skills hold your verbs
-(what `/shorten` does). The guide's whole v1 job is noticing divergence between
-layers 2 and 3 and saying so well — and Skills are how we encode the *repeatable*
-ways of doing that.
+You start by chatting (1); just yap at the thing, and it'll help you write an outline (2);
+punch it up however you like and get started writing the draft (3). Then the guide will
+use your outline, and will look up anything in the lexicon (4) that you referenced there,
+to help keep you on track (✅).
+
 
 The Brief plays the same role as a "plan" in an agentic coding tool: work starts
-by writing it, it governs execution, and changing it mid-flight is a deliberate,
-visible act — not something that drifts silently.
+by writing it, it guides execution by providing a sense of beginning/end and a todo
+of points to hit. It can be changed mid-flight, but that's a deliberate,
+visible act, not something that drifts quietly or implicitly.
 
 ## 3. Layout
 
-Three-pane desktop layout, left to right:
+Three-pane desktop layout, left to right.
 
 ```
 ┌────────────┬─────────────────┬──────────────────────────┐
@@ -90,24 +112,28 @@ Three-pane desktop layout, left to right:
 └────────────┴─────────────────┴──────────────────────────┘
 ```
 
+(Note: it's totally possible that in the
+beginning, a writer would only want 1+2 open, and then they would write for a while
+freeform-ish and collect references so they'd be in 1+3 open, and then as they really
+shape the piece they'll be in 2+3 and not even really chat anymore.)
+
 - The **Draft is the primary surface** — the user lives there while writing. It
   gets the most room by default (roughly 1 : 1 : 2); Chat and Brief can each
   collapse to a rail. This is the reverse of a chat-first app, and the design
   should feel like an editor with a coach attached, not a chatbot with an editor
   attached.
-- The **Brief** pane has two tabs in v1: **Outline** and **Tone**. (A third,
-  **References**, is reserved for later — see §9.) The Outline tab shows two
-  renderings of one tree: an indented list (default) and a **mindmap**. Nodes
+- The **Brief** pane manages to find space for both the Outline/Mindmap, and the
+  notes on length and tone of different sections (maybe all together! IDK!).
+  (A References area is reserved for later — see §9.) Nodes
   display live progress: word count vs target, written/unwritten, current.
 - The **Draft** pane is one continuous editor with **section landmarks**:
-  headings rendered from node titles, subtle boundary indicators between
-  sections, and **transition spans** that can live between sections without
-  belonging to either. Boundaries are soft by default and affirmed only when an
-  operation needs them — see §7.1 for this model, which is the load-bearing
-  choice of the product.
-- The **Lexicon** is not a fourth pane. It lives behind a global entry point and
-  surfaces contextually as chips wherever its terms appear (tone tab, guidance
-  notes, chat).
+  headings rendered from node titles and subtle indicators between sections,
+  with transitions living between sections without belonging to either
+  (§4.4). Boundaries stay loose in v1 — inferred well enough for approximate
+  counts and anchored notes; the formal tracking model is later work (§7).
+- The writer's house style (layer 4) is not a fourth pane. It lives behind a
+  global entry point and surfaces contextually — Lexicon terms as chips
+  wherever they appear (tone notes, guidance notes, chat).
 - Narrow screens: panes become swipeable tabs (Chat / Brief / Draft) with badge
   indicators when a non-visible pane has new activity.
 
@@ -133,7 +159,8 @@ The unit of structure. A tree of nodes, each with:
 - an optional **word-count target** (per node; the article total can be
   distributed across nodes during planning),
 - an optional **tone override** (§4.3),
-- a binding to a **Draft section** (§7),
+- a loose association with the stretch of Draft where the section is being
+  written (§4.4),
 - (later) pinned references and anecdotes (§9).
 
 Both the user and the agent can create, edit, reorder, re-parent, merge, and
@@ -143,7 +170,7 @@ both mutate the same tree.
 
 ### 4.3 Tone decision
 
-The Tone tab holds:
+Tone decisions, wherever the Brief pane ends up putting them (§3), include:
 
 - a **global tone** — a short set of terms (chips), each either a Lexicon term or
   a free-form word, plus an optional free-text note ("like a letter to a smart
@@ -155,9 +182,9 @@ The Tone tab holds:
   and emotional shape of the whole article, in the writer's words: "start
   exciting; the data lives mostly in the middle but threads throughout; finish
   by bringing the three personal anecdotes back with the update about pending
-  action." The arc note is a first-class contract term: the guide reads the
-  draft against it the same way it reads sections against intent notes, and
-  Plan mode co-writes it like everything else in the Brief.
+  action." The guide reads the draft against the arc note the same way it
+  reads sections against intent notes, and Plan mode co-writes it like
+  everything else in the Brief.
 
 In v1 the guide uses tone decisions to **detect drift**: "section 4 is marked
 'professional' but the last two paragraphs read conversational." When a tone word
@@ -167,18 +194,20 @@ the Lexicon grows.
 
 ### 4.4 Draft section, transition, and boundary
 
-The Draft is one continuous, user-authored text with a mapping onto the outline:
+The Draft is one continuous, user-authored text, and the guide reads it in
+three concepts: a **section** is the stretch of text serving an outline node;
+a **transition** is the connective tissue between two sections, belonging to
+neither; a **boundary** is where one span ends and the next begins. In v1
+these are things the guide *perceives and talks about*, not things the app
+operates on: boundaries are inferred lazily and stay approximate ("≈240
+words"), and the writer is never forced to slot prose into sections while in
+flow.
 
-- a **section** is the span of text mapped to an outline node (by node ID),
-  tracking live word count against the node's target and completion state,
-- a **transition** is a span between two sections that is *not required to
-  belong to either* — connective tissue, first-class. A transition is
-  **invalidated** when the section on either side is moved or substantially
-  changed, which produces a divergence note ("this transition connected
-  'the promise' to 'historical accounts'; 'historical accounts' moved"),
-- a **boundary** (where one span ends and the next begins) is either **soft**
-  — provisional, computed lazily by the agent — or **affirmed** — confirmed by
-  the user. See §7.1; this two-state model is central.
+Nothing re-orders text programmatically. When the structure changes, the
+writer moves the prose themselves and can ask the guide to review the
+reworking (F3). The heavier machinery — affirmed boundaries, structural
+operations that carry text safely — is the tracking model (§7), for much
+later.
 
 All prose is the user's; the guide never edits it (see §5.2 for the one narrow
 exception, which is opt-in and on-demand).
@@ -188,13 +217,13 @@ exception, which is opt-in and on-demand).
 The guide's unit of output while the user writes. Each note has:
 
 - an **anchor** — a section (and optionally a paragraph range) it's about,
-- a **type** — structure ("this belongs in section 5"), repetition ("you made
-  this point in section 2"), budget ("300 words over target with two sections
-  to go"), tone drift, **arc/pacing divergence** ("the arc note says the data
-  lives in the middle, but the last three paragraphs of the opening are data —
-  the pacing reads more like a report than the build you described"), plan
-  divergence ("what you're writing isn't what this node says it's for — update
-  the plan or the prose?"),
+- a **kind** — illustrative, not a fixed taxonomy: structure ("this belongs in
+  section 5"), repetition ("you made this point in section 2"), budget ("300
+  words over target with two sections to go"), tone drift, arc/pacing
+  divergence ("the arc note says the data lives in the middle, but the last
+  three paragraphs of the opening are data"), plan divergence ("what you're
+  writing isn't what this node says it's for — update the plan or the
+  prose?"),
 - a **body** — one or two sentences, specific, referencing Brief objects by name,
 - a lifecycle — active → dismissed / resolved / superseded. Dismissing is
   one tap and is signal (a repeatedly dismissed class of note should quiet
@@ -214,9 +243,9 @@ whenever the term is invoked — in tone decisions, in guidance notes, in chat.
 
 ### 4.7 Skill
 
-An invocable editorial routine, authored as an editable instruction file
-(markdown with a small frontmatter), the way skills/slash-commands work in a
-coding agent. A skill has:
+An invocable editorial routine, authored in the app as editable
+natural-language instructions, the way skills/slash-commands work in a coding
+agent. A skill has:
 
 - a **name** (`/shorten`, `/tighten-transitions`, `/fact-check-flags`, …),
   discoverable via autocomplete in the chat composer,
@@ -230,20 +259,18 @@ coding agent. A skill has:
 - **trigger hints** — optional conditions under which the guide may *offer* the
   skill proactively ("section ≥40% over its target → offer /shorten on it"),
   subject to the same interruption rules as any guidance (§6, F2),
-- read access to all three article layers (Brief, Draft, Chat) and the Lexicon.
+- read access to all three article layers (Brief, Draft, Chat) and the
+  writer's material (layer 4).
 
-**Skills are mode-agnostic by contract.** A skill run produces **findings** —
-anchored observations, questions, and proposed actions. What happens to
-findings depends on the mode the product is in: in guide-v1 they render as
-guidance notes and chat questions ("¶2 of §4 restates ¶1 of §2 — cut one?");
-in later ghostwriter mode the very same findings can carry concrete edits to
-accept. Skills therefore never need rewriting when ghostwriter mode arrives.
+A skill run produces **findings** — anchored observations, questions, and
+proposed actions. In v1 they render as guidance notes and chat questions
+("¶2 of §4 restates ¶1 of §2 — cut one?"); if a ghostwriter mode exists
+someday, the same findings could carry concrete edits to accept.
 
 **v1 keeps authorship flat.** One user means "we the user" and "we the
-developers" stay undifferentiated: skills live as plain files in one global
-set, edited directly, hot-reloaded. No per-article/per-user/per-publication
-scoping or inheritance — that's a later problem to solve with experience in
-hand (§9).
+developers" stay undifferentiated: one flat global set of skills, edited
+directly in the app. No per-article/per-user/per-publication scoping or
+inheritance — that's a later problem to solve with experience in hand (§9).
 
 ## 5. Modes
 
@@ -256,6 +283,11 @@ hand (§9).
   and tone map. The user edits everything directly or by chat.
 - Exit is explicit: a **"Start writing"** action (the agent may suggest it:
   "I think the plan's ready — start writing?").
+
+Plan mode is also where the build should start: co-writing a good Brief is
+useful on its own, before any draft-watching exists. Rough build order:
+planning first, then the writing loop's ambient guidance, and the formal
+tracking model (§7) last.
 
 ### 5.2 Write mode
 
@@ -312,16 +344,14 @@ A guidance note may carry a **skill offer** when a skill's trigger hints match:
 dismissing it is costless and counts as signal like any other dismissal.
 
 ### F3 — Restructure ("actually, move this before that")
-Via drag in the Outline (list or mindmap) or via chat. Because moving text
-requires certain boundaries (§7.1), the flow is: tree change requested →
-**bound-and-confirm** on the affected spans (agent proposes exact boundaries
-and transition designations; user adjusts, confirms) → sections re-order in
-the Draft carrying their text (lossless, by node-ID binding) → transitions
-adjacent to any moved or substantially changed section are **invalidated**,
-each producing a divergence note — the seams are now explicit objects, not
-vibes → the user rewrites the seams (their work; the guide just points) → the
-agent offers to release the affirmed boundaries back to soft (per the user's
-boundary style, §7.1).
+Via drag in the Outline (list or mindmap) or via chat — both mutate the same
+tree, which is the plan. The prose is the writer's to move: nothing re-orders
+text programmatically at this stage. The guide's part is noticing ("this
+transition led into 'historical accounts', which just moved — check the
+join") and, on request, reviewing the reworking: "I've moved it — read my
+seams?" gets a specific look at the joins and anything left stranded. The
+version where sections carry their text automatically is the tracking model
+(§7), later.
 
 ### F4 — Plan divergence, both directions
 - **Prose drifts from plan:** the guide flags it (guidance note) and offers a
@@ -342,11 +372,14 @@ The user asks in chat: "read section 3 — am I actually making the point?" The
 guide answers in chat with specifics, referencing the node's intent note and
 tone. This is also where "give me three openings" style requests land (§5.2).
 
-### F6 — Teaching the Lexicon
-From the Lexicon page (add/define/exemplify), from any chip in context ("edit
-what this means"), or from feedback: when the guide's tone-drift notes keep
-getting dismissed, or the user's reactions reveal a meaning, the agent proposes
-an entry — always opt-in, never silent.
+### F6 — Teaching the app your material
+From the layer-4 pages (add/define/exemplify — adding anything is typing a
+sentence or pasting a passage), from any chip in context ("edit what this
+means"), or from feedback: when the guide's tone-drift notes keep getting
+dismissed, or the user's reactions reveal a meaning, the agent proposes an
+entry — always opt-in, never silent. The same loop covers all of the writer's
+material: a correction the writer keeps making in chat can be offered back as
+a standing rule.
 
 ### F7 — Running a skill
 The user types `/shorten` in the chat composer (autocomplete lists skills with
@@ -360,7 +393,8 @@ prose in v1. Skills also arrive via proactive offers (F2).
 
 ## 7. The tracking model (Brief ⇄ Draft)
 
-This is the heart of the product and deserves its own section in the build plan.
+This is an advanced feature but one that shows the potential of the product, so
+it gets its own section, despite being far in the future.
 
 ### 7.1 Binding: soft boundaries, affirmed on demand
 
@@ -417,29 +451,33 @@ in-progress / current / empty), so the outline doubles as a progress map of the
 piece. The status strip surfaces the same data for the current section plus the
 piece total.
 
-## 8. Layer 4 (Lexicon + Skills) — v1 scope
+## 8. Layer 4 (the writer's material) — v1 scope
 
-v1 ships the Lexicon small but real:
+v1 ships this layer small but real, and **in the app** — it's the user's
+material, not developer config. What v1 needs:
 
-- a flat list of terms with free-text definitions and optional examples,
-- chips wherever terms are used (tone tab, guidance notes, chat),
-- state-the-interpretation + offer-to-save when an unknown term is used,
-- agent-proposed entries from observed feedback, opt-in.
+- the **Lexicon**: a flat list of terms with free-text definitions and
+  optional examples; chips wherever terms are used (tone tab, guidance notes,
+  chat); state-the-interpretation + offer-to-save when an unknown term is
+  used; agent-proposed entries from observed feedback, opt-in,
+- **Skills**: a flat set of invocable routines, each just editable
+  natural-language instructions; slash invocation with autocomplete and
+  scope/args (F7) plus the section context menu; proactive offers governed by
+  the interruption rules; findings-based output only (notes + chat) — no
+  prose edits; 2–3 exemplars (`/shorten` first) that double as documentation,
+- **a place for the rest**: standing writing rules, the writer's own samples
+  — somewhere to put them, nothing more specified than that.
 
-And Skills equally small but real:
+The requirements that matter, for all of it: adding or editing something is a
+small act (type a sentence, paste a passage); the guide genuinely reads what's
+there; and none of it ever hardens into a house style — when this layer is
+empty the guide simply knows less, it does not fall back on taste of its own.
+How these things are stored and modeled is the build's decision, not this
+document's — a big flat list the writer tweaks is closer to the truth than a
+set of types.
 
-- a flat global set of skill files (markdown + small frontmatter for name,
-  description, trigger hints), edited directly by the user-developer,
-  hot-reloaded — no in-app authoring UI required in v1,
-- slash invocation with autocomplete and scope/args (F7), plus section context
-  menu,
-- proactive offers via trigger hints, governed by the interruption rules,
-- findings-based output only (notes + chat) — no prose edits,
-- ship with 2–3 exemplar skills (`/shorten` first) that double as documentation
-  of the format.
-
-Explicitly later for both: categories, per-publication voices, importable style
-guides, and skill/lexicon scoping (see §9).
+Some of this will deserve deeper support eventually — scoping, sharing,
+per-publication sets (§9). Decide that from usage, not in advance.
 
 ## 9. Later features (design for, don't build)
 
@@ -455,72 +493,64 @@ guides, and skill/lexicon scoping (see §9).
   stable node IDs with everything bound to them — already in §4.2. In guide-v1
   this also enables notes like "you haven't used the pinned quote for this
   section."
-- **Compiled checks:** the guide reads the Brief and *proposes deterministic,
-  non-LLM watchers* derived from it — "§5's intent note says the three
-  anecdotes return: watch that the closing section mentions each of them,"
-  "the arc note says data lives in the middle: flag if the opening runs
-  data-heavy past N words." The user accepts a proposed check, and from then
-  on it runs as pure code on every edit — instant, free, no model in the
-  loop. The model's comprehension is used once, at compile time, to turn a
-  prose intent into a cheap mechanical watcher; the watcher then never needs
-  the model again. **Per-node word targets (v1, §4.2) are the first member of
-  this family** — hand-authored rather than compiled, but the same shape:
-  a deterministic check derived from the Brief, evaluated in Tier-1 code.
-  Design the check as a first-class object now (id, source-intent reference,
-  predicate, status) so compiled ones slot in later.
+- **Compiled checks:** the guide proposes simple deterministic watchers
+  derived from what the writer declared — "§5's intent note says the three
+  anecdotes return: watch that the closing section mentions each of them."
+  The user accepts a check, and from then on it runs cheaply on every edit.
+  Per-node word targets (v1, §4.2) are the simplest member of this shape.
 - **Cut-material drawer** as a browsable space (v1 only needs it as a safe
   destination).
 - **Copy-edit pass** (tracked suggestions the user accepts one by one — a
   gentler sibling of ghostwriter mode).
-- **Skill & Lexicon scoping/inheritance:** per-article, per-user,
-  per-publication layers with overrides, once multiple users (or multiple
-  distinct voices) exist and real usage has shown which axes matter. v1's flat
-  file set is the deliberate placeholder for this.
-- **Skill-authoring UX:** in-app editing, a "turn this chat instruction into a
-  skill" affordance (you keep asking for the same review — save it as
-  `/my-review`?), sharing skills between users.
+- **Layer-4 scoping and sharing:** per-article, per-user, per-publication
+  layers with overrides, once multiple users (or multiple distinct voices)
+  exist and real usage has shown which axes matter. v1's flat set is the
+  deliberate placeholder for this.
+- **Deeper layer-4 authoring:** a "turn this chat instruction into a skill"
+  affordance (you keep asking for the same review — save it as `/my-review`?),
+  sharing between users.
 - Multi-document/series awareness, collaboration, publishing integrations.
 
 ## 10. Open questions for the build plan
 
 1. **Guidance cadence and thresholds.** How long a typing lull triggers
    evaluation; how near a word target triggers a pacing note; how aggressively
-   repetition is flagged. Recommendation: ship conservative trigger defaults
-   (lull ~3–5s, budget note at 90% of target) and a per-article "coaching
-   intensity" setting (quiet / normal / active). Notes themselves are
-   uncapped — everything relevant shows (F2); intensity tunes *when the guide
-   looks*, never how much it may say.
+   repetition is flagged. Answer: ship conservative trigger defaults
+   (lull ~3–5s, or once in 10 minutes of sustained activity, budget note at 90%
+   of target) and a per-article "coaching intensity" setting (quiet / normal /
+   active). Notes themselves are uncapped — everything relevant shows (F2);
+   intensity tunes *when the guide looks*, never how much it may say.
 2. **Mindmap fidelity in v1.** List view is required; mindmap is a rendering of
-   the same tree. Recommendation: list-only v1, mindmap fast-follow.
+   the same tree. Answer: list-only v1, mindmap fast-follow.
 3. **Where notes live long-term.** Do dismissed/resolved notes leave a
    browsable history (a "notebook" of the piece's editorial record)?
-   Recommendation: keep a simple history behind a disclosure, don't build UI
+   Answer: keep a simple history behind a disclosure, don't build UI
    around it yet.
 4. **Does the guide speak in chat unprompted?** Margin notes are the default
-   channel; chat is user-initiated. Recommendation: the guide posts to chat
+   channel; chat is user-initiated. Answer: the guide posts to chat
    unprompted only for piece-level observations that have no section anchor
    (e.g. "you've now written past your total target"), and rarely.
 5. **Word-count targets: required or optional?** Guidance like "near your
-   target" needs targets to exist. Recommendation: optional per node, but Plan
+   target" needs targets to exist. Answer: optional per node, but Plan
    mode proposes a distribution automatically when an overall length is given.
-6. **Skill file format and location.** Frontmatter fields (name, description,
-   trigger hints, default scope?) and where the files live so the single
-   user-developer can edit them with zero ceremony. Recommendation: a `skills/`
-   directory of markdown files in the app's data folder, hot-reloaded; keep
-   frontmatter minimal (name + description + optional triggers) and let the
-   body carry everything else in prose.
+6. **Skill authoring surface.** Skills live in the app — what's the lightest
+   editing surface that keeps authoring zero-ceremony? Answer: a name,
+   a one-line description, and one free-text body; nothing more structured
+   until prose proves insufficient.
 7. **Trigger-hint expressiveness.** Are hints structured conditions ("section
-   over target by N%") or prose the guide interprets? Recommendation: prose in
-   v1 — the guide reads the hint and judges; structured predicates only if
-   prose proves too noisy or too timid.
-8. **Exactly which operations require affirmed boundaries.** Node move, merge,
+   over target by N%") or prose the guide interprets? Answer: only word counts
+   are structured; everything else is prose in v1 — the guide reads the hint
+   and judges; structured predicates only if prose proves too noisy or too
+   timid.
+8. **Exactly which operations require affirmed boundaries** (for whenever the
+   tracking model, §7, lands). Node move, merge,
    and delete, plus cut-material extraction, clearly do. Do scoped skill runs
-   ("/shorten §3")? Recommendation: no — read-only skills run on soft
+   ("/shorten §3")? Answer: no — read-only skills run on soft
    boundaries and say so ("≈"), since their findings are suggestions the user
    applies by hand anyway; only text-relocating operations pay the
    bound-and-confirm toll.
 9. **Transition word-count attribution.** Transitions belong to neither
    section — do their words count toward the piece total only, split between
-   neighbors, or shown as their own line? Recommendation: piece total only,
+   neighbors, or shown as their own line? Answer: piece total only,
    with transitions listed separately in the Brief's progress view if they
    grow large (a fat transition is itself a signal worth surfacing).
