@@ -1,0 +1,96 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Foundations/Accent" />
+
+# The accent
+
+The page is paper, ink and three greys. There is exactly one colour in the
+system — `--color-accent`, a light yellow, `#ffe6a3` — and it is the only thing
+on a screen that asks for attention.
+
+<div style={{ display: 'flex', gap: '0.75rem', margin: '1.5rem 0', flexWrap: 'wrap' }}>
+  {[
+    ['--color-accent', '#ffe6a3', 'The highlight itself'],
+    ['--color-accent-soft', '#fff6df', 'Wash behind an accented block'],
+    ['--color-accent-edge', '#e3c471', 'Borders, filled progress'],
+    ['--color-accent-ink', '#6a5312', 'Text sitting on accent'],
+  ].map(([token, hex, use]) => (
+    <div key={token} style={{ width: '11rem' }}>
+      <div
+        style={{
+          height: '3.5rem',
+          background: hex,
+          borderRadius: '0.5rem',
+          border: '1px solid #cdc7bc',
+        }}
+      />
+      <p style={{ font: '600 0.75rem ui-monospace, monospace', margin: '0.5rem 0 0.125rem' }}>
+        {token}
+      </p>
+      <p style={{ font: '0.75rem system-ui', color: '#6b665e', margin: 0 }}>{hex} — {use}</p>
+    </div>
+  ))}
+</div>
+
+## What earns it
+
+A thing gets the accent when it is **the one decision the screen is waiting
+on**, or **the one item that has changed and you might not have noticed**.
+
+- The primary action, where there is one — `start drafting →`, `mark published`.
+- The state of an accepted decision — a ticked `Check`, a kept source.
+- Something the app just did to your work — a reference that has crossed over
+  from the chat, a word target a review has revised.
+- The note surfaced after a pause, and only that note.
+- The item in a master/detail list that is also filling the panel — in settings
+  the highlight is a location marker for the thing you are editing.
+
+## What does not
+
+- **Which panes, tabs or filters are selected.** The `PaneRail`'s active pill and
+  `Chip tone="solid"` are ink. Where you are is state, not a request.
+- **Progress.** Bars are ink at 30% — a shape, not an alarm. The exception is
+  going *over* target, which flips to `accent-edge` because it is genuinely news.
+- **Ordinary emphasis.** Headings are weight and size. Metadata is `--color-faint`.
+- **Errors or destructive actions.** The design has none yet; when it does they
+  will need their own colour, and it will not be this one.
+
+## The count
+
+Most screens have **one** accented element. Some have **none** — 2(a), the blank
+plan, is deliberately unaccented, because an empty plan is not asking you for
+anything yet. If you find yourself putting a second yellow thing on a screen,
+one of the two is not really asking for a decision.
+
+## Everything else
+
+<div style={{ display: 'flex', gap: '0.75rem', margin: '1.5rem 0', flexWrap: 'wrap' }}>
+  {[
+    ['--color-paper', '#f4f2ee'],
+    ['--color-surface', '#ffffff'],
+    ['--color-sunk', '#faf8f5'],
+    ['--color-hush', '#f0ede7'],
+    ['--color-ink', '#1b1a17'],
+    ['--color-muted', '#6b665e'],
+    ['--color-faint', '#9b958a'],
+    ['--color-rule', '#e3dfd7'],
+    ['--color-edge', '#cdc7bc'],
+  ].map(([token, hex]) => (
+    <div key={token} style={{ width: '8.5rem' }}>
+      <div
+        style={{
+          height: '2.5rem',
+          background: hex,
+          borderRadius: '0.375rem',
+          border: '1px solid #cdc7bc',
+        }}
+      />
+      <p style={{ font: '0.6875rem ui-monospace, monospace', margin: '0.375rem 0 0' }}>{token}</p>
+      <p style={{ font: '0.6875rem ui-monospace, monospace', color: '#9b958a', margin: 0 }}>{hex}</p>
+    </div>
+  ))}
+</div>
+
+Type is three families: `--font-sans` for the interface, `--font-serif` for the
+writing surface and anything quoted from it, `--font-mono` for the small
+uppercase labels and counts.
