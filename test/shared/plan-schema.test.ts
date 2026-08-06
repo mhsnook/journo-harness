@@ -1,13 +1,16 @@
 import { describe, expect, it } from 'vitest'
 
-import { emptyPlan, planSchema, referenceSchema, sourceSchema } from '../src/shared/plan'
+import type { OutlineNode } from '../../src/shared/plan'
+import {
+	emptyPlan,
+	planSchema,
+	referenceSchema,
+	sourceSchema,
+} from '../../src/shared/plan'
 import { makeNode, makePlan, makeReference } from './plan-fixtures'
 
 /** The path of the first issue, joined — what the UI would point at. */
-function firstIssuePath(result: {
-	success: boolean
-	error?: { issues: { path: PropertyKey[] }[] }
-}) {
+function firstIssuePath(result: ReturnType<typeof planSchema.safeParse>) {
 	return result.error?.issues[0]?.path.join('.')
 }
 
@@ -29,7 +32,7 @@ describe('the Plan schema', () => {
 				}),
 				makeNode({ id: 'n2' }),
 			],
-			references: [makeReference({ id: 'r1', nodeId: 'n1a' })],
+			references: [makeReference({ id: 'r1', nodeId: 'n1a', text: 'A pulled passage.' })],
 		})
 
 		expect(planSchema.safeParse(plan).success).toBe(true)
@@ -73,6 +76,35 @@ describe('the Plan schema', () => {
 		expect(planSchema.safeParse(plan).success).toBe(false)
 	})
 
+	it('holds an Outline node to the same field rules as the Plan', () => {
+		const withNode = (fields: Partial<OutlineNode>) =>
+			planSchema.safeParse(makePlan({ outline: [makeNode({ id: 'n1', ...fields })] }))
+				.success
+
+		expect(withNode({ target: 0 })).toBe(false)
+		expect(withNode({ target: 120.5 })).toBe(false)
+		expect(withNode({ voice: '' })).toBe(false)
+		expect(withNode({ adjectives: [''] })).toBe(false)
+		expect(withNode({ intent: '' })).toBe(false)
+	})
+
+	it('rejects an invalid node however deep it sits', () => {
+		const plan = makePlan({
+			outline: [
+				makeNode({
+					id: 'n1',
+					children: [
+						makeNode({ id: 'n1a', children: [makeNode({ id: 'deep', target: -100 })] }),
+					],
+				}),
+			],
+		})
+		const result = planSchema.safeParse(plan)
+
+		expect(result.success).toBe(false)
+		expect(firstIssuePath(result)).toBe('outline.0.children.0.children.0.target')
+	})
+
 	it('rejects two Outline nodes carrying one id, however deep', () => {
 		const plan = makePlan({
 			outline: [
@@ -88,7 +120,10 @@ describe('the Plan schema', () => {
 
 	it('rejects two References carrying one id', () => {
 		const plan = makePlan({
-			references: [makeReference({ id: 'r1' }), makeReference({ id: 'r1' })],
+			references: [
+				makeReference({ id: 'r1', text: 'One' }),
+				makeReference({ id: 'r1', text: 'Another' }),
+			],
 		})
 		const result = planSchema.safeParse(plan)
 
@@ -99,7 +134,9 @@ describe('the Plan schema', () => {
 	it('rejects a Reference placed at an Outline node that is not there', () => {
 		const plan = makePlan({
 			outline: [makeNode({ id: 'n1' })],
-			references: [makeReference({ id: 'r1', nodeId: 'gone' })],
+			references: [
+				makeReference({ id: 'r1', nodeId: 'gone', text: 'A pulled passage.' }),
+			],
 		})
 		const result = planSchema.safeParse(plan)
 
@@ -109,7 +146,7 @@ describe('the Plan schema', () => {
 })
 
 describe('the Reference invariant', () => {
-	const base = { id: 'r1', provenance: { kind: 'writer' as const }, nodeId: null }
+	const base = makeReference({ id: 'r1' })
 
 	it('accepts a Reference carrying only a text — which is a Quote', () => {
 		const result = referenceSchema.safeParse({ ...base, text: 'They knew by March.' })
@@ -143,6 +180,10 @@ describe('the Reference invariant', () => {
 	it('rejects a source with every field absent, which is neither by another route', () => {
 		expect(sourceSchema.safeParse({}).success).toBe(false)
 		expect(referenceSchema.safeParse({ ...base, source: {} }).success).toBe(false)
+	})
+
+	it('rejects a source url that is not a url', () => {
+		expect(sourceSchema.safeParse({ url: 'not a url' }).success).toBe(false)
 	})
 
 	it('rejects a Provenance that names an Offer without naming which', () => {

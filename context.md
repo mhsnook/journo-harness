@@ -74,7 +74,7 @@ _Avoid_: feedback, comments, findings, suggestions, review (a Review produces No
 
 **Outline node**:
 The unit of structure in the Plan. A node in a tree, carrying a stable ID, a title, an
-intent note, and optionally a word-count target and a Tone override.
+intent note, and optionally a word-count target, a Voice, and Adjectives.
 _Avoid_: section (a Section is in the Draft), item, heading, bullet
 
 **Voice**:

@@ -1,12 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
-import type { ScopeTerms } from '../src/shared/plan'
+import type { ScopeTerms } from '../../src/shared/plan'
 import {
-	findNode,
 	resolveArticleScope,
 	resolveNodeScope,
 	resolveScope,
-} from '../src/shared/plan'
+} from '../../src/shared/plan'
 import { makeNode, makePlan } from './plan-fixtures'
 
 const house: ScopeTerms = {
@@ -88,13 +87,20 @@ describe('the Scope resolver', () => {
 		expect(resolveNodeScope(plan, 'gone', house)).toBeNull()
 	})
 
-	it('keeps an Adjective stated at two Scopes once, at the widest', () => {
+	it('states an Adjective repeated at two Scopes once, in the nearest position', () => {
 		const resolved = resolveScope([
 			{ adjectives: ['funny', 'well researched'] },
 			{ adjectives: ['somber', 'funny'] },
 		])
 
-		expect(resolved.adjectives).toEqual(['funny', 'well researched', 'somber'])
+		expect(resolved.adjectives).toEqual(['well researched', 'somber', 'funny'])
+	})
+
+	it('reads a node restating a House Adjective as local emphasis', () => {
+		const warm = makePlan({ outline: [makeNode({ id: 'n1', adjectives: ['warm'] })] })
+		const resolved = resolveNodeScope(warm, 'n1', { adjectives: ['warm', 'plain'] })
+
+		expect(resolved?.adjectives).toEqual(['plain', 'warm'])
 	})
 
 	it('resolves at read time and writes nothing back', () => {
@@ -102,11 +108,5 @@ describe('the Scope resolver', () => {
 		resolveNodeScope(plan, 'n1a', house)
 
 		expect(plan).toEqual(before)
-		expect(findNode(plan.outline, 'n1a')).toEqual({
-			id: 'n1a',
-			title: 'Node n1a',
-			adjectives: ['high energy'],
-			children: [],
-		})
 	})
 })

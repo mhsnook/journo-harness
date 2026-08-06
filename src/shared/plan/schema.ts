@@ -1,10 +1,12 @@
 import { z } from 'zod'
 
 /**
- * The Plan: one JSON blob in Article Agent state. This schema serves both
- * `validateStateChange`, guarding client writes, and `generateObject`,
- * constraining what the Chat may propose. Rationale in
- * docs/adr/0002-the-plan-data-model.md.
+ * The Plan: one JSON blob in Article Agent state, parsed whole by
+ * `validateStateChange` on every write. Nothing the model emits goes through
+ * `planSchema` — the Chat proposes and the client applies. The piece schemas
+ * below are the ones a Proposal's op payloads reuse.
+ *
+ * Rationale in docs/adr/0002-the-plan-data-model.md.
  */
 
 const id = z.string().min(1)
@@ -14,8 +16,8 @@ const id = z.string().min(1)
 const voice = z.string().min(1)
 const adjective = z.string().min(1)
 
-// The blob is only written by the client, so an unknown key is a client bug
-// rather than a forward-compatible extension — hence strictObject throughout.
+// strictObject throughout: only the client writes the Plan, so an unknown key
+// is a bug rather than a forward-compatible extension.
 
 /** The attribution inside a Reference. Every field is optional on its own,
  * because a book has no url and a leaked memo has no author, and at least one
@@ -114,24 +116,26 @@ export function emptyPlan(title = ''): Plan {
 	}
 }
 
+type Path = (string | number)[]
+
 /**
  * Uniqueness and referential integrity, which the object shape cannot state. A
  * Proposal that deletes a node must also unplace its References.
  */
 function checkIds(plan: Plan, ctx: z.RefinementCtx) {
+	const claim = (seen: Set<string>, id: string, path: Path, noun: string) => {
+		if (seen.has(id)) {
+			ctx.addIssue({ code: 'custom', path, message: `Two ${noun} carry the id ${id}.` })
+		}
+		seen.add(id)
+	}
+
 	const nodeIds = new Set<string>()
 
-	const walk = (nodes: OutlineNode[], path: (string | number)[]) => {
+	const walk = (nodes: OutlineNode[], path: Path) => {
 		nodes.forEach((node, index) => {
 			const nodePath = [...path, index]
-			if (nodeIds.has(node.id)) {
-				ctx.addIssue({
-					code: 'custom',
-					path: [...nodePath, 'id'],
-					message: `Two Outline nodes carry the id ${node.id}.`,
-				})
-			}
-			nodeIds.add(node.id)
+			claim(nodeIds, node.id, [...nodePath, 'id'], 'Outline nodes')
 			walk(node.children, [...nodePath, 'children'])
 		})
 	}
@@ -139,14 +143,7 @@ function checkIds(plan: Plan, ctx: z.RefinementCtx) {
 
 	const referenceIds = new Set<string>()
 	plan.references.forEach((reference, index) => {
-		if (referenceIds.has(reference.id)) {
-			ctx.addIssue({
-				code: 'custom',
-				path: ['references', index, 'id'],
-				message: `Two References carry the id ${reference.id}.`,
-			})
-		}
-		referenceIds.add(reference.id)
+		claim(referenceIds, reference.id, ['references', index, 'id'], 'References')
 
 		if (reference.nodeId !== null && !nodeIds.has(reference.nodeId)) {
 			ctx.addIssue({

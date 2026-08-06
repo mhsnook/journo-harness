@@ -3,16 +3,21 @@
 Status: accepted
 
 The Plan is 1a's whole artifact, held as one JSON blob in Article Agent state and replaced
-wholesale on every write. Its shape has to serve two callers at once — `validateStateChange`
-guarding client writes, and `generateObject` constraining what the Chat may propose — and
-it has to project into party-db rows at phase 2 without a rewrite.
+wholesale on every write. Its shape has to guard client writes through
+`validateStateChange`, give its **piece** schemas to the op payloads a Proposal carries, and
+project into party-db rows at phase 2 without a rewrite.
+
+**Amended:** this paragraph first said the schema serves `generateObject` as a second
+caller. It does not — the Chat proposes and the client applies, so nothing the model emits
+is ever parsed as a Plan. Corrected in `docs/architecture.md` §4 and recorded on #24, where
+the op payloads are built.
 
 ```
 plan: {
   title, totalTarget,
   voice, adjectives: [],
   outline: [ { id, title, intent?, target?, voice?, adjectives?: [], children: [] } ],
-  references: [ { id, provenance, text?, source?, nodeId?, note? } ],
+  references: [ { id, provenance, text?, source?, nodeId, note? } ],
 }
 ```
 
@@ -55,13 +60,29 @@ a Proposal needed them to survive a concurrent insert, but a Proposal saying
 order keys genuinely buy is cheap reordering in a row store, which is phase 2, and they can
 be added during that migration.
 
-## References are flat, with an optional `nodeId`
+## References are flat, and `nodeId` is null until one is placed
 
 An Accepted Reference may sit at an Outline node or nowhere yet, and the Ledger shows
 "accepted, no section yet" as its own group. Nesting References under nodes would leave
 the unplaced ones homeless, forcing a second bucket and one entity in two shapes. Flat
 also makes moving a Reference between Sections a single field, and projects to one table
 with a nullable `node_id`.
+
+**The key is always present and null when unplaced**, rather than optional. Unplaced is a
+state the Ledger groups by, not an absence, and a blob written whole should not carry two
+spellings of it. The schema also rejects a `nodeId` naming a node the Outline does not
+carry, so deleting a node unplaces its References in the same Proposal.
+
+## Provenance names what kind of thing a Reference came from
+
+`{ kind: 'offer', offerId }` for a Reference copied from an Offer, and `{ kind: 'writer' }`
+for one the writer typed in. The writer case has to be sayable: a Reference reaching the
+Plan without passing through the Chat is ordinary, and the Ledger deduplicates on
+Provenance, so "came from nowhere in particular" needs a name rather than an empty field.
+
+It is a flat object with a `kind` rather than a discriminated union, because `generateObject`
+handles a flat object more reliably than an `anyOf`. The pairing rule — `offer` names an
+`offerId` and `writer` names none — is a refinement instead.
 
 ## A Quote is a Reference that carries a text
 
@@ -82,7 +103,16 @@ wins outright, because blending two registers makes mud rather than a third regi
 Adjectives are descriptive terms that accumulate within a Scope and across Scopes, so a
 funny piece can have a somber middle that still carries a few jokes.
 
-Resolution runs House, then Article, then Outline node, and happens **at read time**.
+**A repeated Adjective moves to the nearest position** rather than holding the widest one.
+Order is the only locality the Guide reads from a flat list, so a node restating a House
+term reads as local emphasis: House `warm, plain` under a node saying `warm` resolves to
+`plain, warm`. The cost is that the list reorders on the edit that introduces the repeat,
+which moves the Plan inside the cacheable prompt prefix — but that edit changed the Plan's
+content anyway, so the prefix was missing regardless.
+
+Resolution runs House, then Article, then Outline node, and happens **at read time**. A
+node's ancestors take part in that same order, so a subsection under a somber middle is
+somber unless it says otherwise.
 Storing resolved values would mean re-walking every node whenever the Article's Voice
 changes, inside a whole-blob write, and it could silently drift. In 1a the Plan carries
 Article and node Scope only; the resolver takes House terms as an argument defaulting to

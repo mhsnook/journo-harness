@@ -47,16 +47,20 @@ function allocate(total: number | null, nodes: readonly OutlineNode[]): Allocati
 	}
 
 	const gap = total - allocated
-	const status: AllocationStatus =
-		gap === 0
-			? 'balanced'
-			: gap < 0
-				? 'over'
-				: untargeted > 0 || allocated === 0
-					? 'unallocated'
-					: 'under'
+	return { total, allocated, untargeted, gap, status: statusFor(gap, untargeted, nodes) }
+}
 
-	return { total, allocated, untargeted, gap, status }
+function statusFor(
+	gap: number,
+	untargeted: number,
+	nodes: readonly OutlineNode[],
+): AllocationStatus {
+	if (gap === 0) return 'balanced'
+	if (gap < 0) return 'over'
+
+	// Nothing below yet is the same reading as some node carrying no target:
+	// the words are not placed, rather than deliberately short of the total.
+	return untargeted > 0 || nodes.length === 0 ? 'unallocated' : 'under'
 }
 
 /**

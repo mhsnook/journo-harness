@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { nodeAllocation, planAllocation } from '../src/shared/plan'
+import { nodeAllocation, planAllocation } from '../../src/shared/plan'
 import { makeNode, makePlan } from './plan-fixtures'
 
 describe('word-count arithmetic', () => {
@@ -13,6 +13,18 @@ describe('word-count arithmetic', () => {
 			untargeted: 0,
 			gap: null,
 			status: 'unstated',
+		})
+	})
+
+	it('reports the whole total as unallocated when the Outline is empty', () => {
+		const plan = makePlan({ totalTarget: 2000 })
+
+		expect(planAllocation(plan)).toEqual({
+			total: 2000,
+			allocated: 0,
+			untargeted: 0,
+			gap: 2000,
+			status: 'unallocated',
 		})
 	})
 

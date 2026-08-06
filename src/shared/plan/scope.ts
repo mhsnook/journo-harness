@@ -2,14 +2,12 @@ import type { OutlineNode, Plan } from './schema'
 
 /**
  * One Voice active at a time, cascading with optional Outline-node overrides.
- * Adjectives combine and compose.
+ * Adjectives cascade and combine.
  */
 
-/** What one Scope states. Every level has the same two fields. */
-export type ScopeTerms = {
-	voice?: string
-	adjectives?: string[]
-}
+/** What one Scope states. Taken from the Outline node so the House, the Article,
+ * and a node cannot drift apart as terms are added. */
+export type ScopeTerms = Pick<OutlineNode, 'voice' | 'adjectives'>
 
 /** What applies at a point in the Plan. The Voice is null when no Scope states
  * one, and the Adjectives run House first and nearest last. */
@@ -19,7 +17,8 @@ export type ResolvedScope = {
 }
 
 /** Resolve a chain of Scopes given widest first. An Adjective stated at two
- * Scopes appears once, at the widest that states it. */
+ * Scopes appears once, in the nearest position: restating a term is emphasis,
+ * and order is the only locality the Guide reads from the list. */
 export function resolveScope(chain: readonly ScopeTerms[]): ResolvedScope {
 	let voice: string | null = null
 	const adjectives: string[] = []
@@ -27,7 +26,9 @@ export function resolveScope(chain: readonly ScopeTerms[]): ResolvedScope {
 	for (const terms of chain) {
 		if (terms.voice !== undefined) voice = terms.voice
 		for (const adjective of terms.adjectives ?? []) {
-			if (!adjectives.includes(adjective)) adjectives.push(adjective)
+			const stated = adjectives.indexOf(adjective)
+			if (stated !== -1) adjectives.splice(stated, 1)
+			adjectives.push(adjective)
 		}
 	}
 
@@ -67,12 +68,4 @@ export function findNodePath(
 	}
 
 	return null
-}
-
-/** The node with that id, or null. */
-export function findNode(
-	outline: readonly OutlineNode[],
-	nodeId: string,
-): OutlineNode | null {
-	return findNodePath(outline, nodeId)?.at(-1) ?? null
 }
