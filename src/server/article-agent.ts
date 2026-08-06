@@ -10,7 +10,13 @@ import {
 	type Ruling,
 	rulings,
 } from '../shared/offer'
-import { emptyPlan, type Plan, planSchema, type Source } from '../shared/plan'
+import {
+	emptyPlan,
+	type Plan,
+	type PlanRefused,
+	planSchema,
+	type Source,
+} from '../shared/plan'
 
 /** One Offer row as SQLite returns it. The column names are snake_case and the
  * source is a JSON string, so nothing here is handed to a client unmapped. */
@@ -73,15 +79,21 @@ export class ArticleAgent extends Agent<Env, Plan> {
 	 * The only guard on the blob. Every write is parsed, whatever its source:
 	 * the client is the Plan's one writer, so a server write is already a bug.
 	 *
-	 * The Agents SDK answers a rejected client write with a fixed
-	 * `cf_agent_state_error` string and logs the reason, so the message thrown
-	 * here reaches the log rather than the writer.
+	 * The throw is what refuses the write. The SDK turns it into a fixed
+	 * `cf_agent_state_error` string and logs the rest, so the `plan_refused`
+	 * frame is what carries the reason back to the writer's own connection.
 	 */
-	validateStateChange(nextState: Plan, _source: Connection | 'server'): void {
+	validateStateChange(nextState: Plan, source: Connection | 'server'): void {
 		const result = planSchema.safeParse(nextState)
 		if (result.success) return
 
-		throw new Error(`The Plan does not parse. ${z.prettifyError(result.error)}`)
+		const reason = z.prettifyError(result.error)
+		if (source !== 'server') {
+			const refusal: PlanRefused = { type: 'plan_refused', error: reason }
+			source.send(JSON.stringify(refusal))
+		}
+
+		throw new Error(`The Plan does not parse. ${reason}`)
 	}
 
 	/** Every Offer on this Article, oldest first. The Ledger filters by
@@ -161,12 +173,18 @@ export class ArticleAgent extends Agent<Env, Plan> {
 /**
  * The four Offer methods a client may call over the socket it already holds.
  *
- * `@callable()` on the method is the SDK's own spelling and this build cannot
- * use it. Vite 8 bundles through oxc, which leaves a standard decorator in the
- * output, and workerd's V8 does not implement one — so the Worker fails to
- * parse rather than failing a test. The decorator's whole job is to register
- * the method function in the SDK's callable table, which is what calling it
- * here does. Replace this block with the decorators the day oxc lowers them.
+ * `@callable()` on the method is the SDK's own spelling, and this build cannot
+ * use it. Vite 8 bundles through oxc, which does not transform a standard
+ * decorator at any `target` — it emits the `@` syntax verbatim, and workerd's
+ * V8 refuses to parse it. Its `decorator.legacy` option does transform, to the
+ * pre-standard calling convention, which hands `callable()` the prototype
+ * instead of the method: registration then lands on the wrong object and every
+ * RPC call is refused at runtime with "is not callable". Both were measured
+ * against oxc 0.127, and neither is a setting away from working.
+ *
+ * So this calls the decorator rather than writing it, which is the same
+ * registration by the same function. Adding a callable method means adding it
+ * here, and `test/worker/article-agent.test.ts` fails if it is left out.
  */
 for (const method of [
 	ArticleAgent.prototype.listOffers,

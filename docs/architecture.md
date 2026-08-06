@@ -365,11 +365,16 @@ Settings and known defects. None is a decision to make; all are things to get ri
   everything, and not survivable the moment that stops being true.
 - **An expired Access session answers with a redirect rather than a 1008 close**, so
   party-db's client reconnect-loops instead of firing `onAuthError`.
-- **`@callable` cannot be written as a decorator.** Vite 8 bundles through oxc, which
-  leaves a standard decorator in the output, and workerd's V8 does not implement one — so
-  the Worker fails to parse rather than failing a test. `src/server/article-agent.ts`
-  registers its callable methods by calling `callable()` on each one instead, which is the
-  same registration the decorator performs.
+- **`@callable` cannot be written as a decorator, and no build setting fixes it.** Vite 8
+  bundles through oxc, which does not transform a standard decorator at any `target` — it
+  emits the `@` syntax verbatim and workerd's V8 refuses to parse it. Its
+  `decorator.legacy` option does transform, to the pre-standard calling convention, which
+  hands `callable()` the prototype instead of the method: registration lands on the wrong
+  object and every RPC call is refused at runtime with "is not callable". Both measured
+  against oxc 0.127. `src/server/article-agent.ts` therefore calls `callable()` on each
+  method instead of decorating it, which is the same registration by the same function,
+  and a test names the set so a method left out fails loudly. Recovering the syntax means
+  lowering decorators ahead of oxc, in both `vite.config.ts` and `vitest.config.ts`.
 - **An abandoned tool batch parks indefinitely.** Cloudflare's `ai-chat` enforces batch
   completeness server-side with **no orphan timeout**, so a Proposal the writer neither
   Accepts nor Declines stalls the conversation silently. Surface it in the UI.

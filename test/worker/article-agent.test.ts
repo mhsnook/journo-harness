@@ -1,8 +1,8 @@
-import { env, evictDurableObject } from 'cloudflare:test'
+import { env, evictDurableObject, runInDurableObject } from 'cloudflare:test'
 import { describe, expect, it } from 'vitest'
 
 import type { Offer } from '../../src/shared/offer'
-import { emptyPlan } from '../../src/shared/plan'
+import { emptyPlan, isPlanRefused } from '../../src/shared/plan'
 import { makeNode, makePlan, makeReference } from '../shared/plan-fixtures'
 import { openAgentSocket } from './agent-socket'
 
@@ -76,9 +76,40 @@ describe('the Plan in Article Agent state', () => {
 		const returning = await openAgentSocket('invalid-write')
 		await expect(returning.next('cf_agent_state')).resolves.toMatchObject({ state: plan })
 	})
+
+	it('tells the writer which rule the refused Plan broke', async () => {
+		const writer = await openAgentSocket('refusal-reason')
+		await writer.next('cf_agent_state')
+
+		writer.setState(orphaned)
+
+		const frame = await writer.next('plan_refused')
+
+		expect(isPlanRefused(frame)).toBe(true)
+		expect(frame.error).toContain('which no Outline node carries')
+	})
 })
 
 describe('Offers in the Article Agent', () => {
+	// The build cannot lower a decorator, so `article-agent.ts` registers its
+	// callable methods by calling `callable()` on each one. A method left out of
+	// that list is refused at runtime with no other symptom, so this names the
+	// set the client may call.
+	it('marks every Offer method callable', async () => {
+		const stub = env.ArticleAgent.get(env.ArticleAgent.idFromName('callable-set'))
+
+		const methods = await runInDurableObject(stub, (agent) => [
+			...agent.getCallableMethods().keys(),
+		])
+
+		expect(methods.sort()).toEqual([
+			'createOffer',
+			'listOffers',
+			'restoreOffer',
+			'setOfferDisposition',
+		])
+	})
+
 	it('records an Offer as Undecided and lists it', async () => {
 		const writer = await openAgentSocket('offer-create')
 
