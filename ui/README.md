@@ -49,8 +49,7 @@ with real type, real copy and real spacing.
 Two things to settle before this becomes the app proper:
 
 - **Naming.** These screens use the wireframes' vocabulary — *plan*, *voices*,
-  *adjectives*, *favourite sources*. `docs/ux-outline.md` uses *Brief*,
-  *Lexicon*, *rules*, *skills*, *samples*. They describe the same objects. A
-  rename is cheap now and expensive later.
+  *adjectives*, *favourite sources*. `context.md` fixes the words the code and
+  the UI both use. Rename against it; that is cheap now and expensive later.
 - **Interaction.** Screens are static compositions. Only `PaneRail` takes an
   `onToggle`; nothing else holds state, and no data flows between panes yet.

@@ -23,26 +23,23 @@ workspace, account
 
 **House**:
 The writer's own material, held across every Article — the Lexicon, the standing rules,
-the Skills, and the writing samples. Named for house style. It is an Area, not a Layer.
+the Skills, and the writing samples. Named for house style, and reached from its own
+top-level entry point rather than from inside an Article.
 _Avoid_: layer 4, global settings, user settings, workspace
 
-## The Article and its Layers
+## The Article and its Panels
 
 **Article**:
-One piece of writing, and the container for its four Layers plus a title, a status, and
-a word-count target.
+One piece of writing, and the container for its Chat, its Plan, its Draft, and its Notes,
+plus a title, a status, and a word-count target.
 _Avoid_: project, document, piece (except in prose about the writing itself)
 
-**Layer**:
-One of the four kinds of material belonging to one Article: the Chat, the Plan, the
-Draft, and the Notes. The House is not one of these.
-_Avoid_: section (a Section is part of the Draft), stage (the writer owns their own
-process, and we do not name it for them), tier
-
-**Pane**:
-The column of the Article screen showing one Layer. Four Layers, four Panes, and on a
-narrow screen they become tabs.
-_Avoid_: section, panel, rail (a rail is a collapsed Pane, not a different thing)
+**Panel**:
+One of the columns of the Article screen, and the material it shows. Four today: Chat,
+Plan, Draft, Notes. On a narrow screen the Panels become tabs.
+_Avoid_: layer, pane, section (a Section is part of the Draft), stage (the writer owns
+their own process, and we do not name it for them), rail (a rail is a collapsed Panel,
+not a different thing)
 
 **Mode**:
 Which way of working the Article screen is set up for — Plan or Write.
@@ -170,13 +167,13 @@ _Avoid_: coach, assistant, agent (an Agent is a Durable Object class)
 
 **Guidance note**:
 One observation from the Guide — a Kind, an anchor to a Section or a paragraph range,
-and a body of one or two sentences. The unit that fills the Notes Layer.
+and a body of one or two sentences. The unit that fills the Notes Panel.
 _Avoid_: finding, suggestion, comment, tip, feedback
 
 **Kind**:
 What sort of thing a record is. For a Guidance note: structure, voice, citations,
 repetition, budget, tone drift, pacing, plan divergence — illustrative rather than a
-fixed taxonomy, and the Notes Pane groups by it. For an Offer: Reference, Quote, and
+fixed taxonomy, and the Notes Panel groups by it. For an Offer: Reference, Quote, and
 whatever comes later.
 _Avoid_: category, type, tag, label
 
