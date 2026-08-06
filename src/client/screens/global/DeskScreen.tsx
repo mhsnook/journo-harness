@@ -60,7 +60,9 @@ export function DeskScreen() {
               key={draft.id}
               title={draft.title}
               note={draft.note}
-              trailing={<span className="text-[0.6875rem] text-faint">{draft.touched}</span>}
+              trailing={
+                <span className="text-[0.6875rem] text-faint">{draft.touched}</span>
+              }
             />
           ))}
         </div>
@@ -87,7 +89,9 @@ export function DeskScreen() {
               key={article.id}
               title={article.title}
               note={article.outlet}
-              trailing={<span className="text-[0.6875rem] text-faint">{article.date}</span>}
+              trailing={
+                <span className="text-[0.6875rem] text-faint">{article.date}</span>
+              }
             />
           ))}
         </div>

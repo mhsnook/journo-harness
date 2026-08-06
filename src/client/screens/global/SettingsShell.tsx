@@ -59,7 +59,9 @@ export function SettingsShell({
         >
           {items.map((item) => (
             <div key={item.id} className="flex flex-col gap-1">
-              {item.group ? <p className="label-meta pt-2 first:pt-0">{item.group}</p> : null}
+              {item.group ? (
+                <p className="label-meta pt-2 first:pt-0">{item.group}</p>
+              ) : null}
               <button
                 type="button"
                 aria-current={item.id === selectedId ? 'true' : undefined}

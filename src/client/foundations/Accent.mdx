@@ -24,10 +24,17 @@ on a screen that asks for attention.
           border: '1px solid #cdc7bc',
         }}
       />
-      <p style={{ font: '600 0.75rem ui-monospace, monospace', margin: '0.5rem 0 0.125rem' }}>
+      <p
+        style={{
+          font: '600 0.75rem ui-monospace, monospace',
+          margin: '0.5rem 0 0.125rem',
+        }}
+      >
         {token}
       </p>
-      <p style={{ font: '0.75rem system-ui', color: '#6b665e', margin: 0 }}>{hex} — {use}</p>
+      <p style={{ font: '0.75rem system-ui', color: '#6b665e', margin: 0 }}>
+        {hex} — {use}
+      </p>
     </div>
   ))}
 </div>
@@ -50,7 +57,7 @@ on**, or **the one item that has changed and you might not have noticed**.
 - **Which panes, tabs or filters are selected.** The `PaneRail`'s active pill and
   `Chip tone="solid"` are ink. Where you are is state, not a request.
 - **Progress.** Bars are ink at 30% — a shape, not an alarm. The exception is
-  going *over* target, which flips to `accent-edge` because it is genuinely news.
+  going _over_ target, which flips to `accent-edge` because it is genuinely news.
 - **Ordinary emphasis.** Headings are weight and size. Metadata is `--color-faint`.
 - **Errors or destructive actions.** The design has none yet; when it does they
   will need their own colour, and it will not be this one.
@@ -85,8 +92,14 @@ one of the two is not really asking for a decision.
           border: '1px solid #cdc7bc',
         }}
       />
-      <p style={{ font: '0.6875rem ui-monospace, monospace', margin: '0.375rem 0 0' }}>{token}</p>
-      <p style={{ font: '0.6875rem ui-monospace, monospace', color: '#9b958a', margin: 0 }}>{hex}</p>
+      <p style={{ font: '0.6875rem ui-monospace, monospace', margin: '0.375rem 0 0' }}>
+        {token}
+      </p>
+      <p
+        style={{ font: '0.6875rem ui-monospace, monospace', color: '#9b958a', margin: 0 }}
+      >
+        {hex}
+      </p>
     </div>
   ))}
 </div>

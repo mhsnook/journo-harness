@@ -25,7 +25,10 @@ export function LedgerDrawerScreen() {
           <header className="flex items-center gap-2.5 border-b border-edge bg-sunk px-3.5 py-2.5">
             <h3 className="text-[0.875rem] font-semibold text-ink">Offered</h3>
             <span className="text-[0.75rem] text-faint">17 · 9 accepted</span>
-            <button type="button" className="ml-auto text-[0.75rem] text-faint hover:text-ink">
+            <button
+              type="button"
+              className="ml-auto text-[0.75rem] text-faint hover:text-ink"
+            >
               close ×
             </button>
           </header>
@@ -82,7 +85,8 @@ export function LedgerDrawerScreen() {
             <div className="flex flex-col gap-1.5">
               <MetaLabel count={4}>Accepted, no section yet</MetaLabel>
               <p className="text-[0.75rem] text-muted">
-                Housing starts, quarterly series · The cost of discretionary review · two more
+                Housing starts, quarterly series · The cost of discretionary review · two
+                more
               </p>
             </div>
           </div>

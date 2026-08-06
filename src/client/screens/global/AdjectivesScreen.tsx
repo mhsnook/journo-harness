@@ -1,5 +1,10 @@
 import { ExampleBlock, PolarityHeading } from '../../components/ExampleBlock'
-import { RuleBlock, ScoreTest, SettingsDetailHeader, SettingsShell } from './SettingsShell'
+import {
+  RuleBlock,
+  ScoreTest,
+  SettingsDetailHeader,
+  SettingsShell,
+} from './SettingsShell'
 
 /**
  * 1(e) — Settings · adjectives. Fuzzier than a voice: you say a section should
@@ -23,9 +28,10 @@ export function AdjectivesScreen() {
       <SettingsDetailHeader title="high energy" usage="9 sections use it" />
 
       <RuleBlock label="What I mean by it">
-        Short sentences carrying real information, one after another, with no throat-clearing
-        between them. Verbs do the work. A paragraph earns the label if you could read it aloud
-        without losing your place — not if it merely has exclamation marks.
+        Short sentences carrying real information, one after another, with no
+        throat-clearing between them. Verbs do the work. A paragraph earns the label if
+        you could read it aloud without losing your place — not if it merely has
+        exclamation marks.
       </RuleBlock>
 
       <div className="grid grid-cols-2 gap-3">

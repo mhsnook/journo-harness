@@ -13,27 +13,27 @@ import { defineConfig } from 'vite'
 const forStorybook = process.env.STORYBOOK === 'true'
 
 export default defineConfig({
-	plugins: [
-		// The router plugin generates the route tree, and must run before React.
-		forStorybook
-			? []
-			: tanstackRouter({
-					target: 'react',
-					routesDirectory: './src/client/routes',
-					generatedRouteTree: './src/client/routeTree.gen.ts',
-					autoCodeSplitting: true,
-				}),
-		react(),
-		tailwindcss(),
-		// Runs the Worker in workerd beside the client, so `pnpm dev` serves both.
-		forStorybook
-			? []
-			: cloudflare({
-					// Workers AI is remote-only, and remote bindings open a proxy session
-					// at startup that demands an API token — so leaving them off is what
-					// lets a fresh clone run `pnpm dev`. Set CF_REMOTE_BINDINGS=true to
-					// call a model.
-					remoteBindings: process.env.CF_REMOTE_BINDINGS === 'true',
-				}),
-	],
+  plugins: [
+    // The router plugin generates the route tree, and must run before React.
+    forStorybook
+      ? []
+      : tanstackRouter({
+          target: 'react',
+          routesDirectory: './src/client/routes',
+          generatedRouteTree: './src/client/routeTree.gen.ts',
+          autoCodeSplitting: true,
+        }),
+    react(),
+    tailwindcss(),
+    // Runs the Worker in workerd beside the client, so `pnpm dev` serves both.
+    forStorybook
+      ? []
+      : cloudflare({
+          // Workers AI is remote-only, and remote bindings open a proxy session
+          // at startup that demands an API token — so leaving them off is what
+          // lets a fresh clone run `pnpm dev`. Set CF_REMOTE_BINDINGS=true to
+          // call a model.
+          remoteBindings: process.env.CF_REMOTE_BINDINGS === 'true',
+        }),
+  ],
 })

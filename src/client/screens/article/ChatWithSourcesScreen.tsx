@@ -17,15 +17,21 @@ export function ChatWithSourcesScreen() {
       <FrameBody>
         <Pane className="gap-3">
           <ChatMessage from="me">
-            Find me everything on approval times in comparable cities. Cast wide, I'll cut.
+            Find me everything on approval times in comparable cities. Cast wide, I'll
+            cut.
           </ChatMessage>
           <ChatMessage from="agent">
-            Seventeen worth showing you. Two are from your favourites, and I've ranked those first.
+            Seventeen worth showing you. Two are from your favourites, and I've ranked
+            those first.
           </ChatMessage>
 
           <SectionHeading
             count="17 found"
-            action={<span className="text-[0.6875rem] text-faint">keep 9 · cut 5 · undecided 3</span>}
+            action={
+              <span className="text-[0.6875rem] text-faint">
+                keep 9 · cut 5 · undecided 3
+              </span>
+            }
           >
             Sources
           </SectionHeading>
@@ -38,7 +44,8 @@ export function ChatWithSourcesScreen() {
           </div>
 
           <p className="text-[0.6875rem] text-faint">
-            Keeping one sends it straight to the plan — the ledger keeps the whole list either way.
+            Keeping one sends it straight to the plan — the ledger keeps the whole list
+            either way.
           </p>
           <ChatComposer placeholder="More like the throughput study, but for transit…" />
         </Pane>

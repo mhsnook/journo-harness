@@ -9,7 +9,11 @@ export interface DividerProps {
 export function Divider({ weight = 'hair', className }: DividerProps) {
   return (
     <hr
-      className={cx('border-0', weight === 'strong' ? 'h-px bg-edge' : 'h-px bg-rule', className)}
+      className={cx(
+        'border-0',
+        weight === 'strong' ? 'h-px bg-edge' : 'h-px bg-rule',
+        className,
+      )}
     />
   )
 }
@@ -26,7 +30,12 @@ export interface SectionHeadingProps {
  * A run-on heading: label, count, a hairline that eats the remaining width,
  * then an optional link. Used for every list on the desk and in the plan.
  */
-export function SectionHeading({ children, count, action, className }: SectionHeadingProps) {
+export function SectionHeading({
+  children,
+  count,
+  action,
+  className,
+}: SectionHeadingProps) {
   return (
     <div className={cx('flex items-center gap-2.5', className)}>
       <span className="label-meta shrink-0">

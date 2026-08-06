@@ -11,10 +11,12 @@ export function ShowcaseScreen() {
   return (
     <Frame width={560}>
       <div className="flex flex-col gap-2 bg-ink px-6 py-7">
-        <h1 className="font-serif text-[1.75rem] leading-tight text-paper">Emmy Joarness</h1>
+        <h1 className="font-serif text-[1.75rem] leading-tight text-paper">
+          Emmy Joarness
+        </h1>
         <p className="max-w-[22rem] text-[0.8125rem] leading-relaxed text-paper/60">
-          Reported features and essays on cities, energy and the things that quietly stopped
-          working. Selected work, 2024—2026.
+          Reported features and essays on cities, energy and the things that quietly
+          stopped working. Selected work, 2024—2026.
         </p>
       </div>
 

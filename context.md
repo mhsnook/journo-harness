@@ -111,7 +111,7 @@ Something the writer is drawing on. It carries a **text** — a passage pulled f
 source, whether a quotation, a clip, or a key pullout — or a **source** — the attribution,
 with a title, an author or publication, a year, and a url, each of them optional. At
 least one of the two is present; an entry with neither is nothing.
-_Avoid_: source (a source is the attribution *inside* a Reference), citation, cite
+_Avoid_: source (a source is the attribution _inside_ a Reference), citation, cite
 
 **Quote**:
 A Reference that carries a text. Not a separate entity — the Plan Panel counts References

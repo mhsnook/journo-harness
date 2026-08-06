@@ -8,7 +8,7 @@ import { Agent } from 'agents'
  * all still to come.
  */
 export class ArticleAgent extends Agent<Env> {
-	async onRequest(_request: Request): Promise<Response> {
-		return Response.json({ agent: 'ArticleAgent', name: this.name })
-	}
+  async onRequest(_request: Request): Promise<Response> {
+    return Response.json({ agent: 'ArticleAgent', name: this.name })
+  }
 }

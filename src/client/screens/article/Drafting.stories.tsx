@@ -20,8 +20,8 @@ export const A_PlanAndDraft: Story = {
     <div className="flex flex-col">
       <PlanAndDraftScreen />
       <Annotation>
-        For the writer who wants a sense of completion without watching a counter. Bars only — no
-        numbers that change on every keystroke.
+        For the writer who wants a sense of completion without watching a counter. Bars
+        only — no numbers that change on every keystroke.
       </Annotation>
     </div>
   ),
@@ -33,9 +33,9 @@ export const B_DraftOnly: Story = {
     <div className="flex flex-col">
       <DraftOnlyScreen />
       <Annotation align="right">
-        The default state, and where most of the time goes. The dot appears only when you have gone
-        idle and there is something worth reading — an urgent note after ~20 seconds, an ordinary
-        one after minutes.
+        The default state, and where most of the time goes. The dot appears only when you
+        have gone idle and there is something worth reading — an urgent note after ~20
+        seconds, an ordinary one after minutes.
       </Annotation>
     </div>
   ),
@@ -47,8 +47,8 @@ export const C_ChatAndDraft: Story = {
     <div className="flex flex-col">
       <ChatAndDraftScreen />
       <Annotation>
-        The chat pane never takes more than half. Anything it produces lands in the plan, not in the
-        prose — the writing stays yours.
+        The chat pane never takes more than half. Anything it produces lands in the plan,
+        not in the prose — the writing stays yours.
       </Annotation>
     </div>
   ),
@@ -65,8 +65,8 @@ export const E_NotesRail: Story = {
     <div className="flex flex-col">
       <NotesRailScreen />
       <Annotation>
-        Accepting a note moves it out of the stack and into the checklist underneath, which is the
-        list you actually work through.
+        Accepting a note moves it out of the stack and into the checklist underneath,
+        which is the list you actually work through.
       </Annotation>
     </div>
   ),

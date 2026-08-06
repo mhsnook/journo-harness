@@ -32,9 +32,9 @@
   --color-accent-ink: #6a5312; /* text sitting on accent */
 
   /* Type */
-  --font-sans:
-    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, ui-serif, serif;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-serif:
+    'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, ui-serif, serif;
   --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
   /* Meta label: the small uppercase mono labels used all over the design */

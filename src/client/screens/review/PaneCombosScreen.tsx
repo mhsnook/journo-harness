@@ -75,8 +75,8 @@ export function PaneCombosScreen() {
           </div>
         ))}
         <p className="text-[0.6875rem] leading-relaxed text-faint">
-          Notes is always the narrow one. Plan collapses to a rail when the draft is up. Draft alone
-          is the sixth state, and the most common.
+          Notes is always the narrow one. Plan collapses to a rail when the draft is up.
+          Draft alone is the sixth state, and the most common.
         </p>
       </FrameBody>
     </Frame>

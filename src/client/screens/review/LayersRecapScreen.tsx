@@ -20,7 +20,13 @@ const layers = [
     flex: 1.15,
     accent: false,
   },
-  { n: 3, name: 'Draft', body: 'The human writes. Only the human writes.', flex: 1, accent: false },
+  {
+    n: 3,
+    name: 'Draft',
+    body: 'The human writes. Only the human writes.',
+    flex: 1,
+    accent: false,
+  },
   {
     n: 4,
     name: 'Coach',
@@ -48,11 +54,18 @@ const states: Array<{ label: string; on: number[] }> = [
 export function LayersRecapScreen() {
   return (
     <Frame width={800}>
-      <TitleBar title={ARTICLE_TITLE} subtitle="one horizontal rail · layers slide, never stack" />
+      <TitleBar
+        title={ARTICLE_TITLE}
+        subtitle="one horizontal rail · layers slide, never stack"
+      />
       <FrameBody className="gap-5 p-4">
         <div className="flex items-stretch">
           {layers.map((layer, i) => (
-            <div key={layer.n} className="flex items-stretch" style={{ flex: layer.flex }}>
+            <div
+              key={layer.n}
+              className="flex items-stretch"
+              style={{ flex: layer.flex }}
+            >
               {i > 0 ? (
                 <div className="flex w-14 shrink-0 flex-col items-center justify-center gap-1 px-1">
                   <span className="text-center text-[0.5625rem] leading-tight text-faint">
@@ -66,12 +79,16 @@ export function LayersRecapScreen() {
               <div
                 className={cx(
                   'flex min-w-0 flex-1 flex-col gap-1.5 rounded-lg border p-2.5',
-                  layer.accent ? 'border-accent-edge bg-accent-soft' : 'border-edge bg-sunk',
+                  layer.accent
+                    ? 'border-accent-edge bg-accent-soft'
+                    : 'border-edge bg-sunk',
                 )}
               >
                 <MetaLabel>Layer {layer.n}</MetaLabel>
                 <h3 className="text-[0.875rem] font-semibold text-ink">{layer.name}</h3>
-                <p className="text-[0.6875rem] leading-relaxed text-muted">{layer.body}</p>
+                <p className="text-[0.6875rem] leading-relaxed text-muted">
+                  {layer.body}
+                </p>
               </div>
             </div>
           ))}
@@ -103,8 +120,8 @@ export function LayersRecapScreen() {
           <Chip tone="outline">voices</Chip>
           <Chip tone="outline">refs</Chip>
           <span className="text-[0.6875rem] text-faint">
-            everything the coach knows about this piece lives in layer 2 — which is why editing it
-            by hand changes the advice
+            everything the coach knows about this piece lives in layer 2 — which is why
+            editing it by hand changes the advice
           </span>
         </div>
       </FrameBody>

@@ -21,8 +21,8 @@ export function ChatAndDraftScreen() {
             Is there a number for what a stalled mid-rise costs per week?
           </ChatMessage>
           <ChatMessage from="agent">
-            Municipal Review put it at £4,100 in 2021 — it's already in your ledger, undecided. Two
-            more recent estimates exist if you want them.
+            Municipal Review put it at £4,100 in 2021 — it's already in your ledger,
+            undecided. Two more recent estimates exist if you want them.
           </ChatMessage>
           <ChatSuggestions>
             <Chip tone="accent" interactive>

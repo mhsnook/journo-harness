@@ -21,8 +21,8 @@ export const A_FullReview: Story = {
     <div className="flex flex-col">
       <FullReviewScreen />
       <Annotation>
-        Only this pass is full screen — you asked for it, so it gets the window once. Accepted
-        findings then live in the notes rail while you write.
+        Only this pass is full screen — you asked for it, so it gets the window once.
+        Accepted findings then live in the notes rail while you write.
       </Annotation>
     </div>
   ),
@@ -39,9 +39,10 @@ export const C_NotesToChat: Story = {
     <div className="flex flex-col">
       <NotesToChatScreen />
       <Annotation>
-        The loop: draft → review → accept notes → notes go to chat → the plan changes → draft again.
-        Counts are restated against the new plan, so "3 of 5 quotes used" becomes "3 of 4" instead
-        of standing as a permanent failure against a plan you have already moved on from.
+        The loop: draft → review → accept notes → notes go to chat → the plan changes →
+        draft again. Counts are restated against the new plan, so "3 of 5 quotes used"
+        becomes "3 of 4" instead of standing as a permanent failure against a plan you
+        have already moved on from.
       </Annotation>
     </div>
   ),

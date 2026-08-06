@@ -35,7 +35,11 @@ export function PaneRail({ open, onToggle, className }: PaneRailProps) {
           <Tag
             key={pane}
             {...(onToggle
-              ? { type: 'button' as const, onClick: () => onToggle(pane), 'aria-pressed': isOpen }
+              ? {
+                  type: 'button' as const,
+                  onClick: () => onToggle(pane),
+                  'aria-pressed': isOpen,
+                }
               : {})}
             className={cx(
               'rounded-full px-2.5 py-1 text-[0.6875rem] leading-none font-medium transition-colors',

@@ -17,14 +17,18 @@ export function ReadyToDraftScreen() {
       <ArticleBar title={ARTICLE_TITLE} open={['chat', 'plan']} status="planning" />
       <FrameBody row className="min-h-[21rem]">
         <Pane divider="right" className="gap-3">
-          <p className="text-center text-[0.6875rem] text-faint">↑ earlier in this conversation</p>
+          <p className="text-center text-[0.6875rem] text-faint">
+            ↑ earlier in this conversation
+          </p>
           <ChatMessage from="agent">
             That gives §3 the human cost and keeps the numbers in §2 where they belong.
           </ChatMessage>
-          <ChatMessage from="me">Good. Leave §4 short — I don't want to write a manifesto.</ChatMessage>
+          <ChatMessage from="me">
+            Good. Leave §4 short — I don't want to write a manifesto.
+          </ChatMessage>
           <ChatMessage from="agent">
-            Four sections, 2,400 words, thirteen references and eight quotes saved. Ready when you
-            are.
+            Four sections, 2,400 words, thirteen references and eight quotes saved. Ready
+            when you are.
           </ChatMessage>
           <ChatComposer />
         </Pane>

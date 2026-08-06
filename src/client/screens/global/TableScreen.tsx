@@ -11,7 +11,12 @@ interface Row {
 }
 
 const rows: Row[] = [
-  { title: 'The Long Tail of Batteries', status: 'drafting', words: '1,480', touched: '2h' },
+  {
+    title: 'The Long Tail of Batteries',
+    status: 'drafting',
+    words: '1,480',
+    touched: '2h',
+  },
   { title: 'Why Cities Stopped Building', status: 'planning', words: '—', touched: '1d' },
   {
     title: 'Notes on Slow Software',
@@ -21,8 +26,18 @@ const rows: Row[] = [
     attention: true,
   },
   { title: 'The Quiet Part of the Grid', status: 'sent', words: '3,100', touched: '1w' },
-  { title: 'Everyone Is a Logistics Company', status: 'draft', words: '640', touched: '2mo' },
-  { title: 'A Short History of the Loading Dock', status: 'published', words: '2,240', touched: '4mo' },
+  {
+    title: 'Everyone Is a Logistics Company',
+    status: 'draft',
+    words: '640',
+    touched: '2mo',
+  },
+  {
+    title: 'A Short History of the Loading Dock',
+    status: 'published',
+    words: '2,240',
+    touched: '4mo',
+  },
 ]
 
 /**
@@ -57,8 +72,13 @@ export function TableScreen() {
           <span className="label-meta w-10 text-right">Touch</span>
         </div>
         {rows.map((row) => (
-          <div key={row.title} className="flex items-baseline gap-3 border-b border-rule py-2.5">
-            <span className="min-w-0 flex-1 truncate text-[0.8125rem] text-ink">{row.title}</span>
+          <div
+            key={row.title}
+            className="flex items-baseline gap-3 border-b border-rule py-2.5"
+          >
+            <span className="min-w-0 flex-1 truncate text-[0.8125rem] text-ink">
+              {row.title}
+            </span>
             <span className="w-20">
               {row.attention ? (
                 <Chip tone="accent">{row.status}</Chip>
@@ -74,7 +94,9 @@ export function TableScreen() {
             </span>
           </div>
         ))}
-        <p className="pt-3 text-[0.6875rem] text-faint">+ 18 more · sorted by last touched</p>
+        <p className="pt-3 text-[0.6875rem] text-faint">
+          + 18 more · sorted by last touched
+        </p>
       </FrameBody>
     </Frame>
   )

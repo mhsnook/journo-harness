@@ -51,9 +51,24 @@ export const activeArticles: Article[] = [
 ]
 
 export const olderDrafts = [
-  { id: 'd1', title: 'The Quiet Part of the Grid', note: 'stalled at §2', touched: '4 mar' },
-  { id: 'd2', title: 'Everyone Is a Logistics Company', note: 'plan only', touched: '19 feb' },
-  { id: 'd3', title: 'A Short History of the Loading Dock', note: 'draft 1', touched: '30 jan' },
+  {
+    id: 'd1',
+    title: 'The Quiet Part of the Grid',
+    note: 'stalled at §2',
+    touched: '4 mar',
+  },
+  {
+    id: 'd2',
+    title: 'Everyone Is a Logistics Company',
+    note: 'plan only',
+    touched: '19 feb',
+  },
+  {
+    id: 'd3',
+    title: 'A Short History of the Loading Dock',
+    note: 'draft 1',
+    touched: '30 jan',
+  },
   { id: 'd4', title: 'Against the Roadmap', note: 'plan only', touched: '12 jan' },
 ]
 
@@ -76,8 +91,18 @@ export const publishedArticles = [
 
 export const portfolioBacklist = [
   { id: 'b1', title: 'The Quiet Part of the Grid', outlet: 'Field Notes', year: '2025' },
-  { id: 'b2', title: 'Everyone Is a Logistics Company', outlet: 'the Quarterly', year: '2025' },
-  { id: 'b3', title: 'A Short History of the Loading Dock', outlet: 'Municipal Review', year: '2024' },
+  {
+    id: 'b2',
+    title: 'Everyone Is a Logistics Company',
+    outlet: 'the Quarterly',
+    year: '2025',
+  },
+  {
+    id: 'b3',
+    title: 'A Short History of the Loading Dock',
+    outlet: 'Municipal Review',
+    year: '2024',
+  },
 ]
 
 /* -------------------------------------------------------------------------- */
@@ -125,7 +150,11 @@ export const outlineRevised: OutlineSection[] = [
   { n: 1, title: 'The year the cranes stopped', words: 300 },
   { n: 2, title: 'How review became the process', words: 700 },
   { n: 3, title: 'Who actually pays for the delay', words: 700 },
-  { n: 4, title: 'What a faster city would look like — and the argument for it', words: 700 },
+  {
+    n: 4,
+    title: 'What a faster city would look like — and the argument for it',
+    words: 700,
+  },
 ]
 
 export interface Source {
@@ -164,7 +193,8 @@ export const sources: Source[] = [
     outlet: 'Field Notes',
     year: '2019',
     favourite: 'author',
-    summary: 'The four-to-twelve-unit building has effectively been legislated out of existence.',
+    summary:
+      'The four-to-twelve-unit building has effectively been legislated out of existence.',
     quotes: 1,
     state: 'accepted',
     section: '§3',

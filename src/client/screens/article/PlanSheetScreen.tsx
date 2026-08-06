@@ -39,8 +39,8 @@ export function PlanSheetScreen() {
               />
             </div>
             <p className="text-[0.6875rem] text-faint">
-              Edit it by hand, or go back to the chat and argue about it — either way the advice you
-              get while drafting changes to match.
+              Edit it by hand, or go back to the chat and argue about it — either way the
+              advice you get while drafting changes to match.
             </p>
           </section>
 
@@ -54,7 +54,9 @@ export function PlanSheetScreen() {
                   key={source.id}
                   className="flex flex-col gap-1 rounded-md border border-edge bg-sunk p-2.5"
                 >
-                  <p className="text-[0.75rem] leading-snug font-medium text-ink">{source.title}</p>
+                  <p className="text-[0.75rem] leading-snug font-medium text-ink">
+                    {source.title}
+                  </p>
                   <p className="text-[0.6875rem] text-faint">
                     {[source.outlet, source.year].filter(Boolean).join(' · ')}
                   </p>

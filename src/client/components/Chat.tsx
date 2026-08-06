@@ -26,7 +26,9 @@ export function ChatMessage({ from, children, className }: ChatMessageProps) {
     )
   }
   return (
-    <div className={cx('max-w-[95%] text-[0.8125rem] leading-relaxed text-ink', className)}>
+    <div
+      className={cx('max-w-[95%] text-[0.8125rem] leading-relaxed text-ink', className)}
+    >
       {children}
     </div>
   )

@@ -23,7 +23,9 @@ export function OutlineRow({
 }: OutlineRowProps) {
   return (
     <div className={cx('flex items-start gap-2.5', className)}>
-      <span className="mt-px w-3 shrink-0 font-mono text-[0.6875rem] text-faint">{section.n}</span>
+      <span className="mt-px w-3 shrink-0 font-mono text-[0.6875rem] text-faint">
+        {section.n}
+      </span>
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <div className="flex items-baseline gap-2">
           <span
@@ -35,7 +37,9 @@ export function OutlineRow({
           >
             {section.title}
           </span>
-          {current ? <span className="shrink-0 text-[0.6875rem] text-faint">now</span> : null}
+          {current ? (
+            <span className="shrink-0 text-[0.6875rem] text-faint">now</span>
+          ) : null}
           {dense ? (
             <Chip tone={changed ? 'accent' : 'default'} className="ml-auto">
               {section.words}w

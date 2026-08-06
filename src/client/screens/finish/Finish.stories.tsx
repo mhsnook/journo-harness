@@ -18,9 +18,9 @@ export const A_Finish: Story = {
     <div className="flex flex-col">
       <FinishScreen />
       <Annotation>
-        Called "finish" rather than "export" on purpose — the last steps might include another
-        review or a round of twenty-five candidate titles. This is the start of a checkout process,
-        not the end of the piece.
+        Called "finish" rather than "export" on purpose — the last steps might include
+        another review or a round of twenty-five candidate titles. This is the start of a
+        checkout process, not the end of the piece.
       </Annotation>
     </div>
   ),

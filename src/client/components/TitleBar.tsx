@@ -18,7 +18,14 @@ export interface TitleBarProps {
  * pushed right. The rule underneath is the heavier of the two hairline
  * weights — it separates chrome from content.
  */
-export function TitleBar({ back, onBack, title, subtitle, actions, className }: TitleBarProps) {
+export function TitleBar({
+  back,
+  onBack,
+  title,
+  subtitle,
+  actions,
+  className,
+}: TitleBarProps) {
   return (
     <header
       className={cx(
@@ -38,8 +45,12 @@ export function TitleBar({ back, onBack, title, subtitle, actions, className }: 
           <span className="max-w-[16rem] truncate">{back}</span>
         </button>
       ) : null}
-      <h2 className="truncate text-[0.9375rem] leading-tight font-medium text-ink">{title}</h2>
-      {subtitle ? <span className="truncate text-[0.8125rem] text-faint">{subtitle}</span> : null}
+      <h2 className="truncate text-[0.9375rem] leading-tight font-medium text-ink">
+        {title}
+      </h2>
+      {subtitle ? (
+        <span className="truncate text-[0.8125rem] text-faint">{subtitle}</span>
+      ) : null}
       <div className="ml-auto flex shrink-0 items-center gap-2">{actions}</div>
     </header>
   )

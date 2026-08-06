@@ -52,7 +52,9 @@ export function ReviewRailScreen() {
             <MetaLabel count={3}>Citations</MetaLabel>
             <div className="flex items-start gap-2">
               <Check />
-              <p className="text-[0.75rem] leading-snug text-ink">£4,100 figure needs attribution</p>
+              <p className="text-[0.75rem] leading-snug text-ink">
+                £4,100 figure needs attribution
+              </p>
             </div>
             <div className="flex items-start gap-2">
               <Check />

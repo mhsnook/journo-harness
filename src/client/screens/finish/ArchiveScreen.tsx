@@ -23,8 +23,12 @@ export function ArchiveScreen() {
           <SectionHeading count={2}>Submitted</SectionHeading>
           <div className="flex flex-col gap-2.5 rounded-lg border border-edge p-3">
             <div className="flex items-baseline gap-2.5">
-              <h3 className="text-[0.875rem] font-semibold text-ink">Why Cities Stopped Building</h3>
-              <span className="text-[0.6875rem] text-faint">sent 12 jul · chase due in 2 days</span>
+              <h3 className="text-[0.875rem] font-semibold text-ink">
+                Why Cities Stopped Building
+              </h3>
+              <span className="text-[0.6875rem] text-faint">
+                sent 12 jul · chase due in 2 days
+              </span>
             </div>
             <div className="flex items-center gap-2.5">
               <Button tone="accent" size="sm">
@@ -33,8 +37,8 @@ export function ArchiveScreen() {
               <Field size="sm" placeholder="where it ran (url)" className="flex-1" />
             </div>
             <p className="text-[0.6875rem] leading-relaxed text-faint">
-              Marking it published asks for the text as it ran, which is what the comparison below
-              reads from.
+              Marking it published asks for the text as it ran, which is what the
+              comparison below reads from.
             </p>
           </div>
         </section>
@@ -64,21 +68,27 @@ export function ArchiveScreen() {
 
         <section className="flex flex-col gap-2.5 rounded-lg border border-edge bg-sunk p-3">
           <div className="flex items-baseline gap-2.5">
-            <h3 className="text-[0.875rem] font-semibold text-ink">Self-edit final vs published</h3>
+            <h3 className="text-[0.875rem] font-semibold text-ink">
+              Self-edit final vs published
+            </h3>
             <span className="text-[0.6875rem] text-faint">stub</span>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
               <MetaLabel>Mine</MetaLabel>
               <p className="text-[0.75rem] leading-relaxed text-muted">
-                “Nobody voted to stop building. It happened one reasonable amendment at a time.”
+                “Nobody voted to stop building. It happened one reasonable amendment at a
+                time.”
               </p>
             </div>
             <div className="flex flex-col gap-1.5">
               <MetaLabel>As published</MetaLabel>
               <p className="text-[0.75rem] leading-relaxed text-muted">
                 “Nobody voted to stop building.{' '}
-                <mark className="bg-accent text-accent-ink">It happened by increments.</mark>”
+                <mark className="bg-accent text-accent-ink">
+                  It happened by increments.
+                </mark>
+                ”
               </p>
             </div>
           </div>

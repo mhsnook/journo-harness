@@ -54,8 +54,8 @@ export function FinishScreen() {
             <MetaLabel>Preview</MetaLabel>
             <ol className="flex flex-col gap-1.5 text-[0.75rem] leading-relaxed text-muted">
               <li>
-                1. R. Okonkwo, “Permit throughput in six mid-sized cities”, the Quarterly (2023),
-                quarterly.example/permit-throughput
+                1. R. Okonkwo, “Permit throughput in six mid-sized cities”, the Quarterly
+                (2023), quarterly.example/permit-throughput
               </li>
               <li>
                 2. A. Weill, “Zoning and the missing middle”, Field Notes (2019),

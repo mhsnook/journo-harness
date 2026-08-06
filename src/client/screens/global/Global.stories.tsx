@@ -23,9 +23,10 @@ export const A_Desk: Story = {
     <div className="flex flex-col">
       <DeskScreen />
       <Annotation>
-        The root screen. Board and table both back-button here, so this is the only page that needs
-        a "board view" button — the table is reached from the quiet "see all" links, with the filter
-        already set, because it is a fallback utility rather than an attraction.
+        The root screen. Board and table both back-button here, so this is the only page
+        that needs a "board view" button — the table is reached from the quiet "see all"
+        links, with the filter already set, because it is a fallback utility rather than
+        an attraction.
       </Annotation>
     </div>
   ),
@@ -47,8 +48,9 @@ export const D_Voices: Story = {
     <div className="flex flex-col">
       <VoicesScreen />
       <Annotation>
-        The test row at the bottom takes a pasted paragraph and scores it. An exemplary paragraph
-        should score very high — if it doesn't, the rule above is the thing that needs rewriting.
+        The test row at the bottom takes a pasted paragraph and scores it. An exemplary
+        paragraph should score very high — if it doesn't, the rule above is the thing that
+        needs rewriting.
       </Annotation>
     </div>
   ),
@@ -60,8 +62,8 @@ export const E_Adjectives: Story = {
     <div className="flex flex-col">
       <AdjectivesScreen />
       <Annotation>
-        Same shell as voices, deliberately. An adjective is just a fuzzier voice: you define what
-        "high energy" means once, and then any section can be marked with it.
+        Same shell as voices, deliberately. An adjective is just a fuzzier voice: you
+        define what "high energy" means once, and then any section can be marked with it.
       </Annotation>
     </div>
   ),
@@ -73,8 +75,8 @@ export const F_FavouriteSources: Story = {
     <div className="flex flex-col">
       <FavouriteSourcesScreen />
       <Annotation>
-        Ranking, not filtering — a non-favourite still shows up when it is the best evidence
-        available.
+        Ranking, not filtering — a non-favourite still shows up when it is the best
+        evidence available.
       </Annotation>
     </div>
   ),

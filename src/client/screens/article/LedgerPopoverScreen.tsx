@@ -37,7 +37,11 @@ const groups: Group[] = [
       { text: 'Interview — M. Sze, planning officer' },
     ],
   },
-  { label: 'Offered, undecided', count: 3, items: [{ text: 'Transit-adjacent density pilot' }] },
+  {
+    label: 'Offered, undecided',
+    count: 3,
+    items: [{ text: 'Transit-adjacent density pilot' }],
+  },
   {
     label: 'Cut',
     count: 5,
@@ -57,7 +61,10 @@ export function LedgerPopoverScreen() {
       <div className="flex items-center gap-2.5 border-b border-edge bg-sunk px-3.5 py-2.5">
         <h3 className="text-[0.875rem] font-semibold text-ink">Ledger</h3>
         <span className="text-[0.75rem] text-faint">17</span>
-        <button type="button" className="ml-auto text-[0.75rem] text-faint hover:text-ink">
+        <button
+          type="button"
+          className="ml-auto text-[0.75rem] text-faint hover:text-ink"
+        >
           ⌄
         </button>
       </div>
@@ -71,9 +78,13 @@ export function LedgerPopoverScreen() {
             {group.items.map((item) => (
               <div key={item.text} className="flex items-start gap-2">
                 {item.section ? (
-                  <Chip tone={group.tone === 'used' ? 'accent' : 'outline'}>{item.section}</Chip>
+                  <Chip tone={group.tone === 'used' ? 'accent' : 'outline'}>
+                    {item.section}
+                  </Chip>
                 ) : null}
-                <p className="min-w-0 flex-1 truncate text-[0.75rem] text-muted">{item.text}</p>
+                <p className="min-w-0 flex-1 truncate text-[0.75rem] text-muted">
+                  {item.text}
+                </p>
               </div>
             ))}
           </section>

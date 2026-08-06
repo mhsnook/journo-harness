@@ -11,7 +11,13 @@ export interface ListRowProps {
 }
 
 /** One line of the long tail: older drafts, published pieces, table rows. */
-export function ListRow({ title, note, trailing, dimmed = false, className }: ListRowProps) {
+export function ListRow({
+  title,
+  note,
+  trailing,
+  dimmed = false,
+  className,
+}: ListRowProps) {
   return (
     <div
       className={cx(
@@ -21,7 +27,9 @@ export function ListRow({ title, note, trailing, dimmed = false, className }: Li
       )}
     >
       <span className="min-w-0 truncate text-[0.8125rem] text-ink">{title}</span>
-      {note ? <span className="min-w-0 truncate text-[0.75rem] text-faint">{note}</span> : null}
+      {note ? (
+        <span className="min-w-0 truncate text-[0.75rem] text-faint">{note}</span>
+      ) : null}
       <span className="ml-auto flex shrink-0 items-baseline gap-3">{trailing}</span>
     </div>
   )

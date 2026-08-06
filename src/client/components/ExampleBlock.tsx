@@ -16,7 +16,13 @@ export interface ExampleBlockProps {
  * solid edge; negative ones are dashed, because "not this" is the absence of
  * the rule rather than a rule of its own.
  */
-export function ExampleBlock({ polarity, text, source, reason, className }: ExampleBlockProps) {
+export function ExampleBlock({
+  polarity,
+  text,
+  source,
+  reason,
+  className,
+}: ExampleBlockProps) {
   const yes = polarity === 'yes'
   return (
     <figure
@@ -26,7 +32,9 @@ export function ExampleBlock({ polarity, text, source, reason, className }: Exam
         className,
       )}
     >
-      <blockquote className="text-[0.75rem] leading-relaxed text-ink">“{text}”</blockquote>
+      <blockquote className="text-[0.75rem] leading-relaxed text-ink">
+        “{text}”
+      </blockquote>
       <figcaption className="flex flex-wrap items-center gap-x-1.5 text-[0.6875rem] text-faint">
         {source ? <cite className="not-italic">{source}</cite> : null}
         {source && reason ? <span aria-hidden>·</span> : null}
@@ -50,7 +58,9 @@ export function PolarityHeading({ polarity, children, count }: PolarityHeadingPr
         aria-hidden
         className={cx(
           'size-2.5 shrink-0 rounded-full border',
-          polarity === 'yes' ? 'border-accent-edge bg-accent' : 'border-edge bg-transparent',
+          polarity === 'yes'
+            ? 'border-accent-edge bg-accent'
+            : 'border-edge bg-transparent',
         )}
       />
       <span className="label-meta">

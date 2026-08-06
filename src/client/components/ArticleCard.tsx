@@ -34,7 +34,9 @@ export function ArticleCard({ article, variant = 'card', className }: ArticleCar
         {article.title}
       </h3>
       {!compact ? (
-        <p className="line-clamp-2 text-[0.75rem] leading-relaxed text-muted">{article.blurb}</p>
+        <p className="line-clamp-2 text-[0.75rem] leading-relaxed text-muted">
+          {article.blurb}
+        </p>
       ) : null}
       <ProgressBar value={article.progress} className="mt-0.5" />
       <p className="text-[0.6875rem] text-faint">{article.phaseLabel}</p>

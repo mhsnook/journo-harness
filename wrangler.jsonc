@@ -1,48 +1,48 @@
 {
-	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "journo-harness",
-	"main": "./src/server/index.ts",
-	"compatibility_date": "2026-08-06",
-	// The Agents SDK needs the Node.js compatibility layer.
-	"compatibility_flags": ["nodejs_compat"],
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "journo-harness",
+  "main": "./src/server/index.ts",
+  "compatibility_date": "2026-08-06",
+  // The Agents SDK needs the Node.js compatibility layer.
+  "compatibility_flags": ["nodejs_compat"],
 
-	// Static assets with single-page-application fallback, so a deep link like
-	// /a/:id returns index.html. Worker paths need run_worker_first, or the
-	// fallback swallows them before the Worker runs.
-	"assets": {
-		"binding": "ASSETS",
-		"directory": "./dist/client",
-		"not_found_handling": "single-page-application",
-		"run_worker_first": ["/agents/*", "/api/*"]
-	},
+  // Static assets with single-page-application fallback, so a deep link like
+  // /a/:id returns index.html. Worker paths need run_worker_first, or the
+  // fallback swallows them before the Worker runs.
+  "assets": {
+    "binding": "ASSETS",
+    "directory": "./dist/client",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/agents/*", "/api/*"],
+  },
 
-	// One Article Agent per Article. The Agents SDK needs SQLite-backed storage,
-	// which is spelled new_sqlite_classes in the migration below.
-	"durable_objects": {
-		"bindings": [
-			{
-				"name": "ArticleAgent",
-				"class_name": "ArticleAgent"
-			}
-		]
-	},
-	"migrations": [
-		{
-			"tag": "v1",
-			"new_sqlite_classes": ["ArticleAgent"]
-		}
-	],
+  // One Article Agent per Article. The Agents SDK needs SQLite-backed storage,
+  // which is spelled new_sqlite_classes in the migration below.
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "ArticleAgent",
+        "class_name": "ArticleAgent",
+      },
+    ],
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["ArticleAgent"],
+    },
+  ],
 
-	// Inference runs on Cloudflare over this binding, and the model is named in
-	// llm/model.ts and nowhere else. Workers Paid plan is required.
-	//
-	// Do not set "remote": true — it makes `pnpm dev` demand an API token before
-	// it serves anything. See the remoteBindings note in vite.config.ts.
-	"ai": {
-		"binding": "AI"
-	},
+  // Inference runs on Cloudflare over this binding, and the model is named in
+  // llm/model.ts and nowhere else. Workers Paid plan is required.
+  //
+  // Do not set "remote": true — it makes `pnpm dev` demand an API token before
+  // it serves anything. See the remoteBindings note in vite.config.ts.
+  "ai": {
+    "binding": "AI",
+  },
 
-	"observability": {
-		"enabled": true
-	}
+  "observability": {
+    "enabled": true,
+  },
 }

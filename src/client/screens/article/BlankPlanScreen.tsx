@@ -18,12 +18,12 @@ export function BlankPlanScreen() {
       <FrameBody row className="min-h-[20rem]">
         <Pane divider="right" className="gap-3">
           <ChatMessage from="me">
-            I want to write about why permitting got so slow, using this city as the case. Roughly
-            feature length. Start by finding me the numbers.
+            I want to write about why permitting got so slow, using this city as the case.
+            Roughly feature length. Start by finding me the numbers.
           </ChatMessage>
           <ChatMessage from="agent">
-            Before I search — is this the story of the process, or the story of the people stuck in
-            it? That changes which sources are worth your time.
+            Before I search — is this the story of the process, or the story of the people
+            stuck in it? That changes which sources are worth your time.
           </ChatMessage>
           <ChatComposer />
         </Pane>
@@ -32,7 +32,8 @@ export function BlankPlanScreen() {
           <PlanLength />
           <PlanBlock title="Outline" meta="empty">
             <EmptySlot className="min-h-[3.5rem]">
-              Sections appear as you agree on them — and you can type your own straight in here
+              Sections appear as you agree on them — and you can type your own straight in
+              here
             </EmptySlot>
           </PlanBlock>
           <PlanBlock title="References" meta="0">
@@ -42,7 +43,8 @@ export function BlankPlanScreen() {
             <EmptySlot>Or paste your own</EmptySlot>
           </PlanBlock>
           <p className="mt-auto text-[0.6875rem] text-faint">
-            Scrolls. Nothing here is locked, and nothing has to be finished before you write.
+            Scrolls. Nothing here is locked, and nothing has to be finished before you
+            write.
           </p>
         </Pane>
       </FrameBody>

@@ -25,8 +25,8 @@ export function FavouriteSourcesScreen() {
       <SettingsDetailHeader title="Field Notes" usage="cited in 6 articles" />
 
       <RuleBlock label="Why we prefer it">
-        Reports its own numbers and prints its method. Corrections are dated and visible. When it
-        is wrong it is wrong in a way you can check.
+        Reports its own numbers and prints its method. Corrections are dated and visible.
+        When it is wrong it is wrong in a way you can check.
       </RuleBlock>
 
       <div className="grid grid-cols-2 gap-3">

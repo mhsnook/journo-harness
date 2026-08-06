@@ -114,7 +114,9 @@ export function PlanReferences({ sources, justAddedId }: PlanReferencesProps) {
           )}
         >
           {source.id === justAddedId ? <p className="label-meta">★ just added</p> : null}
-          <p className="text-[0.75rem] leading-snug font-medium text-ink">{source.title}</p>
+          <p className="text-[0.75rem] leading-snug font-medium text-ink">
+            {source.title}
+          </p>
           <p className="text-[0.6875rem] text-faint">
             {[source.outlet, source.year, source.section].filter(Boolean).join(' · ')}
           </p>

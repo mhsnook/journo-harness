@@ -28,10 +28,10 @@ export function VoicesScreen() {
       <SettingsDetailHeader title="Reported feature" usage="4 articles · 2 sections" />
 
       <RuleBlock label="Prompt — how an agent assesses this style">
-        Reported, not argued. Every claim is attributed in the sentence that makes it. Scene before
-        analysis. Sentences average under twenty-five words; no more than one subordinate clause
-        deep. First person is allowed but rationed — roughly once a section, and only where the
-        reporter was actually in the room.
+        Reported, not argued. Every claim is attributed in the sentence that makes it.
+        Scene before analysis. Sentences average under twenty-five words; no more than one
+        subordinate clause deep. First person is allowed but rationed — roughly once a
+        section, and only where the reporter was actually in the room.
       </RuleBlock>
 
       <div className="grid grid-cols-2 gap-3">

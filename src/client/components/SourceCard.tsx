@@ -31,7 +31,12 @@ function FavouriteMark({ kind }: { kind: 'author' | 'publication' }) {
  * the ledger while you decide, and in the plan once it is accepted — the state
  * changes, the row does not.
  */
-export function SourceCard({ source, variant = 'offer', compact = false, className }: SourceCardProps) {
+export function SourceCard({
+  source,
+  variant = 'offer',
+  compact = false,
+  className,
+}: SourceCardProps) {
   const cut = source.state === 'cut'
 
   return (
@@ -45,10 +50,14 @@ export function SourceCard({ source, variant = 'offer', compact = false, classNa
       {variant === 'ledger' && !cut ? (
         <Check checked={source.state === 'accepted'} label={`Accept ${source.title}`} />
       ) : null}
-      {variant === 'ledger' && cut ? <span className="label-meta mt-0.5 shrink-0">cut</span> : null}
+      {variant === 'ledger' && cut ? (
+        <span className="label-meta mt-0.5 shrink-0">cut</span>
+      ) : null}
 
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <h4 className="text-[0.8125rem] leading-snug font-semibold text-ink">{source.title}</h4>
+        <h4 className="text-[0.8125rem] leading-snug font-semibold text-ink">
+          {source.title}
+        </h4>
         <p className="flex flex-wrap items-center gap-x-1.5 text-[0.6875rem] text-faint">
           {source.favourite ? <FavouriteMark kind={source.favourite} /> : null}
           {[source.author, source.outlet, source.year].filter(Boolean).map((part, i) => (

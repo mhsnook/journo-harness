@@ -12,7 +12,14 @@ export interface FieldProps {
 }
 
 /** A read-only input frame — the showcase does not wire up editing. */
-export function Field({ label, value, placeholder, suffix, size = 'md', className }: FieldProps) {
+export function Field({
+  label,
+  value,
+  placeholder,
+  suffix,
+  size = 'md',
+  className,
+}: FieldProps) {
   const empty = value === undefined || value === null || value === ''
   return (
     <div className={cx('flex items-center gap-2.5', className)}>
@@ -25,7 +32,9 @@ export function Field({ label, value, placeholder, suffix, size = 'md', classNam
           size === 'sm' ? 'h-7 text-[0.75rem]' : 'h-8 text-[0.8125rem]',
         )}
       >
-        <span className={cx('min-w-0 flex-1 truncate', empty ? 'text-faint' : 'text-ink')}>
+        <span
+          className={cx('min-w-0 flex-1 truncate', empty ? 'text-faint' : 'text-ink')}
+        >
           {empty ? placeholder : value}
         </span>
         {suffix}

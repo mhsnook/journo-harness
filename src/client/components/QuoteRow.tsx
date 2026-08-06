@@ -14,7 +14,12 @@ export interface QuoteRowProps {
  * A saved quote, tagged with the section it belongs to. An em dash in place of
  * a section number means it is kept but not placed yet.
  */
-export function QuoteRow({ quote, showUsage = false, dimmed = false, className }: QuoteRowProps) {
+export function QuoteRow({
+  quote,
+  showUsage = false,
+  dimmed = false,
+  className,
+}: QuoteRowProps) {
   return (
     <div className={cx('flex items-start gap-2.5', dimmed && 'opacity-50', className)}>
       <Chip tone={quote.section ? 'default' : 'muted'} className="mt-px">

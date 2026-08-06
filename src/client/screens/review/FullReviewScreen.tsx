@@ -71,9 +71,9 @@ export function FullReviewScreen() {
           <div className="flex flex-col gap-1.5">
             <MetaLabel>The shape of it</MetaLabel>
             <p className="text-[0.8125rem] leading-relaxed text-muted">
-              The reporting is doing its job and the middle is the strongest it has been. The piece
-              is 210 words over target and the overrun is entirely in §3, which is also where the
-              plan says the argument should be tightest.
+              The reporting is doing its job and the middle is the strongest it has been.
+              The piece is 210 words over target and the overrun is entirely in §3, which
+              is also where the plan says the argument should be tightest.
             </p>
           </div>
 

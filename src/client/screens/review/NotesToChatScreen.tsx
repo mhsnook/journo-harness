@@ -31,9 +31,9 @@ export function NotesToChatScreen() {
           </ChatMessage>
 
           <ChatMessage from="agent">
-            Notes 1 and 2 are the same problem: §3 is doing §4's job. If §3 loses the throughput
-            quote and §4 absorbs the argument, the unused quotes stop being unused — one gets cut
-            for good. Want me to redo the outline that way?
+            Notes 1 and 2 are the same problem: §3 is doing §4's job. If §3 loses the
+            throughput quote and §4 absorbs the argument, the unused quotes stop being
+            unused — one gets cut for good. Want me to redo the outline that way?
           </ChatMessage>
 
           <ChatSuggestions>
@@ -62,7 +62,8 @@ export function NotesToChatScreen() {
               <div className="flex items-start gap-2.5 opacity-55">
                 <span className="text-[0.6875rem] text-faint">dropped</span>
                 <blockquote className="min-w-0 flex-1 border-l-2 border-rule pl-2.5 text-[0.75rem] leading-relaxed text-muted">
-                  “The meter runs on an empty lot exactly as fast as it runs on a finished one.”
+                  “The meter runs on an empty lot exactly as fast as it runs on a finished
+                  one.”
                   <span className="mt-0.5 block text-[0.6875rem] text-faint">
                     no longer needed in §3
                   </span>

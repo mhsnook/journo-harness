@@ -71,12 +71,15 @@ export const PaneToggle: Story = {
           open={open}
           onToggle={(pane) =>
             setOpen((current) =>
-              current.includes(pane) ? current.filter((p) => p !== pane) : [...current, pane],
+              current.includes(pane)
+                ? current.filter((p) => p !== pane)
+                : [...current, pane],
             )
           }
         />
         <p className="text-[0.8125rem] text-muted">
-          Open: {open.length ? open.join(' · ') : 'nothing — the app would keep the draft up'}
+          Open:{' '}
+          {open.length ? open.join(' · ') : 'nothing — the app would keep the draft up'}
         </p>
       </div>
     )
@@ -94,7 +97,11 @@ export const Progress: Story = {
       </Row>
       <Row label="Length bar — the shape of the piece">
         <LengthBar
-          segments={outline.map((s) => ({ label: s.title, words: s.words, state: s.state }))}
+          segments={outline.map((s) => ({
+            label: s.title,
+            words: s.words,
+            state: s.state,
+          }))}
           height={160}
           accentCurrent
         />

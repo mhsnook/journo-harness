@@ -16,7 +16,13 @@ export interface FrameProps {
  * border, the single elevation used in the whole system, and clips its
  * children so panes can run edge to edge.
  */
-export function Frame({ width = 720, minHeight, children, className, style }: FrameProps) {
+export function Frame({
+  width = 720,
+  minHeight,
+  children,
+  className,
+  style,
+}: FrameProps) {
   return (
     <div
       className={cx(
@@ -41,7 +47,10 @@ export interface FrameBodyProps {
 /** The area under the title bar. `row` turns it into the horizontal pane rail. */
 export function FrameBody({ children, row = false, className, style }: FrameBodyProps) {
   return (
-    <div className={cx('flex min-h-0 flex-1', row ? 'flex-row' : 'flex-col', className)} style={style}>
+    <div
+      className={cx('flex min-h-0 flex-1', row ? 'flex-row' : 'flex-col', className)}
+      style={style}
+    >
       {children}
     </div>
   )
