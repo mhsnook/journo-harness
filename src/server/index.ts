@@ -4,6 +4,7 @@
 
 import { routeAgentRequest } from 'agents'
 import { Hono } from 'hono'
+
 import { ArticleAgent } from './article-agent'
 
 // Re-exported so the Durable Object class ships with the Worker bundle.

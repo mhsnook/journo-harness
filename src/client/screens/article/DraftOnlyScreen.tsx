@@ -1,7 +1,7 @@
 import { ArticleBar } from '../../components/ArticleBar'
+import { NoteDot } from '../../components/CoachNote'
 import { DraftSurface } from '../../components/DraftSurface'
 import { Frame, FrameBody } from '../../components/Frame'
-import { NoteDot } from '../../components/CoachNote'
 import { ARTICLE_TITLE, draftParagraphs } from '../../mock/content'
 
 /**

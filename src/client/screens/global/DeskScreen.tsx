@@ -1,8 +1,8 @@
 import { ArticleCard } from '../../components/ArticleCard'
 import { Button } from '../../components/Button'
+import { SectionHeading } from '../../components/Divider'
 import { Frame, FrameBody } from '../../components/Frame'
 import { ListRow } from '../../components/ListRow'
-import { SectionHeading } from '../../components/Divider'
 import { TitleBar } from '../../components/TitleBar'
 import { activeArticles, olderDrafts, publishedArticles } from '../../mock/content'
 

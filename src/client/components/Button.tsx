@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
+
 import { cx } from '../lib/cx'
 
 export type ButtonTone = 'default' | 'accent' | 'quiet' | 'link'
@@ -42,7 +43,7 @@ export function Button({
     <button
       type={type}
       className={cx(
-        'inline-flex shrink-0 items-center justify-center whitespace-nowrap font-medium transition-[background-color,border-color,color,filter]',
+        'inline-flex shrink-0 items-center justify-center font-medium whitespace-nowrap transition-[background-color,border-color,color,filter]',
         tone === 'link' ? 'h-auto text-[0.8125rem]' : sizeClass[size],
         toneClass[tone],
         className,

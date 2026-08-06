@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
+
 import { cx } from '../lib/cx'
 
 export type ChipTone = 'default' | 'accent' | 'outline' | 'muted' | 'solid'
@@ -39,7 +40,7 @@ export function Chip({
     <Tag
       {...(interactive ? { type: 'button' as const } : {})}
       className={cx(
-        'inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border px-2 py-[0.1875rem] text-[0.6875rem] leading-none font-medium',
+        'inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-[0.1875rem] text-[0.6875rem] leading-none font-medium whitespace-nowrap',
         toneClass[tone],
         dimmed && 'opacity-45',
         interactive && 'transition-colors hover:border-ink/30 hover:text-ink',

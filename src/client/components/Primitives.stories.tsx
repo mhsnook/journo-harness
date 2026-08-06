@@ -1,18 +1,19 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
+
+import { outline, quotes, sources } from '../mock/content'
 import { Button } from './Button'
 import { Check } from './Check'
 import { Chip } from './Chip'
 import { CoachNote, NoteDot } from './CoachNote'
+import { ExampleBlock, PolarityHeading } from './ExampleBlock'
 import { EmptySlot, Field } from './Field'
 import { LengthBar } from './LengthBar'
+import { OutlineRow } from './OutlineRow'
 import { PaneRail, type PaneId } from './PaneRail'
 import { ProgressBar } from './ProgressBar'
 import { QuoteRow } from './QuoteRow'
 import { SourceCard } from './SourceCard'
-import { ExampleBlock, PolarityHeading } from './ExampleBlock'
-import { OutlineRow } from './OutlineRow'
-import { outline, quotes, sources } from '../mock/content'
 
 const meta = {
   title: 'Primitives/Overview',

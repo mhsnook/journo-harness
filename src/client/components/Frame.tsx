@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react'
+
 import { cx } from '../lib/cx'
 
 export interface FrameProps {

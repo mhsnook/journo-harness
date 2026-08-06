@@ -1,6 +1,6 @@
 import { cx } from '../lib/cx'
-import { Chip } from './Chip'
 import type { OutlineSection } from '../mock/content'
+import { Chip } from './Chip'
 
 export interface OutlineRowProps {
   section: OutlineSection

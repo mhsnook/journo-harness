@@ -8,7 +8,7 @@ The writer writes the prose and an AI acts as a guide. The architecture is in
 
 ## Running it
 
-Node 22 and pnpm 11. One package, no workspace.
+Node 22 and pnpm 11.
 
 ```sh
 pnpm install
@@ -23,14 +23,6 @@ pnpm format     # oxfmt, in place. `pnpm format:check` reports instead
 `pnpm dev` runs the Worker in workerd through the Cloudflare Vite plugin, so the bindings
 behave as they do in production. Storybook loads the same Vite config without the Worker or
 the router, so a story renders components alone.
-
-`pnpm install` writes `worker-configuration.d.ts` from the bindings in `wrangler.jsonc`. It
-is generated, so it is not committed, and `pnpm typecheck` calls `wrangler types --check`
-first to catch a config change that nobody regenerated.
-
-oxfmt is set to the style the code already used: no semicolons, single quotes, two spaces,
-and a 90-column width. Import sorting and Tailwind class sorting are both available and
-both off — turn either on in `.oxfmtrc.json` if you want it.
 
 ### Calling a model locally
 

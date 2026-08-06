@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
+
 import { Annotation } from '../../components/Annotation'
 import { ChatAndDraftScreen } from './ChatAndDraftScreen'
 import { DraftOnlyScreen } from './DraftOnlyScreen'

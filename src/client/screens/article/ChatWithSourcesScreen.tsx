@@ -1,8 +1,8 @@
 import { ArticleBar } from '../../components/ArticleBar'
 import { ChatComposer, ChatMessage } from '../../components/Chat'
+import { SectionHeading } from '../../components/Divider'
 import { Frame, FrameBody } from '../../components/Frame'
 import { Pane } from '../../components/Pane'
-import { SectionHeading } from '../../components/Divider'
 import { SourceCard } from '../../components/SourceCard'
 import { ARTICLE_TITLE, sources } from '../../mock/content'
 

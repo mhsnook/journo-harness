@@ -1,7 +1,7 @@
 import { cx } from '../lib/cx'
+import type { Article } from '../mock/content'
 import { Chip } from './Chip'
 import { ProgressBar } from './ProgressBar'
-import type { Article } from '../mock/content'
 
 export interface ArticleCardProps {
   article: Article

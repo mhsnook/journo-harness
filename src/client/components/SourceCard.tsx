@@ -1,8 +1,8 @@
 import { cx } from '../lib/cx'
+import type { Source } from '../mock/content'
 import { Button } from './Button'
 import { Check } from './Check'
 import { Chip } from './Chip'
-import type { Source } from '../mock/content'
 
 export interface SourceCardProps {
   source: Source

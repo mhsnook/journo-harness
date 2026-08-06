@@ -1,8 +1,8 @@
+import { ArticleBar } from '../../components/ArticleBar'
 import { ChatComposer, ChatMessage } from '../../components/Chat'
 import { EmptySlot } from '../../components/Field'
 import { Frame, FrameBody } from '../../components/Frame'
 import { Pane } from '../../components/Pane'
-import { ArticleBar } from '../../components/ArticleBar'
 import { ARTICLE_TITLE } from '../../mock/content'
 import { PlanBlock, PlanLength } from './PlanBlocks'
 

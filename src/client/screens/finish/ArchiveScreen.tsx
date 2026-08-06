@@ -1,8 +1,8 @@
 import { Button } from '../../components/Button'
+import { SectionHeading } from '../../components/Divider'
 import { Field } from '../../components/Field'
 import { Frame, FrameBody } from '../../components/Frame'
 import { MetaLabel } from '../../components/MetaLabel'
-import { SectionHeading } from '../../components/Divider'
 import { TitleBar } from '../../components/TitleBar'
 import { publishedArticles } from '../../mock/content'
 
