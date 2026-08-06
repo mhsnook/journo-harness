@@ -3,9 +3,6 @@ import type { OutlineNode, Plan } from './schema'
 /**
  * Word-count arithmetic. The total is stored and nothing derives it, so the
  * parts are allowed to disagree with the whole and the gap is information.
- *
- * Nothing here distributes a remainder across untargeted nodes — that invents
- * decisions the writer did not make.
  */
 
 /**

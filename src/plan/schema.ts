@@ -7,8 +7,6 @@ import { z } from 'zod'
  * docs/adr/0002-the-plan-data-model.md.
  */
 
-// A stable id that never changes. Proposals anchor on it, and phase 2 projects
-// the blob into rows by it.
 const id = z.string().min(1)
 
 // An absent Voice is how a Scope says "nothing here". The empty string is not a
@@ -16,8 +14,8 @@ const id = z.string().min(1)
 const voice = z.string().min(1)
 const adjective = z.string().min(1)
 
-// Objects are strict: the blob has one writer, so an unknown key is a client
-// bug rather than a forward-compatible extension.
+// The blob is only written by the client, so an unknown key is a client bug
+// rather than a forward-compatible extension — hence strictObject throughout.
 
 /** The attribution inside a Reference. Every field is optional on its own,
  * because a book has no url and a leaked memo has no author, and at least one
@@ -77,8 +75,7 @@ export const outlineNodeSchema = z.strictObject({
 	target: z.number().int().positive().optional(),
 	voice: voice.optional(),
 	adjectives: z.array(adjective).optional(),
-	// The getter is zod 4's own way to spell recursion, and it infers the
-	// recursive type. `z.lazy` is the v3 form and needs the type by hand.
+	// zod 4 recursive schema
 	get children() {
 		return z.array(outlineNodeSchema)
 	},
@@ -118,11 +115,8 @@ export function emptyPlan(title = ''): Plan {
 }
 
 /**
- * Uniqueness and referential integrity, which the object shape cannot state.
- *
- * The nodeId check is the one with teeth: an op that deletes a node must
- * unplace its References in the same Proposal, because the Plan is written
- * whole and validated whole.
+ * Uniqueness and referential integrity, which the object shape cannot state. A
+ * Proposal that deletes a node must also unplace its References.
  */
 function checkIds(plan: Plan, ctx: z.RefinementCtx) {
 	const nodeIds = new Set<string>()

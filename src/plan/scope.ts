@@ -1,13 +1,8 @@
 import type { OutlineNode, Plan } from './schema'
 
 /**
- * Scope resolution, at read time and never stored resolved. A Voice replaces
- * and Adjectives compose, running House, then Article, then Outline node,
- * nearest last. A node's ancestors take part in that same order, so a
- * subsection under a somber middle is somber unless it says otherwise.
- *
- * The House terms default to empty, so 1b passes a value rather than changing
- * these signatures.
+ * One Voice active at a time, cascading with optional Outline-node overrides.
+ * Adjectives combine and compose.
  */
 
 /** What one Scope states. Every level has the same two fields. */
@@ -23,9 +18,8 @@ export type ResolvedScope = {
 	adjectives: string[]
 }
 
-/** Resolve a chain of Scopes given widest first. The last Voice wins outright;
- * the Adjectives accumulate in order, and a term repeated at two Scopes appears
- * once, at the widest Scope that states it. */
+/** Resolve a chain of Scopes given widest first. An Adjective stated at two
+ * Scopes appears once, at the widest that states it. */
 export function resolveScope(chain: readonly ScopeTerms[]): ResolvedScope {
 	let voice: string | null = null
 	const adjectives: string[] = []

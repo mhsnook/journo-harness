@@ -35,7 +35,7 @@ describe('the Plan schema', () => {
 		expect(planSchema.safeParse(plan).success).toBe(true)
 	})
 
-	it('rejects an unknown key, because the blob has one writer', () => {
+	it('rejects an unknown key, because only the client writes the blob', () => {
 		const plan = { ...emptyPlan(), resolvedVoice: 'reported feature' }
 
 		expect(planSchema.safeParse(plan).success).toBe(false)
