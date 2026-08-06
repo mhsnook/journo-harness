@@ -14,9 +14,8 @@ const id = z.string().min(1)
 const voice = z.string().min(1)
 const adjective = z.string().min(1)
 
-// strictObject throughout: an unknown key is a bug rather than a
-// forward-compatible extension, whether it comes from the client — the blob's
-// only writer — or from a model emitting a field the schema does not name.
+// strictObject throughout: only the client writes the Plan, so an unknown key
+// is a bug rather than a forward-compatible extension.
 
 /** The attribution inside a Reference. Every field is optional on its own,
  * because a book has no url and a leaked memo has no author, and at least one
