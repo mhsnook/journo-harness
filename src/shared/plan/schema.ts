@@ -1,10 +1,12 @@
 import { z } from 'zod'
 
 /**
- * The Plan: one JSON blob in Article Agent state. This schema serves both
- * `validateStateChange`, guarding client writes, and `generateObject`,
- * constraining what the Chat may propose. Rationale in
- * docs/adr/0002-the-plan-data-model.md.
+ * The Plan: one JSON blob in Article Agent state, parsed whole by
+ * `validateStateChange` on every write. Nothing the model emits goes through
+ * `planSchema` — the Chat proposes and the client applies. The piece schemas
+ * below are the ones a Proposal's op payloads reuse.
+ *
+ * Rationale in docs/adr/0002-the-plan-data-model.md.
  */
 
 const id = z.string().min(1)

@@ -3,9 +3,14 @@
 Status: accepted
 
 The Plan is 1a's whole artifact, held as one JSON blob in Article Agent state and replaced
-wholesale on every write. Its shape has to serve two callers at once — `validateStateChange`
-guarding client writes, and `generateObject` constraining what the Chat may propose — and
-it has to project into party-db rows at phase 2 without a rewrite.
+wholesale on every write. Its shape has to guard client writes through
+`validateStateChange`, give its **piece** schemas to the op payloads a Proposal carries, and
+project into party-db rows at phase 2 without a rewrite.
+
+**Amended:** this paragraph first said the schema serves `generateObject` as a second
+caller. It does not — the Chat proposes and the client applies, so nothing the model emits
+is ever parsed as a Plan. Corrected in `docs/architecture.md` §4 and recorded on #24, where
+the op payloads are built.
 
 ```
 plan: {

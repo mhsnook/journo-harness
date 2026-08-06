@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import type { OutlineNode } from '../../src/shared/plan'
 import {
 	emptyPlan,
 	planSchema,
@@ -73,6 +74,35 @@ describe('the Plan schema', () => {
 		const plan = makePlan({ outline: [makeNode({ id: '' })] })
 
 		expect(planSchema.safeParse(plan).success).toBe(false)
+	})
+
+	it('holds an Outline node to the same field rules as the Plan', () => {
+		const withNode = (fields: Partial<OutlineNode>) =>
+			planSchema.safeParse(makePlan({ outline: [makeNode({ id: 'n1', ...fields })] }))
+				.success
+
+		expect(withNode({ target: 0 })).toBe(false)
+		expect(withNode({ target: 120.5 })).toBe(false)
+		expect(withNode({ voice: '' })).toBe(false)
+		expect(withNode({ adjectives: [''] })).toBe(false)
+		expect(withNode({ intent: '' })).toBe(false)
+	})
+
+	it('rejects an invalid node however deep it sits', () => {
+		const plan = makePlan({
+			outline: [
+				makeNode({
+					id: 'n1',
+					children: [
+						makeNode({ id: 'n1a', children: [makeNode({ id: 'deep', target: -100 })] }),
+					],
+				}),
+			],
+		})
+		const result = planSchema.safeParse(plan)
+
+		expect(result.success).toBe(false)
+		expect(firstIssuePath(result)).toBe('outline.0.children.0.children.0.target')
 	})
 
 	it('rejects two Outline nodes carrying one id, however deep', () => {
@@ -150,6 +180,10 @@ describe('the Reference invariant', () => {
 	it('rejects a source with every field absent, which is neither by another route', () => {
 		expect(sourceSchema.safeParse({}).success).toBe(false)
 		expect(referenceSchema.safeParse({ ...base, source: {} }).success).toBe(false)
+	})
+
+	it('rejects a source url that is not a url', () => {
+		expect(sourceSchema.safeParse({ url: 'not a url' }).success).toBe(false)
 	})
 
 	it('rejects a Provenance that names an Offer without naming which', () => {
