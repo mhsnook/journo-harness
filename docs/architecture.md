@@ -365,6 +365,11 @@ Settings and known defects. None is a decision to make; all are things to get ri
   everything, and not survivable the moment that stops being true.
 - **An expired Access session answers with a redirect rather than a 1008 close**, so
   party-db's client reconnect-loops instead of firing `onAuthError`.
+- **`@callable` cannot be written as a decorator.** Vite 8 bundles through oxc, which
+  leaves a standard decorator in the output, and workerd's V8 does not implement one — so
+  the Worker fails to parse rather than failing a test. `src/server/article-agent.ts`
+  registers its callable methods by calling `callable()` on each one instead, which is the
+  same registration the decorator performs.
 - **An abandoned tool batch parks indefinitely.** Cloudflare's `ai-chat` enforces batch
   completeness server-side with **no orphan timeout**, so a Proposal the writer neither
   Accepts nor Declines stalls the conversation silently. Surface it in the UI.

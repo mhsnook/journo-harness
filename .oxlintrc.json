@@ -4,7 +4,11 @@
   "categories": {
     "correctness": "error"
   },
-  "rules": {},
+  "rules": {
+    // The Agents SDK spells a statement as a tagged template: `this.sql`
+    // runs the query and a caller that only writes discards the rows.
+    "no-unused-expressions": ["error", { "allowTaggedTemplates": true }]
+  },
   "env": {
     "builtin": true,
     "browser": true,
