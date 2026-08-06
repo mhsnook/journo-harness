@@ -5,11 +5,9 @@ import type { OutlineNode, Plan } from './schema'
  * Adjectives combine and compose.
  */
 
-/** What one Scope states. Every level has the same two fields. */
-export type ScopeTerms = {
-	voice?: string
-	adjectives?: string[]
-}
+/** What one Scope states. Taken from the Outline node so the House, the Article,
+ * and a node cannot drift apart as terms are added. */
+export type ScopeTerms = Pick<OutlineNode, 'voice' | 'adjectives'>
 
 /** What applies at a point in the Plan. The Voice is null when no Scope states
  * one, and the Adjectives run House first and nearest last. */
@@ -70,12 +68,4 @@ export function findNodePath(
 	}
 
 	return null
-}
-
-/** The node with that id, or null. */
-export function findNode(
-	outline: readonly OutlineNode[],
-	nodeId: string,
-): OutlineNode | null {
-	return findNodePath(outline, nodeId)?.at(-1) ?? null
 }

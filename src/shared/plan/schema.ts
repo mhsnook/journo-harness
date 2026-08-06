@@ -114,24 +114,26 @@ export function emptyPlan(title = ''): Plan {
 	}
 }
 
+type Path = (string | number)[]
+
 /**
  * Uniqueness and referential integrity, which the object shape cannot state. A
  * Proposal that deletes a node must also unplace its References.
  */
 function checkIds(plan: Plan, ctx: z.RefinementCtx) {
+	const claim = (seen: Set<string>, id: string, path: Path, noun: string) => {
+		if (seen.has(id)) {
+			ctx.addIssue({ code: 'custom', path, message: `Two ${noun} carry the id ${id}.` })
+		}
+		seen.add(id)
+	}
+
 	const nodeIds = new Set<string>()
 
-	const walk = (nodes: OutlineNode[], path: (string | number)[]) => {
+	const walk = (nodes: OutlineNode[], path: Path) => {
 		nodes.forEach((node, index) => {
 			const nodePath = [...path, index]
-			if (nodeIds.has(node.id)) {
-				ctx.addIssue({
-					code: 'custom',
-					path: [...nodePath, 'id'],
-					message: `Two Outline nodes carry the id ${node.id}.`,
-				})
-			}
-			nodeIds.add(node.id)
+			claim(nodeIds, node.id, [...nodePath, 'id'], 'Outline nodes')
 			walk(node.children, [...nodePath, 'children'])
 		})
 	}
@@ -139,14 +141,7 @@ function checkIds(plan: Plan, ctx: z.RefinementCtx) {
 
 	const referenceIds = new Set<string>()
 	plan.references.forEach((reference, index) => {
-		if (referenceIds.has(reference.id)) {
-			ctx.addIssue({
-				code: 'custom',
-				path: ['references', index, 'id'],
-				message: `Two References carry the id ${reference.id}.`,
-			})
-		}
-		referenceIds.add(reference.id)
+		claim(referenceIds, reference.id, ['references', index, 'id'], 'References')
 
 		if (reference.nodeId !== null && !nodeIds.has(reference.nodeId)) {
 			ctx.addIssue({

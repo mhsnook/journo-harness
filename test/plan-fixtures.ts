@@ -12,12 +12,8 @@ export function makeNode(node: Partial<OutlineNode> & { id: string }): OutlineNo
 	return { title: `Node ${node.id}`, children: [], ...node }
 }
 
-/** A Reference the writer wrote themselves, unplaced. */
+/** A Reference the writer wrote themselves, unplaced. It carries neither a text
+ * nor a source, so a test states whichever the invariant it is about needs. */
 export function makeReference(reference: Partial<Reference> & { id: string }): Reference {
-	return {
-		provenance: { kind: 'writer' },
-		text: 'A passage worth keeping.',
-		nodeId: null,
-		...reference,
-	}
+	return { provenance: { kind: 'writer' }, nodeId: null, ...reference }
 }

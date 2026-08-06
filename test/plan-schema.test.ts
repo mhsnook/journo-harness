@@ -4,10 +4,7 @@ import { emptyPlan, planSchema, referenceSchema, sourceSchema } from '../src/sha
 import { makeNode, makePlan, makeReference } from './plan-fixtures'
 
 /** The path of the first issue, joined — what the UI would point at. */
-function firstIssuePath(result: {
-	success: boolean
-	error?: { issues: { path: PropertyKey[] }[] }
-}) {
+function firstIssuePath(result: ReturnType<typeof planSchema.safeParse>) {
 	return result.error?.issues[0]?.path.join('.')
 }
 
@@ -29,7 +26,7 @@ describe('the Plan schema', () => {
 				}),
 				makeNode({ id: 'n2' }),
 			],
-			references: [makeReference({ id: 'r1', nodeId: 'n1a' })],
+			references: [makeReference({ id: 'r1', nodeId: 'n1a', text: 'A pulled passage.' })],
 		})
 
 		expect(planSchema.safeParse(plan).success).toBe(true)
@@ -88,7 +85,10 @@ describe('the Plan schema', () => {
 
 	it('rejects two References carrying one id', () => {
 		const plan = makePlan({
-			references: [makeReference({ id: 'r1' }), makeReference({ id: 'r1' })],
+			references: [
+				makeReference({ id: 'r1', text: 'One' }),
+				makeReference({ id: 'r1', text: 'Another' }),
+			],
 		})
 		const result = planSchema.safeParse(plan)
 
@@ -99,7 +99,9 @@ describe('the Plan schema', () => {
 	it('rejects a Reference placed at an Outline node that is not there', () => {
 		const plan = makePlan({
 			outline: [makeNode({ id: 'n1' })],
-			references: [makeReference({ id: 'r1', nodeId: 'gone' })],
+			references: [
+				makeReference({ id: 'r1', nodeId: 'gone', text: 'A pulled passage.' }),
+			],
 		})
 		const result = planSchema.safeParse(plan)
 
@@ -109,7 +111,7 @@ describe('the Plan schema', () => {
 })
 
 describe('the Reference invariant', () => {
-	const base = { id: 'r1', provenance: { kind: 'writer' as const }, nodeId: null }
+	const base = makeReference({ id: 'r1' })
 
 	it('accepts a Reference carrying only a text — which is a Quote', () => {
 		const result = referenceSchema.safeParse({ ...base, text: 'They knew by March.' })

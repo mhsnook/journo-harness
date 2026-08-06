@@ -16,6 +16,18 @@ describe('word-count arithmetic', () => {
 		})
 	})
 
+	it('reports the whole total as unallocated when the Outline is empty', () => {
+		const plan = makePlan({ totalTarget: 2000 })
+
+		expect(planAllocation(plan)).toEqual({
+			total: 2000,
+			allocated: 0,
+			untargeted: 0,
+			gap: 2000,
+			status: 'unallocated',
+		})
+	})
+
 	it('reports the whole total as unallocated when no node carries a target', () => {
 		const plan = makePlan({ totalTarget: 2000, outline: [makeNode({ id: 'n1' })] })
 

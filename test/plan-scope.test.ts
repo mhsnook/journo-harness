@@ -1,12 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import type { ScopeTerms } from '../src/shared/plan'
-import {
-	findNode,
-	resolveArticleScope,
-	resolveNodeScope,
-	resolveScope,
-} from '../src/shared/plan'
+import { resolveArticleScope, resolveNodeScope, resolveScope } from '../src/shared/plan'
 import { makeNode, makePlan } from './plan-fixtures'
 
 const house: ScopeTerms = {
@@ -109,11 +104,5 @@ describe('the Scope resolver', () => {
 		resolveNodeScope(plan, 'n1a', house)
 
 		expect(plan).toEqual(before)
-		expect(findNode(plan.outline, 'n1a')).toEqual({
-			id: 'n1a',
-			title: 'Node n1a',
-			adjectives: ['high energy'],
-			children: [],
-		})
 	})
 })
