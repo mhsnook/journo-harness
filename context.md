@@ -54,8 +54,8 @@ _Avoid_: conversation, thread
 
 **Plan**:
 The structured plan for one Article — its Outline nodes, its Tone decisions, its
-word-count targets, its references, and its quotes. It is what the Chat and the writer
-co-construct, and it plays the role a plan plays in an agentic coding tool.
+word-count targets, and the References and Quotes the writer has Accepted. It is what the
+Chat and the writer co-construct, and it plays the role a plan plays in an agentic coding tool.
 _Avoid_: **brief** (see below), outline (the Outline is one part of the Plan), context
 stash, spec
 
@@ -86,9 +86,60 @@ Outline node. Some terms come from the Lexicon and some are free-form.
 _Avoid_: style, voice setting, tone tag
 
 **Scope**:
-Which level a Tone decision, a reference, or a quote is attached to — House, Article, or
+Which level a Tone decision, a Reference, or a Quote is attached to — House, Article, or
 Outline node. A narrower Scope overrides a wider one.
 _Avoid_: level, tier, inheritance chain
+
+## Offers and the Ledger
+
+**Offer**:
+Something the Chat turns up and hands to the writer to rule on. Two Kinds so far,
+References and Quotes, and Offers stay flat — two Quotes from one publication are two
+Offers, not a Quote nested in something else.
+_Avoid_: offering, result, finding, suggestion, candidate, card
+
+**Reference**:
+A Kind of Offer — a piece of research, with a title, an author or a publication, and a
+year.
+_Avoid_: source, citation, link, cite
+
+**Quote**:
+A Kind of Offer — a passage the writer may use.
+_Avoid_: excerpt, passage, snippet, pull quote
+
+**Ledger**:
+The View of an Article's Offers and what the writer decided about each — a query over
+Offers, not a store of its own.
+_Avoid_: inbox, tray, queue, history
+
+**Undecided**:
+The disposition of an Offer the writer has not ruled on. The starting state.
+_Avoid_: pending, new, unread
+
+**Accepted**:
+The disposition of an Offer the writer has taken into the Plan.
+_Avoid_: kept, approved, selected, promoted
+
+**Declined**:
+The disposition of an Offer the writer has ruled out. Restorable — nothing is deleted.
+_Avoid_: cut (the writer cuts their own prose), rejected, dismissed (a Guidance note is
+dismissed), discarded
+
+**Provenance**:
+Where a record came from. An Accepted Offer is **copied** into the Plan as a new,
+editable record that keeps its Provenance — so the Plan's copy is the writer's to change,
+and the Offer keeps what was actually turned up. A Lexicon entry carries Provenance the
+same way.
+_Avoid_: back-ref, origin, source, lineage
+
+**Ready**:
+Describes an Accepted Offer the writer has placed in a Section but not yet worked into
+the Draft.
+_Avoid_: pending, staged, assigned
+
+**Used**:
+Describes an Accepted Offer that appears in the Draft.
+_Avoid_: applied, written, done
 
 ## Inside the Draft
 
@@ -123,9 +174,10 @@ and a body of one or two sentences. The unit that fills the Notes Layer.
 _Avoid_: finding, suggestion, comment, tip, feedback
 
 **Kind**:
-What a Guidance note is about — structure, voice, citations, repetition, budget, tone
-drift, pacing, plan divergence. Illustrative rather than a fixed taxonomy, and the
-Notes Pane groups by it.
+What sort of thing a record is. For a Guidance note: structure, voice, citations,
+repetition, budget, tone drift, pacing, plan divergence — illustrative rather than a
+fixed taxonomy, and the Notes Pane groups by it. For an Offer: Reference, Quote, and
+whatever comes later.
 _Avoid_: category, type, tag, label
 
 **Review**:
@@ -146,9 +198,11 @@ notes like any other.
 _Avoid_: command, macro, prompt, action
 
 **Proposal**:
-A change to the Plan that the Chat offers and the writer accepts or rejects. The Chat
-never writes to the Plan itself.
-_Avoid_: suggestion, edit, tool call, patch
+A change to the Plan that the Chat offers and the writer Accepts or Declines. The writer
+rules on it the same way they rule on an Offer, but it is not one: a Proposal lives in
+the Chat turn that made it, goes Stale, and leaves no record, where an Offer is a row that
+keeps its disposition until the writer changes it.
+_Avoid_: suggestion, offer, edit, tool call, patch
 
 **Stale**:
 Describes a Proposal whose target text has changed since the Proposal was generated. A
@@ -162,8 +216,16 @@ Guide's context whenever the term is invoked.
 ## Homes and lifecycle
 
 **Article Agent**:
-The Durable Object that hosts one Article — its Chat, its Plan, and its Notes.
+The Durable Object that hosts one Article — its Chat, its Plan, its Notes, and its Offers.
+Always name it in full: an unqualified "agent" could be this object, the Guide, or the
+Chat.
 _Avoid_: room, agent (unqualified), DO
+
+**Article Agent state**:
+The one whole-blob record the Article Agent replaces on every write, holding the Plan.
+The Article Agent's other material — Notes, Rounds, and Offers — is in its SQLite
+tables instead, because a whole-blob store can only have one owner.
+_Avoid_: agent state (unqualified), the blob, the document
 
 **Done**:
 Describes an Article the writer has finished writing. Independent of Archived — a Done
