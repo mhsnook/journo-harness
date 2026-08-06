@@ -1,0 +1,69 @@
+name: CI
+
+# Pull requests, and main itself, so a merge that breaks something is caught
+# even when nothing else runs against it that day.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# A newer push to the same branch makes the run in flight pointless.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Wrangler runs twice here — `wrangler types` on install, and `--check` in the
+  # typecheck — and neither needs to phone home.
+  WRANGLER_SEND_METRICS: false
+
+jobs:
+  checks:
+    name: Lint, typecheck, and test
+    runs-on: ubuntu-latest
+    # One job rather than four: installing takes longer than all four checks
+    # together, and four jobs would install four times.
+    steps:
+      - uses: actions/checkout@v5
+
+      # Reads the pnpm version from packageManager in package.json. It must come
+      # before setup-node, which needs the pnpm binary to find the store to cache.
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # postinstall runs `wrangler types`, which writes the gitignored
+      # worker-configuration.d.ts that the typecheck and the Worker tests read.
+      # Nothing here logs in to Cloudflare: `wrangler types` reads wrangler.jsonc
+      # and nothing else.
+      - name: Install
+        id: install
+        run: pnpm install --frozen-lockfile
+
+      # Each check runs even after an earlier one failed, so one run reports
+      # everything that is wrong rather than the first thing. They stay skipped
+      # when the install fails, because then all four fail for that one reason.
+      - name: Lint
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: pnpm lint
+
+      - name: Check formatting
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: pnpm format:check
+
+      - name: Typecheck
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: pnpm typecheck
+
+      # `pnpm test` builds the client first, because the Worker serves it through
+      # the ASSETS binding and the smoke tests fetch it. The AI binding is the
+      # only remote one and no test calls a model, so this needs no API token.
+      - name: Test
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: pnpm test
