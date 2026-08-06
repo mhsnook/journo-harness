@@ -16,6 +16,33 @@ plan: {
 }
 ```
 
+## Why a blob at all, now that the Plan is this structured
+
+#13 put the Plan in Article Agent state on the grounds that 1a would then need no second
+store. **That argument has expired** — Offers arrive in 1a as SQLite rows, so the Article
+Agent already has both.
+
+The argument that replaces it: **the blob is the reactive store and the tables are the
+on-demand store.** Rows in a Durable Object's SQLite have no sync, and `@callable` RPC is
+request and response, so nothing tells a client that a row changed. That suits Notes,
+Rounds, and Offers, which are read when the writer opens a Panel. It does not suit the Plan,
+which is on screen continuously and edited constantly — holding it in rows means
+hand-writing the broadcast, the client cache, and the invalidation. `setState` gives all
+three, plus optimistic local echo and a single schema-check point in `validateStateChange`.
+Two smaller things follow the same way: every context pack sends the whole Plan to the
+model, so a blob is already the payload shape, and a multi-op Proposal applies as one
+`setState` rather than a transaction plus a hand-written broadcast.
+
+**If this is revisited, the alternative is not raw rows.** It is composing party-db into the
+Article Agent, which #18 proved works — reactive rows without reopening #13's grain, since
+the collections would live in the per-Article object rather than a new one. That costs about
+120 lines of forked party-db glue and makes the client discriminate frames on the
+multiplexed socket. Below the size ceiling the blob is less work; above it, it is not.
+
+**The migration is bounded but not free.** The decisions below buy it: stable IDs
+everywhere, parents by containment, References already row-shaped and carrying Provenance.
+What they do not buy is the read sites — every `plan.outline.map(…)` becomes a query.
+
 ## The Outline is a nested tree, ordered by array position
 
 Nesting is the natural shape for a JSON blob and for a model emitting structured output,
