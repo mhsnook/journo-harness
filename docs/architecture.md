@@ -55,7 +55,7 @@ rather than synced. D1 also carries the backup story, because a Durable Object's
 no export path and D1 has `wrangler d1 export`.
 
 **Three source roots**: `src/client`, `src/server`, and `src/shared` for the modules both
-sides import — the Plan schema and, next, the Proposal applier. Nothing in `src/shared`
+sides import — the Plan schema, the Proposal ops, and the applier. Nothing in `src/shared`
 touches a Worker binding or React, and each tsconfig lists the root once rather than
 naming each domain.
 
@@ -181,7 +181,7 @@ A list of ops, applied all-or-nothing.
 
 ```
 proposal: [
-  { op: 'createNode', parentId, beforeId, node: { id, title, intent } },
+  { op: 'createNode', parentId, beforeId, node: { id, title, intent, children: [] } },
   { op: 'setTarget',  nodeId, expected: null, value: 400 },
 ]
 ```
@@ -195,6 +195,32 @@ proposal: [
 - **If any op's `expected` fails, the whole Proposal is Stale.** The UI must say why rather
   than greying it out — whole-field comparison is conservative and will refuse a Proposal
   against a field the writer has since touched.
+
+**Ten ops**, in `src/shared/plan/ops.ts`: `createNode`, `moveNode`, `mergeNodes`,
+`deleteNode`, `setTitle`, `setIntent`, `setTarget`, `setVoice`, `setAdjectives`,
+`placeReference`. A content op reads `nodeId: null` as the Article Scope, so setting the
+Article's Voice and setting one node's Voice are one op rather than two. Two ops carry a
+consequence worth stating: **`deleteNode` unplaces every Reference that sat in the subtree it
+removes**, because the Plan is written whole and a Reference naming a node that is gone does
+not parse; and **`mergeNodes` keeps the target's own fields**, moving the source's children
+and placed References onto it, so a Proposal that wants the source's intent note carried over
+says so with a `setIntent` op in the same batch.
+
+**The applier refuses with a reason**, in `src/shared/plan/apply.ts`. `applyProposal` returns
+either a new Plan or a refusal naming which op failed, its position in the Proposal, and what
+it expected against what it found. Four kinds: `malformed` (outside the vocabulary), `missing`
+(an anchor that is gone), `stale` (an `expected` that no longer matches), and `invalid` (the
+ops resolve, but the result would not be a Plan). It parses the Plan it produces, so a
+Proposal the Article Agent would reject is refused here, where there is a reason to show,
+rather than there, where there is none.
+
+**The op payloads are strict, and a rejected tool call retries with the validation error.**
+The piece schemas the payloads reuse are `strictObject`, so a model that adds one field fails
+the whole tool call rather than having the field stripped. Stripping would produce a Proposal
+the model did not make and the writer would rule on it without seeing what was dropped. The
+cost is real: a model that adds the same field every time thrashes the retry instead of
+converging, and the answer to that is naming the field in the schema, not loosening every
+payload to strip.
 
 **Staleness is not a multi-client problem.** It comes from the gap between generating a
 Proposal and applying it, and inference is slower than typing, so it exists with one writer

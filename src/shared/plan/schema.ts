@@ -9,12 +9,16 @@ import { z } from 'zod'
  * Rationale in docs/adr/0002-the-plan-data-model.md.
  */
 
-const id = z.string().min(1)
+// The field rules, stated once. A Proposal's op payloads set the same fields
+// through ops.ts, so restating `.min(1)` there is drift waiting to happen.
+export const idSchema = z.string().min(1)
 
 // An absent Voice is how a Scope says "nothing here". The empty string is not a
-// second way to say it.
-const voice = z.string().min(1)
-const adjective = z.string().min(1)
+// second way to say it. An absent intent note says the same.
+export const voiceSchema = z.string().min(1)
+export const adjectiveSchema = z.string().min(1)
+export const intentSchema = z.string().min(1)
+export const targetSchema = z.number().int().positive()
 
 // strictObject throughout: only the client writes the Plan, so an unknown key
 // is a bug rather than a forward-compatible extension.
@@ -39,7 +43,7 @@ export const sourceSchema = z
 export const provenanceSchema = z
 	.strictObject({
 		kind: z.enum(['writer', 'offer']),
-		offerId: id.optional(),
+		offerId: idSchema.optional(),
 	})
 	.refine(
 		(provenance) => (provenance.kind === 'offer') === (provenance.offerId !== undefined),
@@ -54,11 +58,11 @@ export const provenanceSchema = z
  * node. */
 export const referenceSchema = z
 	.strictObject({
-		id,
+		id: idSchema,
 		provenance: provenanceSchema,
 		text: z.string().min(1).optional(),
 		source: sourceSchema.optional(),
-		nodeId: id.nullable(),
+		nodeId: idSchema.nullable(),
 		note: z.string().min(1).optional(),
 	})
 	.refine((reference) => reference.text !== undefined || reference.source !== undefined, {
@@ -71,12 +75,12 @@ export const referenceSchema = z
  *
  * `title` may be empty: the writer creates a node and then types into it. */
 export const outlineNodeSchema = z.strictObject({
-	id,
+	id: idSchema,
 	title: z.string(),
-	intent: z.string().min(1).optional(),
-	target: z.number().int().positive().optional(),
-	voice: voice.optional(),
-	adjectives: z.array(adjective).optional(),
+	intent: intentSchema.optional(),
+	target: targetSchema.optional(),
+	voice: voiceSchema.optional(),
+	adjectives: z.array(adjectiveSchema).optional(),
 	// zod 4 recursive schema
 	get children() {
 		return z.array(outlineNodeSchema)
@@ -89,9 +93,9 @@ const planObjectSchema = z.strictObject({
 	title: z.string(),
 	// Null until the writer states a total. The total is stored and nothing
 	// derives it — see word-count.ts for why the parts may disagree with it.
-	totalTarget: z.number().int().positive().nullable(),
-	voice: voice.optional(),
-	adjectives: z.array(adjective),
+	totalTarget: targetSchema.nullable(),
+	voice: voiceSchema.optional(),
+	adjectives: z.array(adjectiveSchema),
 	outline: z.array(outlineNodeSchema),
 	references: z.array(referenceSchema),
 })
