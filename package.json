@@ -12,6 +12,7 @@
     "preview": "vite preview",
     "deploy": "vite build && wrangler deploy",
     "test": "vite build && vitest run",
+    "test:shared": "vitest run --project shared",
     "test:watch": "vitest",
     "typecheck": "wrangler types --check && tsc --build",
     "lint": "oxlint .",

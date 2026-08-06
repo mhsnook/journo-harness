@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { nodeAllocation, planAllocation } from '../src/shared/plan'
+import { nodeAllocation, planAllocation } from '../../src/shared/plan'
 import { makeNode, makePlan } from './plan-fixtures'
 
 describe('word-count arithmetic', () => {

@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
-import { emptyPlan, planSchema, referenceSchema, sourceSchema } from '../src/shared/plan'
+import {
+	emptyPlan,
+	planSchema,
+	referenceSchema,
+	sourceSchema,
+} from '../../src/shared/plan'
 import { makeNode, makePlan, makeReference } from './plan-fixtures'
 
 /** The path of the first issue, joined — what the UI would point at. */

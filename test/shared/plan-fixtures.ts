@@ -1,5 +1,5 @@
-import type { OutlineNode, Plan, Reference } from '../src/shared/plan'
-import { emptyPlan } from '../src/shared/plan'
+import type { OutlineNode, Plan, Reference } from '../../src/shared/plan'
+import { emptyPlan } from '../../src/shared/plan'
 
 /** A Plan with the fields a test does not care about already filled in. */
 export function makePlan(overrides: Partial<Plan> = {}): Plan {

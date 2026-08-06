@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
-import type { ScopeTerms } from '../src/shared/plan'
-import { resolveArticleScope, resolveNodeScope, resolveScope } from '../src/shared/plan'
+import type { ScopeTerms } from '../../src/shared/plan'
+import {
+	resolveArticleScope,
+	resolveNodeScope,
+	resolveScope,
+} from '../../src/shared/plan'
 import { makeNode, makePlan } from './plan-fixtures'
 
 const house: ScopeTerms = {
