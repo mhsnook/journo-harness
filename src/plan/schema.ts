@@ -1,26 +1,23 @@
 import { z } from 'zod'
 
 /**
- * The Plan is 1a's whole artifact: one JSON blob in Article Agent state,
- * replaced wholesale on every write. One schema serves two callers —
- * `validateStateChange` guarding client writes, and `generateObject`
- * constraining what the Chat may propose.
- *
- * Shape and rationale: docs/adr/0002-the-plan-data-model.md.
+ * The Plan: one JSON blob in Article Agent state. This schema serves both
+ * `validateStateChange`, guarding client writes, and `generateObject`,
+ * constraining what the Chat may propose. Rationale in
+ * docs/adr/0002-the-plan-data-model.md.
  */
 
-// Every record carries a stable id that never changes. A Proposal anchors on
-// it, and the phase 2 move into rows is then a projection of the blob rather
-// than a rewrite of every pointer in it.
+// A stable id that never changes. Proposals anchor on it, and phase 2 projects
+// the blob into rows by it.
 const id = z.string().min(1)
 
-// A Voice is the register the writing is in. An absent Voice is how a Scope
-// says "nothing here"; the empty string is not a second way to say it.
+// An absent Voice is how a Scope says "nothing here". The empty string is not a
+// second way to say it.
 const voice = z.string().min(1)
 const adjective = z.string().min(1)
 
-// Objects are strict. The blob has one owner and one writer, so an unknown key
-// is a client bug rather than a forward-compatible extension.
+// Objects are strict: the blob has one writer, so an unknown key is a client
+// bug rather than a forward-compatible extension.
 
 /** The attribution inside a Reference. Every field is optional on its own,
  * because a book has no url and a leaked memo has no author, and at least one
@@ -80,6 +77,8 @@ export const outlineNodeSchema = z.strictObject({
 	target: z.number().int().positive().optional(),
 	voice: voice.optional(),
 	adjectives: z.array(adjective).optional(),
+	// The getter is zod 4's own way to spell recursion, and it infers the
+	// recursive type. `z.lazy` is the v3 form and needs the type by hand.
 	get children() {
 		return z.array(outlineNodeSchema)
 	},
@@ -119,13 +118,11 @@ export function emptyPlan(title = ''): Plan {
 }
 
 /**
- * Three invariants the object shape cannot state on its own: an Outline node id
- * is unique among Outline nodes, a Reference id is unique among References, and
- * a placed Reference names a node that exists.
+ * Uniqueness and referential integrity, which the object shape cannot state.
  *
- * The last one is what stops a deleted node leaving dangling References behind.
- * An op that deletes a node has to unplace them in the same Proposal, because
- * the Plan is written whole and validated whole.
+ * The nodeId check is the one with teeth: an op that deletes a node must
+ * unplace its References in the same Proposal, because the Plan is written
+ * whole and validated whole.
  */
 function checkIds(plan: Plan, ctx: z.RefinementCtx) {
 	const nodeIds = new Set<string>()

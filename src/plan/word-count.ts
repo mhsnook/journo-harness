@@ -1,13 +1,11 @@
 import type { OutlineNode, Plan } from './schema'
 
 /**
- * Word-count arithmetic. The Article total is stored and nothing derives it,
- * because the total usually predates the outline and node targets are routinely
- * incomplete mid-planning.
+ * Word-count arithmetic. The total is stored and nothing derives it, so the
+ * parts are allowed to disagree with the whole and the gap is information.
  *
- * The parts are allowed to disagree with the whole. The gap is information, and
- * it is the only thing connecting the two. Nothing here distributes a remainder
- * across untargeted nodes — that invents decisions the writer did not make.
+ * Nothing here distributes a remainder across untargeted nodes — that invents
+ * decisions the writer did not make.
  */
 
 /**
@@ -65,12 +63,10 @@ function allocate(total: number | null, nodes: readonly OutlineNode[]): Allocati
 }
 
 /**
- * A node's target covers its whole subtree, so the walk stops at the outermost
- * node that carries one. Counting a parent and its children both would double
- * the same words.
- *
- * `untargeted` counts the leaves the walk reaches without meeting a target,
- * which is what separates "not allocated yet" from "deliberately under".
+ * A node's target covers its subtree, so the walk stops at the outermost node
+ * carrying one — counting a parent and its children both would double the same
+ * words. `untargeted` counts the leaves the walk reaches without meeting a
+ * target, which is what separates "not allocated yet" from "deliberately under".
  */
 function sumTargets(nodes: readonly OutlineNode[]): {
 	allocated: number

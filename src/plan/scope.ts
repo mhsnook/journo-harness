@@ -1,16 +1,13 @@
 import type { OutlineNode, Plan } from './schema'
 
 /**
- * Scope resolution. A Voice replaces and Adjectives compose, resolved at read
- * time and never stored resolved — storing them would mean re-walking every
- * node whenever the Article's Voice changes, inside a whole-blob write.
+ * Scope resolution, at read time and never stored resolved. A Voice replaces
+ * and Adjectives compose, running House, then Article, then Outline node,
+ * nearest last. A node's ancestors take part in that same order, so a
+ * subsection under a somber middle is somber unless it says otherwise.
  *
- * Resolution runs House, then Article, then Outline node, nearest last. An
- * Outline node's ancestors take part in that order too, so a subsection under a
- * somber middle is somber unless it says otherwise.
- *
- * The House terms default to empty. 1a has no House, and 1b passes a real value
- * to the same signature.
+ * The House terms default to empty, so 1b passes a value rather than changing
+ * these signatures.
  */
 
 /** What one Scope states. Every level has the same two fields. */
