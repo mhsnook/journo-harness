@@ -2,7 +2,7 @@ import type { OutlineNode, Plan } from './schema'
 
 /**
  * One Voice active at a time, cascading with optional Outline-node overrides.
- * Adjectives combine and compose.
+ * Adjectives cascade and combine.
  */
 
 /** What one Scope states. Taken from the Outline node so the House, the Article,
