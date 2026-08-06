@@ -8,19 +8,23 @@ The writer writes the prose and an AI acts as a guide. The architecture is in
 
 ## Running it
 
-Node 22 and pnpm 10. The repo is one pnpm workspace: the app at the root, and the component
-showcase in [`ui/`](./ui).
+Node 22 and pnpm 11. One package, no workspace.
 
 ```sh
 pnpm install
 pnpm dev        # the client and the Worker together, on http://localhost:5173
+pnpm storybook  # the components and screens on their own, on http://localhost:6006
 pnpm test       # builds the client, then runs the smoke tests in workerd
 pnpm typecheck
 ```
 
 `pnpm dev` runs the Worker in workerd through the Cloudflare Vite plugin, so the bindings
-behave as they do in production. Storybook runs separately with
-`pnpm --filter journo-harness-ui dev`.
+behave as they do in production. Storybook loads the same Vite config without the Worker or
+the router, so a story renders components alone.
+
+`pnpm install` writes `worker-configuration.d.ts` from the bindings in `wrangler.jsonc`. It
+is generated, so it is not committed, and `pnpm typecheck` calls `wrangler types --check`
+first to catch a config change that nobody regenerated.
 
 ### Calling a model locally
 
@@ -47,8 +51,13 @@ Access gate, and requiring the header would make the app unrunnable in developme
 
 | Path | What it holds |
 | --- | --- |
-| `src/client/` | React, Vite, and TanStack Router. Routes are files under `src/client/routes/` |
+| `src/client/routes/` | TanStack Router routes, one file each |
+| `src/client/components/` | The primitives: `Frame`, `PaneRail`, `Chip`, `SourceCard`, … |
+| `src/client/screens/` | The wireframed screens, built against mock data |
+| `src/client/styles/theme.css` | The Tailwind v4 `@theme` tokens |
 | `src/server/` | The Hono Worker entry and the `ArticleAgent` Durable Object |
 | `test/` | Tests running in workerd through `@cloudflare/vitest-pool-workers` |
-| `ui/` | The component library and its Storybook showcase |
-| `docs/` | The architecture document and the ADRs |
+| `docs/` | The architecture document, the ADRs, and [the UI notes](./docs/ui.md) |
+
+The screens are wireframes with nothing wired to them. They are superseded one at a time as
+the routes that replace them land, so treat them as reference rather than as a library.

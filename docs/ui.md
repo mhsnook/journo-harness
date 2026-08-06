@@ -1,29 +1,25 @@
-# Journo Harness — UI showcase
+# The UI showcase
 
-A Vite 8 + React 19 component library for the writing harness, with Storybook as
-its only entry point. Every screen from the `Joarness WF` wireframes is built
-here as real components against mock data, so the interface can be reviewed,
-argued with, and eventually wired to the back end.
+Every screen from the `Joarness WF` wireframes is built as real components against mock
+data, so the interface can be reviewed and argued with before it is wired up.
 
 ```bash
-cd ui
-npm install
-npm run storybook     # http://localhost:6006
+pnpm storybook        # http://localhost:6006
 ```
 
-Other scripts: `npm run typecheck`, `npm run build-storybook`, `npm run build`
-(the last builds `src/index.ts` as a library so the screens can be imported into
-the real app later).
+The components live in the app rather than in a package of their own, so a route imports
+one directly and Tailwind scans it with no configuration. The screens are superseded as the
+routes that replace them land.
 
 ## What's in here
 
 | Path | |
 |---|---|
-| `src/styles/theme.css` | Tailwind v4 `@theme` tokens — the whole palette and type scale |
-| `src/components/` | Primitives: `Frame`, `PaneRail`, `Chip`, `CoachNote`, `SourceCard`, `LengthBar`, … |
-| `src/screens/` | The 21 screens, grouped global / article / review / finish |
-| `src/mock/content.ts` | Sample content. Nothing is wired; swap for API data |
-| `src/foundations/Accent.mdx` | The accent rule, written down |
+| `src/client/styles/theme.css` | Tailwind v4 `@theme` tokens — the whole palette and type scale |
+| `src/client/components/` | Primitives: `Frame`, `PaneRail`, `Chip`, `CoachNote`, `SourceCard`, `LengthBar`, … |
+| `src/client/screens/` | The 21 screens, grouped global / article / review / finish |
+| `src/client/mock/content.ts` | Sample content. Nothing is wired; swap for API data |
+| `src/client/foundations/Accent.mdx` | The accent rule, written down |
 
 Storybook is organised as **Foundations → Primitives → Screens**, and the screen
 stories are numbered to match the wireframe deck: `1(a) Desk`, `2(e) The plan on
@@ -37,7 +33,7 @@ wants a decision, or the one thing that has just changed. Selected tabs, open
 panes and progress bars are *not* that: they take ink, because where you are is
 state rather than a request. Some screens have no accent at all, on purpose.
 
-`src/foundations/Accent.mdx` has the full version, with what earns it and what
+`src/client/foundations/Accent.mdx` has the full version, with what earns it and what
 doesn't.
 
 ## Fidelity notes

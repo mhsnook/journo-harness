@@ -1,7 +1,10 @@
-packages:
-  - ui
-
-onlyBuiltDependencies:
-  - esbuild
-  - sharp
-  - workerd
+# There are no workspace packages. This file exists because pnpm 11 reads its
+# settings here rather than from package.json or .npmrc.
+#
+# esbuild and workerd need their install scripts to fetch the right platform
+# binary. core-js-pure only prints a funding banner, so it stays blocked — pnpm
+# asks about it on install and will not stop asking until it is named here.
+allowBuilds:
+  core-js-pure: false
+  esbuild: true
+  workerd: true
