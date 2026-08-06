@@ -119,9 +119,12 @@ plan: {
 - **The word-count total is stored and nothing is derived.** The parts may disagree with the
   whole; the gap is information. Auto-distributing the remainder is rejected.
 
-**One zod schema serves two callers**: `validateStateChange` guarding client writes, and
-`generateObject` constraining what the Chat may propose. It lives in `src/shared/plan/` with
-the Scope resolver and the word-count arithmetic.
+**The schema guards client writes.** `validateStateChange` parses the whole Plan on every
+write, and nothing the model emits ever goes through it — the Chat proposes and the client
+applies, so the blob has exactly one writer. What the model does meet are the **piece**
+schemas, `outlineNodeSchema`, `referenceSchema`, and `sourceSchema`, reused inside a
+Proposal's op payloads. It lives in `src/shared/plan/` with the Scope resolver and the
+word-count arithmetic.
 
 Three invariants sit above the object shape, checked in the same parse: an Outline node id
 is unique among Outline nodes, a Reference id is unique among References, and a placed
