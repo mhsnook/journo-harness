@@ -12,11 +12,11 @@ model producing prose for the Draft.
 Three stages of usefulness. Build with all three in mind and ship them in order. A refactor
 at a stage boundary is accepted rather than designed around.
 
-| Stage | What ships | What it adds |
-| --- | --- | --- |
-| **1a** | The Chat and the Plan | One Article Agent per Article. Useful alone. |
-| **1b** | The House | The Lexicon, the standing rules, the Skills, House-scoped Voice and Adjectives, and the article index. Only useful once 1a exists. |
-| **2** | The Draft and the Guide | The writing surface, Guidance notes, Reviews. |
+| Stage  | What ships              | What it adds                                                                                                                       |
+| ------ | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **1a** | The Chat and the Plan   | One Article Agent per Article. Useful alone.                                                                                       |
+| **1b** | The House               | The Lexicon, the standing rules, the Skills, House-scoped Voice and Adjectives, and the article index. Only useful once 1a exists. |
+| **2**  | The Draft and the Guide | The writing surface, Guidance notes, Reviews.                                                                                      |
 
 **Scale**: one Team of two people. No signup flow. "Only one editor at a time on a Draft" is
 an acceptable constraint.
@@ -47,7 +47,7 @@ object, the Guide, or the Chat.
 
 **The House** arrives at 1b as a single party-db room persisted to D1, holding everything
 that spans Articles. The House is small, constantly read, and exactly CRUD over a few
-collections, so defining the collections *is* the API: no endpoints, no query keys, no
+collections, so defining the collections _is_ the API: no endpoints, no query keys, no
 invalidation.
 
 **Plain D1 tables** hold Archived Plans, Drafts, and Finals, read through a Worker endpoint
@@ -216,12 +216,12 @@ the Article Agent, with one retry that includes the validation error.
 Plan, then the volatile Draft or deltas. Cached input costs $0.26 per million against $1.40
 uncached, so the ordering is a five-fold saving on the repeated part of every pass.
 
-| Pack | Contents |
-| --- | --- |
-| Chat turn | The conversation, plus the Plan |
-| Proposal | The affected span, plus adjacent Outline node titles and intent notes. Nothing else |
-| Guide pass | The Plan, the Draft or active Section with neighbours, recent deltas. **No Chat** |
-| Review | The same, plus the existing Notes. **No Chat** |
+| Pack       | Contents                                                                            |
+| ---------- | ----------------------------------------------------------------------------------- |
+| Chat turn  | The conversation, plus the Plan                                                     |
+| Proposal   | The affected span, plus adjacent Outline node titles and intent notes. Nothing else |
+| Guide pass | The Plan, the Draft or active Section with neighbours, recent deltas. **No Chat**   |
+| Review     | The same, plus the existing Notes. **No Chat**                                      |
 
 Research reaches a Review only by being Accepted into the Plan. The Ledger is the bridge, and
 curation is forced rather than assumed.

@@ -1,0 +1,20 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "oxc", "react", "import", "vitest"],
+  "categories": {
+    "correctness": "error"
+  },
+  "rules": {},
+  "env": {
+    "builtin": true,
+    "browser": true,
+    "es2024": true
+  },
+  "ignorePatterns": ["src/client/routeTree.gen.ts", "worker-configuration.d.ts"],
+  "overrides": [
+    {
+      "files": ["src/server/**", "test/**", "*.config.ts", ".storybook/**"],
+      "env": { "browser": false, "node": true }
+    }
+  ]
+}

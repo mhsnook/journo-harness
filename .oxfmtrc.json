@@ -1,0 +1,20 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "semi": false,
+  "singleQuote": true,
+  "useTabs": false,
+  "tabWidth": 2,
+  "printWidth": 90,
+  "sortImports": true,
+  "sortTailwindcss": {
+    "functions": ["cx"],
+    "stylesheet": "./src/client/styles/theme.css"
+  },
+  "ignorePatterns": [".claude/**", "src/client/routeTree.gen.ts"],
+  "overrides": [
+    {
+      "files": ["**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx,css,html}"],
+      "options": { "useTabs": true }
+    }
+  ]
+}

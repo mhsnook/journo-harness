@@ -1,0 +1,52 @@
+{
+  "name": "journo-harness",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A writing harness where the writer writes the prose and an AI acts as a guide.",
+  "type": "module",
+  "scripts": {
+    "preinstall": "npx only-allow pnpm",
+    "postinstall": "wrangler types",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy": "vite build && wrangler deploy",
+    "test": "vite build && vitest run",
+    "test:watch": "vitest",
+    "typecheck": "wrangler types --check && tsc --build",
+    "lint": "oxlint .",
+    "format": "oxfmt .",
+    "format:check": "oxfmt --check .",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
+  },
+  "dependencies": {
+    "@tanstack/react-router": "^1.170.20",
+    "agents": "^0.20.1",
+    "hono": "^4.13.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.51.0",
+    "@cloudflare/vitest-pool-workers": "^0.20.2",
+    "@storybook/addon-a11y": "^10.5.6",
+    "@storybook/addon-docs": "^10.5.6",
+    "@storybook/react-vite": "^10.5.6",
+    "@tailwindcss/vite": "^4.3.3",
+    "@tanstack/router-plugin": "^1.168.25",
+    "@types/node": "^26.1.2",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.0.5",
+    "oxfmt": "^0.62.0",
+    "oxlint": "^1.77.0",
+    "storybook": "^10.5.6",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.3",
+    "vite": "^8.2.0",
+    "vitest": "^4.1.10",
+    "wrangler": "^4.119.0"
+  },
+  "packageManager": "pnpm@11.1.2"
+}
