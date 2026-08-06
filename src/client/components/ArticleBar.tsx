@@ -2,14 +2,14 @@ import { cx } from '../lib/cx'
 import { PaneRail, type PaneId } from './PaneRail'
 
 export interface ArticleBarProps {
-  title: string
-  /** Right-hand status: "draft 1", "round 2", "§3 of 4". */
-  status?: string
-  open: readonly PaneId[]
-  onToggle?: (pane: PaneId) => void
-  /** Draw the rule underneath. Off when the pane below carries its own edge. */
-  divided?: boolean
-  className?: string
+	title: string
+	/** Right-hand status: "draft 1", "round 2", "§3 of 4". */
+	status?: string
+	open: readonly PaneId[]
+	onToggle?: (pane: PaneId) => void
+	/** Draw the rule underneath. Off when the pane below carries its own edge. */
+	divided?: boolean
+	className?: string
 }
 
 /**
@@ -18,26 +18,26 @@ export interface ArticleBarProps {
  * thing with any weight.
  */
 export function ArticleBar({
-  title,
-  status,
-  open,
-  onToggle,
-  divided = true,
-  className,
+	title,
+	status,
+	open,
+	onToggle,
+	divided = true,
+	className,
 }: ArticleBarProps) {
-  return (
-    <header
-      className={cx(
-        'flex shrink-0 items-center gap-3 px-3 py-2',
-        divided && 'border-b border-rule',
-        className,
-      )}
-    >
-      <span className="min-w-0 flex-1 truncate text-[0.8125rem] text-faint">{title}</span>
-      <PaneRail open={open} onToggle={onToggle} />
-      <span className="min-w-0 flex-1 truncate text-right text-[0.75rem] whitespace-nowrap text-faint">
-        {status}
-      </span>
-    </header>
-  )
+	return (
+		<header
+			className={cx(
+				'flex shrink-0 items-center gap-3 px-3 py-2',
+				divided && 'border-b border-rule',
+				className,
+			)}
+		>
+			<span className="min-w-0 flex-1 truncate text-[0.8125rem] text-faint">{title}</span>
+			<PaneRail open={open} onToggle={onToggle} />
+			<span className="min-w-0 flex-1 truncate text-right text-[0.75rem] whitespace-nowrap text-faint">
+				{status}
+			</span>
+		</header>
+	)
 }

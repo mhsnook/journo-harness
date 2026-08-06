@@ -9,86 +9,86 @@
  * is probably wrong.
  */
 @theme {
-  /* Surfaces */
-  --color-paper: #f4f2ee; /* the desk the app sits on */
-  --color-surface: #ffffff; /* cards, panes, the writing surface */
-  --color-sunk: #faf8f5; /* secondary panes: plan, notes, sidebars */
-  --color-hush: #f0ede7; /* your own chat messages, inert fills */
+	/* Surfaces */
+	--color-paper: #f4f2ee; /* the desk the app sits on */
+	--color-surface: #ffffff; /* cards, panes, the writing surface */
+	--color-sunk: #faf8f5; /* secondary panes: plan, notes, sidebars */
+	--color-hush: #f0ede7; /* your own chat messages, inert fills */
 
-  /* Ink */
-  --color-ink: #1b1a17; /* body + headings */
-  --color-muted: #6b665e; /* secondary copy */
-  --color-faint: #9b958a; /* meta, counts, timestamps */
+	/* Ink */
+	--color-ink: #1b1a17; /* body + headings */
+	--color-muted: #6b665e; /* secondary copy */
+	--color-faint: #9b958a; /* meta, counts, timestamps */
 
-  /* Lines */
-  --color-rule: #e3dfd7; /* hairlines between rows */
-  --color-edge: #cdc7bc; /* card borders, inputs */
-  --color-strong: #1b1a17; /* the one heavy divider per frame */
+	/* Lines */
+	--color-rule: #e3dfd7; /* hairlines between rows */
+	--color-edge: #cdc7bc; /* card borders, inputs */
+	--color-strong: #1b1a17; /* the one heavy divider per frame */
 
-  /* The accent — light yellow highlight. Rationed. */
-  --color-accent: #ffe6a3;
-  --color-accent-soft: #fff6df; /* wash behind an accented block */
-  --color-accent-edge: #e3c471;
-  --color-accent-ink: #6a5312; /* text sitting on accent */
+	/* The accent — light yellow highlight. Rationed. */
+	--color-accent: #ffe6a3;
+	--color-accent-soft: #fff6df; /* wash behind an accented block */
+	--color-accent-edge: #e3c471;
+	--color-accent-ink: #6a5312; /* text sitting on accent */
 
-  /* Type */
-  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-serif:
-    'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, ui-serif, serif;
-  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+	/* Type */
+	--font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+	--font-serif:
+		'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, ui-serif, serif;
+	--font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
-  /* Meta label: the small uppercase mono labels used all over the design */
-  --text-meta: 0.6875rem;
-  --text-meta--line-height: 1.4;
-  --text-meta--letter-spacing: 0.06em;
+	/* Meta label: the small uppercase mono labels used all over the design */
+	--text-meta: 0.6875rem;
+	--text-meta--line-height: 1.4;
+	--text-meta--letter-spacing: 0.06em;
 
-  --radius-frame: 0.625rem;
+	--radius-frame: 0.625rem;
 
-  /* One elevation, used only on the outermost frame */
-  --shadow-frame: 0 1px 2px rgb(27 26 23 / 0.05), 0 8px 24px -16px rgb(27 26 23 / 0.25);
+	/* One elevation, used only on the outermost frame */
+	--shadow-frame: 0 1px 2px rgb(27 26 23 / 0.05), 0 8px 24px -16px rgb(27 26 23 / 0.25);
 }
 
 @layer base {
-  html {
-    -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
-  }
+	html {
+		-webkit-font-smoothing: antialiased;
+		text-rendering: optimizeLegibility;
+	}
 
-  body {
-    background: var(--color-paper);
-    color: var(--color-ink);
-    font-family: var(--font-sans);
-  }
+	body {
+		background: var(--color-paper);
+		color: var(--color-ink);
+		font-family: var(--font-sans);
+	}
 
-  /* Keyboard focus is visible everywhere; it borrows the accent edge rather
+	/* Keyboard focus is visible everywhere; it borrows the accent edge rather
      than the accent fill so it never competes with a real accent element. */
-  :focus-visible {
-    outline: 2px solid var(--color-accent-edge);
-    outline-offset: 2px;
-    border-radius: 2px;
-  }
+	:focus-visible {
+		outline: 2px solid var(--color-accent-edge);
+		outline-offset: 2px;
+		border-radius: 2px;
+	}
 }
 
 @layer components {
-  /* The small uppercase mono label. Used often enough to earn a class. */
-  .label-meta {
-    font-family: var(--font-mono);
-    font-size: var(--text-meta);
-    line-height: var(--text-meta--line-height);
-    letter-spacing: var(--text-meta--letter-spacing);
-    text-transform: uppercase;
-    color: var(--color-faint);
-  }
+	/* The small uppercase mono label. Used often enough to earn a class. */
+	.label-meta {
+		font-family: var(--font-mono);
+		font-size: var(--text-meta);
+		line-height: var(--text-meta--line-height);
+		letter-spacing: var(--text-meta--letter-spacing);
+		text-transform: uppercase;
+		color: var(--color-faint);
+	}
 
-  /* Prose in the writing surface and the draft previews. */
-  .prose-draft {
-    font-family: var(--font-serif);
-    font-size: 1rem;
-    line-height: 1.75;
-    color: var(--color-ink);
-  }
+	/* Prose in the writing surface and the draft previews. */
+	.prose-draft {
+		font-family: var(--font-serif);
+		font-size: 1rem;
+		line-height: 1.75;
+		color: var(--color-ink);
+	}
 
-  .prose-draft p + p {
-    margin-top: 1.1em;
-  }
+	.prose-draft p + p {
+		margin-top: 1.1em;
+	}
 }

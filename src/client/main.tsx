@@ -9,16 +9,16 @@ import './styles/theme.css'
 const router = createRouter({ routeTree })
 
 declare module '@tanstack/react-router' {
-  interface Register {
-    router: typeof router
-  }
+	interface Register {
+		router: typeof router
+	}
 }
 
 const container = document.getElementById('root')
 if (!container) throw new Error('No #root element to mount into.')
 
 createRoot(container).render(
-  <StrictMode>
-    <RouterProvider router={router} />
-  </StrictMode>,
+	<StrictMode>
+		<RouterProvider router={router} />
+	</StrictMode>,
 )

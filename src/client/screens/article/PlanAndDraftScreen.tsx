@@ -9,17 +9,17 @@ import { PlanRail } from './PlanRail'
  * quiet bar per section; the draft keeps the room.
  */
 export function PlanAndDraftScreen() {
-  return (
-    <Frame width={720}>
-      <ArticleBar title={ARTICLE_TITLE} open={['plan', 'draft']} status="draft 1" />
-      <FrameBody row className="min-h-[19rem]">
-        <PlanRail
-          sections={outline}
-          written={[300, 700, 520, 0]}
-          counts={['refs 2/12', 'quotes 4/6', 'notes 1/3']}
-        />
-        <DraftSurface paragraphs={draftParagraphs} measure="narrow" caret />
-      </FrameBody>
-    </Frame>
-  )
+	return (
+		<Frame width={720}>
+			<ArticleBar title={ARTICLE_TITLE} open={['plan', 'draft']} status="draft 1" />
+			<FrameBody row className="min-h-[19rem]">
+				<PlanRail
+					sections={outline}
+					written={[300, 700, 520, 0]}
+					counts={['refs 2/12', 'quotes 4/6', 'notes 1/3']}
+				/>
+				<DraftSurface paragraphs={draftParagraphs} measure="narrow" caret />
+			</FrameBody>
+		</Frame>
+	)
 }

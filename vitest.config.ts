@@ -5,16 +5,16 @@ import { defineConfig } from 'vitest/config'
 // with `poolOptions.workers`, which no longer resolves — the package stopped
 // exporting "./config".
 export default defineConfig({
-  plugins: [
-    cloudflareTest({
-      wrangler: { configPath: './wrangler.jsonc' },
-      // The AI binding is the only remote-only one and no test calls a model,
-      // so keep everything in the local workerd rather than making `pnpm test`
-      // need an API token.
-      remoteBindings: false,
-    }),
-  ],
-  test: {
-    include: ['test/**/*.test.ts'],
-  },
+	plugins: [
+		cloudflareTest({
+			wrangler: { configPath: './wrangler.jsonc' },
+			// The AI binding is the only remote-only one and no test calls a model,
+			// so keep everything in the local workerd rather than making `pnpm test`
+			// need an API token.
+			remoteBindings: false,
+		}),
+	],
+	test: {
+		include: ['test/**/*.test.ts'],
+	},
 })

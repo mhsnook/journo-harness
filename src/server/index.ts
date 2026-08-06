@@ -17,8 +17,8 @@ app.get('/api/health', (c) => c.json({ ok: true }))
 // routeAgentRequest maps /agents/article-agent/:name onto the ArticleAgent
 // binding — the path segment is the binding name in kebab-case.
 app.all('/agents/*', async (c) => {
-  const response = await routeAgentRequest(c.req.raw, c.env)
-  return response ?? c.text('No such Agent route', 404)
+	const response = await routeAgentRequest(c.req.raw, c.env)
+	return response ?? c.text('No such Agent route', 404)
 })
 
 // Without this, notFound below would answer an unknown /api path with the

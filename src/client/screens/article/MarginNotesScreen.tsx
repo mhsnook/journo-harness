@@ -10,50 +10,50 @@ import { ARTICLE_TITLE, draftParagraphs } from '../../mock/content'
  * accented thing on the page.
  */
 export function MarginNotesScreen() {
-  return (
-    <Frame width={720}>
-      <ArticleBar title={ARTICLE_TITLE} open={['draft', 'notes']} status="§3" />
-      <FrameBody className="min-h-[19rem] gap-5 px-5 py-5">
-        <div className="flex gap-5">
-          <div className="prose-draft min-w-0 flex-1">
-            <p className="text-[0.9375rem]">{draftParagraphs[0]}</p>
-          </div>
-          <div className="w-[11rem] shrink-0" />
-        </div>
+	return (
+		<Frame width={720}>
+			<ArticleBar title={ARTICLE_TITLE} open={['draft', 'notes']} status="§3" />
+			<FrameBody className="min-h-[19rem] gap-5 px-5 py-5">
+				<div className="flex gap-5">
+					<div className="prose-draft min-w-0 flex-1">
+						<p className="text-[0.9375rem]">{draftParagraphs[0]}</p>
+					</div>
+					<div className="w-[11rem] shrink-0" />
+				</div>
 
-        <div className="flex gap-5">
-          <div className="prose-draft min-w-0 flex-1 border-l-2 border-accent-edge pl-4">
-            <p className="text-[0.9375rem]">{draftParagraphs[1]}</p>
-          </div>
-          <CoachNote
-            anchor="§3"
-            confidence="confident"
-            live
-            title="You're restating §2 here"
-            body="The permit-process argument already landed. §3 is meant to be the cost of the delay to people."
-            actions={
-              <>
-                <Chip tone="outline" interactive>
-                  accept
-                </Chip>
-                <Chip tone="muted" interactive>
-                  ×
-                </Chip>
-              </>
-            }
-            className="w-[11rem] shrink-0 self-start"
-          />
-        </div>
+				<div className="flex gap-5">
+					<div className="prose-draft min-w-0 flex-1 border-l-2 border-accent-edge pl-4">
+						<p className="text-[0.9375rem]">{draftParagraphs[1]}</p>
+					</div>
+					<CoachNote
+						anchor="§3"
+						confidence="confident"
+						live
+						title="You're restating §2 here"
+						body="The permit-process argument already landed. §3 is meant to be the cost of the delay to people."
+						actions={
+							<>
+								<Chip tone="outline" interactive>
+									accept
+								</Chip>
+								<Chip tone="muted" interactive>
+									×
+								</Chip>
+							</>
+						}
+						className="w-[11rem] shrink-0 self-start"
+					/>
+				</div>
 
-        <div className="flex gap-5">
-          <div className="prose-draft min-w-0 flex-1">
-            <p className="text-[0.9375rem]">{draftParagraphs[2]}</p>
-          </div>
-          <p className="flex w-[11rem] shrink-0 items-center text-[0.6875rem] text-faint">
-            Notes hold their place beside the paragraph they're about, and scroll with it.
-          </p>
-        </div>
-      </FrameBody>
-    </Frame>
-  )
+				<div className="flex gap-5">
+					<div className="prose-draft min-w-0 flex-1">
+						<p className="text-[0.9375rem]">{draftParagraphs[2]}</p>
+					</div>
+					<p className="flex w-[11rem] shrink-0 items-center text-[0.6875rem] text-faint">
+						Notes hold their place beside the paragraph they're about, and scroll with it.
+					</p>
+				</div>
+			</FrameBody>
+		</Frame>
+	)
 }

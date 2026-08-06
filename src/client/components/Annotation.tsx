@@ -3,9 +3,9 @@ import type { ReactNode } from 'react'
 import { cx } from '../lib/cx'
 
 export interface AnnotationProps {
-  children: ReactNode
-  align?: 'left' | 'right'
-  className?: string
+	children: ReactNode
+	align?: 'left' | 'right'
+	className?: string
 }
 
 /**
@@ -14,18 +14,18 @@ export interface AnnotationProps {
  * wireframes used. It explains intent; it is never part of the UI.
  */
 export function Annotation({ children, align = 'left', className }: AnnotationProps) {
-  return (
-    <p
-      className={cx(
-        'flex max-w-[28rem] gap-2 pt-2.5 text-[0.75rem] leading-relaxed text-muted',
-        align === 'right' && 'ml-auto flex-row-reverse text-right',
-        className,
-      )}
-    >
-      <span aria-hidden className="shrink-0 text-faint">
-        ↑
-      </span>
-      <span>{children}</span>
-    </p>
-  )
+	return (
+		<p
+			className={cx(
+				'flex max-w-[28rem] gap-2 pt-2.5 text-[0.75rem] leading-relaxed text-muted',
+				align === 'right' && 'ml-auto flex-row-reverse text-right',
+				className,
+			)}
+		>
+			<span aria-hidden className="shrink-0 text-faint">
+				↑
+			</span>
+			<span>{children}</span>
+		</p>
+	)
 }

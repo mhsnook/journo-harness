@@ -3,13 +3,13 @@ import type { CSSProperties, ReactNode } from 'react'
 import { cx } from '../lib/cx'
 
 export interface FrameProps {
-  /** Width of the app window. Numbers are px. */
-  width?: number | string
-  /** Minimum height of the body area below the title bar. Numbers are px. */
-  minHeight?: number | string
-  children?: ReactNode
-  className?: string
-  style?: CSSProperties
+	/** Width of the app window. Numbers are px. */
+	width?: number | string
+	/** Minimum height of the body area below the title bar. Numbers are px. */
+	minHeight?: number | string
+	children?: ReactNode
+	className?: string
+	style?: CSSProperties
 }
 
 /**
@@ -18,41 +18,41 @@ export interface FrameProps {
  * children so panes can run edge to edge.
  */
 export function Frame({
-  width = 720,
-  minHeight,
-  children,
-  className,
-  style,
+	width = 720,
+	minHeight,
+	children,
+	className,
+	style,
 }: FrameProps) {
-  return (
-    <div
-      className={cx(
-        'flex flex-col overflow-hidden rounded-frame border border-edge bg-surface text-ink shadow-frame',
-        className,
-      )}
-      style={{ width, minHeight, ...style }}
-    >
-      {children}
-    </div>
-  )
+	return (
+		<div
+			className={cx(
+				'flex flex-col overflow-hidden rounded-frame border border-edge bg-surface text-ink shadow-frame',
+				className,
+			)}
+			style={{ width, minHeight, ...style }}
+		>
+			{children}
+		</div>
+	)
 }
 
 export interface FrameBodyProps {
-  children?: ReactNode
-  /** Lay the children out as horizontal panes rather than stacked blocks. */
-  row?: boolean
-  className?: string
-  style?: CSSProperties
+	children?: ReactNode
+	/** Lay the children out as horizontal panes rather than stacked blocks. */
+	row?: boolean
+	className?: string
+	style?: CSSProperties
 }
 
 /** The area under the title bar. `row` turns it into the horizontal pane rail. */
 export function FrameBody({ children, row = false, className, style }: FrameBodyProps) {
-  return (
-    <div
-      className={cx('flex min-h-0 flex-1', row ? 'flex-row' : 'flex-col', className)}
-      style={style}
-    >
-      {children}
-    </div>
-  )
+	return (
+		<div
+			className={cx('flex min-h-0 flex-1', row ? 'flex-row' : 'flex-col', className)}
+			style={style}
+		>
+			{children}
+		</div>
+	)
 }
