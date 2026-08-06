@@ -3,8 +3,26 @@
 Product ideas kept out of v1. Nothing here is planned, scheduled, or designed. They are
 recorded so they are not lost, and each one is small enough to pick up cold.
 
-These five are what survived `docs/ux-outline.md`. Everything else in that document has
+These are what survived `docs/ux-outline.md`. Everything else in that document has
 either been settled in the map (#5) and its tickets, or has moved into the mockups.
+
+## Public showcase
+
+A portfolio page at a per-person path, off by default and switched on in settings, listing
+published work — pieces written here and pieces backfilled from before the app existed.
+The writer chooses which ones show. Possibly part of v2, possibly a side project.
+
+Two things it needs that the app does not:
+
+- **A public surface.** Cloudflare Access is scoped by hostname and path, so this page
+  needs its own hostname or a path the Access policy exempts. It can still be served by
+  the same Worker, reading published records from D1.
+- **A shape for a backfilled piece.** Whether that is a full Article or a lighter
+  published-work record is open, and the showcase is the first thing that needs an answer.
+
+Rendering it per request is one Hono route over a small D1 query. Generating the page when
+the writer marks a piece published is also viable, since publishing is rare and
+deliberate. Decided in #15 that neither justifies TanStack Start across the whole app.
 
 ## Arc note
 
