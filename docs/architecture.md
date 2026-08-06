@@ -54,6 +54,11 @@ invalidation.
 rather than synced. D1 also carries the backup story, because a Durable Object's storage has
 no export path and D1 has `wrangler d1 export`.
 
+**Three source roots**: `src/client`, `src/server`, and `src/shared` for the modules both
+sides import — the Plan schema and, next, the Proposal applier. Nothing in `src/shared`
+touches a Worker binding or React, and each tsconfig lists the root once rather than
+naming each domain.
+
 Recorded in [ADR 0001](./adr/0001-phase-1-storage-shape.md).
 
 ## 3. Where writes go
@@ -115,9 +120,8 @@ plan: {
   whole; the gap is information. Auto-distributing the remainder is rejected.
 
 **One zod schema serves two callers**: `validateStateChange` guarding client writes, and
-`generateObject` constraining what the Chat may propose. It lives in `src/plan/` with the
-Scope resolver and the word-count arithmetic — no Worker and no React, so the Article Agent
-and the client import the same rules.
+`generateObject` constraining what the Chat may propose. It lives in `src/shared/plan/` with
+the Scope resolver and the word-count arithmetic.
 
 Three invariants sit above the object shape, checked in the same parse: an Outline node id
 is unique among Outline nodes, a Reference id is unique among References, and a placed
