@@ -1,0 +1,12 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "semi": false,
+  "singleQuote": true,
+  "useTabs": false,
+  "tabWidth": 2,
+  "printWidth": 90,
+  "ignorePatterns": [
+    ".claude/**",
+    "src/client/routeTree.gen.ts"
+  ]
+}

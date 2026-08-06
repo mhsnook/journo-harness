@@ -1,10 +1,9 @@
 {
   "name": "journo-harness",
-  "private": true,
   "version": "0.1.0",
-  "type": "module",
-  "packageManager": "pnpm@11.1.2",
+  "private": true,
   "description": "A writing harness where the writer writes the prose and an AI acts as a guide.",
+  "type": "module",
   "scripts": {
     "preinstall": "npx only-allow pnpm",
     "postinstall": "wrangler types",
@@ -15,6 +14,9 @@
     "test": "vite build && vitest run",
     "test:watch": "vitest",
     "typecheck": "wrangler types --check && tsc --build",
+    "lint": "oxlint .",
+    "format": "oxfmt .",
+    "format:check": "oxfmt --check .",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
@@ -37,11 +39,14 @@
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^6.0.5",
+    "oxfmt": "^0.62.0",
+    "oxlint": "^1.77.0",
     "storybook": "^10.5.6",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.9.3",
     "vite": "^8.2.0",
     "vitest": "^4.1.10",
     "wrangler": "^4.119.0"
-  }
+  },
+  "packageManager": "pnpm@11.1.2"
 }
