@@ -50,8 +50,8 @@ The dialogue between the writer and the guide about one Article.
 _Avoid_: conversation, thread
 
 **Plan**:
-The structured plan for one Article — its Outline nodes, its Tone decisions, its
-word-count targets, and the References and Quotes the writer has Accepted. It is what the
+The structured plan for one Article — its Outline nodes, its Voice and Adjectives, its
+word-count targets, and the References the writer has Accepted. It is what the
 Chat and the writer co-construct, and it plays the role a plan plays in an agentic coding tool.
 _Avoid_: **brief** (see below), outline (the Outline is one part of the Plan), context
 stash, spec
@@ -77,14 +77,25 @@ The unit of structure in the Plan. A node in a tree, carrying a stable ID, a tit
 intent note, and optionally a word-count target and a Tone override.
 _Avoid_: section (a Section is in the Draft), item, heading, bullet
 
-**Tone decision**:
-A choice about how the writing should read, made at the House, the Article, or the
-Outline node. Some terms come from the Lexicon and some are free-form.
-_Avoid_: style, voice setting, tone tag
+**Voice**:
+The register the writing is in — "reported feature", "clean and professional",
+"academic". **One applies at a time.** Voices do not compose: switching from one to
+another for a passage replaces it, because blending two registers makes mud rather than a
+third register.
+_Avoid_: tone, style, register, mode
+
+**Adjective**:
+A descriptive term the writing should answer to — "funny", "somber", "high energy",
+"well researched". **Adjectives compose**, within a Scope and across Scopes, so a funny
+piece can have a somber middle that still carries a few jokes. Some come from the
+Lexicon and some are free-form.
+_Avoid_: tone word, tag, chip (a chip is how one is rendered), trait
 
 **Scope**:
-Which level a Tone decision, a Reference, or a Quote is attached to — House, Article, or
-Outline node. A narrower Scope overrides a wider one.
+Which level a Voice, an Adjective, or a Reference is attached to — House, Article, or
+Outline node. Resolution runs House first and the Outline node last: the nearest Voice
+wins outright, and Adjectives accumulate in that order. Resolved when read, never stored
+resolved.
 _Avoid_: level, tier, inheritance chain
 
 ## Offers and the Ledger
@@ -96,12 +107,15 @@ Offers, not a Quote nested in something else.
 _Avoid_: offering, result, finding, suggestion, candidate, card
 
 **Reference**:
-A Kind of Offer — a piece of research, with a title, an author or a publication, and a
-year.
-_Avoid_: source, citation, link, cite
+Something the writer is drawing on. It carries a **text** — a passage pulled from the
+source, whether a quotation, a clip, or a key pullout — or a **source** — the attribution,
+with a title, an author or publication, a year, and a url, each of them optional. At
+least one of the two is present; an entry with neither is nothing.
+_Avoid_: source (a source is the attribution *inside* a Reference), citation, cite
 
 **Quote**:
-A Kind of Offer — a passage the writer may use.
+A Reference that carries a text. Not a separate entity — the Plan Panel counts References
+and Quotes separately, and that is a display filter rather than a schema fact.
 _Avoid_: excerpt, passage, snippet, pull quote
 
 **Ledger**:

@@ -4,7 +4,7 @@ Status: accepted
 
 Phase 1 splits into two stages of usefulness. **1a** is the Chat and the Plan, which is
 worth looking at on its own. **1b** adds the House — the Lexicon, the Skills, the standing
-rules, the House-scoped Tone decisions, and the article index — which is only worth
+rules, the House-scoped Voice and Adjectives, and the article index — which is only worth
 having once 1a exists. Phase 2 is the Draft and the Guide.
 
 Three homes carry it:
@@ -68,7 +68,7 @@ document per keystroke.
 - **1a has no article index**, because the index lives in the House. Articles are
   addressed by ID in the URL until 1b arrives.
 - **Every Plan node carries a stable ID from the first commit** — Outline nodes, Accepted
-  References and Quotes, and each scoped Tone decision, with children referring to parents by
+  References, and each scoped Voice and Adjective, with children referring to parents by
   ID rather than by position. This makes the phase 2 move a projection of the blob into
   rows rather than a rewrite of every reference in the Plan.
 - **Proposal staleness is required in 1a.** It comes from the gap between generating a
