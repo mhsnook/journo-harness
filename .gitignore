@@ -1,0 +1,12 @@
+node_modules/
+dist/
+storybook-static/
+.wrangler/
+.dev.vars
+*.local
+*.log
+.DS_Store
+
+# pnpm only — see packageManager in package.json
+package-lock.json
+yarn.lock

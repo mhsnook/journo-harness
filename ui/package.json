@@ -3,7 +3,6 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "packageManager": "pnpm@11.1.2",
   "description": "Component library and screen showcase for the Journo Harness writing app.",
   "scripts": {
     "preinstall": "npx only-allow pnpm",

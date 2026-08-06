@@ -1,0 +1,7 @@
+packages:
+  - ui
+
+onlyBuiltDependencies:
+  - esbuild
+  - sharp
+  - workerd
