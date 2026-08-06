@@ -2,3 +2,7 @@ node_modules
 dist
 storybook-static
 *.log
+
+# pnpm only — see packageManager in package.json
+package-lock.json
+yarn.lock
