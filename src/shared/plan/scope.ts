@@ -19,7 +19,8 @@ export type ResolvedScope = {
 }
 
 /** Resolve a chain of Scopes given widest first. An Adjective stated at two
- * Scopes appears once, at the widest that states it. */
+ * Scopes appears once, in the nearest position: restating a term is emphasis,
+ * and order is the only locality the Guide reads from the list. */
 export function resolveScope(chain: readonly ScopeTerms[]): ResolvedScope {
 	let voice: string | null = null
 	const adjectives: string[] = []
@@ -27,7 +28,9 @@ export function resolveScope(chain: readonly ScopeTerms[]): ResolvedScope {
 	for (const terms of chain) {
 		if (terms.voice !== undefined) voice = terms.voice
 		for (const adjective of terms.adjectives ?? []) {
-			if (!adjectives.includes(adjective)) adjectives.push(adjective)
+			const stated = adjectives.indexOf(adjective)
+			if (stated !== -1) adjectives.splice(stated, 1)
+			adjectives.push(adjective)
 		}
 	}
 

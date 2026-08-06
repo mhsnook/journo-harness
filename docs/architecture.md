@@ -102,7 +102,7 @@ plan: {
   title, totalTarget,
   voice, adjectives: [],
   outline: [ { id, title, intent?, target?, voice?, adjectives?: [], children: [] } ],
-  references: [ { id, provenance, text?, source?, nodeId?, note? } ],
+  references: [ { id, provenance, text?, source?, nodeId, note? } ],
 }
 ```
 
