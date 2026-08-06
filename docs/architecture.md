@@ -54,6 +54,11 @@ invalidation.
 rather than synced. D1 also carries the backup story, because a Durable Object's storage has
 no export path and D1 has `wrangler d1 export`.
 
+**Three source roots**: `src/client`, `src/server`, and `src/shared` for the modules both
+sides import — the Plan schema and, next, the Proposal applier. Nothing in `src/shared`
+touches a Worker binding or React, and each tsconfig lists the root once rather than
+naming each domain.
+
 Recorded in [ADR 0001](./adr/0001-phase-1-storage-shape.md).
 
 ## 3. Where writes go
@@ -109,12 +114,19 @@ plan: {
   attribution, or both, with at least one present.
 - **Voice replaces; Adjectives compose.** One Voice applies at a time and the nearest Scope
   wins outright. Adjectives accumulate. Resolution runs House, then Article, then Outline
-  node, **at read time**.
+  node, **at read time**. A node's ancestors take part in that same order, so a subsection
+  under a somber middle is somber unless it says otherwise.
 - **The word-count total is stored and nothing is derived.** The parts may disagree with the
   whole; the gap is information. Auto-distributing the remainder is rejected.
 
 **One zod schema serves two callers**: `validateStateChange` guarding client writes, and
-`generateObject` constraining what the Chat may propose.
+`generateObject` constraining what the Chat may propose. It lives in `src/shared/plan/` with
+the Scope resolver and the word-count arithmetic.
+
+Three invariants sit above the object shape, checked in the same parse: an Outline node id
+is unique among Outline nodes, a Reference id is unique among References, and a placed
+Reference names a node that exists. The last one means an op that deletes a node unplaces
+its References in the same Proposal, because the Plan is written whole and validated whole.
 
 **Size**: a normal Plan runs about 40 KB. The soft ceiling is around 100 KB, where
 re-broadcasting on every write gets noticeable; the hard wall is 2 MB, the Durable Object
