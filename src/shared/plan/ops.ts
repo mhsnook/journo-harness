@@ -204,6 +204,19 @@ export const proposalSchema = z.array(proposalOpSchema).min(1)
  */
 export const chatProposalSchema = z.array(z.discriminatedUnion('op', [...planOps])).min(1)
 
+/**
+ * The names of those ops, read off the schema rather than listed again — a
+ * second list is a list that drifts. The Proposal tool's description has to
+ * teach every one of them, and a test holds it to that: an op added to
+ * `planOps` reaches the model whether or not anything tells the model what it
+ * does.
+ */
+export const chatOpNames: OpName[] = (
+	chatProposalSchema.element as unknown as {
+		options: { shape: { op: { value: OpName } } }[]
+	}
+).options.map((option) => option.shape.op.value)
+
 export type ProposalOp = z.infer<typeof proposalOpSchema>
 export type Proposal = z.infer<typeof proposalSchema>
 export type OpName = ProposalOp['op']

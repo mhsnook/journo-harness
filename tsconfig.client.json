@@ -18,6 +18,10 @@
     "composite": true,
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.client.tsbuildinfo"
   },
+  // Every folder under test/ belongs to exactly one project — this one or
+  // tsconfig.worker.json — and a folder named in neither is typechecked by
+  // neither, silently. Add it here or there when you add it.
+  //
   // The Plan fixtures are named one by one rather than by folder: the rest of
   // test/shared is the worker project's.
   "include": [

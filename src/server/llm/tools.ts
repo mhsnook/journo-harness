@@ -40,6 +40,11 @@ const proposePlanChange = tool({
 		'deleteNode unplaces every Reference placed at the node it removes and at any node below',
 		"it. mergeNodes keeps the target's own fields, so carry the source's intent note over",
 		'with a setIntent op in the same batch when you want it kept.',
+		'',
+		'placeReference puts a Reference the writer has already Accepted at a Section, and',
+		'"value": null takes it off the one it sits at. Its "expected" is where it sits now, which',
+		'is null while it is unplaced. You cannot add a Reference to the Plan: research reaches it',
+		'by the writer Accepting an Offer.',
 	].join('\n'),
 	inputSchema: proposePlanChangeInput,
 })
