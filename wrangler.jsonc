@@ -42,6 +42,13 @@
     "binding": "AI",
   },
 
+  // AI_GATEWAY_ID is deliberately not declared here. It names the account's AI
+  // Gateway, which is deployment configuration rather than repo content, and a
+  // var declared in this file overwrites the deployed value on every
+  // `wrangler deploy` — so declaring it even as an empty placeholder would wipe
+  // the one set from the CLI. Its type is in src/server/env.d.ts, and
+  // llm/model.ts is the only thing that reads it.
+
   "observability": {
     "enabled": true,
   },

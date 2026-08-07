@@ -41,6 +41,18 @@ CF_REMOTE_BINDINGS=true pnpm dev
 pnpm deploy     # builds the client, then wrangler deploy
 ```
 
+`AI_GATEWAY_ID` names the AI Gateway the model calls log through. Set it from the CLI rather
+than in `wrangler.jsonc`, because a var declared there overwrites the deployed value on every
+deploy:
+
+```sh
+pnpm wrangler secret put AI_GATEWAY_ID
+```
+
+Leaving it unset attaches no Gateway, which is what a deployment without one wants — a
+Gateway that does not exist fails the call. Leave the Gateway itself **unauthenticated**: a
+Workers AI binding call is same-account and carries no place to put a Gateway token.
+
 The Worker needs the Workers Paid plan for the model, and Cloudflare Access gates it at the
 edge. Nothing in the app reads the `Cf-Access-Jwt-Assertion` header — localhost has no
 Access gate, and requiring the header would make the app unrunnable in development.
@@ -54,6 +66,7 @@ Access gate, and requiring the header would make the app unrunnable in developme
 | `src/client/screens/`         | The wireframed screens, built against mock data                       |
 | `src/client/styles/theme.css` | The Tailwind v4 `@theme` tokens                                       |
 | `src/server/`                 | The Hono Worker entry and the `ArticleAgent` Durable Object           |
+| `src/server/llm/`             | The model boundary, the Chat turn's prompt pack, and the tools        |
 | `test/`                       | Tests running in workerd through `@cloudflare/vitest-pool-workers`    |
 | `docs/`                       | The architecture document, the ADRs, and [the UI notes](./docs/ui.md) |
 

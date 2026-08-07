@@ -22,11 +22,14 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
+    "@cloudflare/ai-chat": "^0.10.1",
     "@tanstack/react-router": "^1.170.20",
     "agents": "^0.20.1",
+    "ai": "^7.0.55",
     "hono": "^4.13.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "workers-ai-provider": "^4.0.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
