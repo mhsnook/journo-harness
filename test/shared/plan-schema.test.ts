@@ -88,6 +88,17 @@ describe('the Plan schema', () => {
 		expect(withNode({ intent: '' })).toBe(false)
 	})
 
+	it('gives a node one way to say it states no Adjectives, and it is not the empty list', () => {
+		const withAdjectives = (adjectives?: string[]) =>
+			planSchema.safeParse(makePlan({ outline: [makeNode({ id: 'n1', adjectives })] }))
+				.success
+
+		expect(withAdjectives(undefined)).toBe(true)
+		expect(withAdjectives([])).toBe(false)
+		// The Article carries the key either way, so there the empty list is it.
+		expect(planSchema.safeParse(makePlan({ adjectives: [] })).success).toBe(true)
+	})
+
 	it('rejects an invalid node however deep it sits', () => {
 		const plan = makePlan({
 			outline: [

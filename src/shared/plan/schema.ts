@@ -9,9 +9,9 @@ import { z } from 'zod'
  * Rationale in docs/adr/0002-the-plan-data-model.md.
  */
 
-// `.min(1)` throughout: absence is how a Scope says "nothing here", and the
-// empty string is not a second way to say it. Which of these fields may be
-// absent is decided below, and again in a Proposal's op payloads.
+// `.min(1)` throughout: absence is how a Scope says "nothing here", and neither
+// the empty string nor the empty list is a second way to say it. Which of these
+// fields may be absent is decided below, and again in a Proposal's op payloads.
 export const idSchema = z.string().min(1)
 export const voiceSchema = z.string().min(1)
 export const adjectiveSchema = z.string().min(1)
@@ -78,7 +78,7 @@ export const outlineNodeSchema = z.strictObject({
 	intent: intentSchema.optional(),
 	target: targetSchema.optional(),
 	voice: voiceSchema.optional(),
-	adjectives: z.array(adjectiveSchema).optional(),
+	adjectives: z.array(adjectiveSchema).min(1).optional(),
 	// zod 4 recursive schema
 	get children() {
 		return z.array(outlineNodeSchema)
@@ -93,6 +93,8 @@ const planObjectSchema = z.strictObject({
 	// targets, which are free to disagree with it.
 	totalTarget: targetSchema.nullable(),
 	voice: voiceSchema.optional(),
+	// The Article always carries the key, so the empty list is how it says
+	// "nothing here". A node says the same by carrying no key at all.
 	adjectives: z.array(adjectiveSchema),
 	outline: z.array(outlineNodeSchema),
 	references: z.array(referenceSchema),
