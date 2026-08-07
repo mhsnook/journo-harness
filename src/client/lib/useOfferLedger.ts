@@ -80,10 +80,9 @@ export function useOfferLedger(): OfferLedgerHandle {
 		loading: rows === null,
 		failure,
 
-		// Accepting is two writes against two stores and nothing makes them
-		// atomic. The row goes first, because it is what carries the Provenance
-		// the copy needs — and if the second write never lands, the Offer shows
-		// in the Ledger as stranded rather than as nothing at all.
+		// Accepting requires two writes against two stores, decoupled. The row
+		// goes first, because it carries the Provenance the copy needs. The
+		// Ledger shows the Offer stranded if the second write never lands.
 		accept(offer) {
 			run(
 				'This Offer was not Accepted.',

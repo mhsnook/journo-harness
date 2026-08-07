@@ -24,13 +24,7 @@ export type OfferLedger = {
 	byDisposition: Record<Disposition, Offer[]>
 	/** The filter counts, `all` included so the chips read from one place. */
 	counts: Record<'all' | Disposition, number>
-	/**
-	 * Accepted Offers that no Reference points back at. Accepting is two writes
-	 * against two stores and nothing makes them atomic, so a refused Plan write
-	 * or a closed tab leaves the row Accepted with nothing in the Plan. These
-	 * are not the same as the Accepted-with-no-Section group below, which are
-	 * References carrying `nodeId: null`.
-	 */
+	/** Accepted Offers that did not make it to the Plan's References. */
 	stranded: Offer[]
 	/** The Plan half, in Outline order. */
 	sections: LedgerSection[]
@@ -43,11 +37,7 @@ export function referenceForOffer(plan: Plan, offerId: string): Reference | unde
 	return plan.references.find((reference) => reference.provenance.offerId === offerId)
 }
 
-/**
- * The Reference an Accepted Offer becomes: a new record the writer owns and may
- * edit, keeping a Provenance that names the row it came from — §3, rule 5. The
- * Offer keeps what was actually turned up.
- */
+/** Creates a Reference from an Offer, with Provenance — §3, rule 5. */
 export function referenceFromOffer(offer: Offer, id: string): Reference {
 	// Each optional field is set only when the Offer carries it. A key holding
 	// undefined would be a second spelling of "nothing here" — §4.
@@ -67,17 +57,12 @@ export function referenceFromOffer(offer: Offer, id: string): Reference {
 export type Acceptance = {
 	plan: Plan
 	reference: Reference
-	/** True when the Plan already held a copy, and the Plan came back untouched.
-	 * A second Accept — a double click, or the re-add of an Offer whose Plan
-	 * write turned out to have landed — must not make a second Reference. */
+	/** True when the Plan came back untouched, already having a copy. */
 	alreadyThere: boolean
 }
 
-/**
- * Copy an Offer into the Plan. This is the second of Accepting's two writes;
- * the first is `setOfferDisposition` on the Article Agent, and the Offer it
- * returns is what to pass here.
- */
+/** The second of Accepting's two writes. The Offer is the one
+ * `setOfferDisposition` returned. */
 export function acceptIntoPlan(plan: Plan, offer: Offer, id: string): Acceptance {
 	const held = referenceForOffer(plan, offer.id)
 	if (held !== undefined) return { plan, reference: held, alreadyThere: true }

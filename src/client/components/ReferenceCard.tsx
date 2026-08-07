@@ -7,17 +7,9 @@ import { Chip } from './Chip'
 
 export interface ReferenceCardProps {
 	offer: Offer
-	/**
-	 * `offer` is how one arrives in the Chat, to Accept or Decline. `ledger` is
-	 * the same Offer once it carries a disposition.
-	 */
 	variant?: 'offer' | 'ledger'
-	/** Hide the note — the Offer ledger runs tighter than the Chat. */
 	compact?: boolean
-	/**
-	 * Whether the Plan holds a copy of this Offer. An Accepted Offer with no
-	 * copy is stranded, and the card offers the writer the re-add.
-	 */
+	/** False is stranded, and the card offers the re-add. */
 	inThePlan?: boolean
 	/** Waits on the House, which arrives at 1b — nothing in 1a computes it. */
 	favourite?: 'author' | 'publication'
@@ -28,7 +20,6 @@ export interface ReferenceCardProps {
 	className?: string
 }
 
-/** The star that marks a Reference as coming from your favourites. */
 function FavouriteMark({ type }: { type: 'author' | 'publication' }) {
 	return (
 		<span className="inline-flex items-center gap-1 text-accent-ink">

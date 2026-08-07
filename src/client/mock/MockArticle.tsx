@@ -8,7 +8,7 @@ import { articlePlan, offers as seeded } from './content'
 /**
  * An Article held in memory, so a story exercises the real Offer ledger without
  * a Worker. It answers the same three methods the Article Agent exposes over
- * RPC, and the route that connects the real one (#29) swaps this provider for
+ * RPC, and the route that connects the real one swaps this provider for
  * `useAgent`.
  */
 export function MockArticle({ children }: { children: ReactNode }) {

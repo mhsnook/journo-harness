@@ -122,8 +122,7 @@ export class ArticleAgent extends Agent<Env, Plan> {
 	 *
 	 * Not `@callable`, and neither is `createOffer` below: the writer never
 	 * authors an Offer, so the Chat's research tool is the only caller and it
-	 * runs inside this Agent (§3, rule 4). The tool declaration that wraps this
-	 * lands with the Chat turn, in #25.
+	 * runs inside this Agent (§3, rule 4).
 	 */
 	recordOffers(batch: unknown): RecordedOffer[] {
 		const found = offerBatchSchema.parse(batch)

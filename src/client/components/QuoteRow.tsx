@@ -6,22 +6,14 @@ import { Chip } from './Chip'
 export interface QuoteRowProps {
 	/** The Plan's copy, which the writer owns and may have edited. */
 	reference: Reference
-	/** Where it sits: "§2", and an em dash when it is Accepted but unplaced. */
+	/** Renders as an em dash where the caller passes none. */
 	section?: string
-	/**
-	 * Whether the passage is in the Draft. There is no Draft until phase 2, so
-	 * a placed Reference reads Ready until the caller says otherwise.
-	 */
+	/** Unused till phase 2. */
 	used?: boolean
 	showUsage?: boolean
 	dimmed?: boolean
 	className?: string
 }
-
-/**
- * One Quote in the Plan, tagged with the Section it is placed at. An em dash in
- * place of a Section number means it is Accepted but not placed yet.
- */
 export function QuoteRow({
 	reference,
 	section,
