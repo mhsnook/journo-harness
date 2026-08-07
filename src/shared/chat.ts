@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import { planSchema, proposalSchema } from './plan'
+import { chatProposalSchema, planSchema } from './plan'
 
 /**
  * What the two ends of a Chat turn agree on. The Article Agent declares the
@@ -21,8 +21,13 @@ export const proposePlanChangeTool = 'proposePlanChange'
  * the suspended call. Strict, like the op payloads inside it: a model that
  * adds a field fails the whole call and retries with the validation error
  * rather than having the field silently stripped — `docs/architecture.md` §6.
+ *
+ * `chatProposalSchema` rather than `proposalSchema`: the applier understands
+ * three more ops, and they are the writer's own References. Research reaches
+ * the Plan through the Ledger (§5), so the model is never offered a way round
+ * it.
  */
-export const proposePlanChangeInput = z.strictObject({ ops: proposalSchema })
+export const proposePlanChangeInput = z.strictObject({ ops: chatProposalSchema })
 export type ProposePlanChangeInput = z.infer<typeof proposePlanChangeInput>
 
 /**

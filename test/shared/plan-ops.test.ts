@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
-import { proposalOpSchema, proposalSchema } from '../../src/shared/plan'
+import {
+	chatProposalSchema,
+	proposalOpSchema,
+	proposalSchema,
+} from '../../src/shared/plan'
 
 /** An op that parses, so each test states only the field it is about. */
 const setTitle = {
@@ -83,5 +87,30 @@ describe('the op vocabulary', () => {
 
 	it('refuses an empty Proposal, which changes nothing', () => {
 		expect(proposalSchema.safeParse([]).success).toBe(false)
+	})
+})
+
+describe('what the Chat may propose', () => {
+	const createReference = {
+		op: 'createReference',
+		reference: {
+			id: 'r1',
+			type: 'link',
+			provenance: { type: 'writer' },
+			source: { title: 'The memo' },
+			nodeId: null,
+		},
+	}
+
+	it('takes the ops that change the Plan', () => {
+		expect(chatProposalSchema.safeParse([setTitle, createNode]).success).toBe(true)
+	})
+
+	// Research reaches the Plan by being Accepted from an Offer, and the Ledger
+	// is that bridge — docs/architecture.md §5. The applier still understands
+	// the op, because the writer's own paste goes through it.
+	it('refuses the Reference ops, which the applier understands', () => {
+		expect(chatProposalSchema.safeParse([createReference]).success).toBe(false)
+		expect(proposalSchema.safeParse([createReference]).success).toBe(true)
 	})
 })

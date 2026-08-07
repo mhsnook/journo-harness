@@ -224,10 +224,15 @@ proposal: [
 
 **Thirteen ops**, in `src/shared/plan/ops.ts`: `createNode`, `moveNode`, `mergeNodes`,
 `deleteNode`, `setTitle`, `setIntent`, `setTarget`, `setVoice`, `setAdjectives`,
-`placeReference`, `createReference`, `deleteReference`, `setReference`. The last three are
-how the writer pastes a Reference in themselves, and the applier understanding an op does
-not mean the Chat may propose it: what the model is offered is the tool schema, and
-research reaches the Plan through the Ledger — §5. A content op reads `nodeId: null` as the Article Scope, so setting the
+`placeReference`, `createReference`, `deleteReference`, `setReference`.
+
+**The Chat is offered ten of them.** The three Reference ops are how the writer pastes a
+Reference in themselves, and `chatProposalSchema` leaves them out of the tool the model
+sees — research reaches the Plan by being Accepted from an Offer, and handing a model
+`createReference` would be a way round the Ledger (§5). The applier takes all thirteen,
+because the writer's own paste goes through it too.
+
+A content op reads `nodeId: null` as the Article Scope, so setting the
 Article's Voice and setting one node's Voice are one op rather than two. Two ops carry a
 consequence worth stating: **`deleteNode` unplaces every Reference placed at the node it
 removes or at any node below it**, because the Plan is written whole and a Reference naming a
