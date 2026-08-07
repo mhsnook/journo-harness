@@ -130,36 +130,24 @@ describe('reading the Offer ledger', () => {
 	})
 
 	it('counts each disposition, and the whole list', () => {
-		const ledger = offerLedger(held, offers)
+		const ledger = offerLedger(offers)
 
 		expect(ledger.counts).toEqual({ all: 5, undecided: 1, accepted: 2, declined: 2 })
 		expect(ledger.byDisposition.declined.map((offer) => offer.id)).toEqual(['o4', 'o5'])
 	})
 
-	// It was not offered, so no Offer group holds it.
-	it('leaves a Reference the writer wrote out of the Offer counts', () => {
-		expect(offerLedger(held, offers).counts.all).toBe(5)
+	// The Ledger belongs to the Chat Panel, so what the Plan holds — `r3`, which
+	// the writer typed, and `r2`, which sits at no Section — never reaches it.
+	it('reads the Offers alone, whatever the Plan holds', () => {
+		expect(held.references).toHaveLength(3)
+		expect(offerLedger(offers).counts.all).toBe(5)
 	})
 
-	it('strands an Accepted Offer that no Reference points back at', () => {
-		const ledger = offerLedger(held, [
-			...offers,
-			makeOffer({ id: 'o6', disposition: 'accepted' }),
-		])
-
-		expect(ledger.stranded.map((offer) => offer.id)).toEqual(['o6'])
-	})
-
-	// `r2` above is unplaced, which is not stranded — §5.
-	it('does not strand an Accepted Offer whose Reference carries no Section', () => {
-		expect(offerLedger(held, offers).stranded).toEqual([])
-	})
-
-	it('reads an empty Article as an empty Ledger', () => {
-		const ledger = offerLedger(makePlan(), [])
+	it('reads an Article with no Offers as an empty Ledger', () => {
+		const ledger = offerLedger([])
 
 		expect(ledger.counts).toEqual({ all: 0, undecided: 0, accepted: 0, declined: 0 })
-		expect(ledger.stranded).toEqual([])
+		expect(ledger.offers).toEqual([])
 	})
 })
 

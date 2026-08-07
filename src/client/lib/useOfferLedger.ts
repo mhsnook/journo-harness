@@ -19,12 +19,10 @@ export type OfferLedgerHandle = {
 	accept: (offer: Offer) => void
 	decline: (offer: Offer) => void
 	restore: (offer: Offer) => void
-	/** The re-add for a stranded Offer — §5. */
-	addToPlan: (offer: Offer) => void
 }
 
 export function useOfferLedger(): OfferLedgerHandle {
-	const { offers: store, plan, edit } = useArticle()
+	const { offers: store, edit } = useArticle()
 	const [rows, setRows] = useState<Offer[] | null>(null)
 	const [failure, setFailure] = useState<string | null>(null)
 
@@ -58,20 +56,21 @@ export function useOfferLedger(): OfferLedgerHandle {
 	}
 
 	return {
-		ledger: offerLedger(plan, rows ?? []),
+		ledger: offerLedger(rows ?? []),
 		loading: rows === null,
 		failure,
 
-		// Two writes against two stores, decoupled — §5. The row goes first
-		// because it carries the Provenance the copy needs.
+		// Two writes against two stores, decoupled — §5. The Plan goes first and
+		// lands locally, because the copy is built from what the Offer says and
+		// needs nothing the ruling returns. A ruling that then fails leaves the
+		// copy in place and the row Undecided, which the writer clears by
+		// Accepting again: the second `acceptOffer` builds no op.
 		accept(offer) {
+			edit((held) => acceptOffer(held, offer))
 			run(
 				'This Offer was not Accepted.',
 				() => store.setOfferDisposition(offer.id, 'accepted'),
-				(ruled) => {
-					replace(ruled)
-					edit((held) => acceptOffer(held, ruled))
-				},
+				replace,
 			)
 		},
 
@@ -85,11 +84,6 @@ export function useOfferLedger(): OfferLedgerHandle {
 
 		restore(offer) {
 			run('This Offer was not restored.', () => store.restoreOffer(offer.id), replace)
-		},
-
-		addToPlan(offer) {
-			setFailure(null)
-			edit((held) => acceptOffer(held, offer))
 		},
 	}
 }

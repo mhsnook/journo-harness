@@ -244,8 +244,8 @@ export const draftShort = [
 	'What replaced the cranes was not a decision. Nobody voted to stop building.',
 ]
 
-/** The Offers behind that Plan. `offer-sze` is the stranded case: Accepted, and
- * in the Plan nowhere. */
+/** The Offers behind that Plan. Every Accepted one has its copy over there,
+ * because Accepting writes the copy first and the ruling second. */
 export const offers: Offer[] = [
 	{
 		id: 'offer-throughput',
@@ -327,8 +327,8 @@ export const offers: Offer[] = [
 		id: 'offer-sze',
 		type: 'link',
 		source: { title: 'Interview — M. Sze, planning officer' },
-		disposition: 'accepted',
+		disposition: 'undecided',
 		createdAt: 7,
-		decidedAt: 15,
+		decidedAt: null,
 	},
 ]

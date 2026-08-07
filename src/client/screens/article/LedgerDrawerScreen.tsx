@@ -30,12 +30,10 @@ const filters: Filter[] = ['all', 'undecided', 'accepted', 'declined']
  */
 export function LedgerDrawerScreen() {
 	const { plan, edit } = useArticle()
-	const { ledger, loading, failure, accept, decline, restore, addToPlan } =
-		useOfferLedger()
+	const { ledger, loading, failure, accept, decline, restore } = useOfferLedger()
 	const [filter, setFilter] = useState<Filter>('all')
 
 	const shown = filter === 'all' ? ledger.offers : ledger.byDisposition[filter]
-	const stranded = new Set(ledger.stranded.map((offer) => offer.id))
 
 	return (
 		<Frame width={820}>
@@ -75,11 +73,9 @@ export function LedgerDrawerScreen() {
 								offer={offer}
 								variant="ledger"
 								compact
-								inThePlan={!stranded.has(offer.id)}
 								onAccept={() => accept(offer)}
 								onDecline={() => decline(offer)}
 								onRestore={() => restore(offer)}
-								onAddToPlan={() => addToPlan(offer)}
 							/>
 						))}
 						{!loading && shown.length === 0 ? (

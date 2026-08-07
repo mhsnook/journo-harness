@@ -9,14 +9,11 @@ export interface ReferenceCardProps {
 	offer: Offer
 	variant?: 'offer' | 'ledger'
 	compact?: boolean
-	/** False is stranded, and the card offers the re-add. */
-	inThePlan?: boolean
 	/** Waits on the House, at 1b. */
 	favourite?: 'author' | 'publication'
 	onAccept?: () => void
 	onDecline?: () => void
 	onRestore?: () => void
-	onAddToPlan?: () => void
 	className?: string
 }
 
@@ -34,12 +31,10 @@ export function ReferenceCard({
 	offer,
 	variant = 'offer',
 	compact = false,
-	inThePlan = true,
 	favourite,
 	onAccept,
 	onDecline,
 	onRestore,
-	onAddToPlan,
 	className,
 }: ReferenceCardProps) {
 	const declined = offer.disposition === 'declined'
@@ -111,11 +106,6 @@ export function ReferenceCard({
 			{variant === 'ledger' && declined ? (
 				<Button size="sm" variant="link" className="self-start" onClick={onRestore}>
 					Restore
-				</Button>
-			) : null}
-			{variant === 'ledger' && accepted && !inThePlan ? (
-				<Button size="sm" variant="link" className="self-start" onClick={onAddToPlan}>
-					Add to the Plan
 				</Button>
 			) : null}
 		</article>

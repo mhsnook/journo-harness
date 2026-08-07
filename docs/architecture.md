@@ -191,18 +191,26 @@ rather than writing a second one, still carrying the disposition the writer gave
 Asking whether an Offer is already in the Plan runs on the Provenance instead: the writer
 edits their copy, and content stops matching the moment they do.
 
-**Accepting is two writes against two stores, and nothing makes them atomic.**
-`setOfferDisposition` over RPC, then a `createReference` op through the applier like every
-other Plan edit. The row goes first, because what it returns is what the copy is built
-from. If the second write never lands, the Offer is Accepted and the Plan holds nothing — a
-**stranded** Offer. The Provenance pointer is what finds it: an Accepted Offer whose id
-appears in no `provenance.offerId`. The card carries the re-add, which is the second write
-on its own. No reconciliation pass, and nothing atomic to build.
+**Accepting is two writes against two stores, and nothing makes them atomic. The copy goes
+first.** A `createReference` op through the applier like every other Plan edit, then
+`setOfferDisposition` over RPC. `referenceFromOffer` reads what the Offer says and not what
+the writer ruled, so the copy needs nothing the ruling returns and the order is free to be
+this way round.
 
-Stranded is a write that did not land, not a fourth ruling, so it gets no group of its own
-— the writer reads Accepted and finds the re-add on the row. A Reference sitting at no
-Section is a different thing again, and an ordinary one: the Plan Panel lists it and its
-Section reads "not placed".
+**It is this way round so the failure does not outlive the click.** The Plan write is local
+and the RPC is the one that can fail, so what a half-done Accept leaves is a copy in the
+Plan and a row still reading Undecided. The writer sees an unticked row, Accepts again, and
+both halves are right: `acceptOffer` follows the Provenance, finds the copy, and builds no
+op, so the retry sends the ruling and nothing else. Nothing to reconcile, nothing to show,
+and no state that persists waiting to be noticed.
+
+The other order buys the opposite. The row would read Accepted with the Plan holding
+nothing — invisible on the Ledger, unfixable from it, and needing a group and a re-add of
+its own to get back out. That was the earlier design, and the group it needed was the
+Ledger reading the Plan.
+
+A Reference sitting at no Section is a different thing entirely, and an ordinary one: the
+Plan Panel lists it and its Section reads "not placed".
 
 **The writer pastes their own References straight into the Plan**, and those carry
 `provenance: { type: 'writer' }` rather than an Offer id. They never enter the Ledger: an
@@ -210,8 +218,9 @@ Offer is something the Chat turned up and handed over to rule on, and there is n
 rule on in a passage the writer typed.
 
 **One Offer becomes one Reference**, and `planSchema` refuses a Plan carrying two copies
-of one. §5 leans on it, `referenceForOffer` answers with the first match on the strength of
-it, and a second copy would quietly stop the Ledger reporting the Offer as stranded.
+of one. `referenceForOffer` answers with the first match on the strength of it, and that
+answer is what makes a retried Accept build no op — so a second copy would turn every retry
+into another copy.
 
 **A Proposal is not an Offer.** The writer rules on both the same way, but a Proposal lives
 in the Chat turn that made it, goes Stale, and leaves no record, where an Offer is a row that

@@ -2,7 +2,7 @@ import { env, evictDurableObject, runInDurableObject } from 'cloudflare:test'
 import { describe, expect, it } from 'vitest'
 
 import type { RecordedOffer } from '../../src/server/article-agent'
-import { offerLedger, referenceFromOffer } from '../../src/shared/ledger'
+import { referenceForOffer, referenceFromOffer } from '../../src/shared/ledger'
 import type { Offer } from '../../src/shared/offer'
 import type { Plan, ReferenceContent } from '../../src/shared/plan'
 import { emptyPlan, isPlanRefused } from '../../src/shared/plan'
@@ -310,8 +310,9 @@ describe('Accepting an Offer into the Plan', () => {
 		writer.setState(opening)
 		const [{ offer }] = await recordOffers('accept-and-edit', [quote])
 
+		// The copy first, built from what the Offer says; then the ruling.
+		writer.setState(copiedInto(opening, offer))
 		const ruled = await writer.call<Offer>('setOfferDisposition', offer.id, 'accepted')
-		writer.setState(copiedInto(opening, ruled))
 
 		const accepted = await readPlan('accept-and-edit')
 		expect(accepted.references).toEqual([
@@ -354,24 +355,27 @@ describe('Accepting an Offer into the Plan', () => {
 		await expect(readPlan('decline-and-restore')).resolves.toEqual(opening)
 	})
 
-	// If the second write does not land, the row is Accepted and the Plan holds
-	// nothing. The Provenance pointer is what finds it.
-	it('leaves an Accepted Offer stranded when the Plan write does not land', async () => {
-		const writer = await openAgentSocket('accept-stranded')
+	// The copy goes first, so the write left to fail is the ruling. What that
+	// leaves is a copy in the Plan and a row still Undecided — the writer sees an
+	// unticked row and Accepts again, and nothing is stranded anywhere.
+	it('keeps the copy when the ruling does not land, and copies once on the retry', async () => {
+		const writer = await openAgentSocket('accept-no-ruling')
 		await writer.next('cf_agent_state')
 		writer.setState(opening)
-		const [{ offer }] = await recordOffers('accept-stranded', [reference])
+		const [{ offer }] = await recordOffers('accept-no-ruling', [reference])
 
+		writer.setState(copiedInto(opening, offer))
+		// The tab closes here, and the ruling is never sent.
+
+		const held = await readPlan('accept-no-ruling')
+		expect(held.references.map((copy) => copy.provenance.offerId)).toEqual([offer.id])
+		await expect(writer.call<Offer[]>('listOffers')).resolves.toEqual([offer])
+
+		// Accepting again sends the ruling. `acceptOffer` finds the copy on the
+		// Provenance and builds no op, so the Plan is not written a second time.
 		const ruled = await writer.call<Offer>('setOfferDisposition', offer.id, 'accepted')
-		// The tab closes here, and the second write does not happen.
-
-		const ledger = offerLedger(await readPlan('accept-stranded'), [ruled])
-		expect(ledger.stranded).toEqual([ruled])
-
-		// The re-add is the same second write, and it is the only one missing.
-		writer.setState(copiedInto(opening, ruled))
-		const replaced = await readPlan('accept-stranded')
-		expect(offerLedger(replaced, [ruled]).stranded).toEqual([])
-		expect(replaced.references.map((held) => held.provenance.offerId)).toEqual([offer.id])
+		expect(ruled.disposition).toBe('accepted')
+		expect(referenceForOffer(held, offer.id)?.id).toBe('r1')
+		await expect(readPlan('accept-no-ruling')).resolves.toEqual(held)
 	})
 })

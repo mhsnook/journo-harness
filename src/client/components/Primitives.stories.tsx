@@ -117,7 +117,7 @@ export const Research: Story = {
 			<ReferenceCard offer={offers[0]} favourite="publication" />
 			<ReferenceCard offer={offers[2]} variant="ledger" />
 			<ReferenceCard offer={offers[4]} variant="ledger" compact />
-			<ReferenceCard offer={offers[6]} variant="ledger" compact inThePlan={false} />
+			<ReferenceCard offer={offers[6]} variant="ledger" compact />
 			<QuoteRow reference={plan.references[2]} section="§2" showUsage />
 			<QuoteRow reference={plan.references[3]} showUsage />
 		</div>

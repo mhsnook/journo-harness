@@ -2,8 +2,10 @@ import type { Disposition, Offer } from './offer'
 import type { Plan, Reference } from './plan'
 
 /**
- * The Offer ledger — docs/architecture.md §5. What is here needs both stores at
- * once, joined on Provenance; the Plan half alone is `client/plan/references.ts`.
+ * The Offer ledger — docs/architecture.md §5. The View reads Offers and nothing
+ * else, because the Ledger belongs to the Chat Panel and what the Plan did with
+ * a copy is the Plan Panel's. The two below are the copy Accepting sends across,
+ * which is the one thing that does travel between them.
  */
 
 export type OfferLedger = {
@@ -12,16 +14,16 @@ export type OfferLedger = {
 	byDisposition: Record<Disposition, Offer[]>
 	/** `all` included, so the filter chips read from one place. */
 	counts: Record<'all' | Disposition, number>
-	/** Accepted Offers that did not make it to the Plan's References. */
-	stranded: Offer[]
 }
 
-/** Found on Provenance, not on content: the writer edits their copy. */
+/** Found on Provenance, not on content: the writer edits their copy. It guards
+ * the send, so Accepting twice copies once. */
 export function referenceForOffer(plan: Plan, offerId: string): Reference | undefined {
 	return plan.references.find((reference) => reference.provenance.offerId === offerId)
 }
 
-/** Copied rather than moved — §3, rule 5. */
+/** Copied rather than moved — §3, rule 5. It reads what the Offer says and not
+ * what the writer ruled, so the copy can be built before the ruling is sent. */
 export function referenceFromOffer(offer: Offer, id: string): Reference {
 	// Absent rather than undefined — §4.
 	const reference: Reference = {
@@ -37,17 +39,15 @@ export function referenceFromOffer(offer: Offer, id: string): Reference {
 	return reference
 }
 
-/** Derived on read. Both halves arrive whole from their own store, so a third
- * copy would only need keeping in step. */
-export function offerLedger(plan: Plan, offers: readonly Offer[]): OfferLedger {
+/** Derived on read. The Offers arrive whole from their store, so a second copy
+ * would only need keeping in step. */
+export function offerLedger(offers: readonly Offer[]): OfferLedger {
 	const byDisposition: Record<Disposition, Offer[]> = {
 		undecided: [],
 		accepted: [],
 		declined: [],
 	}
 	for (const offer of offers) byDisposition[offer.disposition].push(offer)
-
-	const copied = new Set(plan.references.map((reference) => reference.provenance.offerId))
 
 	return {
 		offers,
@@ -58,6 +58,5 @@ export function offerLedger(plan: Plan, offers: readonly Offer[]): OfferLedger {
 			accepted: byDisposition.accepted.length,
 			declined: byDisposition.declined.length,
 		},
-		stranded: byDisposition.accepted.filter((offer) => !copied.has(offer.id)),
 	}
 }
