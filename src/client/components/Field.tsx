@@ -1,16 +1,26 @@
-import type { ChangeEvent, KeyboardEvent, ReactNode } from 'react'
+import type { ChangeEvent, KeyboardEvent, ReactNode, Ref } from 'react'
 
 import { cx } from '../lib/cx'
 
 /** The frame both the read-only Field and the editable TextField sit in, so a
- * field the writer types in looks like the one they cannot. */
+ * field the writer types in looks like the one they cannot.
+ *
+ * `min-w-0` is load-bearing: an input carries an intrinsic width of about 20
+ * characters, and a flex item's automatic minimum size takes it: the frame
+ * would refuse to shrink inside a narrow field and spill over whatever sits
+ * beside it. */
 const frameClass =
-	'flex flex-1 items-center gap-2 rounded-md border border-edge bg-surface px-2.5'
+	'flex min-w-0 flex-1 items-center gap-2 rounded-md border border-edge bg-surface px-2.5'
 
 const sizeClass = {
 	sm: 'h-7 text-[0.75rem]',
 	md: 'h-8 text-[0.8125rem]',
 }
+
+/** One label style for every field, and it is the same mono label a list gets.
+ * `text-muted` over the class's own faint, because a label the writer is
+ * reading to fill a field in is not a count they skim past. */
+const labelClass = 'label-meta shrink-0 text-muted'
 
 export interface FieldProps {
 	label?: ReactNode
@@ -34,9 +44,7 @@ export function Field({
 	const empty = value === undefined || value === null || value === ''
 	return (
 		<div className={cx('flex items-center gap-2.5', className)}>
-			{label ? (
-				<span className="shrink-0 text-[0.8125rem] font-medium text-muted">{label}</span>
-			) : null}
+			{label ? <span className={labelClass}>{label}</span> : null}
 			<div className={cx(frameClass, sizeClass[size])}>
 				<span
 					className={cx('min-w-0 flex-1 truncate', empty ? 'text-faint' : 'text-ink')}
@@ -88,9 +96,7 @@ export function TextField({
 			className={cx('flex gap-2.5', rows > 1 ? 'items-start' : 'items-center', className)}
 		>
 			{label ? (
-				<span className="shrink-0 pt-1.5 text-[0.8125rem] font-medium text-muted">
-					{label}
-				</span>
+				<span className={cx(labelClass, rows > 1 && 'pt-1.5')}>{label}</span>
 			) : null}
 			<div
 				className={cx(frameClass, rows > 1 ? 'py-1.5 text-[0.75rem]' : sizeClass[size])}
@@ -128,6 +134,8 @@ export interface InlineInputProps {
 	onChange: (value: string) => void
 	onKeyDown?: (event: KeyboardEvent<HTMLInputElement>) => void
 	placeholder?: string
+	/** Held so a Section the writer has just made can take the caret. */
+	ref?: Ref<HTMLInputElement>
 	className?: string
 }
 
@@ -142,11 +150,13 @@ export function InlineInput({
 	onChange,
 	onKeyDown,
 	placeholder,
+	ref,
 	className,
 }: InlineInputProps) {
 	return (
 		<input
 			aria-label={label}
+			ref={ref}
 			className={cx(
 				'min-w-0 rounded-sm border-b border-transparent bg-transparent text-ink outline-none placeholder:text-faint hover:border-edge focus:border-edge',
 				className,

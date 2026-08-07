@@ -101,8 +101,11 @@ export function moveSection(
 }
 
 /**
- * Make a Section the last Subsection of the Section above it. Null where that
- * would go a level too deep: the interface offers two levels, and anything
+ * Make a Section the last Subsection of the Section above it. **No control in
+ * the Panel calls this yet** — Subsections are TBD, and SectionRow says why.
+ * The Chat can still propose one, so the applier and this builder stay.
+ *
+ * Null where the move would go a level too deep: the interface offers two levels, and anything
  * deeper wants a word the writer already holds rather than a more recursive
  * one — context.md, **Subsection**.
  */
@@ -116,7 +119,8 @@ export function nestSection(plan: Plan, nodeId: string): ProposalInput | null {
 	]
 }
 
-/** Make a Subsection a Section again, directly after the one it sat in. */
+/** Make a Subsection a Section again, directly after the one it sat in. TBD
+ * alongside `nestSection`. */
 export function liftSection(plan: Plan, nodeId: string): ProposalInput | null {
 	const at = placementOf(plan, nodeId)
 	if (at === null || at.parentId === null) return null

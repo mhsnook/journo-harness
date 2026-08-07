@@ -37,10 +37,10 @@
 		'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, ui-serif, serif;
 	--font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
-	/* Meta label: the small uppercase mono labels used all over the design */
+	/* Meta label: the small mono labels used all over the design */
 	--text-meta: 0.6875rem;
 	--text-meta--line-height: 1.4;
-	--text-meta--letter-spacing: 0.06em;
+	--text-meta--letter-spacing: 0.02em;
 
 	--radius-frame: 0.625rem;
 
@@ -70,13 +70,16 @@
 }
 
 @layer components {
-	/* The small uppercase mono label. Used often enough to earn a class. */
+	/* The small mono label. Used often enough to earn a class, and it labels
+     every field in the app as well as every list.
+
+     It is set in sentence case. Uppercasing it reads as shouting, and the
+     monospace face already separates a label from the writing around it. */
 	.label-meta {
 		font-family: var(--font-mono);
 		font-size: var(--text-meta);
 		line-height: var(--text-meta--line-height);
 		letter-spacing: var(--text-meta--letter-spacing);
-		text-transform: uppercase;
 		color: var(--color-faint);
 	}
 

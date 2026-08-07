@@ -1,10 +1,13 @@
+import { useState } from 'react'
+
 import type { Plan, ProposalInput, Refusal } from '../../shared/plan'
 import { planAllocation, resolveArticleScope } from '../../shared/plan'
-import { Button } from '../components/Button'
 import { GroupHeading } from '../components/Divider'
 import { EmptySlot, TextField } from '../components/Field'
 import { LengthBar } from '../components/LengthBar'
 import { Panel } from '../components/Panel'
+import { AddSection } from './AddSection'
+import type { SectionAnchor } from './edits'
 import { addSection, setAdjectives, setTarget, setTitle, setVoice } from './edits'
 import { outlineEntries } from './outline'
 import { ReferenceList } from './ReferenceList'
@@ -35,13 +38,28 @@ export function PlanPanel({
 	rejected = null,
 	className,
 }: PlanPanelProps) {
+	// One Section is open at a time. `made` is the one the writer has just
+	// added, which takes the caret as it opens.
+	const [openId, setOpenId] = useState<string | null>(null)
+	const [made, setMade] = useState<string | null>(null)
+
 	const entries = outlineEntries(plan.outline)
 	const allocation = planAllocation(plan)
 	const resolved = resolveArticleScope(plan)
 
-	// The bar is the shape of the piece, so it only draws once every Section
-	// carries a share of it. Until then the gap is the thing to read.
-	const targeted = plan.outline.every((node) => node.target !== undefined)
+	// The bar is the shape of the piece, drawn from the Sections that carry a
+	// share of it. A Section with no target is left out rather than taking the
+	// bar away: what is placed is still worth seeing.
+	const segments = plan.outline
+		.filter((node) => node.target !== undefined)
+		.map((node) => ({ label: node.title, words: node.target ?? 0 }))
+
+	const add = (anchor: SectionAnchor) => {
+		const id = crypto.randomUUID()
+		edit(addSection(anchor, id))
+		setOpenId(id)
+		setMade(id)
+	}
 
 	return (
 		<Panel className={className} variant="sunk">
@@ -64,14 +82,14 @@ export function PlanPanel({
 				value={plan.title}
 			/>
 
-			<div className="flex flex-wrap items-center gap-2.5">
+			<div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
 				<TargetField
-					className="w-44"
+					className="w-48 shrink-0"
 					label="Length"
 					onTarget={(target) => edit(setTarget(plan, null, target))}
 					target={plan.totalTarget}
 				/>
-				<AllocationNote allocation={allocation} className="text-[0.6875rem] text-faint" />
+				<AllocationNote allocation={allocation} className="label-meta" />
 			</div>
 
 			<ToneFields
@@ -83,20 +101,7 @@ export function PlanPanel({
 				voice={plan.voice ?? null}
 			/>
 
-			<GroupHeading
-				action={
-					<Button
-						onClick={() => edit(addSection({ parentId: null, beforeId: null }))}
-						size="sm"
-						variant="quiet"
-					>
-						+ section
-					</Button>
-				}
-				count={plan.outline.length}
-			>
-				Outline
-			</GroupHeading>
+			<GroupHeading count={plan.outline.length}>Outline</GroupHeading>
 
 			{entries.length === 0 ? (
 				<EmptySlot className="min-h-[3.5rem]">
@@ -105,22 +110,28 @@ export function PlanPanel({
 				</EmptySlot>
 			) : (
 				<div className="flex items-start gap-3.5">
-					<div className="flex min-w-0 flex-1 flex-col gap-3.5">
+					<div className="flex min-w-0 flex-1 flex-col gap-1.5">
 						{entries.map((entry) => (
-							<SectionRow key={entry.node.id} edit={edit} entry={entry} plan={plan} />
+							<SectionRow
+								key={entry.node.id}
+								edit={edit}
+								entry={entry}
+								onOpen={setOpenId}
+								open={entry.node.id === openId}
+								plan={plan}
+								takeCaret={entry.node.id === made}
+							/>
 						))}
 					</div>
-					{targeted ? (
-						<LengthBar
-							segments={plan.outline.map((node) => ({
-								label: node.title,
-								words: node.target ?? 0,
-							}))}
-							height={Math.max(120, entries.length * 96)}
-						/>
+					{segments.length > 0 ? (
+						<LengthBar segments={segments} height={Math.max(120, entries.length * 44)} />
 					) : null}
 				</div>
 			)}
+
+			<div className="flex">
+				<AddSection onAdd={add} outline={plan.outline} />
+			</div>
 
 			<GroupHeading count={plan.references.length}>References</GroupHeading>
 			<ReferenceList

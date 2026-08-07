@@ -38,7 +38,7 @@ export function OutlineRow({
 				<div className="flex items-baseline gap-2">
 					<span
 						className={cx(
-							'min-w-0 text-[0.8125rem] leading-snug',
+							'min-w-0 flex-1 text-[0.8125rem] leading-snug',
 							current ? 'font-medium text-ink' : 'text-ink',
 							dense && 'truncate',
 						)}
@@ -48,17 +48,14 @@ export function OutlineRow({
 					{current ? (
 						<span className="shrink-0 text-[0.6875rem] text-faint">now</span>
 					) : null}
-					{dense && target !== null ? (
-						<Chip variant={changed ? 'accent' : 'default'} className="ml-auto">
-							{target}
-						</Chip>
+					{/* The count sits on the title line, where the eye can run down a
+					    column of them rather than hunting each row for it. */}
+					{target !== null ? (
+						<Chip variant={changed ? 'accent' : 'default'}>{target}</Chip>
 					) : null}
 				</div>
 				{!dense ? (
-					<div className="flex flex-wrap gap-1.5">
-						{target !== null ? (
-							<Chip variant={changed ? 'accent' : 'default'}>{target}</Chip>
-						) : null}
+					<div className="flex flex-wrap gap-1.5 empty:hidden">
 						{node.adjectives?.map((adjective) => (
 							<Chip key={adjective} variant="outline">
 								{adjective}

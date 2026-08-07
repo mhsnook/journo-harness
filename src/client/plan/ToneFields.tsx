@@ -3,13 +3,14 @@ import { useState } from 'react'
 import type { ResolvedScope } from '../../shared/plan'
 import { Chip } from '../components/Chip'
 import { InlineInput, TextField } from '../components/Field'
+import { cx } from '../lib/cx'
 
 /**
  * The Tone at one Scope: its Voice and its Adjectives. One Voice applies at a
  * time and the nearest Scope wins outright, while Adjectives accumulate — so
  * what this Scope states is editable here, and what it inherits is shown
- * beside it and edited where it was said. Resolution runs at read time, and
- * nothing here stores a resolved value — docs/architecture.md §4.
+ * beside it, dimmed, and edited where it was said. Resolution runs at read
+ * time, and nothing here stores a resolved value — docs/architecture.md §4.
  */
 
 export interface ToneFieldsProps {
@@ -48,19 +49,26 @@ export function ToneFields({
 		onAdjectives([...adjectives, adjective])
 	}
 
+	// Both labels in one column, so Voice and Adjectives read as the pair they
+	// are rather than as two unrelated fields.
 	return (
-		<div className={className}>
+		<div
+			className={cx(
+				'grid grid-cols-[5rem_minmax(0,1fr)] items-center gap-x-2 gap-y-1.5',
+				className,
+			)}
+		>
+			<span className="label-meta text-muted">Voice</span>
 			<TextField
 				hiddenLabel={`Voice for ${scopeName}`}
-				label="Voice"
 				onChange={(typed) => onVoice(typed.trim() === '' ? null : typed)}
 				placeholder={inherited === null ? 'no Voice set' : `${inherited}, inherited`}
 				size="sm"
 				value={voice ?? ''}
 			/>
 
-			<div className="mt-2 flex flex-wrap items-center gap-1.5">
-				<span className="label-meta shrink-0">Adjectives</span>
+			<span className="label-meta text-muted">Adjectives</span>
+			<div className="flex flex-wrap items-center gap-1.5">
 				{inheritedAdjectives.map((adjective) => (
 					<Chip key={adjective} dimmed title="inherited" variant="outline">
 						{adjective}
