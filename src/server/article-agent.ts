@@ -4,8 +4,10 @@ import { z } from 'zod'
 import {
 	type Disposition,
 	type Offer,
-	type OfferContent,
-	offerContentSchema,
+	offerBatchSchema,
+	offerFingerprint,
+	type OfferMaterial,
+	offerMaterialSchema,
 	type Ruling,
 	rulingSchema,
 } from '../shared/offer'
@@ -49,6 +51,10 @@ function toOffer(row: OfferRow): Offer {
 function missingOffer(id: string): Error {
 	return new Error(`No Offer carries the id ${id}.`)
 }
+
+/** One entry of a research turn, once the Article Agent has placed it.
+ * `duplicate` says the row was already there and nothing was written. */
+export type RecordedOffer = { offer: Offer; duplicate: boolean }
 
 /**
  * One Article Agent per Article — docs/architecture.md §2, and §3 for what goes
@@ -107,13 +113,43 @@ export class ArticleAgent extends Agent<Env, Plan> {
 		return this.sql<OfferRow>`SELECT * FROM offer ORDER BY seq`.map(toOffer)
 	}
 
-	/** Record something the Chat turned up. It starts Undecided.
+	/**
+	 * Record what one research turn turned up, and answer with what the writer
+	 * will see. An entry this Article already carries comes back as it stands,
+	 * marked a duplicate and written nowhere: the same source next session is
+	 * the same Offer, still holding the disposition the writer gave it, and its
+	 * Provenance is what says where it went in the Plan.
 	 *
-	 * Not `@callable`: the writer never authors an Offer, so the Chat's research
-	 * tool is the only caller and it runs inside this Agent (§3, rule 4). */
-	createOffer(content: OfferContent): Offer {
+	 * Not `@callable`, and neither is `createOffer` below: the writer never
+	 * authors an Offer, so the Chat's research tool is the only caller and it
+	 * runs inside this Agent (§3, rule 4). The tool declaration that wraps this
+	 * lands with the Chat turn, in #25.
+	 */
+	recordOffers(batch: unknown): RecordedOffer[] {
+		const found = offerBatchSchema.parse(batch)
+
+		// Built once and added to as the batch is written, so one turn offering
+		// the same source twice records it once.
+		const held = new Map(
+			this.listOffers().map((offer) => [offerFingerprint(offer), offer]),
+		)
+
+		return found.map((material) => {
+			const fingerprint = offerFingerprint(material)
+			const already = held.get(fingerprint)
+			if (already !== undefined) return { offer: already, duplicate: true }
+
+			const offer = this.createOffer(material)
+			held.set(fingerprint, offer)
+
+			return { offer, duplicate: false }
+		})
+	}
+
+	/** Record one thing the Chat turned up. It starts Undecided. */
+	createOffer(material: OfferMaterial): Offer {
 		const offer: Offer = {
-			...offerContentSchema.parse(content),
+			...offerMaterialSchema.parse(material),
 			id: crypto.randomUUID(),
 			disposition: 'undecided',
 			createdAt: Date.now(),
