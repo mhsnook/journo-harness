@@ -101,8 +101,10 @@ export class ArticleAgent extends Agent<Env, Plan> {
 		return this.sql<OfferRow>`SELECT * FROM offer ORDER BY created_at, id`.map(toOffer)
 	}
 
-	/** Record something the Chat turned up. It starts Undecided. */
-	@callable()
+	/** Record something the Chat turned up. It starts Undecided.
+	 *
+	 * Not `@callable`: the writer never authors an Offer, so the Chat's research
+	 * tool is the only caller and it runs inside this Agent (§3, rule 4). */
 	createOffer(content: OfferContent): Offer {
 		const offer: Offer = {
 			...offerContentSchema.parse(content),
