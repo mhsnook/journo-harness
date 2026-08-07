@@ -1,4 +1,5 @@
 import { cloudflareTest } from '@cloudflare/vitest-pool-workers'
+import agents from 'agents/vite'
 import { defineConfig } from 'vitest/config'
 
 // Two projects, split by what the code under test needs. A test in test/shared
@@ -17,6 +18,8 @@ export default defineConfig({
 			},
 			{
 				plugins: [
+					// Cloudflare's workaround for `@callable` support in Vite 8.
+					agents(),
 					// `cloudflareTest` is the current API. Most docs still show
 					// `defineWorkersConfig` with `poolOptions.workers`, which no longer
 					// resolves — the package stopped exporting "./config".

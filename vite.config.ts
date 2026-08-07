@@ -2,6 +2,7 @@ import { cloudflare } from '@cloudflare/vite-plugin'
 import tailwindcss from '@tailwindcss/vite'
 import { tanstackRouter } from '@tanstack/router-plugin/vite'
 import react from '@vitejs/plugin-react'
+import agents from 'agents/vite'
 import { defineConfig } from 'vite'
 
 // Storybook loads this same config, and it renders components without the app
@@ -25,6 +26,8 @@ export default defineConfig({
 				}),
 		react(),
 		tailwindcss(),
+		// Cloudflare's workaround for `@callable` support in Vite 8.
+		forStorybook ? [] : agents(),
 		// Runs the Worker in workerd beside the client, so `pnpm dev` serves both.
 		forStorybook
 			? []

@@ -365,6 +365,15 @@ Settings and known defects. None is a decision to make; all are things to get ri
   everything, and not survivable the moment that stops being true.
 - **An expired Access session answers with a redirect rather than a 1008 close**, so
   party-db's client reconnect-loops instead of firing `onAuthError`.
+- **`@callable` needs the `agents/vite` plugin, in both Vite configs.** Vite 8 transpiles
+  with oxc, which does not implement TC39 decorators (oxc#9170) and emits the `@` syntax
+  verbatim, so the Worker fails to parse with "SyntaxError: Invalid or unexpected token".
+  The plugin lowers them through Babel. `vitest.config.ts` needs it as well as
+  `vite.config.ts` — a worker test builds the Article Agent, and the two files do not
+  share plugins. **Do not reach for `experimentalDecorators`**: the SDK uses standard
+  decorators, and the legacy convention hands `callable()` the prototype instead of the
+  method, so nothing registers and every RPC call is refused at runtime with "is not
+  callable" — a silent failure where the missing plugin is a loud one.
 - **An abandoned tool batch parks indefinitely.** Cloudflare's `ai-chat` enforces batch
   completeness server-side with **no orphan timeout**, so a Proposal the writer neither
   Accepts nor Declines stalls the conversation silently. Surface it in the UI.

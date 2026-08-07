@@ -1,14 +1,174 @@
-import { Agent } from 'agents'
+import { Agent, callable, type Connection } from 'agents'
+import { z } from 'zod'
+
+import {
+	type Disposition,
+	type Offer,
+	type OfferContent,
+	type OfferKind,
+	offerContentSchema,
+	type Ruling,
+	rulingSchema,
+} from '../shared/offer'
+import {
+	emptyPlan,
+	type Plan,
+	type PlanRefused,
+	planSchema,
+	type Source,
+} from '../shared/plan'
+
+/** One Offer row as SQLite returns it. `this.sql` asserts the row type rather
+ * than checking it, and this class is the table's only writer, so the columns
+ * are stated as what `createOffer` parsed before writing them. */
+type OfferRow = {
+	id: string
+	kind: OfferKind
+	disposition: Disposition
+	text: string | null
+	source: string | null
+	note: string | null
+	created_at: number
+	decided_at: number | null
+}
+
+function toOffer(row: OfferRow): Offer {
+	return {
+		id: row.id,
+		kind: row.kind,
+		disposition: row.disposition,
+		text: row.text ?? undefined,
+		source: row.source === null ? undefined : (JSON.parse(row.source) as Source),
+		note: row.note ?? undefined,
+		createdAt: row.created_at,
+		decidedAt: row.decided_at,
+	}
+}
+
+function missingOffer(id: string): Error {
+	return new Error(`No Offer carries the id ${id}.`)
+}
 
 /**
  * One Article Agent per Article — docs/architecture.md §2, and §3 for what goes
  * in the state blob against what goes in its SQLite.
- *
- * Empty so far: `validateStateChange`, which runs `planSchema` from
- * `src/shared/plan`, and the Offer rows.
  */
-export class ArticleAgent extends Agent<Env> {
+export class ArticleAgent extends Agent<Env, Plan> {
+	initialState = emptyPlan()
+
+	/** Runs on every wake, so every statement here has to be idempotent. A new
+	 * table can join this one. A new column cannot — SQLite has no ADD COLUMN
+	 * IF NOT EXISTS, so the second wake throws on a duplicate column. */
+	onStart(): void {
+		this.sql`
+			CREATE TABLE IF NOT EXISTS offer (
+				id TEXT PRIMARY KEY,
+				kind TEXT NOT NULL,
+				disposition TEXT NOT NULL,
+				text TEXT,
+				source TEXT,
+				note TEXT,
+				created_at INTEGER NOT NULL,
+				decided_at INTEGER
+			)
+		`
+	}
+
 	async onRequest(_request: Request): Promise<Response> {
 		return Response.json({ agent: 'ArticleAgent', name: this.name })
+	}
+
+	/**
+	 * The only guard on the blob. Every write is parsed, whatever its source:
+	 * the client is the Plan's one writer, so a server write is already a bug.
+	 */
+	validateStateChange(nextState: Plan, source: Connection | 'server'): void {
+		const result = planSchema.safeParse(nextState)
+		if (result.success) return
+
+		const reason = z.prettifyError(result.error)
+		if (source !== 'server') {
+			const refusal: PlanRefused = { type: 'plan_refused', error: reason }
+			source.send(JSON.stringify(refusal))
+		}
+
+		throw new Error(`The Plan does not parse. ${reason}`)
+	}
+
+	/** Every Offer on this Article, oldest first. */
+	@callable()
+	listOffers(): Offer[] {
+		return this.sql<OfferRow>`SELECT * FROM offer ORDER BY created_at, id`.map(toOffer)
+	}
+
+	/** Record something the Chat turned up. It starts Undecided.
+	 *
+	 * Not `@callable`: the writer never authors an Offer, so the Chat's research
+	 * tool is the only caller and it runs inside this Agent (§3, rule 4). */
+	createOffer(content: OfferContent): Offer {
+		const offer: Offer = {
+			...offerContentSchema.parse(content),
+			id: crypto.randomUUID(),
+			disposition: 'undecided',
+			createdAt: Date.now(),
+			decidedAt: null,
+		}
+
+		this.sql`
+			INSERT INTO offer (id, kind, disposition, text, source, note, created_at, decided_at)
+			VALUES (
+				${offer.id},
+				${offer.kind},
+				${offer.disposition},
+				${offer.text ?? null},
+				${offer.source === undefined ? null : JSON.stringify(offer.source)},
+				${offer.note ?? null},
+				${offer.createdAt},
+				${offer.decidedAt}
+			)
+		`
+
+		return offer
+	}
+
+	/** Mark an Offer as having been Accepted or Declined by the client. */
+	@callable()
+	setOfferDisposition(id: string, disposition: Ruling): Offer {
+		const ruling = rulingSchema.parse(disposition)
+
+		const rows = this.sql<OfferRow>`
+			UPDATE offer SET disposition = ${ruling}, decided_at = ${Date.now()}
+			WHERE id = ${id} RETURNING *
+		`
+		if (rows.length === 0) throw missingOffer(id)
+
+		return toOffer(rows[0])
+	}
+
+	/** Restore a Declined Offer back to Undecided. */
+	@callable()
+	restoreOffer(id: string): Offer {
+		// Read first: an Offer that is Accepted and one that does not exist have
+		// to be told apart, and one conditional UPDATE cannot do that.
+		const offer = this.readOffer(id)
+		if (offer.disposition !== 'declined') {
+			throw new Error(
+				`Offer ${id} is ${offer.disposition}, and restoring undoes a Decline.`,
+			)
+		}
+
+		const rows = this.sql<OfferRow>`
+			UPDATE offer SET disposition = 'undecided', decided_at = NULL
+			WHERE id = ${id} RETURNING *
+		`
+
+		return toOffer(rows[0])
+	}
+
+	private readOffer(id: string): Offer {
+		const rows = this.sql<OfferRow>`SELECT * FROM offer WHERE id = ${id}`
+		if (rows.length === 0) throw missingOffer(id)
+
+		return toOffer(rows[0])
 	}
 }
