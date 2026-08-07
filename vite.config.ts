@@ -2,6 +2,7 @@ import { cloudflare } from '@cloudflare/vite-plugin'
 import tailwindcss from '@tailwindcss/vite'
 import { tanstackRouter } from '@tanstack/router-plugin/vite'
 import react from '@vitejs/plugin-react'
+import agents from 'agents/vite'
 import { defineConfig } from 'vite'
 
 // Storybook loads this same config, and it renders components without the app
@@ -25,6 +26,12 @@ export default defineConfig({
 				}),
 		react(),
 		tailwindcss(),
+		// Lowers the `@callable` decorators in the Article Agent through Babel.
+		// Vite 8 transpiles with oxc, which does not implement TC39 decorators
+		// (oxc#9170) and emits the `@` syntax verbatim — so without this the
+		// Worker fails to parse. Required in vitest.config.ts as well, which
+		// builds the Worker for the tests and does not read this file.
+		forStorybook ? [] : agents(),
 		// Runs the Worker in workerd beside the client, so `pnpm dev` serves both.
 		forStorybook
 			? []

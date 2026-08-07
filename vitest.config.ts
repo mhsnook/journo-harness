@@ -1,4 +1,5 @@
 import { cloudflareTest } from '@cloudflare/vitest-pool-workers'
+import agents from 'agents/vite'
 import { defineConfig } from 'vitest/config'
 
 // Two projects, split by what the code under test needs. A test in test/shared
@@ -17,6 +18,10 @@ export default defineConfig({
 			},
 			{
 				plugins: [
+					// The same decorator transform vite.config.ts carries. This file does
+					// not read that one, and a worker test builds the Article Agent, so
+					// leaving it out here fails every worker test on a parse error.
+					agents(),
 					// `cloudflareTest` is the current API. Most docs still show
 					// `defineWorkersConfig` with `poolOptions.workers`, which no longer
 					// resolves — the package stopped exporting "./config".

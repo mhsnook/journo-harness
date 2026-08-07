@@ -91,10 +91,10 @@ describe('the Plan in Article Agent state', () => {
 })
 
 describe('Offers in the Article Agent', () => {
-	// The build cannot lower a decorator, so `article-agent.ts` registers its
-	// callable methods by calling `callable()` on each one. A method left out of
-	// that list is refused at runtime with no other symptom, so this names the
-	// set the client may call.
+	// `@callable` is the whole allowlist of what a browser may invoke on this
+	// Durable Object, so the set is worth naming. It also proves the decorator
+	// survived the build: oxc does not lower one, and the Babel transform in
+	// `agents/vite` is what does.
 	it('marks every Offer method callable', async () => {
 		const stub = env.ArticleAgent.get(env.ArticleAgent.idFromName('callable-set'))
 

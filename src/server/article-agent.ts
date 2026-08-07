@@ -99,11 +99,13 @@ export class ArticleAgent extends Agent<Env, Plan> {
 	/** Every Offer on this Article, oldest first. The Ledger filters by
 	 * disposition and counts, and it does that over this list — it is a View
 	 * over Offers rather than a store, and one Article's Offers are few. */
+	@callable()
 	listOffers(): Offer[] {
 		return this.sql<OfferRow>`SELECT * FROM offer ORDER BY created_at, id`.map(toOffer)
 	}
 
 	/** Record something the Chat turned up. It starts Undecided. */
+	@callable()
 	createOffer(content: OfferContent): Offer {
 		const offer: Offer = {
 			...offerContentSchema.parse(content),
@@ -133,6 +135,7 @@ export class ArticleAgent extends Agent<Env, Plan> {
 	/** Rule on an Offer: Accept it into the Plan, or Decline it. Accepting does
 	 * not touch the Plan — the client copies the Offer in and keeps its
 	 * Provenance (§3, rule 5). */
+	@callable()
 	setOfferDisposition(id: string, disposition: Ruling): Offer {
 		const ruling = z.enum(rulings).parse(disposition)
 		this.readOffer(id)
@@ -147,6 +150,7 @@ export class ArticleAgent extends Agent<Env, Plan> {
 	/** Put a Declined Offer back to Undecided. Declining is restorable and
 	 * nothing is deleted, so this is the undo of a Decline rather than a third
 	 * ruling. */
+	@callable()
 	restoreOffer(id: string): Offer {
 		const offer = this.readOffer(id)
 		if (offer.disposition !== 'declined') {
@@ -168,30 +172,4 @@ export class ArticleAgent extends Agent<Env, Plan> {
 
 		return toOffer(rows[0])
 	}
-}
-
-/**
- * The four Offer methods a client may call over the socket it already holds.
- *
- * `@callable()` on the method is the SDK's own spelling, and this build cannot
- * use it. Vite 8 bundles through oxc, which does not transform a standard
- * decorator at any `target` — it emits the `@` syntax verbatim, and workerd's
- * V8 refuses to parse it. Its `decorator.legacy` option does transform, to the
- * pre-standard calling convention, which hands `callable()` the prototype
- * instead of the method: registration then lands on the wrong object and every
- * RPC call is refused at runtime with "is not callable". Both were measured
- * against the oxc inside rolldown 1.2.3, and neither is a setting away from
- * working.
- *
- * So this calls the decorator rather than writing it, which is the same
- * registration by the same function. Adding a callable method means adding it
- * here, and `test/worker/article-agent.test.ts` fails if it is left out.
- */
-for (const method of [
-	ArticleAgent.prototype.listOffers,
-	ArticleAgent.prototype.createOffer,
-	ArticleAgent.prototype.setOfferDisposition,
-	ArticleAgent.prototype.restoreOffer,
-] as ((...args: never[]) => unknown)[]) {
-	callable()(method, {} as ClassMethodDecoratorContext)
 }
