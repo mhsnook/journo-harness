@@ -1,6 +1,5 @@
-// Nothing here parses a token. Cloudflare Access gates this Worker at the edge,
-// and localhost has no Access gate — so requiring the Cf-Access-Jwt-Assertion
-// header would make the app unrunnable in development.
+// Nothing here parses a token, and nothing may require the
+// Cf-Access-Jwt-Assertion header — docs/architecture.md §9.
 
 import { routeAgentRequest } from 'agents'
 import { Hono } from 'hono'

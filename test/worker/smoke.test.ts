@@ -26,8 +26,7 @@ describe('the Worker', () => {
 		})
 	})
 
-	// The request carries no Cf-Access-Jwt-Assertion header, because localhost
-	// has no Access gate and so nothing may require one.
+	// No Cf-Access-Jwt-Assertion header, per architecture.md §9.
 	it('answers the health route rather than the SPA fallback', async () => {
 		const response = await SELF.fetch('https://harness.test/api/health')
 
