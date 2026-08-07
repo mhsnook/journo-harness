@@ -9,12 +9,10 @@ import { z } from 'zod'
  * Rationale in docs/adr/0002-the-plan-data-model.md.
  */
 
-// The field rules, stated once. A Proposal's op payloads set the same fields
-// through ops.ts, so restating `.min(1)` there is drift waiting to happen.
+// `.min(1)` throughout: absence is how a Scope says "nothing here", and the
+// empty string is not a second way to say it. Which of these fields may be
+// absent is decided below, and again in a Proposal's op payloads.
 export const idSchema = z.string().min(1)
-
-// An absent Voice is how a Scope says "nothing here". The empty string is not a
-// second way to say it. An absent intent note says the same.
 export const voiceSchema = z.string().min(1)
 export const adjectiveSchema = z.string().min(1)
 export const intentSchema = z.string().min(1)
@@ -91,8 +89,8 @@ export const outlineNodeSchema = z.strictObject({
 // inferring the type from the refined schema would be circular.
 const planObjectSchema = z.strictObject({
 	title: z.string(),
-	// Null until the writer states a total. The total is stored and nothing
-	// derives it — see word-count.ts for why the parts may disagree with it.
+	// Null until the writer states a total, and never derived from the node
+	// targets, which are free to disagree with it.
 	totalTarget: targetSchema.nullable(),
 	voice: voiceSchema.optional(),
 	adjectives: z.array(adjectiveSchema),

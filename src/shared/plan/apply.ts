@@ -6,14 +6,9 @@ import type { OutlineNode, Plan } from './schema'
 import { planSchema } from './schema'
 
 /**
- * The client-side applier. A Proposal is a list of ops applied
- * **all-or-nothing**: the applier works on a copy, and the first op that refuses
- * throws the copy away, so the Plan the writer sees never holds half a Proposal.
- *
- * A refusal names which op failed and why, because the UI has to say why rather
- * than greying the Proposal out. Whole-field comparison is conservative on
- * purpose — a Proposal that rewords an intent note the writer has since edited
- * is refused rather than merged.
+ * The client-side applier, working on a copy so that the first op to refuse
+ * throws the whole Proposal away. What the ops mean is `docs/architecture.md`
+ * §6, and the vocabulary is ops.ts.
  */
 
 /**
@@ -44,13 +39,12 @@ export type Refusal = {
 export type ApplyResult = { ok: true; plan: Plan } | { ok: false; refusal: Refusal }
 
 /**
- * Apply a Proposal to a Plan. The Plan passed in is never touched: a success
- * carries a new Plan, and a refusal carries the reason.
+ * Apply a Proposal to a Plan, leaving the Plan passed in untouched.
  *
  * The Proposal arrives from a tool call, so this parses it rather than trusting
- * its type, and it parses the Plan it produces rather than trusting the ops —
- * `validateStateChange` in the Article Agent would reject a Plan that does not
- * parse, and a refusal here says why while a rejected write says nothing.
+ * its type, and it parses the Plan it produces rather than trusting the ops:
+ * `validateStateChange` would reject an unparseable Plan with nothing to show
+ * the writer, where a refusal here says which op did it.
  */
 export function applyProposal(plan: Plan, proposal: unknown): ApplyResult {
 	const parsed = proposalSchema.safeParse(proposal)
@@ -97,9 +91,8 @@ function applyOp(plan: Plan, op: ProposalOp, index: number): Refusal | null {
 			const at = insertionIndex(siblings, op)
 			if (at === null) return refuse('missing', anchorMissing(op))
 
-			// The final parse catches a repeated id through checkIds, but that
-			// refusal cannot say which op carried it. Claiming the ids here is what
-			// lets this one name the op, so the duplication is the point.
+			// checkIds catches a repeated id at the final parse, but that refusal
+			// cannot say which op carried it. Claiming them here is what does.
 			const taken = new Set(plan.outline.flatMap(subtreeIds))
 			for (const id of subtreeIds(op.node)) {
 				if (taken.has(id)) {
@@ -123,7 +116,7 @@ function applyOp(plan: Plan, op: ProposalOp, index: number): Refusal | null {
 			if (op.parentId !== null && subtreeIds(node).includes(op.parentId)) {
 				return refuse(
 					'invalid',
-					`${op.op} would move ${op.nodeId} inside its own subtree.`,
+					`${op.op} would move ${op.nodeId} under a node it contains.`,
 				)
 			}
 
@@ -170,6 +163,8 @@ function applyOp(plan: Plan, op: ProposalOp, index: number): Refusal | null {
 			const site = locate(plan.outline, op.nodeId)
 			if (site === null) return absent(`node ${op.nodeId}`)
 
+			// A Reference naming a node that is gone does not parse, and the Plan is
+			// written whole, so the unplacing lands in this op or nowhere.
 			const gone = new Set(subtreeIds(site.siblings[site.index]))
 			site.siblings.splice(site.index, 1)
 			for (const reference of plan.references) {
@@ -204,10 +199,9 @@ function applyOp(plan: Plan, op: ProposalOp, index: number): Refusal | null {
 		}
 
 		case 'setTarget': {
-			// setTitle and setVoice reach both Scopes through scopeOf, and this op
-			// and setAdjectives cannot: the Article spells its target `totalTarget`,
-			// and its Adjectives are a required field where a node's are optional.
-			// The op vocabulary unifies the two Scopes further than the Plan does.
+			// This op and setAdjectives cannot reach both Scopes through scopeOf the
+			// way setTitle and setVoice do: the Article spells its target
+			// `totalTarget`, and its Adjectives are required where a node's are not.
 			if (op.nodeId === null) {
 				if (!matches(op.expected, plan.totalTarget)) {
 					return stale(scopeName(null), op.expected, plan.totalTarget)
@@ -253,8 +247,6 @@ function applyOp(plan: Plan, op: ProposalOp, index: number): Refusal | null {
 			const node = findNode(plan, op.nodeId)
 			if (node === null) return absent(`node ${op.nodeId}`)
 
-			// A node stating no Adjectives and one stating an empty list are the
-			// same node, so both read as the empty list here.
 			const found = node.adjectives ?? []
 			if (!matches(op.expected, found))
 				return stale(scopeName(op.nodeId), op.expected, found)
@@ -280,8 +272,8 @@ function applyOp(plan: Plan, op: ProposalOp, index: number): Refusal | null {
 	}
 }
 
-/** Where a node sits: the array holding it, and its position in that array. The
- * applier splices, so it needs the array rather than the node alone. */
+/** Splicing needs the array holding a node, which `findNodePath` in scope.ts
+ * does not return. */
 type Site = { siblings: OutlineNode[]; index: number }
 
 function locate(nodes: OutlineNode[], id: string): Site | null {
@@ -301,8 +293,7 @@ function findNode(plan: Plan, id: string): OutlineNode | null {
 	return site === null ? null : site.siblings[site.index]
 }
 
-/** What a content op with `nodeId: null` acts on. The Article and an Outline
- * node carry the same Scope fields, which is why one op serves both. */
+/** What a content op with `nodeId: null` acts on. */
 function scopeOf(plan: Plan, nodeId: string | null): Plan | OutlineNode | null {
 	return nodeId === null ? plan : findNode(plan, nodeId)
 }
@@ -315,7 +306,7 @@ function childrenOf(plan: Plan, parentId: string | null): OutlineNode[] | null {
 }
 
 /** Where the anchor puts the node among `siblings`, or null when the sibling it
- * names is gone. A null anchor names no sibling, so it never goes missing. */
+ * names is gone. A null anchor names none, so it never goes missing. */
 function insertionIndex(siblings: OutlineNode[], anchor: Anchor): number | null {
 	if (anchor.afterId !== undefined) {
 		if (anchor.afterId === null) return 0
@@ -330,13 +321,12 @@ function insertionIndex(siblings: OutlineNode[], anchor: Anchor): number | null 
 	return at === -1 ? null : at
 }
 
-/** Every id in a subtree, the node's own first. */
 function subtreeIds(node: Pick<OutlineNode, 'id' | 'children'>): string[] {
 	return [node.id, ...node.children.flatMap(subtreeIds)]
 }
 
 /** Whole-field comparison. Adjectives are the one list a content op sets, and
- * two lists match when they carry the same terms in the same order. */
+ * order counts there. */
 function matches(expected: unknown, found: unknown): boolean {
 	if (Array.isArray(expected) && Array.isArray(found)) {
 		return (
@@ -351,7 +341,6 @@ function scopeName(nodeId: string | null): string {
 	return nodeId === null ? 'the Article' : `node ${nodeId}`
 }
 
-/** Why a structural op refused: the anchor it stated, and where it looked. */
 function anchorMissing(op: Anchor & { op: OpName; parentId: string | null }): string {
 	const anchor =
 		op.afterId !== undefined ? `after ${op.afterId}` : `before ${op.beforeId}`
@@ -385,8 +374,6 @@ function invalidPlan(error: z.ZodError): Refusal {
 	}
 }
 
-/** Which field a zod issue names, as a phrase, and nothing when it names the
- * whole value. */
 function at(path: PropertyKey[]): string {
 	return path.length === 0 ? '' : ` at ${path.join('.')}`
 }

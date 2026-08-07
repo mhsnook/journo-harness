@@ -200,9 +200,9 @@ proposal: [
 `deleteNode`, `setTitle`, `setIntent`, `setTarget`, `setVoice`, `setAdjectives`,
 `placeReference`. A content op reads `nodeId: null` as the Article Scope, so setting the
 Article's Voice and setting one node's Voice are one op rather than two. Two ops carry a
-consequence worth stating: **`deleteNode` unplaces every Reference that sat in the subtree it
-removes**, because the Plan is written whole and a Reference naming a node that is gone does
-not parse; and **`mergeNodes` keeps the target's own fields**, moving the source's children
+consequence worth stating: **`deleteNode` unplaces every Reference placed at the node it
+removes or at any node below it**, because the Plan is written whole and a Reference naming a
+node that is gone does not parse; and **`mergeNodes` keeps the target's own fields**, moving the source's children
 and placed References onto it, so a Proposal that wants the source's intent note carried over
 says so with a `setIntent` op in the same batch.
 

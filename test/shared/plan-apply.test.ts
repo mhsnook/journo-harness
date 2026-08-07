@@ -237,13 +237,13 @@ describe('the structural ops', () => {
 		expect(ids(next.outline[1].children)).toEqual(['n2a', 'n3', 'n2b'])
 	})
 
-	it('refuses to move a node inside its own subtree', () => {
+	it('refuses to move a node under one it contains', () => {
 		const refusal = refused([
 			{ op: 'moveNode', nodeId: 'n2', parentId: 'n2a', beforeId: null },
 		])
 
 		expect(refusal.kind).toBe('invalid')
-		expect(refusal.message).toContain('its own subtree')
+		expect(refusal.message).toContain('a node it contains')
 	})
 
 	it('deletes a node with its subtree, and unplaces the References that sat there', () => {
