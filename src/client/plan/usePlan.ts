@@ -16,9 +16,7 @@ import { createPlanWriter, type PlanEdit } from './writer'
 export type PlanConnection = {
 	/** The Plan the writer sees, and null until the first state update arrives. */
 	plan: Plan | null
-	/** Apply an edit. Takes what the builders in edits.ts return, including the
-	 * null they return for an edit with nowhere to go, and a builder for an edit
-	 * that has to read the Plan as it stands. */
+	/** What the builders in edits.ts return, null included. */
 	edit: (edit: PlanEdit) => void
 	/** Why the last edit did not land, cleared by the next one. */
 	refusal: Refusal | null

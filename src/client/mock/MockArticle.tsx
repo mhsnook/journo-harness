@@ -7,20 +7,14 @@ import { createPlanWriter } from '../plan/writer'
 import { offers as seeded, plan as seededPlan } from './content'
 
 /**
- * An Article held in memory, so a story exercises the real Offer ledger without
- * a Worker. It answers the same three methods the Article Agent exposes over
- * RPC and applies edits through the same applier, so what a story shows is what
- * the Panel does.
- *
- * What it leaves out is what only the socket needs: `usePlan` debounces its
- * writes and surfaces a refusal, and there is neither a wire to spare nor a
- * place to show one here.
+ * An Article held in memory, so a story runs the real Ledger and the real
+ * applier without a Worker. A refusal has nowhere to go here, where `usePlan`
+ * surfaces one.
  */
 export function MockArticle({ children }: { children: ReactNode }) {
 	const [plan, setPlan] = useState<Plan>(seededPlan)
 
-	// The real writer, driven without a socket: `onPlan` fires on every edit
-	// where only the outbound `send` is debounced, so a story sees each one.
+	// The real writer, without a socket: only `send` is debounced.
 	const writer = useMemo(() => {
 		const held = createPlanWriter({ send: () => {}, onPlan: setPlan })
 		held.receive(seededPlan)
@@ -28,8 +22,7 @@ export function MockArticle({ children }: { children: ReactNode }) {
 		return held
 	}, [])
 
-	// One store for the life of the story: the Ledger reads its rows once, the
-	// way it will read them when a Panel opens.
+	// One store per story: the Ledger reads its rows once.
 	const offers = useMemo(() => memoryOfferStore(seeded), [])
 
 	return (

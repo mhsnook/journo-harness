@@ -20,12 +20,9 @@ type Filter = 'all' | Disposition
 const filters: Filter[] = ['all', 'undecided', 'accepted', 'declined']
 
 /**
- * 2(f) — The Offer ledger, as two equal halves. Left is what has been offered
- * and nothing else; right is the Plan, with Accepted items sitting under the
- * Section they are placed at.
- *
- * It is the same list at every stage — early on most rows read Undecided, later
- * most are placed. That is why there is no separate triage screen.
+ * 2(f) — The Offer ledger, as two equal halves: what has been offered, and the
+ * Plan it goes into. It is the same list at every stage, which is why there is
+ * no separate triage screen.
  */
 export function LedgerDrawerScreen() {
 	const { plan } = useArticle()
@@ -136,8 +133,7 @@ export function LedgerDrawerScreen() {
 							</div>
 						) : null}
 
-						{/* Accepted with nothing in the Plan at all, which is not the group
-						    above: that one is a Reference waiting for a Section. */}
+						{/* Not the group above, which is placed nowhere yet — §5. */}
 						{ledger.stranded.length > 0 ? (
 							<div className="flex flex-col gap-1.5">
 								<MetaLabel count={ledger.stranded.length}>

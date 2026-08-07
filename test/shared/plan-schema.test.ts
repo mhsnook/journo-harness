@@ -245,9 +245,7 @@ describe('the Reference invariant', () => {
 		expect(result.success).toBe(true)
 	})
 
-	// One Offer becomes one Reference. The Offer ledger answers "is this already
-	// in the Plan?" with the first match, so a second copy makes it answer for
-	// the wrong record and stop reporting the Offer as stranded.
+	// One Offer becomes one Reference — §5.
 	it('refuses two References copied from one Offer', () => {
 		const twice = makePlan({
 			references: [

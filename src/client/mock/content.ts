@@ -244,13 +244,8 @@ export const draftShort = [
 	'What replaced the cranes was not a decision. Nobody voted to stop building.',
 ]
 
-/**
- * The Offers behind that Plan, and a few the writer has not taken. Three were
- * Accepted and are the Provenance the References above name; the rest spread
- * across the other dispositions so a story shows every filter with something in
- * it. `offer-sze` is Accepted with nothing in the Plan — the stranded case the
- * Offer ledger has to surface.
- */
+/** The Offers behind that Plan. `offer-sze` is the stranded case: Accepted, and
+ * in the Plan nowhere. */
 export const offers: Offer[] = [
 	{
 		id: 'offer-throughput',

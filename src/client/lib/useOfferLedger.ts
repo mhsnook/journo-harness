@@ -6,23 +6,20 @@ import { acceptOffer } from '../plan/edits'
 import { useArticle } from './article'
 
 /**
- * The Offer ledger, live. It reads the Offers once when the Panel opens, which
- * is what the row store is for — `@callable` RPC is request and response, so
- * nothing tells a client a row changed (§3). The Plan half arrives reactively
- * through Article Agent state, so the View is re-derived on every render.
+ * The Offer ledger, live. Rows are read once when the Panel opens, because
+ * nothing tells a client a row changed; the Plan half is already reactive — §3.
  */
 
 export type OfferLedgerHandle = {
 	ledger: OfferLedger
-	/** True until the first `listOffers` answers. */
+	/** Until the first `listOffers` answers. */
 	loading: boolean
-	/** The last write that did not land, in one sentence for the writer. */
+	/** In one sentence, for the writer to read. */
 	failure: string | null
 	accept: (offer: Offer) => void
 	decline: (offer: Offer) => void
 	restore: (offer: Offer) => void
-	/** The second half of Accepting, on its own — the re-add for a stranded
-	 * Offer, whose row is Accepted and whose copy never reached the Plan. */
+	/** The re-add for a stranded Offer — §5. */
 	addToPlan: (offer: Offer) => void
 }
 
@@ -48,8 +45,7 @@ export function useOfferLedger(): OfferLedgerHandle {
 		}
 	}, [store])
 
-	/** Replace one row in place: the Ledger's order is the order the Article
-	 * Agent recorded them, and a ruling does not change it. */
+	/** In place: a ruling does not change the recorded order. */
 	function replace(ruled: Offer) {
 		setRows((held) =>
 			(held ?? []).map((offer) => (offer.id === ruled.id ? ruled : offer)),
@@ -66,9 +62,8 @@ export function useOfferLedger(): OfferLedgerHandle {
 		loading: rows === null,
 		failure,
 
-		// Accepting requires two writes against two stores, decoupled. The row
-		// goes first, because it carries the Provenance the copy needs. The
-		// Ledger shows the Offer stranded if the second write never lands.
+		// Two writes against two stores, decoupled — §5. The row goes first
+		// because it carries the Provenance the copy needs.
 		accept(offer) {
 			run(
 				'This Offer was not Accepted.',

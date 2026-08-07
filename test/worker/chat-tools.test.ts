@@ -43,8 +43,7 @@ describe('the Offer tool', () => {
 		expect(chatTools[recordOffersTool].execute).toBeTypeOf('function')
 	})
 
-	// The model decides how many Offers a turn makes, so the one rule it cannot
-	// read off the schema is the one worth stating.
+	// The one rule the schema does not carry is worth stating.
 	it('teaches that Offers are flat', () => {
 		const described = chatTools[recordOffersTool].description
 

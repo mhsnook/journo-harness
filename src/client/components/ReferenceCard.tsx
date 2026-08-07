@@ -11,7 +11,7 @@ export interface ReferenceCardProps {
 	compact?: boolean
 	/** False is stranded, and the card offers the re-add. */
 	inThePlan?: boolean
-	/** Waits on the House, which arrives at 1b — nothing in 1a computes it. */
+	/** Waits on the House, at 1b. */
 	favourite?: 'author' | 'publication'
 	onAccept?: () => void
 	onDecline?: () => void
@@ -29,11 +29,7 @@ function FavouriteMark({ type }: { type: 'author' | 'publication' }) {
 	)
 }
 
-/**
- * One Offer. The same card appears in the Chat when it is offered and in the
- * Offer ledger while the writer decides — the disposition changes, the card
- * does not.
- */
+/** One Offer, in the Chat and in the Offer ledger alike. */
 export function ReferenceCard({
 	offer,
 	variant = 'offer',
@@ -49,8 +45,7 @@ export function ReferenceCard({
 	const declined = offer.disposition === 'declined'
 	const accepted = offer.disposition === 'accepted'
 	const heading = referenceName(offer)
-	// A Quote pulled without a source is its own heading, so printing the
-	// passage again below it would say one thing twice.
+	// A Quote with no source is its own heading; do not print it twice.
 	const passage = offer.text !== undefined && offer.text !== heading
 
 	return (

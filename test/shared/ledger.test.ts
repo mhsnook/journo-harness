@@ -11,8 +11,7 @@ import type { ReferenceContent } from '../../src/shared/plan'
 import { referenceSchema } from '../../src/shared/plan'
 import { makeNode, makePlan, makeReference } from './plan-fixtures'
 
-/** An Offer as the Article Agent hands it back — the content the Chat turned
- * up, plus the row fields. */
+/** An Offer as the Article Agent hands it back. */
 function makeOffer(offer: Partial<Offer> & { id: string }): Offer {
 	return {
 		type: 'link',
@@ -53,8 +52,7 @@ describe('the Reference an Accepted Offer becomes', () => {
 		})
 	})
 
-	// An Offer carries Reference content, so this is true by construction — and
-	// it is what stops a field being added to one and not reaching the other.
+	// True by construction, and what catches a field added to one side.
 	it('parses as a Reference', () => {
 		const offer = makeOffer({ id: 'o1', type: 'quote', text: 'Forty separate times.' })
 
@@ -90,8 +88,7 @@ describe('finding the Plan copy of an Offer', () => {
 		expect(referenceForOffer(accepted, 'o2')).toBeUndefined()
 	})
 
-	// The whole reason Provenance is the pointer: the writer owns the copy, and
-	// content stops matching the moment they edit it.
+	// The writer owns the copy, so content stops matching.
 	it('finds it after the writer has edited the copy past recognition', () => {
 		const edited = {
 			...accepted,
@@ -139,8 +136,7 @@ describe('reading the Offer ledger', () => {
 		expect(ledger.byDisposition.declined.map((offer) => offer.id)).toEqual(['o4', 'o5'])
 	})
 
-	// The writer's own Reference is in the Plan like any other, and it is in no
-	// Offer's group: it was never offered.
+	// It was not offered, so no Offer group holds it.
 	it('leaves a Reference the writer wrote out of the Offer counts', () => {
 		expect(offerLedger(held, offers).counts.all).toBe(5)
 	})
@@ -154,10 +150,7 @@ describe('reading the Offer ledger', () => {
 		expect(ledger.stranded.map((offer) => offer.id)).toEqual(['o6'])
 	})
 
-	// An unplaced Reference is Accepted and waiting for a Section — `r2` above.
-	// A stranded Offer is Accepted and in the Plan nowhere at all. Telling the
-	// writer the second is the first sends them looking for something that is
-	// not there.
+	// `r2` above is unplaced, which is not stranded — §5.
 	it('does not strand an Accepted Offer whose Reference carries no Section', () => {
 		expect(offerLedger(held, offers).stranded).toEqual([])
 	})
@@ -193,16 +186,14 @@ describe('the fingerprint a re-offer is recognised by', () => {
 		expect(offerFingerprint(again)).toBe(offerFingerprint(content))
 	})
 
-	// The Guide writes the note fresh each session, and it says nothing about
-	// which source this is.
+	// Written fresh each session, and not about which source this is.
 	it('ignores the note', () => {
 		expect(offerFingerprint({ ...content, note: 'Primary data.' })).toBe(
 			offerFingerprint(content),
 		)
 	})
 
-	// Offers are flat: two Quotes from one publication are two Offers, so a url
-	// on its own would fold them into one.
+	// Offers are flat, and a url alone would fold these into one.
 	it('separates two Quotes pulled from one source', () => {
 		const first: ReferenceContent = {
 			...content,

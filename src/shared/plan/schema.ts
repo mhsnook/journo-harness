@@ -173,11 +173,7 @@ function checkIds(plan: Plan, ctx: z.RefinementCtx) {
 	plan.references.forEach((reference, index) => {
 		claim(referenceIds, reference.id, ['references', index, 'id'], 'References')
 
-		// One Offer becomes one Reference. §5 relies on it, `referenceForOffer`
-		// answers with the first match on the strength of it, and the Offer
-		// ledger stops reporting a stranded Offer once a second copy exists —
-		// so a Plan carrying two is refused rather than left to each caller to
-		// avoid.
+		// One Offer becomes one Reference — §5.
 		const { offerId } = reference.provenance
 		if (offerId !== undefined) {
 			if (offerIds.has(offerId)) {

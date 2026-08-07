@@ -33,10 +33,8 @@ export type PlanWriterOptions = {
 }
 
 /**
- * An edit, or a builder for one. A builder is handed the Plan the writer holds
- * now, which is what an edit derived from the current Plan needs: a caller that
- * closed over an older render would read a Plan the writer has moved past —
- * the Offer ledger builds its Accept after a round trip.
+ * An edit, or a builder handed the Plan the writer holds now. A caller building
+ * one after a round trip wants the builder, having closed over an older render.
  */
 export type PlanEdit = ProposalInput | null | ((plan: Plan) => ProposalInput | null)
 

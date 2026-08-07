@@ -11,12 +11,9 @@ type Row = { key: string; text: string; section?: string }
 type Group = { label: string; rows: Row[]; variant?: 'ready' | 'plain' | 'declined' }
 
 /**
- * 2(g) — The Offer ledger opened from the composer, as a popover. The groups
- * *are* the lifecycle and their order is fixed, so the Undecided pile visibly
- * shrinks as you work.
- *
- * The wireframe's first group was "Used in the draft". There is no Draft until
- * phase 2, so a placed Reference reads Ready and Used waits for it.
+ * 2(g) — The Offer ledger opened from the composer. The groups *are* the
+ * lifecycle and their order is fixed, so the Undecided pile visibly shrinks as
+ * you work. Used waits on the Draft, at phase 2.
  */
 export function LedgerPopoverScreen() {
 	const { plan } = useArticle()

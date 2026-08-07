@@ -5,11 +5,9 @@ import type { Plan } from '../../shared/plan'
 import type { PlanEdit } from '../plan/writer'
 
 /**
- * The seam one Article Agent arrives through, in two stores because the Plan
- * and the Offers are held apart on the server — architecture §3, rules 1 and 2.
- * The Plan half is the shape `usePlan` returns and the Offers half is the shape
- * `useAgent`'s typed stub already has, so the route passes both straight
- * through and writes no adapter.
+ * The seam one Article Agent arrives through, in two stores because the Plan and
+ * the Offers are held apart on the server — §3, rules 1 and 2. Both halves are
+ * shaped as `usePlan` and `useAgent`'s stub already return them.
  */
 
 /** The Article Agent's three writer-facing `@callable` methods. */
@@ -22,9 +20,7 @@ export type OfferStore = {
 export type Article = {
 	offers: OfferStore
 	plan: Plan
-	/** Apply an edit, in the op vocabulary every other Plan write uses. Takes
-	 * the null a builder returns for an edit with nowhere to go, and a builder
-	 * for an edit that has to read the Plan as it stands. */
+	/** The op vocabulary every other Plan write uses. */
 	edit: (edit: PlanEdit) => void
 }
 

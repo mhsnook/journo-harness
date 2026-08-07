@@ -7,11 +7,7 @@ import type { Plan } from '../../src/shared/plan'
 import { applyProposal } from '../../src/shared/plan'
 import { makeNode, makePlan } from '../shared/plan-fixtures'
 
-/**
- * Accepting an Offer, as the op the Ledger sends. It goes through the applier
- * like every other Plan edit, so what this checks is the op it builds and what
- * the applier makes of it.
- */
+/** Accepting, as the op the Ledger sends through the applier. */
 
 const offer: Offer = {
 	id: 'o1',
@@ -53,9 +49,7 @@ describe('Accepting an Offer into the Plan', () => {
 		expect(result.plan.references[0]).toMatchObject({ id: 'r1', nodeId: null })
 	})
 
-	// The two writes Accepting makes are not atomic, so the second can be asked
-	// for twice — by a double click, or by the re-add of a stranded Offer whose
-	// Plan write turns out to have landed after all.
+	// A double click, or the re-add of an Offer whose write had landed.
 	it('is not an edit at all once the Plan holds a copy', () => {
 		const result = applyProposal(plan, acceptOffer(plan, offer, 'r1'))
 		if (!result.ok) throw new Error(result.refusal.message)
@@ -63,7 +57,7 @@ describe('Accepting an Offer into the Plan', () => {
 		expect(acceptOffer(result.plan, offer, 'r2')).toBeNull()
 	})
 
-	// Provenance is the pointer precisely so that editing the copy cannot hide it.
+	// The writer owns the copy, so content stops matching.
 	it('still recognises the copy after the writer has edited it', () => {
 		const accepted = applyProposal(plan, acceptOffer(plan, offer, 'r1'))
 		if (!accepted.ok) throw new Error(accepted.refusal.message)
@@ -82,9 +76,8 @@ describe('Accepting an Offer into the Plan', () => {
 })
 
 /**
- * Accepting builds its op after a round trip to the Article Agent, so the Plan
- * the handler closed over is not the Plan the writer holds by then. Handing the
- * writer a builder rather than ops is what makes the guard read the current one.
+ * The op is built after a round trip, so the handler's Plan is older than the
+ * writer's. The builder form is what reads the current one.
  */
 describe('Accepting twice before the first write lands', () => {
 	function writerOn(start: Plan) {
@@ -97,15 +90,14 @@ describe('Accepting twice before the first write lands', () => {
 	it('copies the Offer once when the edit is built against the held Plan', () => {
 		const writer = writerOn(plan)
 
-		// Both handlers were bound against `plan`, which carries no copy.
+		// Both bound against `plan`, which carries no copy.
 		writer.edit((held) => acceptOffer(held, offer))
 		writer.edit((held) => acceptOffer(held, offer))
 
 		expect(writer.plan?.references).toHaveLength(1)
 	})
 
-	// The schema is the backstop, and it does not depend on the client asking
-	// the right question: two copies of one Offer are not a Plan.
+	// The backstop, which does not depend on the client asking well.
 	it('is refused by the applier when the ops are built against a stale Plan', () => {
 		const writer = writerOn(plan)
 		const stale = acceptOffer(plan, offer, 'r1')

@@ -138,8 +138,8 @@ describe('Offers in the Article Agent', () => {
 		await expect(writer.call<Offer[]>('listOffers')).resolves.toEqual([offer])
 	})
 
-	// No socket first: the material is parsed before any row is written, so this
-	// one refuses without the Article Agent ever reaching its table.
+	// No socket first: parsed before any row is written, so it refuses without
+	// the Article Agent reaching its table.
 	it('refuses an Offer carrying neither a text nor a source', async () => {
 		await expect(
 			createOffer('offer-empty', { type: 'link' } as ReferenceContent),
@@ -249,7 +249,7 @@ describe('Offers in the Article Agent', () => {
 		const [first] = await recordOffers('offer-reoffered', [reference])
 		await writer.call('setOfferDisposition', first.offer.id, 'accepted')
 
-		// The same source next session, worded the way that session worded it.
+		// The same source next session, worded differently.
 		const [again] = await recordOffers('offer-reoffered', [
 			{ ...reference, note: 'Turned up again, and still the best figure.' },
 		])
@@ -284,11 +284,7 @@ describe('Offers in the Article Agent', () => {
 	})
 })
 
-/**
- * Accepting end to end. It is two writes against two stores and nothing makes
- * them atomic — `setOfferDisposition` over RPC, then a `setState` carrying the
- * copy — so what these assert is that neither store hears about the other.
- */
+/** Accepting end to end: two writes, and neither store hears about the other. */
 describe('Accepting an Offer into the Plan', () => {
 	/** The Plan as it stands after `setState`, read from a fresh connection. */
 	async function readPlan(name: string): Promise<Plan> {
@@ -298,8 +294,7 @@ describe('Accepting an Offer into the Plan', () => {
 		return frame.state as Plan
 	}
 
-	/** The Plan after Accepting, which the client builds and sends whole. The op
-	 * that does it in the app is `acceptOffer`, tested in test/client. */
+	/** What `acceptOffer` builds in the app, sent whole here. */
 	function copiedInto(held: Plan, offer: Offer): Plan {
 		return { ...held, references: [...held.references, referenceFromOffer(offer, 'r1')] }
 	}
@@ -359,9 +354,8 @@ describe('Accepting an Offer into the Plan', () => {
 		await expect(readPlan('decline-and-restore')).resolves.toEqual(opening)
 	})
 
-	// The seam this ticket covers rather than closes: if the `setState` never
-	// lands, the row is Accepted and the Plan holds nothing. The Provenance
-	// pointer is what finds it, and the Ledger is where the writer sees it.
+	// If the second write does not land, the row is Accepted and the Plan holds
+	// nothing. The Provenance pointer is what finds it.
 	it('leaves an Accepted Offer stranded when the Plan write does not land', async () => {
 		const writer = await openAgentSocket('accept-stranded')
 		await writer.next('cf_agent_state')
@@ -369,7 +363,7 @@ describe('Accepting an Offer into the Plan', () => {
 		const [{ offer }] = await recordOffers('accept-stranded', [reference])
 
 		const ruled = await writer.call<Offer>('setOfferDisposition', offer.id, 'accepted')
-		// The tab closes here, and the second write never happens.
+		// The tab closes here, and the second write does not happen.
 
 		const ledger = offerLedger(await readPlan('accept-stranded'), [ruled])
 		expect(ledger.stranded).toEqual([ruled])

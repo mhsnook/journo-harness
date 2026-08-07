@@ -9,8 +9,7 @@ import { plan, sectionState } from '../../mock/content'
 import { outlineEntries, sectionLabel } from '../../plan/outline'
 import { PlanOutline, PlanReferences } from './PlanBlocks'
 
-/** What each Section is called on the References list. Off the same walk the
- * Panels read, so the showcase cannot number a Section its own way. */
+/** Off the same walk the Panels read. */
 const placedAt = Object.fromEntries(
 	outlineEntries(plan.outline).map((entry) => [entry.node.id, sectionLabel(entry)]),
 )

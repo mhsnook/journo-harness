@@ -3,12 +3,8 @@ import { z } from 'zod'
 import { type ReferenceContent, referenceContentSchema } from './plan/schema'
 
 /**
- * An Offer, as coined in context.md. Stored in the Article Agent's SQLite,
- * Offers are kept as a flat list of Links and Quotes turned up from research.
- *
- * An Offer carries **Reference content** and nothing of its own beyond the row
- * fields, so Accepting one copies content onto content — the two cannot drift
- * into disagreeing about what a Reference says.
+ * An Offer — context.md. A flat SQLite row carrying Reference content and the
+ * row fields, so Accepting copies content onto content.
  */
 
 /** How far the writer has got with one Offer. Every Offer starts Undecided. */
@@ -18,8 +14,7 @@ export type Disposition = (typeof dispositions)[number]
 export const rulingSchema = z.enum(['accepted', 'declined'])
 export type Ruling = z.infer<typeof rulingSchema>
 
-/** What the research tool hands the Article Agent — one turn's findings, in the
- * order the model wants them shown. */
+/** One research turn's findings, in the order to show them. */
 export const offerBatchSchema = z.array(referenceContentSchema).min(1)
 
 /** One Offer row. `decidedAt` is null while the Offer is Undecided, and
@@ -31,14 +26,12 @@ export type Offer = ReferenceContent & {
 	decidedAt: number | null
 }
 
-/** Refusals the writer may meet either way they reach an Offer. The wording
- * lives with the rule so the Article Agent and the in-memory store cannot say
- * one thing two ways. */
+/** Shared, so the Agent and the in-memory store word these the same. */
 export function missingOffer(id: string): Error {
 	return new Error(`No Offer carries the id ${id}.`)
 }
 
-/** Restoring undoes a Decline, so an Offer in any other disposition refuses. */
+/** Restoring undoes a Decline — context.md. */
 export function notDeclined(offer: Offer): Error {
 	return new Error(
 		`Offer ${offer.id} is ${offer.disposition}, and restoring undoes a Decline.`,
@@ -46,20 +39,15 @@ export function notDeclined(offer: Offer): Error {
 }
 
 /**
- * What makes two Offers the same thing turned up twice, so that research
- * repeating itself next session lands on the row the writer already ruled on
- * rather than on a second one.
- *
- * The note is left out: the Guide writes it fresh each session and it says
- * nothing about which source this is. The text is in, because Offers are flat —
- * two Quotes from one publication are two Offers, and a url on its own would
- * fold them into one.
+ * What makes two Offers the same thing turned up twice, so a re-offer lands on
+ * the row the writer already ruled on. The note is out because the Guide writes
+ * it fresh each session; the text is in because two Quotes from one url are two
+ * Offers.
  */
 export function offerFingerprint(content: ReferenceContent): string {
 	const source = content.source ?? {}
 
-	// A JSON array rather than a joined string: any delimiter that can appear
-	// inside a field lets two Offers that differ fingerprint the same.
+	// JSON, so no delimiter can turn up inside a field and shift the parts.
 	return JSON.stringify(
 		[
 			content.type,

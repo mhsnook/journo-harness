@@ -158,13 +158,9 @@ export function addReference(
 }
 
 /**
- * Accepting an Offer: the same op, carrying the Offer's Provenance rather than
- * the writer's — architecture §5. Returns null where the Plan already holds a
- * copy, which is what stops a second Accept making a second Reference.
- *
- * This is the second of Accepting's two writes. The first is
- * `setOfferDisposition` on the Article Agent, and the Offer it returns is what
- * to pass here.
+ * The same op as `addReference`, carrying the Offer's Provenance — §5. Null
+ * where the Plan already holds a copy, so a second Accept builds nothing. The
+ * Offer is the one `setOfferDisposition` returned.
  */
 export function acceptOffer(
 	plan: Plan,

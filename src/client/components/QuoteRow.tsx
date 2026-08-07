@@ -4,9 +4,8 @@ import { citation, referenceName } from '../plan/references'
 import { Chip } from './Chip'
 
 export interface QuoteRowProps {
-	/** The Plan's copy, which the writer owns and may have edited. */
 	reference: Reference
-	/** Renders as an em dash where the caller passes none. */
+	/** An em dash where the caller passes none. */
 	section?: string
 	/** Unused till phase 2. */
 	used?: boolean
@@ -14,6 +13,7 @@ export interface QuoteRowProps {
 	dimmed?: boolean
 	className?: string
 }
+
 export function QuoteRow({
 	reference,
 	section,

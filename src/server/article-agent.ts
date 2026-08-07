@@ -55,8 +55,7 @@ function toOffer(row: OfferRow): Offer {
 	}
 }
 
-/** One entry of a research turn, once the Article Agent has placed it.
- * `duplicate` says the row was already there and nothing was written. */
+/** `duplicate` means the row was already there and nothing was written. */
 export type RecordedOffer = { offer: Offer; duplicate: boolean }
 
 /**
@@ -181,21 +180,16 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 	}
 
 	/**
-	 * Record what one research turn turned up, and answer with what the writer
-	 * will see. An entry this Article already carries comes back as it stands,
-	 * marked a duplicate and written nowhere: the same source next session is
-	 * the same Offer, still holding the disposition the writer gave it, and its
-	 * Provenance is what says where it went in the Plan.
+	 * One research turn. An entry this Article already carries comes back as it
+	 * stands, keeping the disposition the writer gave it — §5.
 	 *
-	 * Not `@callable`, and neither is `createOffer` below: the writer never
-	 * authors an Offer, so the Chat's research tool is the only caller and it
-	 * runs inside this Agent (§3, rule 4).
+	 * Not `@callable`, and neither is `createOffer`: the research tool is the
+	 * only caller and it runs inside this Agent (§3, rule 4).
 	 */
 	recordOffers(batch: unknown): RecordedOffer[] {
 		const found = offerBatchSchema.parse(batch)
 
-		// Built once and added to as the batch is written, so one turn offering
-		// the same source twice records it once.
+		// Added to as the batch is written, so a turn dedupes against itself.
 		const held = new Map(
 			this.listOffers().map((offer) => [offerFingerprint(offer), offer]),
 		)
@@ -212,7 +206,7 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 		})
 	}
 
-	/** Record one thing the Chat turned up. It starts Undecided. */
+	/** Starts Undecided. */
 	createOffer(content: ReferenceContent): Offer {
 		const offer: Offer = {
 			...referenceContentSchema.parse(content),

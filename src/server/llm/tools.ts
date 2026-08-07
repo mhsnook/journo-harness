@@ -19,12 +19,8 @@ import type { ArticleAgent } from '../article-agent'
  * Do not reach for `needsApproval` or `toolApproval`. Both gate a server-side
  * `execute` this product does not have.
  *
- * The Offer tool below is the exception, and carries an `execute`. Recording
- * an Offer is a row on the Article Agent rather than something the writer rules
- * on mid-turn, so the suspension would buy nothing and cost the turn: a
- * research turn returns seventeen items, and an unruled tool batch stalls the
- * Chat with no orphan timeout (§11). The writer rules later, in the Offer
- * ledger, and the row waits for them.
+ * The Offer tool below carries an `execute` instead, because an Offer is a row
+ * the writer rules on later rather than mid-turn — §5.
  */
 
 const proposePlanChange = tool({
@@ -69,13 +65,10 @@ const recordOffers = tool({
 		'marked a duplicate, keeping whatever the writer already decided about it, and no',
 		'second row is written.',
 	].join('\n'),
-	// An object at the top level, like the Proposal tool's input: a bare array
-	// is what function calling handles least predictably across providers, and
-	// the wrapper costs one key.
+	// An object at the top level, like the Proposal tool's input.
 	inputSchema: z.strictObject({ offers: offerBatchSchema }),
 	execute: async ({ offers }) => {
-		// The Agent rather than a parameter: this module is imported once, and the
-		// instance is whichever one is running the turn.
+		// The module is imported once; the instance is per turn.
 		const { agent } = getCurrentAgent<ArticleAgent>()
 		if (agent === undefined)
 			throw new Error('The Offer tool ran outside an Article Agent.')
@@ -89,9 +82,8 @@ const recordOffers = tool({
 	},
 })
 
-/** The name the Offer tool is registered under. The Chat Panel does not match
- * on it — this one resolves server-side — so it does not live in shared/chat.ts
- * the way the Proposal tool's name does. */
+/** Not in shared/chat.ts, because this tool resolves server-side and no client
+ * matches on it. */
 export const recordOffersTool = 'recordOffers'
 
 /** Typed as the whole `ToolSet` rather than inferred: the Proposal tool has no
