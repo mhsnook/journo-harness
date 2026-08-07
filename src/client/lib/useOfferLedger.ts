@@ -75,7 +75,7 @@ export function useOfferLedger(): OfferLedgerHandle {
 				() => store.setOfferDisposition(offer.id, 'accepted'),
 				(ruled) => {
 					replace(ruled)
-					edit(acceptOffer(plan, ruled))
+					edit((held) => acceptOffer(held, ruled))
 				},
 			)
 		},
@@ -94,7 +94,7 @@ export function useOfferLedger(): OfferLedgerHandle {
 
 		addToPlan(offer) {
 			setFailure(null)
-			edit(acceptOffer(plan, offer))
+			edit((held) => acceptOffer(held, offer))
 		},
 	}
 }

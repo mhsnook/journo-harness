@@ -66,6 +66,16 @@ export function outlineEntries(outline: readonly OutlineNode[]): OutlineEntry[] 
 	return entries
 }
 
+/**
+ * What a Section is called where the number stands on its own — a heading, a
+ * chip, a row in the Offer ledger. `ordinal` is the bare number, for a gutter
+ * of them and for the phrases that compose one: "Section 2" reads as itself,
+ * where "Section §2" does not.
+ */
+export function sectionLabel(entry: Pick<OutlineEntry, 'ordinal'>): string {
+	return `§${entry.ordinal}`
+}
+
 /** What the writer calls a row at this depth. */
 export function depthName(depth: number): string {
 	return depth === 0 ? 'Section' : 'Subsection'

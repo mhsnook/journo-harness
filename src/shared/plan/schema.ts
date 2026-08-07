@@ -168,8 +168,27 @@ function checkIds(plan: Plan, ctx: z.RefinementCtx) {
 	walk(plan.outline, ['outline'])
 
 	const referenceIds = new Set<string>()
+	const offerIds = new Set<string>()
+
 	plan.references.forEach((reference, index) => {
 		claim(referenceIds, reference.id, ['references', index, 'id'], 'References')
+
+		// One Offer becomes one Reference. §5 relies on it, `referenceForOffer`
+		// answers with the first match on the strength of it, and the Offer
+		// ledger stops reporting a stranded Offer once a second copy exists —
+		// so a Plan carrying two is refused rather than left to each caller to
+		// avoid.
+		const { offerId } = reference.provenance
+		if (offerId !== undefined) {
+			if (offerIds.has(offerId)) {
+				ctx.addIssue({
+					code: 'custom',
+					path: ['references', index, 'provenance', 'offerId'],
+					message: `Two References were copied from the Offer ${offerId}.`,
+				})
+			}
+			offerIds.add(offerId)
+		}
 
 		if (reference.nodeId !== null && !nodeIds.has(reference.nodeId)) {
 			ctx.addIssue({

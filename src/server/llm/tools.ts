@@ -1,5 +1,6 @@
 import { getCurrentAgent } from 'agents'
 import { tool, type ToolSet } from 'ai'
+import { z } from 'zod'
 
 import { proposePlanChangeInput, proposePlanChangeTool } from '../../shared/chat'
 import { offerBatchSchema } from '../../shared/offer'
@@ -68,15 +69,18 @@ const recordOffers = tool({
 		'marked a duplicate, keeping whatever the writer already decided about it, and no',
 		'second row is written.',
 	].join('\n'),
-	inputSchema: offerBatchSchema,
-	execute: async (batch) => {
+	// An object at the top level, like the Proposal tool's input: a bare array
+	// is what function calling handles least predictably across providers, and
+	// the wrapper costs one key.
+	inputSchema: z.strictObject({ offers: offerBatchSchema }),
+	execute: async ({ offers }) => {
 		// The Agent rather than a parameter: this module is imported once, and the
 		// instance is whichever one is running the turn.
 		const { agent } = getCurrentAgent<ArticleAgent>()
 		if (agent === undefined)
 			throw new Error('The Offer tool ran outside an Article Agent.')
 
-		return agent.recordOffers(batch).map(({ offer, duplicate }) => ({
+		return agent.recordOffers(offers).map(({ offer, duplicate }) => ({
 			id: offer.id,
 			name: offer.source?.title ?? offer.text,
 			disposition: offer.disposition,

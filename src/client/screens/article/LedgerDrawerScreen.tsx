@@ -12,7 +12,7 @@ import { ReferenceCard } from '../../components/ReferenceCard'
 import { useArticle } from '../../lib/article'
 import { useOfferLedger } from '../../lib/useOfferLedger'
 import { ARTICLE_TITLE } from '../../mock/content'
-import { outlineEntries } from '../../plan/outline'
+import { outlineEntries, sectionLabel } from '../../plan/outline'
 import { referenceName, referencesAt } from '../../plan/references'
 
 type Filter = 'all' | Disposition
@@ -105,7 +105,7 @@ export function LedgerDrawerScreen() {
 							return (
 								<div key={entry.node.id} className="flex flex-col gap-2">
 									<MetaLabel>
-										§{entry.ordinal} · {entry.node.title}
+										{sectionLabel(entry)} · {entry.node.title}
 									</MetaLabel>
 									{held.length === 0 ? (
 										<EmptySlot className="ml-2">
@@ -117,7 +117,7 @@ export function LedgerDrawerScreen() {
 												<QuoteRow
 													key={reference.id}
 													reference={reference}
-													section={`§${entry.ordinal}`}
+													section={sectionLabel(entry)}
 													showUsage
 												/>
 											))}

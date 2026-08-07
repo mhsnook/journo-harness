@@ -1,7 +1,8 @@
 import { createContext, useContext } from 'react'
 
 import type { Offer, Ruling } from '../../shared/offer'
-import type { Plan, ProposalInput } from '../../shared/plan'
+import type { Plan } from '../../shared/plan'
+import type { PlanEdit } from '../plan/writer'
 
 /**
  * The seam one Article Agent arrives through, in two stores because the Plan
@@ -22,8 +23,9 @@ export type Article = {
 	offers: OfferStore
 	plan: Plan
 	/** Apply an edit, in the op vocabulary every other Plan write uses. Takes
-	 * the null a builder returns for an edit with nowhere to go. */
-	edit: (ops: ProposalInput | null) => void
+	 * the null a builder returns for an edit with nowhere to go, and a builder
+	 * for an edit that has to read the Plan as it stands. */
+	edit: (edit: PlanEdit) => void
 }
 
 const ArticleContext = createContext<Article | null>(null)

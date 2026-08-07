@@ -4,7 +4,7 @@ import { MetaLabel } from '../../components/MetaLabel'
 import { useArticle } from '../../lib/article'
 import { cx } from '../../lib/cx'
 import { useOfferLedger } from '../../lib/useOfferLedger'
-import { outlineEntries } from '../../plan/outline'
+import { outlineEntries, sectionLabel } from '../../plan/outline'
 import { referenceName, referencesAt } from '../../plan/references'
 
 type Row = { key: string; text: string; section?: string }
@@ -30,7 +30,7 @@ export function LedgerPopoverScreen() {
 				referencesAt(plan, entry.node.id).map(({ reference }) => ({
 					key: reference.id,
 					text: referenceName(reference),
-					section: `§${entry.ordinal}`,
+					section: sectionLabel(entry),
 				})),
 			),
 		},

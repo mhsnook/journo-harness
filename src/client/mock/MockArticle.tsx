@@ -1,9 +1,10 @@
 import { type ReactNode, useMemo, useState } from 'react'
 
 import { missingOffer, notDeclined, type Offer, type Ruling } from '../../shared/offer'
-import type { Plan, ProposalInput } from '../../shared/plan'
+import type { Plan } from '../../shared/plan'
 import { applyProposal } from '../../shared/plan'
 import { ArticleProvider, type OfferStore } from '../lib/article'
+import type { PlanEdit } from '../plan/writer'
 import { offers as seeded, plan as seededPlan } from './content'
 
 /**
@@ -23,10 +24,11 @@ export function MockArticle({ children }: { children: ReactNode }) {
 	// way it will read them when a Panel opens.
 	const offers = useMemo(() => memoryOfferStore(seeded), [])
 
-	const edit = (ops: ProposalInput | null) => {
-		if (ops === null) return
-
+	const edit = (next: PlanEdit) => {
 		setPlan((held) => {
+			const ops = typeof next === 'function' ? next(held) : next
+			if (ops === null) return held
+
 			const result = applyProposal(held, ops)
 
 			return result.ok ? result.plan : held

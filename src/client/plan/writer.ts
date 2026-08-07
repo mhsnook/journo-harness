@@ -32,6 +32,14 @@ export type PlanWriterOptions = {
 	delay?: number
 }
 
+/**
+ * An edit, or a builder for one. A builder is handed the Plan the writer holds
+ * now, which is what an edit derived from the current Plan needs: a caller that
+ * closed over an older render would read a Plan the writer has moved past —
+ * the Offer ledger builds its Accept after a round trip.
+ */
+export type PlanEdit = ProposalInput | null | ((plan: Plan) => ProposalInput | null)
+
 export type PlanWriter = {
 	/** The Plan as the writer sees it, and null until the first one arrives. */
 	readonly plan: Plan | null
@@ -40,7 +48,7 @@ export type PlanWriter = {
 	/** Apply an edit and schedule the write. Returns the refusal, or null when
 	 * it landed. An edit built as null — a Section that cannot move up — is not
 	 * an edit, and does nothing. */
-	edit: (ops: ProposalInput | null) => Refusal | null
+	edit: (edit: PlanEdit) => Refusal | null
 	/** Take an update from the Article Agent. */
 	receive: (plan: Plan) => void
 	/** Send what is waiting, now. */
@@ -79,9 +87,11 @@ export function createPlanWriter(options: PlanWriterOptions): PlanWriter {
 			return timer !== null
 		},
 
-		edit(ops) {
-			if (ops === null) return null
+		edit(edit) {
 			if (plan === null) return notYet
+
+			const ops = typeof edit === 'function' ? edit(plan) : edit
+			if (ops === null) return null
 
 			const result = applyProposal(plan, ops)
 			if (!result.ok) {
