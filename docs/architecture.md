@@ -45,10 +45,15 @@ Browser — React + Vite + TanStack Router
 about one Article. It is always named in full — an unqualified "agent" could mean this
 object, the Guide, or the Chat.
 
-**The House** arrives at 1b as a single party-db room persisted to D1, holding everything
-that spans Articles. The House is small, constantly read, and exactly CRUD over a few
+**The House** arrives at 1b as a single party-db room persisted to D1, holding the writer's
+own standing material: the Lexicon, the standing rules, the Skills, and House-scoped Voice
+and Adjectives. The House is small, constantly read, and exactly CRUD over a few
 collections, so defining the collections _is_ the API: no endpoints, no query keys, no
 invalidation.
+
+**The House holds what the writer authors and reuses.** Spanning Articles is not on its own
+a reason to put something there, and where a body of accumulated _research_ lives is open —
+issue #40, with the shape it might take in [`later.md`](./later.md).
 
 **Plain D1 tables** hold Archived Plans, Drafts, and Finals, read through a Worker endpoint
 rather than synced. D1 also carries the backup story, because a Durable Object's storage has

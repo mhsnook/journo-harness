@@ -48,6 +48,17 @@ so the writer chooses what a Round is looking for rather than always getting the
 pass. The invocable, writer-authored part comes back if and when the model starts
 producing text.
 
+## The Beat
+
+A subject a writer covers over time, holding the research they build up on it. An Article
+would draw on its Beat and add back to what it holds, leaving the Article's own research
+small enough for a Chat turn.
+
+Today an Article is its own Beat, and nothing has to choose between them. The Beat earns a
+design the moment research accumulates across Articles and a writer wants the second piece
+on a subject to start from what the first one turned up. Where that material lives is the
+open half of #40, and this is the shape it might take.
+
 ## Exemplar pieces
 
 The app already knows what the writer has published. This would let them point at one and
