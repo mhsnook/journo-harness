@@ -2,9 +2,8 @@ import { type ReactNode, useMemo, useState } from 'react'
 
 import { missingOffer, notDeclined, type Offer, type Ruling } from '../../shared/offer'
 import type { Plan } from '../../shared/plan'
-import { applyProposal } from '../../shared/plan'
 import { ArticleProvider, type OfferStore } from '../lib/article'
-import type { PlanEdit } from '../plan/writer'
+import { createPlanWriter } from '../plan/writer'
 import { offers as seeded, plan as seededPlan } from './content'
 
 /**
@@ -20,22 +19,24 @@ import { offers as seeded, plan as seededPlan } from './content'
 export function MockArticle({ children }: { children: ReactNode }) {
 	const [plan, setPlan] = useState<Plan>(seededPlan)
 
+	// The real writer, driven without a socket: `onPlan` fires on every edit
+	// where only the outbound `send` is debounced, so a story sees each one.
+	const writer = useMemo(() => {
+		const held = createPlanWriter({ send: () => {}, onPlan: setPlan })
+		held.receive(seededPlan)
+
+		return held
+	}, [])
+
 	// One store for the life of the story: the Ledger reads its rows once, the
 	// way it will read them when a Panel opens.
 	const offers = useMemo(() => memoryOfferStore(seeded), [])
 
-	const edit = (next: PlanEdit) => {
-		setPlan((held) => {
-			const ops = typeof next === 'function' ? next(held) : next
-			if (ops === null) return held
-
-			const result = applyProposal(held, ops)
-
-			return result.ok ? result.plan : held
-		})
-	}
-
-	return <ArticleProvider value={{ offers, plan, edit }}>{children}</ArticleProvider>
+	return (
+		<ArticleProvider value={{ offers, plan, edit: writer.edit }}>
+			{children}
+		</ArticleProvider>
+	)
 }
 
 function memoryOfferStore(seed: readonly Offer[]): OfferStore {

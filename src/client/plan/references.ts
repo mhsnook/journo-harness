@@ -39,15 +39,23 @@ export function attribution(source: Source | undefined): string[] {
 		.map(String)
 }
 
-/** The same parts on one line, where the caller has no room to space them out. */
-function attributionLine(source: Source | undefined): string {
-	return attribution(source).join(' · ')
+/** Everything that says where a Reference came from, on one line, with the url
+ * last. The Plan Panel's row has the width for it where a Chat card's meta line
+ * does not, which is why `attribution` leaves it out and this does not. */
+export function sourceLine(source: Source | undefined): string {
+	return [...attribution(source), source?.url].filter(Boolean).join(' · ')
 }
 
 /** What a pulled passage is credited to. It falls back to the attribution
  * rather than to the text, which is the passage itself. */
 export function citation(content: ReferenceContent): string {
-	return content.source?.title ?? attributionLine(content.source)
+	return content.source?.title ?? sourceLine(content.source)
+}
+
+/** The References the writer has Accepted and not yet placed. Distinct from a
+ * stranded Offer, which is Accepted and in the Plan nowhere at all — §5. */
+export function unplacedReferences(plan: Plan): Reference[] {
+	return plan.references.filter((reference) => reference.nodeId === null)
 }
 
 /** Every Reference, numbered. */

@@ -13,7 +13,7 @@ import { useArticle } from '../../lib/article'
 import { useOfferLedger } from '../../lib/useOfferLedger'
 import { ARTICLE_TITLE } from '../../mock/content'
 import { outlineEntries, sectionLabel } from '../../plan/outline'
-import { referenceName, referencesAt } from '../../plan/references'
+import { referenceName, referencesAt, unplacedReferences } from '../../plan/references'
 
 type Filter = 'all' | Disposition
 
@@ -35,7 +35,7 @@ export function LedgerDrawerScreen() {
 
 	const shown = filter === 'all' ? ledger.offers : ledger.byDisposition[filter]
 	const stranded = new Set(ledger.stranded.map((offer) => offer.id))
-	const unplaced = plan.references.filter((reference) => reference.nodeId === null)
+	const unplaced = unplacedReferences(plan)
 
 	return (
 		<Frame width={820}>

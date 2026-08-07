@@ -5,7 +5,7 @@ import { useArticle } from '../../lib/article'
 import { cx } from '../../lib/cx'
 import { useOfferLedger } from '../../lib/useOfferLedger'
 import { outlineEntries, sectionLabel } from '../../plan/outline'
-import { referenceName, referencesAt } from '../../plan/references'
+import { referenceName, referencesAt, unplacedReferences } from '../../plan/references'
 
 type Row = { key: string; text: string; section?: string }
 type Group = { label: string; rows: Row[]; variant?: 'ready' | 'plain' | 'declined' }
@@ -36,9 +36,10 @@ export function LedgerPopoverScreen() {
 		},
 		{
 			label: 'Accepted, no Section yet',
-			rows: plan.references
-				.filter((reference) => reference.nodeId === null)
-				.map((reference) => ({ key: reference.id, text: referenceName(reference) })),
+			rows: unplacedReferences(plan).map((reference) => ({
+				key: reference.id,
+				text: referenceName(reference),
+			})),
 		},
 		{
 			label: 'Accepted, and not in the Plan',

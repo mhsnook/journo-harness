@@ -34,9 +34,7 @@ export function QuoteRow({
 				)}
 			>
 				<p className="text-[0.8125rem] leading-relaxed text-ink">
-					{reference.text === undefined
-						? referenceName(reference)
-						: `“${reference.text}”`}
+					{referenceName(reference)}
 				</p>
 				<footer className="mt-1 flex items-center gap-2 text-[0.6875rem] text-faint">
 					<cite className="not-italic">{citation(reference)}</cite>

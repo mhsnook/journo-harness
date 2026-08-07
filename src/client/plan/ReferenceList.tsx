@@ -10,7 +10,7 @@ import type { OutlineEntry } from './outline'
 import { sectionLabel } from './outline'
 import { ReferenceForm } from './ReferenceForm'
 import type { ReferenceEntry } from './references'
-import { referenceEntries, referenceMark, referenceName } from './references'
+import { referenceEntries, referenceMark, referenceName, sourceLine } from './references'
 
 /**
  * The Plan's References: what the Chat turned up and the writer Accepted, and
@@ -134,14 +134,7 @@ function ReferenceRow({
 		return () => clearTimeout(held)
 	}, [shown, onShown])
 
-	const attribution = [
-		reference.source?.author,
-		reference.source?.publication,
-		reference.source?.year,
-		reference.source?.url,
-	]
-		.filter(Boolean)
-		.join(' · ')
+	const attribution = sourceLine(reference.source)
 
 	return (
 		<div
