@@ -15,7 +15,7 @@ at a stage boundary is accepted rather than designed around.
 | Stage  | What ships              | What it adds                                                                                                    |
 | ------ | ----------------------- | --------------------------------------------------------------------------------------------------------------- |
 | **1a** | The Chat and the Plan   | One Article Agent per Article. Useful alone.                                                                    |
-| **1b** | The House               | The Lexicon, the standing rules, the Skills, House-scoped Voice and Adjectives, and the article index. Only useful once 1a exists. |
+| **1b** | The House               | The Lexicon, the standing rules, the Skills, and House-scoped Voice and Adjectives. Only useful once 1a exists. |
 | **2**  | The Draft and the Guide | The writing surface, Guidance notes, Reviews.                                                                   |
 
 **Scale**: one Team of two people. No signup flow. "Only one editor at a time on a Draft" is
@@ -35,7 +35,8 @@ Browser — React + Vite + TanStack Router
   └─ Notes Panel  ─┘                            ├─ Agent state (one JSON blob): the Plan
                                                 ├─ SQLite rows: Offers, Notes, Rounds
                    ── party-db WebSocket ──►  The House (one party-db room, → D1)   [1b]
-                   ── HTTP (Hono) ─────────►  Archived reads, export
+                   ── HTTP (Hono) ─────────►  The article index (→ D1)
+                                              Archived reads, export
                                               Workers AI binding → the model
 ```
 
@@ -319,11 +320,11 @@ Start does not join it** — its value is a typed server boundary in both direct
 Agents SDK owns the actions while the two sockets own the reads, leaving about five HTTP
 calls in total.
 
-**Hono** serves those in the same Worker: the Agents SDK's chat route, party-db's lobby and
-write path at 1b, archived reads, and export.
+**Hono** serves those in the same Worker: the Agents SDK's chat route, the article index,
+party-db's lobby and write path at 1b, archived reads, and export.
 
-**TanStack Query** serves only the archived and export reads. Live data is already reactive
-through Article Agent state and, at 1b, party-db's TanStack DB collections.
+**TanStack Query** serves the article index and the archived and export reads. Live data is
+already reactive through Article Agent state and, at 1b, party-db's TanStack DB collections.
 
 **The Article screen has four Panels** — Chat, Plan, Draft, Notes — which become tabs on a
 narrow screen. The **Areas** are Articles (with Board and Archive Views), House, and Team.
@@ -339,12 +340,10 @@ client handles them. It becomes work if a party-db transport ever shares that so
 **1a is single-author and its auth is zero code.** One Team, both people read everything, no
 per-user records, so nothing parses a token.
 
-**1a's article index is a throwaway array in `localStorage`** — `{ id, title }`, appended on
-create and pruned liberally. The real index lives in the House and arrives at 1b. This one is
-per browser, so the two people see different lists and an Article created on one machine does
-not appear on another, which is acceptable because 1a is single-author. Keeping it in
-`localStorage` rather than a Durable Object is deliberate: it is visibly not the real store,
-so nobody builds on it. It gains no search, no sorting, no Board View.
+**The article index is a real D1 table, built as the last 1a ticket** — a small table read
+through a Worker endpoint, on the path §2 already has for the Archived reads. It does not
+wait for the House. An Article created on one machine appears on the other, which is what
+makes the index worth having at all. Issue #29.
 
 **Nothing in 1a may require the `Cf-Access-Jwt-Assertion` header.** Localhost has no Access
 gate at all, so in development there is no header and no gate. Read it if present, tolerate
