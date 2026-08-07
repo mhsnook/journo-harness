@@ -6,6 +6,8 @@ import {
 	idSchema,
 	intentSchema,
 	outlineNodeSchema,
+	referenceContentSchema,
+	referenceSchema,
 	targetSchema,
 	voiceSchema,
 } from './schema'
@@ -136,6 +138,35 @@ export const placeReferenceOpSchema = z.strictObject({
 	value: idSchema.nullable(),
 })
 
+/**
+ * The three ops below are the writer's own References — the ones they paste in
+ * rather than Accept from an Offer, which is why the payload states its
+ * Provenance.
+ *
+ * The applier understanding an op does not mean the Chat may propose it. What
+ * the model is offered is the tool schema, and research reaches the Plan
+ * through the Ledger — architecture §5. Leave these out of that schema.
+ */
+export const createReferenceOpSchema = z.strictObject({
+	op: z.literal('createReference'),
+	reference: referenceSchema,
+})
+
+export const deleteReferenceOpSchema = z.strictObject({
+	op: z.literal('deleteReference'),
+	referenceId: idSchema,
+})
+
+/** Replaces what a Reference says and leaves its id, its Provenance, and its
+ * placement alone. `expected` is the whole of what it said, compared key by
+ * key, because a Reference's content is short and one field. */
+export const setReferenceOpSchema = z.strictObject({
+	op: z.literal('setReference'),
+	referenceId: idSchema,
+	expected: referenceContentSchema,
+	value: referenceContentSchema,
+})
+
 export const proposalOpSchema = z.discriminatedUnion('op', [
 	createNodeOpSchema,
 	moveNodeOpSchema,
@@ -147,6 +178,9 @@ export const proposalOpSchema = z.discriminatedUnion('op', [
 	setVoiceOpSchema,
 	setAdjectivesOpSchema,
 	placeReferenceOpSchema,
+	createReferenceOpSchema,
+	deleteReferenceOpSchema,
+	setReferenceOpSchema,
 ])
 
 /** The whole Proposal, applied as one ordered batch. An empty list is not one. */

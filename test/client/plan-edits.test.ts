@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+	addReference,
 	addSection,
+	deleteReference,
 	deleteSection,
 	liftSection,
 	moveSection,
@@ -9,6 +11,7 @@ import {
 	placeReference,
 	setAdjectives,
 	setIntent,
+	setReference,
 	setTarget,
 	setTitle,
 	setVoice,
@@ -183,5 +186,40 @@ describe('the References', () => {
 
 	it('builds no edit for a Reference the Plan does not carry', () => {
 		expect(placeReference(plan, 'gone', 'a')).toBeNull()
+		expect(
+			setReference(plan, 'gone', { type: 'reference', text: 'A passage' }),
+		).toBeNull()
+	})
+
+	it('pastes one in, carrying the writer as its Provenance', () => {
+		const pasted = applied(
+			plan,
+			addReference(
+				{ type: 'quote', text: 'A passage they pasted', source: { title: 'The memo' } },
+				'a',
+				'r2',
+			),
+		)
+
+		expect(pasted.references).toHaveLength(2)
+		expect(pasted.references[1]).toEqual({
+			id: 'r2',
+			type: 'quote',
+			provenance: { type: 'writer' },
+			text: 'A passage they pasted',
+			source: { title: 'The memo' },
+			nodeId: 'a',
+		})
+	})
+
+	it('rewrites what one says, and deletes it', () => {
+		const fixed = applied(
+			plan,
+			setReference(plan, 'r1', { type: 'quote', text: 'A passage, corrected' }),
+		)
+		expect(fixed.references[0].text).toBe('A passage, corrected')
+		expect(fixed.references[0].type).toBe('quote')
+
+		expect(applied(fixed, deleteReference('r1')).references).toEqual([])
 	})
 })

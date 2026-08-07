@@ -1,14 +1,13 @@
 import { useState } from 'react'
 
 import type { OutlineNode } from '../../shared/plan'
-import { Button } from '../components/Button'
+import { Button, ButtonGroup } from '../components/Button'
 import type { SectionAnchor } from './edits'
 
 /**
- * Making a Section, and saying where it goes. The button that opens this sits
- * at the top of the Outline while a new Section usually belongs somewhere else,
- * so it asks rather than appending and leaving the writer to hunt for what it
- * did.
+ * Making a Section, and saying where it goes. It asks rather than appending,
+ * because a new Section usually belongs somewhere other than wherever the
+ * button happens to sit.
  *
  * Subsections are TBD, so every choice here anchors at the top level.
  */
@@ -37,7 +36,7 @@ export function AddSection({ outline, onAdd }: AddSectionProps) {
 
 	if (!asking) {
 		return (
-			<Button onClick={() => setAsking(true)} size="sm" variant="quiet">
+			<Button onClick={() => setAsking(true)} size="sm">
 				+ section
 			</Button>
 		)
@@ -45,25 +44,38 @@ export function AddSection({ outline, onAdd }: AddSectionProps) {
 
 	return (
 		<div
-			className="flex flex-col items-stretch gap-1 rounded-md border border-edge bg-surface p-1.5"
+			className="flex flex-col items-start gap-2 rounded-md border border-edge bg-surface p-2.5"
 			onKeyDown={(event) => {
 				if (event.key === 'Escape') setAsking(false)
 			}}
 		>
-			<p className="label-meta px-1 pb-0.5">Where does it go?</p>
-			<Choice onChoose={() => add({ parentId: null, afterId: null })}>
-				At the beginning
-			</Choice>
-			{/* The last Section is left out: "after" it and "at the end" are the
-			    same place, and one of them is the shorter thing to read. */}
+			<p className="label-meta text-muted">New section: where?</p>
+
+			<ButtonGroup label="Where the Section goes">
+				<Button onClick={() => add({ parentId: null, afterId: null })} size="sm">
+					Top
+				</Button>
+				<Button onClick={() => add({ parentId: null, beforeId: null })} size="sm">
+					Bottom
+				</Button>
+			</ButtonGroup>
+
+			{/* The last Section is left out: "after" it and "bottom" are the same
+			    place, and one of them is the shorter thing to read. */}
 			{outline.slice(0, -1).map((node, index) => (
-				<Choice key={node.id} onChoose={() => add({ parentId: null, afterId: node.id })}>
-					After {index + 1}. {node.title === '' ? 'Untitled section' : node.title}
-				</Choice>
+				<button
+					key={node.id}
+					className="w-full truncate rounded-md border border-edge bg-surface px-2.5 py-1.5 text-left text-[0.75rem] text-ink hover:border-ink/40 hover:bg-hush"
+					onClick={() => add({ parentId: null, afterId: node.id })}
+					type="button"
+				>
+					<span className="text-faint">after {index + 1} · </span>
+					{node.title === '' ? 'Untitled section' : node.title}
+				</button>
 			))}
-			<Choice onChoose={() => add({ parentId: null, beforeId: null })}>At the end</Choice>
+
 			<Button
-				className="mt-0.5 self-end"
+				className="self-end"
 				onClick={() => setAsking(false)}
 				size="sm"
 				variant="quiet"
@@ -71,22 +83,5 @@ export function AddSection({ outline, onAdd }: AddSectionProps) {
 				cancel
 			</Button>
 		</div>
-	)
-}
-
-interface ChoiceProps {
-	onChoose: () => void
-	children: React.ReactNode
-}
-
-function Choice({ onChoose, children }: ChoiceProps) {
-	return (
-		<button
-			className="truncate rounded-sm px-1 py-1 text-left text-[0.75rem] text-ink hover:bg-hush"
-			onClick={onChoose}
-			type="button"
-		>
-			{children}
-		</button>
 	)
 }

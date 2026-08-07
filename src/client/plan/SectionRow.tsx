@@ -64,11 +64,14 @@ export function SectionRow({
 	const title = useRef<HTMLInputElement>(null)
 	const row = useRef<HTMLDivElement>(null)
 
+	// Opening a Section puts the caret in its title. Without it the focus stays
+	// on the closed row's button, which this row has just replaced — so it falls
+	// to the page, and Escape has nothing to close.
 	useEffect(() => {
-		if (!open || !takeCaret) return
+		if (!open) return
 
-		row.current?.scrollIntoView({ block: 'nearest' })
 		title.current?.focus()
+		if (takeCaret) row.current?.scrollIntoView({ block: 'nearest' })
 	}, [open, takeCaret])
 
 	if (!open) {
@@ -102,6 +105,18 @@ export function SectionRow({
 				'flex items-start gap-2.5 rounded-md border border-edge bg-surface p-2.5',
 				className,
 			)}
+			onBlur={(event) => {
+				// Reaching for another field closes this Section. A blur with nowhere
+				// to go — clicking the page, or the row being moved in the list — is
+				// not the writer leaving, so it does not close anything.
+				const to = event.relatedTarget
+				if (to !== null && !event.currentTarget.contains(to)) onOpen(null)
+			}}
+			onKeyDown={(event) => {
+				if (event.key !== 'Escape') return
+				event.stopPropagation()
+				onOpen(null)
+			}}
 			style={{ marginLeft: depth * 20 }}
 		>
 			<span className="mt-1.5 w-3 shrink-0 font-mono text-[0.6875rem] text-faint">

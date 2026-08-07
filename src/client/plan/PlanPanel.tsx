@@ -135,7 +135,7 @@ export function PlanPanel({
 
 			<GroupHeading count={plan.references.length}>References</GroupHeading>
 			<ReferenceList
-				className="flex flex-col gap-1.5"
+				className="flex flex-col items-stretch gap-1.5"
 				edit={edit}
 				entries={entries}
 				plan={plan}

@@ -50,23 +50,45 @@ export const provenanceSchema = z
 		},
 	)
 
+/** What a Reference says, against the three fields that identify it, say where
+ * it came from, and place it. An op that edits one replaces this much and
+ * leaves those alone. */
+const referenceContentFields = {
+	type: referenceTypeSchema,
+	text: z.string().min(1).optional(),
+	source: sourceSchema.optional(),
+	note: z.string().min(1).optional(),
+}
+
+type ReferenceContentFields = { type: ReferenceType; text?: string }
+
+const carriesSomething = {
+	check: (reference: { text?: string; source?: unknown }) =>
+		reference.text !== undefined || reference.source !== undefined,
+	error: 'A Reference carries a text, a source, or both. One with neither is nothing.',
+}
+
+const quoteCarriesText = {
+	check: (reference: ReferenceContentFields) =>
+		reference.type !== 'quote' || reference.text !== undefined,
+	error: 'A Reference of type quote carries a text.',
+}
+
+export const referenceContentSchema = z
+	.strictObject(referenceContentFields)
+	.refine(carriesSomething.check, { error: carriesSomething.error })
+	.refine(quoteCarriesText.check, { error: quoteCarriesText.error })
+
 /** Something the writer is drawing on. */
 export const referenceSchema = z
 	.strictObject({
 		id: idSchema,
-		type: referenceTypeSchema,
 		provenance: provenanceSchema,
-		text: z.string().min(1).optional(),
-		source: sourceSchema.optional(),
 		nodeId: idSchema.nullable(),
-		note: z.string().min(1).optional(),
+		...referenceContentFields,
 	})
-	.refine((reference) => reference.text !== undefined || reference.source !== undefined, {
-		error: 'A Reference carries a text, a source, or both. One with neither is nothing.',
-	})
-	.refine((reference) => reference.type !== 'quote' || reference.text !== undefined, {
-		error: 'A Reference of type quote carries a text.',
-	})
+	.refine(carriesSomething.check, { error: carriesSomething.error })
+	.refine(quoteCarriesText.check, { error: quoteCarriesText.error })
 
 /** The unit of structure in the Plan. */
 export const outlineNodeSchema = z.strictObject({
@@ -95,11 +117,21 @@ const planObjectSchema = z.strictObject({
 
 export type Source = z.infer<typeof sourceSchema>
 export type Provenance = z.infer<typeof provenanceSchema>
+export type ReferenceContent = z.infer<typeof referenceContentSchema>
 export type Reference = z.infer<typeof referenceSchema>
 export type OutlineNode = z.infer<typeof outlineNodeSchema>
 export type Plan = z.infer<typeof planObjectSchema>
 
 export const planSchema = planObjectSchema.superRefine(checkIds)
+
+/** What a Reference says, without the three fields `setReference` leaves
+ * alone. Both the builder of that op and the applier read it here, so the two
+ * sides of an `expected` cannot disagree about what content is. */
+export function referenceContent(reference: Reference): ReferenceContent {
+	const { type, text, source, note } = reference
+
+	return { type, ...(text && { text }), ...(source && { source }), ...(note && { note }) }
+}
 
 /** What a new Article opens into, shaped so `validateStateChange` accepts it. */
 export function emptyPlan(title = ''): Plan {

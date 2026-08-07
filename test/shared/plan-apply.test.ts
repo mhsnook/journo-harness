@@ -410,6 +410,141 @@ describe('the content ops', () => {
 		expect(refusal.found).toBe('n2a')
 	})
 
+	it('takes a Reference the writer wrote themselves, placed or not', () => {
+		const next = applied([
+			{
+				op: 'createReference',
+				reference: {
+					id: 'r4',
+					type: 'quote',
+					provenance: { type: 'writer' },
+					text: 'A passage they pasted in',
+					source: { title: 'The memo', year: 2024 },
+					nodeId: 'n1',
+				},
+			},
+		])
+
+		expect(next.references).toHaveLength(4)
+		expect(next.references[3].provenance).toEqual({ type: 'writer' })
+		expect(next.references[3].nodeId).toBe('n1')
+	})
+
+	it('refuses a Reference placed at a node the Plan does not carry', () => {
+		const refusal = refused([
+			{
+				op: 'createReference',
+				reference: {
+					id: 'r4',
+					type: 'reference',
+					provenance: { type: 'writer' },
+					source: { title: 'The memo' },
+					nodeId: 'gone',
+				},
+			},
+		])
+
+		expect(refusal.type).toBe('missing')
+		expect(refusal.message).toContain('node gone')
+	})
+
+	it('refuses a Reference carrying an id the Plan already holds', () => {
+		const refusal = refused([
+			{
+				op: 'createReference',
+				reference: {
+					id: 'r1',
+					type: 'reference',
+					provenance: { type: 'writer' },
+					source: { title: 'The memo' },
+					nodeId: null,
+				},
+			},
+		])
+
+		expect(refusal.type).toBe('invalid')
+		expect(refusal.message).toContain('two References')
+	})
+
+	it('replaces what a Reference says, and keeps what identifies it', () => {
+		const next = applied([
+			{
+				op: 'setReference',
+				referenceId: 'r1',
+				expected: { type: 'reference', text: 'A pulled passage' },
+				value: {
+					type: 'quote',
+					text: 'A pulled passage, corrected',
+					source: { author: 'R. Okonkwo' },
+				},
+			},
+		])
+
+		expect(next.references[0]).toEqual({
+			id: 'r1',
+			type: 'quote',
+			provenance: { type: 'writer' },
+			text: 'A pulled passage, corrected',
+			source: { author: 'R. Okonkwo' },
+			nodeId: 'n2a',
+		})
+	})
+
+	it('drops a field the new content leaves out', () => {
+		const noted = applied([
+			{
+				op: 'setReference',
+				referenceId: 'r2',
+				expected: { type: 'reference', text: 'An unplaced passage' },
+				value: { type: 'reference', text: 'An unplaced passage', note: 'Worth a look' },
+			},
+		])
+		const next = applied(
+			[
+				{
+					op: 'setReference',
+					referenceId: 'r2',
+					expected: {
+						type: 'reference',
+						text: 'An unplaced passage',
+						note: 'Worth a look',
+					},
+					value: { type: 'reference', text: 'An unplaced passage' },
+				},
+			],
+			noted,
+		)
+
+		expect('note' in next.references[1]).toBe(false)
+	})
+
+	it('compares a Reference key by key, so one changed field is stale', () => {
+		const refusal = refused([
+			{
+				op: 'setReference',
+				referenceId: 'r1',
+				expected: { type: 'reference', text: 'A pulled passage', note: 'Never said' },
+				value: { type: 'reference', text: 'Something else' },
+			},
+		])
+
+		expect(refusal.type).toBe('stale')
+		expect(refusal.found).toEqual({ type: 'reference', text: 'A pulled passage' })
+	})
+
+	it('deletes a Reference and leaves the rest', () => {
+		const next = applied([{ op: 'deleteReference', referenceId: 'r2' }])
+
+		expect(next.references.map((reference) => reference.id)).toEqual(['r1', 'r3'])
+	})
+
+	it('refuses to delete a Reference the Plan does not carry', () => {
+		const refusal = refused([{ op: 'deleteReference', referenceId: 'gone' }])
+
+		expect(refusal.type).toBe('missing')
+		expect(refusal.message).toContain('Reference gone')
+	})
+
 	it('refuses a content op naming a node the Plan does not carry', () => {
 		const refusal = refused([
 			{ op: 'setTitle', nodeId: 'gone', expected: '', value: 'A title' },

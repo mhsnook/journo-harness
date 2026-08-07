@@ -1,5 +1,11 @@
-import type { Anchor, OutlineNode, Plan, ProposalInput } from '../../shared/plan'
-import { findNodePath } from '../../shared/plan'
+import type {
+	Anchor,
+	OutlineNode,
+	Plan,
+	ProposalInput,
+	ReferenceContent,
+} from '../../shared/plan'
+import { findNodePath, referenceContent } from '../../shared/plan'
 import { placementOf } from './outline'
 
 /**
@@ -129,6 +135,48 @@ export function liftSection(plan: Plan, nodeId: string): ProposalInput | null {
 	if (parent === null) return null
 
 	return [{ op: 'moveNode', nodeId, parentId: parent.parentId, afterId: at.parentId }]
+}
+
+/**
+ * A Reference the writer pasted in themselves, which is what its Provenance
+ * says. The ones that arrive from the Chat are Accepted from an Offer and carry
+ * that Offer's id instead — architecture §5.
+ */
+export function addReference(
+	content: ReferenceContent,
+	nodeId: string | null = null,
+	id: string = crypto.randomUUID(),
+): ProposalInput {
+	return [
+		{
+			op: 'createReference',
+			reference: { id, provenance: { type: 'writer' }, nodeId, ...content },
+		},
+	]
+}
+
+/** Replace what a Reference says, keeping its id, its Provenance, and where it
+ * sits. */
+export function setReference(
+	plan: Plan,
+	referenceId: string,
+	content: ReferenceContent,
+): ProposalInput | null {
+	const reference = plan.references.find((held) => held.id === referenceId)
+	if (reference === undefined) return null
+
+	return [
+		{
+			op: 'setReference',
+			referenceId,
+			expected: referenceContent(reference),
+			value: content,
+		},
+	]
+}
+
+export function deleteReference(referenceId: string): ProposalInput {
+	return [{ op: 'deleteReference', referenceId }]
 }
 
 /** Place a Reference at a Section, or nowhere with null. */

@@ -165,6 +165,11 @@ Offers are flat. Two Quotes from one publication are two Offers.
 Accepting copies the Offer into the Plan as a new editable record carrying its Provenance —
 rule 5. Deduplicate a re-offered Reference on the Provenance, not on the content.
 
+**The writer pastes their own References straight into the Plan**, and those carry
+`provenance: { type: 'writer' }` rather than an Offer id. They never enter the Ledger: an
+Offer is something the Chat turned up and handed over to rule on, and there is nothing to
+rule on in a passage the writer typed.
+
 **A Proposal is not an Offer.** The writer rules on both the same way, but a Proposal lives
 in the Chat turn that made it, goes Stale, and leaves no record, where an Offer is a row that
 keeps its disposition.
@@ -217,9 +222,12 @@ proposal: [
   than greying it out — whole-field comparison is conservative and will refuse a Proposal
   against a field the writer has since touched.
 
-**Ten ops**, in `src/shared/plan/ops.ts`: `createNode`, `moveNode`, `mergeNodes`,
+**Thirteen ops**, in `src/shared/plan/ops.ts`: `createNode`, `moveNode`, `mergeNodes`,
 `deleteNode`, `setTitle`, `setIntent`, `setTarget`, `setVoice`, `setAdjectives`,
-`placeReference`. A content op reads `nodeId: null` as the Article Scope, so setting the
+`placeReference`, `createReference`, `deleteReference`, `setReference`. The last three are
+how the writer pastes a Reference in themselves, and the applier understanding an op does
+not mean the Chat may propose it: what the model is offered is the tool schema, and
+research reaches the Plan through the Ledger — §5. A content op reads `nodeId: null` as the Article Scope, so setting the
 Article's Voice and setting one node's Voice are one op rather than two. Two ops carry a
 consequence worth stating: **`deleteNode` unplaces every Reference placed at the node it
 removes or at any node below it**, because the Plan is written whole and a Reference naming a
