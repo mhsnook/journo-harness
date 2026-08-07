@@ -13,7 +13,7 @@ import { useArticle } from '../../lib/article'
 import { useOfferLedger } from '../../lib/useOfferLedger'
 import { ARTICLE_TITLE } from '../../mock/content'
 import { outlineEntries, sectionLabel } from '../../plan/outline'
-import { referenceName, referencesAt, unplacedReferences } from '../../plan/references'
+import { referencesAt, unplacedReferences } from '../../plan/references'
 
 type Filter = 'all' | Disposition
 
@@ -23,6 +23,9 @@ const filters: Filter[] = ['all', 'undecided', 'accepted', 'declined']
  * 2(f) — The Offer ledger, as two equal halves: what has been offered, and the
  * Plan it goes into. It is the same list at every stage, which is why there is
  * no separate triage screen.
+ *
+ * The left half says what the writer ruled and nothing else. Where a Reference
+ * sits is the right half's to show, and it shows it Section by Section.
  */
 export function LedgerDrawerScreen() {
 	const { plan } = useArticle()
@@ -124,24 +127,16 @@ export function LedgerDrawerScreen() {
 							)
 						})}
 
+						{/* In the Plan, and held by no Section — so the count above accounts
+						    for it. "Not placed" is the word the Panel's Section select uses. */}
 						{unplaced.length > 0 ? (
-							<div className="flex flex-col gap-1.5">
-								<MetaLabel count={unplaced.length}>Accepted, no Section yet</MetaLabel>
-								<p className="text-[0.75rem] text-muted">
-									{unplaced.map(referenceName).join(' · ')}
-								</p>
-							</div>
-						) : null}
-
-						{/* Not the group above, which is placed nowhere yet — §5. */}
-						{ledger.stranded.length > 0 ? (
-							<div className="flex flex-col gap-1.5">
-								<MetaLabel count={ledger.stranded.length}>
-									Accepted, and not in the Plan
-								</MetaLabel>
-								<p className="text-[0.75rem] text-muted">
-									{ledger.stranded.map(referenceName).join(' · ')}
-								</p>
+							<div className="flex flex-col gap-2">
+								<MetaLabel count={unplaced.length}>Not placed</MetaLabel>
+								<div className="flex flex-col gap-2.5 pl-2">
+									{unplaced.map((reference) => (
+										<QuoteRow key={reference.id} reference={reference} showUsage />
+									))}
+								</div>
 							</div>
 						) : null}
 					</div>

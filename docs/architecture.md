@@ -164,6 +164,11 @@ The Chat turns up **Offers** — Links and Quotes — as SQLite rows in the Arti
 Each carries a disposition: **Undecided**, **Accepted**, or **Declined**, and Declining is
 restorable. The **Ledger** is a View over Offers, not a store.
 
+**The Ledger shows the ruling and stops there.** Its groups are the three dispositions.
+Once the writer Accepts, the Reference is the Plan's, and where it sits is the Plan Panel's
+to show — Section by Section, which it already does. A Ledger group about placement would
+be the Ledger restating the Panel beside it.
+
 Offers are flat. Two Quotes from one publication are two Offers.
 
 Accepting copies the Offer into the Plan as a new editable record carrying its Provenance —
@@ -187,12 +192,15 @@ edits their copy, and content stops matching the moment they do.
 **Accepting is two writes against two stores, and nothing makes them atomic.**
 `setOfferDisposition` over RPC, then a `createReference` op through the applier like every
 other Plan edit. The row goes first, because what it returns is what the copy is built
-from. If the second write never lands, the Offer is
-Accepted and the Plan holds nothing — a **stranded** Offer, which is not the Ledger's
-"Accepted, no Section yet" group; that group is a Reference carrying `nodeId: null`. The
-Provenance pointer is what finds it: an Accepted Offer whose id appears in no
-`provenance.offerId`. The Ledger shows it and the writer re-adds, which is the second write
+from. If the second write never lands, the Offer is Accepted and the Plan holds nothing — a
+**stranded** Offer. The Provenance pointer is what finds it: an Accepted Offer whose id
+appears in no `provenance.offerId`. The card carries the re-add, which is the second write
 on its own. No reconciliation pass, and nothing atomic to build.
+
+Stranded is a write that did not land, not a fourth ruling, so it gets no group of its own
+— the writer reads Accepted and finds the re-add on the row. A Reference sitting at no
+Section is a different thing again, and an ordinary one: the Plan Panel lists it and its
+Section reads "not placed".
 
 **The writer pastes their own References straight into the Plan**, and those carry
 `provenance: { type: 'writer' }` rather than an Offer id. They never enter the Ledger: an

@@ -54,7 +54,8 @@ export function citation(content: ReferenceContent): string {
 		.join(' · ')
 }
 
-/** Distinct from a stranded Offer, which is in the Plan nowhere at all — §5. */
+/** The ones no Section holds. In the Plan and ordinary — `ReferenceList` reads
+ * the same state as "not placed" on its Section select. */
 export function unplacedReferences(plan: Plan): Reference[] {
 	return plan.references.filter((reference) => reference.nodeId === null)
 }

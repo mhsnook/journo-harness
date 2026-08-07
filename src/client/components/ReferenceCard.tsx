@@ -95,11 +95,6 @@ export function ReferenceCard({
 					{variant === 'ledger' && offer.disposition === 'undecided' ? (
 						<span className="text-[0.6875rem] text-faint">undecided</span>
 					) : null}
-					{accepted && !inThePlan ? (
-						<span className="text-[0.6875rem] text-faint">
-							Accepted, and not in the Plan
-						</span>
-					) : null}
 				</div>
 			</div>
 
