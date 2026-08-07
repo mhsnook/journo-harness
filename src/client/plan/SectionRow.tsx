@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 
-import type { Plan, ProposalInput, Reference } from '../../shared/plan'
+import type { Plan, ProposalInput } from '../../shared/plan'
 import { nodeAllocation, resolveNodeScope } from '../../shared/plan'
 import { Button } from '../components/Button'
 import { InlineInput, TextField } from '../components/Field'
@@ -17,6 +17,7 @@ import {
 } from './edits'
 import type { OutlineEntry } from './outline'
 import { depthName } from './outline'
+import { referenceMark, referenceName, referencesAt } from './references'
 import { ToneFields } from './ToneFields'
 import { AllocationNote, TargetField } from './WordCount'
 
@@ -67,7 +68,7 @@ export function SectionRow({
 	const title = useRef<HTMLInputElement>(null)
 	const row = useRef<HTMLDivElement>(null)
 
-	const placed = plan.references.filter((reference) => reference.nodeId === node.id)
+	const placed = referencesAt(plan, node.id)
 
 	// Opening a Section puts the caret in its title. Without it the focus stays
 	// on the closed row's button, which this row has just replaced — so it falls
@@ -90,15 +91,15 @@ export function SectionRow({
 	const references =
 		placed.length === 0 ? null : (
 			<div className="flex flex-col gap-0.5 pl-[1.375rem]">
-				{placed.map((reference) => (
+				{placed.map((held) => (
 					<button
-						key={reference.id}
+						key={held.reference.id}
 						className="flex items-baseline gap-1.5 truncate text-left text-[0.6875rem] text-muted hover:text-ink"
-						onClick={() => onShowReference(reference.id)}
+						onClick={() => onShowReference(held.reference.id)}
 						type="button"
 					>
-						<span className="label-meta shrink-0">{reference.type}</span>
-						<span className="truncate">{nameOfReference(reference)}</span>
+						<span className="label-meta shrink-0">{referenceMark(held)}</span>
+						<span className="truncate">{referenceName(held.reference)}</span>
 					</button>
 				))}
 			</div>
@@ -256,11 +257,4 @@ export function SectionRow({
 			</div>
 		</div>
 	)
-}
-
-/** What a Reference reads as on one line: its passage, or its title. */
-function nameOfReference(reference: Reference): string {
-	if (reference.text !== undefined) return `“${reference.text}”`
-
-	return reference.source?.title ?? reference.source?.url ?? 'Untitled reference'
 }

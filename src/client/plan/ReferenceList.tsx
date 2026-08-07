@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 
-import type { Plan, ProposalInput, Reference } from '../../shared/plan'
+import type { Plan, ProposalInput } from '../../shared/plan'
 import { Button } from '../components/Button'
 import { Chip } from '../components/Chip'
 import { EmptySlot } from '../components/Field'
@@ -8,6 +8,8 @@ import { cx } from '../lib/cx'
 import { addReference, deleteReference, placeReference, setReference } from './edits'
 import type { OutlineEntry } from './outline'
 import { ReferenceForm } from './ReferenceForm'
+import type { ReferenceEntry } from './references'
+import { referenceEntries, referenceMark, referenceName } from './references'
 
 /**
  * The Plan's References: what the Chat turned up and the writer Accepted, and
@@ -55,7 +57,7 @@ export function ReferenceList({
 				</EmptySlot>
 			) : null}
 
-			{plan.references.map((reference) =>
+			{referenceEntries(plan).map(({ reference, number }) =>
 				reference.id === openId ? (
 					<ReferenceForm
 						key={reference.id}
@@ -73,11 +75,11 @@ export function ReferenceList({
 				) : (
 					<ReferenceRow
 						key={reference.id}
+						entry={{ reference, number }}
 						entries={entries}
 						onOpen={() => setOpenId(reference.id)}
 						onPlace={(nodeId) => edit(placeReference(plan, reference.id, nodeId))}
 						onShown={onShown}
-						reference={reference}
 						shown={reference.id === shown}
 					/>
 				),
@@ -101,7 +103,7 @@ export function ReferenceList({
 }
 
 interface ReferenceRowProps {
-	reference: Reference
+	entry: ReferenceEntry
 	entries: OutlineEntry[]
 	onOpen: () => void
 	onPlace: (nodeId: string | null) => void
@@ -110,13 +112,14 @@ interface ReferenceRowProps {
 }
 
 function ReferenceRow({
-	reference,
+	entry,
 	entries,
 	onOpen,
 	onPlace,
 	shown,
 	onShown,
 }: ReferenceRowProps) {
+	const { reference } = entry
 	const row = useRef<HTMLDivElement>(null)
 
 	useEffect(() => {
@@ -148,7 +151,9 @@ function ReferenceRow({
 			)}
 		>
 			<div className="flex items-baseline gap-2">
-				<Chip variant="outline">{reference.type}</Chip>
+				<Chip className="font-mono" variant="outline">
+					{referenceMark(entry)}
+				</Chip>
 				{reference.source?.title ? (
 					<p className="min-w-0 flex-1 text-[0.75rem] leading-snug font-medium text-ink">
 						{reference.source.title}
@@ -175,7 +180,7 @@ function ReferenceRow({
 			) : null}
 
 			<select
-				aria-label={`Where ${label(reference)} sits`}
+				aria-label={`Where ${referenceMark(entry)}, ${referenceName(reference)}, sits`}
 				className="h-7 rounded-md border border-edge bg-surface px-2 text-[0.75rem] text-ink"
 				onChange={(event) =>
 					onPlace(event.target.value === '' ? null : event.target.value)
@@ -191,9 +196,4 @@ function ReferenceRow({
 			</select>
 		</div>
 	)
-}
-
-/** What to call one in a label a screen reader reads out. */
-function label(reference: Reference): string {
-	return reference.source?.title ?? reference.text ?? reference.id
 }
