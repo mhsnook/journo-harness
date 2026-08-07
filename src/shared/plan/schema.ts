@@ -1,29 +1,23 @@
 import { z } from 'zod'
 
 /**
- * The Plan: one JSON blob in Article Agent state, parsed whole by
- * `validateStateChange` on every write. Nothing the model emits goes through
- * `planSchema` — the Chat proposes and the client applies. The piece schemas
- * below are the ones a Proposal's op payloads reuse.
- *
- * Rationale in docs/adr/0002-the-plan-data-model.md.
+ * The Plan's schema, parsed whole on every write. The data model it enforces is
+ * `docs/architecture.md` §4, who may write it is §3, and the reasoning behind
+ * both is docs/adr/0002-the-plan-data-model.md.
  */
 
-// `.min(1)` throughout: absence is how a Scope says "nothing here", and neither
-// the empty string nor the empty list is a second way to say it. Which of these
-// fields may be absent is decided below, and again in a Proposal's op payloads.
+// `.min(1)` throughout, so that a field carries one spelling of "nothing here"
+// rather than two — §4.
 export const idSchema = z.string().min(1)
 export const voiceSchema = z.string().min(1)
 export const adjectiveSchema = z.string().min(1)
 export const intentSchema = z.string().min(1)
 export const targetSchema = z.number().int().positive()
 
-// strictObject throughout: only the client writes the Plan, so an unknown key
-// is a bug rather than a forward-compatible extension.
+// strictObject throughout: the Plan has one writer, so an unknown key is a bug
+// rather than a forward-compatible extension — §3, rule 1.
 
-/** The attribution inside a Reference. Every field is optional on its own,
- * because a book has no url and a leaked memo has no author, and at least one
- * of them is present. */
+/** The attribution inside a Reference. */
 export const sourceSchema = z
 	.strictObject({
 		title: z.string().min(1).optional(),
@@ -36,8 +30,7 @@ export const sourceSchema = z
 		error: 'A source carries at least one of title, author, publication, year, or url.',
 	})
 
-/** Where a record came from. An Accepted Offer is copied into the Plan as a new
- * editable record that keeps a pointer to the Offer row it came from. */
+/** Where a record came from. */
 export const provenanceSchema = z
 	.strictObject({
 		kind: z.enum(['writer', 'offer']),
@@ -50,10 +43,7 @@ export const provenanceSchema = z
 		},
 	)
 
-/** Something the writer is drawing on. A Quote is a Reference that carries a
- * `text` — one structure, not two, and the Plan Panel's separate counts are a
- * display filter. `nodeId` is null until the Reference is placed at an Outline
- * node. */
+/** Something the writer is drawing on. */
 export const referenceSchema = z
 	.strictObject({
 		id: idSchema,
@@ -67,11 +57,7 @@ export const referenceSchema = z
 		error: 'A Reference carries a text, a source, or both. One with neither is nothing.',
 	})
 
-/** The unit of structure in the Plan. Children are contained rather than
- * referenced, so orphans and cycles are impossible rather than merely invalid,
- * and sibling order is array position.
- *
- * `title` may be empty: the writer creates a node and then types into it. */
+/** The unit of structure in the Plan. */
 export const outlineNodeSchema = z.strictObject({
 	id: idSchema,
 	title: z.string(),
@@ -89,12 +75,8 @@ export const outlineNodeSchema = z.strictObject({
 // inferring the type from the refined schema would be circular.
 const planObjectSchema = z.strictObject({
 	title: z.string(),
-	// Null until the writer states a total, and never derived from the node
-	// targets, which are free to disagree with it.
 	totalTarget: targetSchema.nullable(),
 	voice: voiceSchema.optional(),
-	// The Article always carries the key, so the empty list is how it says
-	// "nothing here". A node says the same by carrying no key at all.
 	adjectives: z.array(adjectiveSchema),
 	outline: z.array(outlineNodeSchema),
 	references: z.array(referenceSchema),
@@ -108,8 +90,7 @@ export type Plan = z.infer<typeof planObjectSchema>
 
 export const planSchema = planObjectSchema.superRefine(checkIds)
 
-/** What a new Article opens into. `validateStateChange` accepts it, so the
- * Article Agent can use it as `initialState`. */
+/** What a new Article opens into, shaped so `validateStateChange` accepts it. */
 export function emptyPlan(title = ''): Plan {
 	return {
 		title,
@@ -122,10 +103,7 @@ export function emptyPlan(title = ''): Plan {
 
 type Path = (string | number)[]
 
-/**
- * Uniqueness and referential integrity, which the object shape cannot state. A
- * Proposal that deletes a node must also unplace its References.
- */
+/** Uniqueness and referential integrity, which the object shape cannot state. */
 function checkIds(plan: Plan, ctx: z.RefinementCtx) {
 	const claim = (seen: Set<string>, id: string, path: Path, noun: string) => {
 		if (seen.has(id)) {

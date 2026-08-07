@@ -39,12 +39,8 @@ export type Refusal = {
 export type ApplyResult = { ok: true; plan: Plan } | { ok: false; refusal: Refusal }
 
 /**
- * Apply a Proposal to a Plan, leaving the Plan passed in untouched.
- *
- * The Proposal arrives from a tool call, so this parses it rather than trusting
- * its type, and it parses the Plan it produces rather than trusting the ops:
- * `validateStateChange` would reject an unparseable Plan with nothing to show
- * the writer, where a refusal here says which op did it.
+ * Apply a Proposal to a Plan, leaving the Plan passed in untouched. The Proposal
+ * arrives from a tool call, so this parses it rather than trusting its type.
  */
 export function applyProposal(plan: Plan, proposal: unknown): ApplyResult {
 	const parsed = proposalSchema.safeParse(proposal)
@@ -163,8 +159,8 @@ function applyOp(plan: Plan, op: ProposalOp, index: number): Refusal | null {
 			const site = locate(plan.outline, op.nodeId)
 			if (site === null) return absent(`node ${op.nodeId}`)
 
-			// A Reference naming a node that is gone does not parse, and the Plan is
-			// written whole, so the unplacing lands in this op or nowhere.
+			// The unplacing lands in this op or nowhere: the Plan is written whole,
+			// and a Reference naming a node that is gone does not parse — §4.
 			const gone = new Set(subtreeIds(site.siblings[site.index]))
 			site.siblings.splice(site.index, 1)
 			for (const reference of plan.references) {

@@ -10,14 +10,9 @@ import {
 } from './schema'
 
 /**
- * The op vocabulary a Proposal is written in. What the ops mean, and why they
- * are shaped this way, is `docs/architecture.md` §6; the applier is apply.ts.
- *
- * The payloads reuse the Plan's piece schemas, which are `strictObject`, so a
- * model that adds one field fails the whole tool call and retries with the
- * validation error rather than having the field stripped. If a model adds the
- * same field every turn it thrashes that retry: name the field here rather than
- * loosening the payloads to strip.
+ * The op vocabulary a Proposal is written in. What the ops mean, how strict the
+ * payloads are, and what to do when a model fights that strictness are all
+ * `docs/architecture.md` §6. The applier is apply.ts.
  */
 
 /** Nullable and optional say different things: `afterId: null` is first child,
@@ -43,8 +38,8 @@ function statesOneAnchor(op: Anchor) {
 const scopeIdSchema = idSchema.nullable()
 const parentIdSchema = idSchema.nullable()
 
-/** The payload is `outlineNodeSchema` whole, so a leaf states `children: []`
- * and one op may create a node with its children. */
+/** The payload is `outlineNodeSchema` whole, so a node with nothing under it
+ * states `children: []`, and one op may create a node with its children. */
 export const createNodeOpSchema = z
 	.strictObject({
 		op: z.literal('createNode'),

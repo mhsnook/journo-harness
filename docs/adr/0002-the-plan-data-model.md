@@ -73,6 +73,11 @@ state the Ledger groups by, not an absence, and a blob written whole should not 
 spellings of it. The schema also rejects a `nodeId` naming a node the Outline does not
 carry, so deleting a node unplaces its References in the same Proposal.
 
+**Amended:** the second half of that reason is general and was stated here only because
+`nodeId` is where it first came up. #24 applied it to the rest of the Plan — a node's
+Adjectives took both an absent key and an empty list — and `docs/architecture.md` §4 now
+carries it as a rule of the data model.
+
 ## Provenance names what kind of thing a Reference came from
 
 `{ kind: 'offer', offerId }` for a Reference copied from an Offer, and `{ kind: 'writer' }`

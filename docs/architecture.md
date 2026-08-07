@@ -118,6 +118,12 @@ plan: {
   under a somber middle is somber unless it says otherwise.
 - **The word-count total is stored and nothing is derived.** The parts may disagree with the
   whole; the gap is information. Auto-distributing the remainder is rejected.
+- **One spelling per state.** A field that may be absent says "nothing here" by being absent,
+  and never also by an empty string or an empty list — the blob is written whole, compared
+  whole-field by a Proposal's `expected`, and sent whole in every prompt pack, so a second
+  spelling is a second Plan for the same content. Two fields carry their key always and say
+  "nothing here" with a value: a Reference's `nodeId`, which is null until it is placed, and
+  the Article's `adjectives`, which is the empty list.
 
 **The schema guards client writes.** `validateStateChange` parses the whole Plan on every
 write, and nothing the model emits ever goes through it — the Chat proposes and the client
