@@ -37,7 +37,7 @@ _Avoid_: project, document, piece (except in prose about the writing itself)
 **Panel**:
 One of the columns of the Article screen, and the material it shows. Four today: Chat,
 Plan, Draft, Notes. On a narrow screen the Panels become tabs.
-_Avoid_: layer, pane, section (a Section is part of the Draft), stage (the writer owns
+_Avoid_: layer, pane, section (a Section is part of the Article), stage (the writer owns
 their own process, and we do not name it for them), rail (a rail is a collapsed Panel,
 not a different thing)
 
@@ -50,9 +50,9 @@ The dialogue between the writer and the guide about one Article.
 _Avoid_: conversation, thread
 
 **Plan**:
-The structured plan for one Article — its Outline nodes, its Voice and Adjectives, its
-word-count targets, and the References the writer has Accepted. It is what the
-Chat and the writer co-construct, and it plays the role a plan plays in an agentic coding tool.
+The structured plan for one Article — its Sections, its Tone, its word-count targets, and
+the References the writer has Accepted. It is what the Chat and the writer co-construct,
+and it plays the role a plan plays in an agentic coding tool.
 _Avoid_: **brief** (see below), outline (the Outline is one part of the Plan), context
 stash, spec
 
@@ -72,17 +72,44 @@ _Avoid_: feedback, comments, findings, suggestions, review (a Review produces No
 
 ## Inside the Plan
 
-**Outline node**:
-The unit of structure in the Plan. A node in a tree, carrying a stable ID, a title, an
-intent note, and optionally a word-count target, a Voice, and Adjectives.
-_Avoid_: section (a Section is in the Draft), item, heading, bullet
+**Outline**:
+The Plan's ordered tree of Sections, and the Panel material the writer rearranges. One
+part of the Plan rather than another word for it.
+_Avoid_: structure, TOC, table of contents
+
+**Section**:
+The unit the writer works in — one stretch of the Article, planned in the Outline and
+written in the Draft. Its plan side is stored, carrying a stable ID, a title, an intent
+note, and optionally a word-count target and a Tone. Its prose side is the run of Blocks
+that serves it, inferred rather than stored (see **Boundary**). One word for both, because
+the writer has one thing in mind.
+_Avoid_: node (a Node is the code word — see below), item, heading, bullet, chapter (a
+Chapter is a longer work's unit, and v1 has none)
+
+**Subsection**:
+A Section nested one level inside another. Two levels is what the interface offers.
+Anything deeper wants a word writers already hold — Chapter, for a book — rather than a
+more recursive one, and we would rather add that word later than ask a writer to think in
+trees.
+
+**Node**:
+The code word for the recursive unit a Section and a Subsection are both instances of, and
+the name it keeps in the schema: `OutlineNode` in `src/shared/plan`. Depth picks the word
+the writer reads — 0 is a Section and 1 is a Subsection.
+_Avoid_: the word "node" anywhere the writer can read it
+
+**Tone**:
+The Voice and the Adjectives together — everything saying how the writing should sound, as
+against what it should say. A Section's Tone is its resolved Voice plus its accumulated
+Adjectives, so Tone names the pair and never one of them.
+_Avoid_: Tone for a Voice alone or an Adjective alone, style, register
 
 **Voice**:
 The register the writing is in — "reported feature", "clean and professional",
 "academic". **One applies at a time.** Voices do not compose: switching from one to
 another for a passage replaces it, because blending two registers makes mud rather than a
 third register.
-_Avoid_: tone, style, register, mode
+_Avoid_: tone (a Tone is the Voice and the Adjectives together), style, register, mode
 
 **Adjective**:
 A descriptive term the writing should answer to — "funny", "somber", "high energy",
@@ -93,8 +120,8 @@ _Avoid_: tone word, tag, chip (a chip is how one is rendered), trait
 
 **Scope**:
 Which level a Voice, an Adjective, or a Reference is attached to — House, Article, or
-Outline node. Resolution runs House first and the Outline node last: the nearest Voice
-wins outright, and Adjectives accumulate in that order. Resolved when read, never stored
+Section. Resolution runs House first and the Section last: the nearest Voice wins
+outright, and Adjectives accumulate in that order. Resolved when read, never stored
 resolved.
 _Avoid_: level, tier, inheritance chain
 
@@ -120,8 +147,12 @@ _Avoid_: excerpt, passage, snippet, pull quote
 
 **Ledger**:
 The View of an Article's Offers and what the writer decided about each — a query over
-Offers, not a store of its own.
-_Avoid_: inbox, tray, queue, history
+Offers, not a store of its own. Name it the **Offer ledger** wherever the phrase stands on
+its own, in a heading, a story name, or a menu item: a bare "Ledger" makes the reader
+supply the noun, and the qualifier costs one word. Drop to "the Ledger" only in running
+prose that has already named it.
+_Avoid_: source ledger (a source is the attribution inside a Reference), inbox, tray,
+queue, history
 
 **Undecided**:
 The disposition of an Offer the writer has not ruled on. The starting state.
@@ -154,23 +185,19 @@ _Avoid_: applied, written, done
 
 ## Inside the Draft
 
-**Section**:
-The stretch of Draft prose serving one Outline node. Approximate and inferred, rather
-than a storage fact.
-_Avoid_: chapter, part, block (a Block is the unit the Draft is stored in)
-
 **Transition**:
 The connective prose between two Sections, belonging to neither.
 
 **Boundary**:
-The place where one Section ends and the next begins. Inferred lazily (for now) and
-reported approximately.
+The place where one Section's prose ends and the next begins. Inferred lazily (for now)
+and reported approximately — the Draft is stored as a flat run of Blocks, so which Section
+a Block serves is read out rather than written down.
 
 **Block**:
 The unit the Draft is stored and synced in, usually one paragraph. Blocks settle lazily
 and hold loosely — a paragraph the writer is in the middle of splitting may stay one
 Block until they move on, and the structure is never enforced against them mid-flow.
-_Avoid_: row, chunk, node (an Outline node is a different thing)
+_Avoid_: row, chunk, node (a Node is the code word for a Section)
 
 ## The guide and its output
 
@@ -185,10 +212,11 @@ and a body of one or two sentences. The unit that fills the Notes Panel.
 _Avoid_: finding, suggestion, comment, tip, feedback
 
 **Kind**:
-What sort of thing a record is. For a Guidance note: structure, voice, citations,
-repetition, budget, tone drift, pacing, plan divergence — illustrative rather than a
-fixed taxonomy, and the Notes Panel groups by it. For an Offer: Reference, Quote, and
-whatever comes later.
+What sort of thing a record is. For a Guidance note: structure, tone drift, citations,
+repetition, budget, pacing, plan divergence — illustrative rather than a fixed taxonomy,
+and the Notes Panel groups by it. A note about the Voice and a note about an Adjective are
+both tone drift, because the writer reads them the same way. For an Offer: Reference,
+Quote, and whatever comes later.
 _Avoid_: category, type, tag, label
 
 **Review**:

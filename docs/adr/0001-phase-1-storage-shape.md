@@ -45,7 +45,7 @@ has no export path, and D1 has `wrangler d1 export`.
 
 Archived Plans, Drafts, and Finals grow without bound and no client needs them resident,
 so they live in plain D1 tables behind a read endpoint. Only the Chat goes to cold storage
-in R2, which is why un-archiving restores a conversation rather than an Article.
+in R2, which is why un-archiving restores a Chat rather than an Article.
 
 ## Considered options
 
@@ -67,7 +67,7 @@ document per keystroke.
   party-db setup that already runs rather than standing one up.
 - **1a has no article index**, because the index lives in the House. Articles are
   addressed by ID in the URL until 1b arrives.
-- **Every Plan node carries a stable ID from the first commit** — Outline nodes, Accepted
+- **Every Plan node carries a stable ID from the first commit** — Sections, Accepted
   References, and each scoped Voice and Adjective, with children referring to parents by
   ID rather than by position. This makes the phase 2 move a projection of the blob into
   rows rather than a rewrite of every reference in the Plan.

@@ -4,14 +4,14 @@ import { cx } from '../lib/cx'
 import { Button } from './Button'
 
 export interface ChatMessageProps {
-	from: 'me' | 'agent'
+	from: 'me' | 'guide'
 	children: ReactNode
 	className?: string
 }
 
 /**
- * One turn. Yours is a bounded block; the agent's runs loose against the pane
- * so the sources and controls it returns can sit at full width underneath it.
+ * One turn. Yours is a bounded block; the guide's runs loose against the Panel
+ * so the references and controls it returns can sit at full width underneath it.
  */
 export function ChatMessage({ from, children, className }: ChatMessageProps) {
 	if (from === 'me') {
@@ -58,12 +58,12 @@ export function ChatComposer({
 	)
 }
 
-export interface ChatSuggestionsProps {
+export interface ChatRepliesProps {
 	children: ReactNode
 	className?: string
 }
 
-/** The reply chips an agent turn can end with. */
-export function ChatSuggestions({ children, className }: ChatSuggestionsProps) {
+/** The reply chips a guide turn can end with. */
+export function ChatReplies({ children, className }: ChatRepliesProps) {
 	return <div className={cx('flex flex-wrap gap-1.5', className)}>{children}</div>
 }

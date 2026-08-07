@@ -2,10 +2,10 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 
 import { Annotation } from '../../components/Annotation'
 import { BlankPlanScreen } from './BlankPlanScreen'
-import { ChatWithSourcesScreen } from './ChatWithSourcesScreen'
+import { ChatWithReferencesScreen } from './ChatWithReferencesScreen'
 import { LedgerDrawerScreen } from './LedgerDrawerScreen'
 import { LedgerPopoverScreen } from './LedgerPopoverScreen'
-import { MidConversationScreen } from './MidConversationScreen'
+import { MidChatScreen } from './MidChatScreen'
 import { PlanSheetScreen } from './PlanSheetScreen'
 import { ReadyToDraftScreen } from './ReadyToDraftScreen'
 
@@ -32,12 +32,12 @@ export const A_BlankPlan: Story = {
 }
 
 export const B_MidConversation: Story = {
-	name: '2(b) Mid-conversation',
+	name: '2(b) Mid-chat',
 	render: () => (
 		<div className="flex flex-col">
-			<MidConversationScreen />
+			<MidChatScreen />
 			<Annotation>
-				Ticking a source in the chat sends it across into References immediately — the
+				Ticking a reference in the chat sends it across into References immediately — the
 				wash on the newly added reference is the only thing marking the change. Section 3
 				is being typed by hand at the same time, which is equally allowed.
 			</Annotation>
@@ -51,8 +51,8 @@ export const C_ReadyToDraft: Story = {
 		<div className="flex flex-col">
 			<ReadyToDraftScreen />
 			<Annotation>
-				The button is a suggestion, not a gate — it appears once the plan has a length and
-				at least one section, and the draft pill was clickable long before it showed up.
+				The button is a nudge, not a gate — it appears once the plan has a length and at
+				least one section, and the draft pill was clickable long before it showed up.
 			</Annotation>
 		</div>
 	),
@@ -60,7 +60,7 @@ export const C_ReadyToDraft: Story = {
 
 export const D_ChatWithSources: Story = {
 	name: '2(d) A turn that returned a lot',
-	render: () => <ChatWithSourcesScreen />,
+	render: () => <ChatWithReferencesScreen />,
 }
 
 export const E_PlanSheet: Story = {
@@ -69,29 +69,29 @@ export const E_PlanSheet: Story = {
 		<div className="flex flex-col">
 			<PlanSheetScreen />
 			<Annotation>
-				Outline, references and quotes are stacked, never columned: inside a phase the eye
-				should only have to travel one way. The bar beside the outline is the shape of the
-				piece — 300 / 700 / 900 / 500 of 2,400.
+				Outline, references and quotes are stacked, never columned: inside a status the
+				eye should only have to travel one way. The bar beside the outline is the shape of
+				the piece — 300 / 700 / 900 / 500 of 2,400.
 			</Annotation>
 		</div>
 	),
 }
 
 export const F_LedgerDrawer: Story = {
-	name: '2(f) Source ledger',
+	name: '2(f) Offer ledger',
 	render: () => (
 		<div className="flex flex-col">
 			<LedgerDrawerScreen />
 			<Annotation>
-				The same list at every stage — early on most rows read "offered", later most read
-				"used". That is precisely why there is no separate triage screen.
+				The same list at every stage — early on most rows read "undecided", later most
+				read "used". That is precisely why there is no separate triage screen.
 			</Annotation>
 		</div>
 	),
 }
 
 export const G_LedgerPopover: Story = {
-	name: '2(g) Ledger from the composer',
+	name: '2(g) Offer ledger from the composer',
 	render: () => (
 		<div className="flex flex-col">
 			<LedgerPopoverScreen />

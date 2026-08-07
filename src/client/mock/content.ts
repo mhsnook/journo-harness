@@ -10,8 +10,8 @@ export interface Article {
 	id: string
 	title: string
 	blurb: string
-	phase: 'planning' | 'drafting' | 'self-edit' | 'submitted' | 'published'
-	phaseLabel: string
+	status: 'planning' | 'drafting' | 'self-edit' | 'submitted' | 'published'
+	statusLabel: string
 	progress: number
 	voice?: string
 	chips?: string[]
@@ -23,8 +23,8 @@ export const activeArticles: Article[] = [
 		id: 'batteries',
 		title: 'The Long Tail of Batteries',
 		blurb: 'What happens to a cell after the warranty runs out, and who is counting.',
-		phase: 'drafting',
-		phaseLabel: 'drafting',
+		status: 'drafting',
+		statusLabel: 'drafting',
 		progress: 0.62,
 		voice: 'wry',
 		chips: ['3 notes'],
@@ -33,8 +33,8 @@ export const activeArticles: Article[] = [
 		id: 'cities',
 		title: 'Why Cities Stopped Building',
 		blurb: 'Permitting is not a queue. It is a series of small, reasonable refusals.',
-		phase: 'planning',
-		phaseLabel: 'planning chat',
+		status: 'planning',
+		statusLabel: 'planning chat',
 		progress: 0.2,
 		chips: ['12 refs'],
 	},
@@ -42,8 +42,8 @@ export const activeArticles: Article[] = [
 		id: 'slow-software',
 		title: 'Notes on Slow Software',
 		blurb: 'In praise of programs that do one thing and then stop.',
-		phase: 'self-edit',
-		phaseLabel: 'self-edit · round 2',
+		status: 'self-edit',
+		statusLabel: 'self-edit · round 2',
 		progress: 0.95,
 		chips: ['review ready'],
 		needsAttention: true,
@@ -111,7 +111,7 @@ export const portfolioBacklist = [
 
 export const ARTICLE_TITLE = 'Why Cities Stopped Building'
 
-export interface OutlineSection {
+export interface Section {
 	n: number
 	title: string
 	words: number
@@ -120,7 +120,7 @@ export interface OutlineSection {
 	state?: 'done' | 'current' | 'planned'
 }
 
-export const outline: OutlineSection[] = [
+export const outline: Section[] = [
 	{
 		n: 1,
 		title: 'The year the cranes stopped',
@@ -146,7 +146,7 @@ export const outline: OutlineSection[] = [
 	},
 ]
 
-export const outlineRevised: OutlineSection[] = [
+export const outlineRevised: Section[] = [
 	{ n: 1, title: 'The year the cranes stopped', words: 300 },
 	{ n: 2, title: 'How review became the process', words: 700 },
 	{ n: 3, title: 'Who actually pays for the delay', words: 700 },
@@ -157,7 +157,7 @@ export const outlineRevised: OutlineSection[] = [
 	},
 ]
 
-export interface Source {
+export interface Reference {
 	id: string
 	title: string
 	author?: string
@@ -166,12 +166,12 @@ export interface Source {
 	favourite?: 'author' | 'publication'
 	summary?: string
 	quotes?: number
-	state: 'undecided' | 'accepted' | 'cut'
+	state: 'undecided' | 'accepted' | 'declined'
 	section?: string
 	used?: boolean
 }
 
-export const sources: Source[] = [
+export const references: Reference[] = [
 	{
 		id: 's1',
 		title: 'Permit throughput in six mid-sized cities',
@@ -223,7 +223,7 @@ export const sources: Source[] = [
 		outlet: 'The Evening Ledger',
 		year: '2022',
 		summary: 'Assertive, unsourced. Covers ground we already have better evidence for.',
-		state: 'cut',
+		state: 'declined',
 	},
 ]
 

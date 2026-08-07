@@ -2,7 +2,7 @@ import { ArticleBar } from '../../components/ArticleBar'
 import { ChatComposer, ChatMessage } from '../../components/Chat'
 import { EmptySlot } from '../../components/Field'
 import { Frame, FrameBody } from '../../components/Frame'
-import { Pane } from '../../components/Pane'
+import { Panel } from '../../components/Panel'
 import { ARTICLE_TITLE } from '../../mock/content'
 import { PlanBlock, PlanLength } from './PlanBlocks'
 
@@ -16,19 +16,19 @@ export function BlankPlanScreen() {
 		<Frame width={760}>
 			<ArticleBar title={ARTICLE_TITLE} open={['chat', 'plan']} status="new" />
 			<FrameBody row className="min-h-[20rem]">
-				<Pane divider="right" className="gap-3">
+				<Panel divider="right" className="gap-3">
 					<ChatMessage from="me">
 						I want to write about why permitting got so slow, using this city as the case.
 						Roughly feature length. Start by finding me the numbers.
 					</ChatMessage>
-					<ChatMessage from="agent">
+					<ChatMessage from="guide">
 						Before I search — is this the story of the process, or the story of the people
-						stuck in it? That changes which sources are worth your time.
+						stuck in it? That changes which references are worth your time.
 					</ChatMessage>
 					<ChatComposer />
-				</Pane>
+				</Panel>
 
-				<Pane tone="sunk">
+				<Panel variant="sunk">
 					<PlanLength />
 					<PlanBlock title="Outline" meta="empty">
 						<EmptySlot className="min-h-[3.5rem]">
@@ -37,7 +37,7 @@ export function BlankPlanScreen() {
 						</EmptySlot>
 					</PlanBlock>
 					<PlanBlock title="References" meta="0">
-						<EmptySlot>Tick a source in the chat</EmptySlot>
+						<EmptySlot>Tick a reference in the chat</EmptySlot>
 					</PlanBlock>
 					<PlanBlock title="Quotes" meta="0">
 						<EmptySlot>Or paste your own</EmptySlot>
@@ -46,7 +46,7 @@ export function BlankPlanScreen() {
 						Scrolls. Nothing here is locked, and nothing has to be finished before you
 						write.
 					</p>
-				</Pane>
+				</Panel>
 			</FrameBody>
 		</Frame>
 	)

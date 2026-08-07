@@ -2,9 +2,9 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 
 import { Annotation } from '../../components/Annotation'
 import { FullReviewScreen } from './FullReviewScreen'
-import { LayersRecapScreen } from './LayersRecapScreen'
 import { NotesToChatScreen } from './NotesToChatScreen'
-import { PaneCombosScreen } from './PaneCombosScreen'
+import { PanelCombosScreen } from './PanelCombosScreen'
+import { PanelsRecapScreen } from './PanelsRecapScreen'
 import { PhoneNotesScreen } from './PhoneNotesScreen'
 import { ReviewRailScreen } from './ReviewRailScreen'
 
@@ -23,14 +23,14 @@ export const A_FullReview: Story = {
 			<FullReviewScreen />
 			<Annotation>
 				Only this pass is full screen — you asked for it, so it gets the window once.
-				Accepted findings then live in the notes rail while you write.
+				Accepted notes then live in the Notes rail while you write.
 			</Annotation>
 		</div>
 	),
 }
 
 export const B_ReviewRail: Story = {
-	name: '4(b) Findings in the rail',
+	name: '4(b) Notes in the rail',
 	render: () => <ReviewRailScreen />,
 }
 
@@ -55,18 +55,18 @@ export const D_Phone: Story = {
 		<div className="flex flex-col">
 			<PhoneNotesScreen />
 			<Annotation>
-				A form factor, not a phase. Read and triage; no writing happens here.
+				A form factor, not a status. Read and triage; no writing happens here.
 			</Annotation>
 		</div>
 	),
 }
 
-export const E_PaneCombos: Story = {
-	name: '4(e) Recap · pane combinations',
-	render: () => <PaneCombosScreen />,
+export const E_PanelCombos: Story = {
+	name: '4(e) Recap · Panel combinations',
+	render: () => <PanelCombosScreen />,
 }
 
-export const F_LayersRecap: Story = {
-	name: '4(f) Recap · the four layers',
-	render: () => <LayersRecapScreen />,
+export const F_PanelsRecap: Story = {
+	name: '4(f) Recap · the four Panels',
+	render: () => <PanelsRecapScreen />,
 }

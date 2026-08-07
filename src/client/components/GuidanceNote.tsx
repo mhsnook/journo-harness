@@ -3,10 +3,10 @@ import type { ReactNode } from 'react'
 import { cx } from '../lib/cx'
 import { Chip } from './Chip'
 
-export interface CoachNoteProps {
+export interface GuidanceNoteProps {
 	/** Where it points: "§3", "§2 ↔ §4". */
 	anchor?: string
-	/** How sure the coach is. `confident` notes are the ones surfaced on a pause. */
+	/** How sure the Guide is. `confident` notes are the ones surfaced on a pause. */
 	confidence?: 'confident' | 'tentative'
 	title: ReactNode
 	body?: ReactNode
@@ -18,11 +18,11 @@ export interface CoachNoteProps {
 }
 
 /**
- * A note from the coach. Notes never edit the prose — they say what they see
- * and wait. `live` is the freshly surfaced one and gets the accent wash; every
- * other note on screen stays quiet.
+ * One Guidance note from the Guide. Notes never edit the prose — they say what
+ * they see and wait. `live` is the freshly surfaced one and gets the accent
+ * wash; every other note on screen stays quiet.
  */
-export function CoachNote({
+export function GuidanceNote({
 	anchor,
 	confidence,
 	title,
@@ -31,7 +31,7 @@ export function CoachNote({
 	accepted = false,
 	actions,
 	className,
-}: CoachNoteProps) {
+}: GuidanceNoteProps) {
 	return (
 		<article
 			className={cx(
@@ -48,7 +48,7 @@ export function CoachNote({
 			{body ? <p className="text-[0.75rem] leading-relaxed text-muted">{body}</p> : null}
 			{actions ? <div className="mt-0.5 flex flex-wrap gap-1.5">{actions}</div> : null}
 			{accepted ? (
-				<Chip tone="outline" className="self-start">
+				<Chip variant="outline" className="self-start">
 					accepted
 				</Chip>
 			) : null}
@@ -65,7 +65,7 @@ export interface NoteDotProps {
 /**
  * The only thing that interrupts a blank writing surface: a small accent dot,
  * shown when you go idle and there is something worth reading. Clicking it
- * opens the notes pane.
+ * opens the notes Panel.
  */
 export function NoteDot({ count, className, onClick }: NoteDotProps) {
 	return (

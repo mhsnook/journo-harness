@@ -1,19 +1,19 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
 
-import { outline, quotes, sources } from '../mock/content'
+import { outline, quotes, references } from '../mock/content'
 import { Button } from './Button'
 import { Check } from './Check'
 import { Chip } from './Chip'
-import { CoachNote, NoteDot } from './CoachNote'
 import { ExampleBlock, PolarityHeading } from './ExampleBlock'
 import { EmptySlot, Field } from './Field'
+import { GuidanceNote, NoteDot } from './GuidanceNote'
 import { LengthBar } from './LengthBar'
 import { OutlineRow } from './OutlineRow'
-import { PaneRail, type PaneId } from './PaneRail'
+import { PanelRail, type PanelId } from './PanelRail'
 import { ProgressBar } from './ProgressBar'
 import { QuoteRow } from './QuoteRow'
-import { SourceCard } from './SourceCard'
+import { ReferenceCard } from './ReferenceCard'
 
 const meta = {
 	title: 'Primitives/Overview',
@@ -35,18 +35,18 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 export const Buttons: Story = {
 	render: () => (
 		<div className="w-[40rem]">
-			<Row label="Button tones">
-				<Button tone="accent">start drafting →</Button>
+			<Row label="Button variants">
+				<Button variant="accent">start drafting →</Button>
 				<Button>download</Button>
-				<Button tone="quiet">cut</Button>
-				<Button tone="link">see all drafts</Button>
+				<Button variant="quiet">declined</Button>
+				<Button variant="link">see all drafts</Button>
 			</Row>
 			<Row label="Chips">
-				<Chip tone="accent">review ready</Chip>
+				<Chip variant="accent">review ready</Chip>
 				<Chip>700w</Chip>
-				<Chip tone="outline">well researched</Chip>
-				<Chip tone="muted">—</Chip>
-				<Chip dimmed>cut</Chip>
+				<Chip variant="outline">well researched</Chip>
+				<Chip variant="muted">—</Chip>
+				<Chip dimmed>declined</Chip>
 			</Row>
 			<Row label="Check — accepting is the decision these lists ask for">
 				<Check />
@@ -57,24 +57,24 @@ export const Buttons: Story = {
 				<Field label="Length" placeholder="words —" className="w-64" />
 			</Row>
 			<Row label="Empty slot — dashed always means optional and unfilled">
-				<EmptySlot className="w-72">Tick a source in the chat</EmptySlot>
+				<EmptySlot className="w-72">Tick a reference in the chat</EmptySlot>
 			</Row>
 		</div>
 	),
 }
 
-export const PaneToggle: Story = {
-	render: function PaneToggleStory() {
-		const [open, setOpen] = useState<PaneId[]>(['plan', 'draft'])
+export const PanelToggle: Story = {
+	render: function PanelToggleStory() {
+		const [open, setOpen] = useState<PanelId[]>(['plan', 'draft'])
 		return (
 			<div className="flex w-[40rem] flex-col gap-4">
-				<PaneRail
+				<PanelRail
 					open={open}
-					onToggle={(pane) =>
+					onToggle={(Panel) =>
 						setOpen((current) =>
-							current.includes(pane)
-								? current.filter((p) => p !== pane)
-								: [...current, pane],
+							current.includes(Panel)
+								? current.filter((p) => p !== Panel)
+								: [...current, Panel],
 						)
 					}
 				/>
@@ -114,9 +114,9 @@ export const Progress: Story = {
 export const Research: Story = {
 	render: () => (
 		<div className="flex w-[34rem] flex-col gap-4">
-			<SourceCard source={sources[0]} />
-			<SourceCard source={sources[2]} variant="ledger" />
-			<SourceCard source={sources[4]} variant="ledger" compact />
+			<ReferenceCard reference={references[0]} />
+			<ReferenceCard reference={references[2]} variant="ledger" />
+			<ReferenceCard reference={references[4]} variant="ledger" compact />
 			<QuoteRow quote={quotes[0]} showUsage />
 			<QuoteRow quote={quotes[2]} showUsage />
 		</div>
@@ -126,7 +126,7 @@ export const Research: Story = {
 export const Notes: Story = {
 	render: () => (
 		<div className="flex w-[16rem] flex-col gap-3">
-			<CoachNote
+			<GuidanceNote
 				anchor="§3"
 				confidence="confident"
 				live
@@ -134,22 +134,22 @@ export const Notes: Story = {
 				body="You're supposed to be moving into the human cost."
 				actions={
 					<>
-						<Chip tone="outline" interactive>
+						<Chip variant="outline" interactive>
 							accept
 						</Chip>
-						<Chip tone="muted" interactive>
+						<Chip variant="muted" interactive>
 							dismiss
 						</Chip>
 					</>
 				}
 			/>
-			<CoachNote
+			<GuidanceNote
 				anchor="whole piece"
 				confidence="tentative"
 				title="220 words over target"
 				body="With §4 still to write, something in §3 has to give."
 			/>
-			<CoachNote title="Attribute the £4,100 figure in-sentence" accepted />
+			<GuidanceNote title="Attribute the £4,100 figure in-sentence" accepted />
 			<NoteDot count={3} className="self-start" />
 		</div>
 	),

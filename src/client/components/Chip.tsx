@@ -2,18 +2,18 @@ import type { ButtonHTMLAttributes, ReactNode } from 'react'
 
 import { cx } from '../lib/cx'
 
-export type ChipTone = 'default' | 'accent' | 'outline' | 'muted' | 'solid'
+export type ChipVariant = 'default' | 'accent' | 'outline' | 'muted' | 'solid'
 
 export interface ChipProps extends Omit<ButtonHTMLAttributes<HTMLElement>, 'children'> {
-	tone?: ChipTone
+	variant?: ChipVariant
 	/** Renders as a button. Off by default — most chips are labels. */
 	interactive?: boolean
-	/** Dims the chip without changing its tone (unresolved, cut, not-yet). */
+	/** Dims the chip without changing its variant (unresolved, declined, not-yet). */
 	dimmed?: boolean
 	children?: ReactNode
 }
 
-const toneClass: Record<ChipTone, string> = {
+const variantClass: Record<ChipVariant, string> = {
 	default: 'border-edge bg-hush text-muted',
 	accent: 'border-accent-edge bg-accent text-accent-ink',
 	outline: 'border-edge bg-transparent text-muted',
@@ -28,7 +28,7 @@ const toneClass: Record<ChipTone, string> = {
  * Chips are read-only labels unless `interactive` is set.
  */
 export function Chip({
-	tone = 'default',
+	variant = 'default',
 	interactive = false,
 	dimmed = false,
 	className,
@@ -41,7 +41,7 @@ export function Chip({
 			{...(interactive ? { type: 'button' as const } : {})}
 			className={cx(
 				'inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-[0.1875rem] text-[0.6875rem] leading-none font-medium whitespace-nowrap',
-				toneClass[tone],
+				variantClass[variant],
 				dimmed && 'opacity-45',
 				interactive && 'transition-colors hover:border-ink/30 hover:text-ink',
 				className,

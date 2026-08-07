@@ -51,7 +51,7 @@ export function ShowcaseScreen() {
 
 				<div className="flex items-center gap-2.5 border-t border-edge pt-3">
 					<span className="text-[0.75rem] text-muted">joarness.app/em</span>
-					<Chip tone="accent" className="ml-auto">
+					<Chip variant="accent" className="ml-auto">
 						public · on
 					</Chip>
 				</div>

@@ -7,7 +7,7 @@ import {
 } from './SettingsShell'
 
 /**
- * 1(d) — Settings · voices. A voice is a tiny prompt that tells an agent how
+ * 1(d) — Settings · voices. A Voice is a tiny prompt that tells the Guide how
  * to assess a piece of writing. An article has a dominant one; sections can
  * override it.
  */
@@ -27,7 +27,7 @@ export function VoicesScreen() {
 		>
 			<SettingsDetailHeader title="Reported feature" usage="4 articles · 2 sections" />
 
-			<RuleBlock label="Prompt — how an agent assesses this style">
+			<RuleBlock label="Prompt — how the Guide assesses this Voice">
 				Reported, not argued. Every claim is attributed in the sentence that makes it.
 				Scene before analysis. Sentences average under twenty-five words; no more than one
 				subordinate clause deep. First person is allowed but rationed — roughly once a

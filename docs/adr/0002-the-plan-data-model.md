@@ -62,8 +62,8 @@ be added during that migration.
 
 ## References are flat, and `nodeId` is null until one is placed
 
-An Accepted Reference may sit at an Outline node or nowhere yet, and the Ledger shows
-"accepted, no section yet" as its own group. Nesting References under nodes would leave
+An Accepted Reference may sit at a Section or nowhere yet, and the Ledger shows
+"accepted, no Section yet" as its own group. Nesting References under Sections would leave
 the unplaced ones homeless, forcing a second bucket and one entity in two shapes. Flat
 also makes moving a Reference between Sections a single field, and projects to one table
 with a nullable `node_id`.
@@ -115,8 +115,8 @@ term reads as local emphasis: House `warm, plain` under a node saying `warm` res
 which moves the Plan inside the cacheable prompt prefix — but that edit changed the Plan's
 content anyway, so the prefix was missing regardless.
 
-Resolution runs House, then Article, then Outline node, and happens **at read time**. A
-node's ancestors take part in that same order, so a subsection under a somber middle is
+Resolution runs House, then Article, then Section, and happens **at read time**. A
+Section's ancestors take part in that same order, so a Subsection under a somber middle is
 somber unless it says otherwise.
 Storing resolved values would mean re-walking every node whenever the Article's Voice
 changes, inside a whole-blob write, and it could silently drift. In 1a the Plan carries
@@ -172,7 +172,7 @@ costs, and what to do if a model thrashes the retry, is in `docs/architecture.md
 
 - **The soft size ceiling is around 100 KB; the hard wall is 2 MB.** A SQLite-backed
   Durable Object caps a single row or value at 2 MB, but every write re-serialises the
-  whole Plan and broadcasts it, so cost is per-write. A normal Plan of 30 Outline nodes and
+  whole Plan and broadcasts it, so cost is per-write. A normal Plan of 30 Sections and
   40 References is roughly 40 KB. Growth is driven by References carrying long pulled
   passages, not by the outline.
 - **The relief valve is moving References into SQLite rows.** They are already row-shaped

@@ -33,9 +33,9 @@ export function FavouriteSourcesScreen() {
 				<div className="flex flex-col gap-2">
 					<PolarityHeading polarity="yes">Prefer for</PolarityHeading>
 					<div className="flex flex-wrap gap-1.5">
-						<Chip tone="outline">policy</Chip>
-						<Chip tone="outline">primary data</Chip>
-						<Chip tone="outline">interviews</Chip>
+						<Chip variant="outline">policy</Chip>
+						<Chip variant="outline">primary data</Chip>
+						<Chip variant="outline">interviews</Chip>
 					</div>
 				</div>
 				<div className="flex flex-col gap-2">
@@ -51,7 +51,7 @@ export function FavouriteSourcesScreen() {
 			<div className="flex flex-col gap-2">
 				<MetaLabel count="14 times">Pulled in research</MetaLabel>
 				<div className="flex items-center gap-2.5">
-					<Chip tone="accent">★ rank first</Chip>
+					<Chip variant="accent">★ rank first</Chip>
 					<p className="text-[0.75rem] text-muted">
 						Ahead of equally relevant results, never instead of better ones.
 					</p>

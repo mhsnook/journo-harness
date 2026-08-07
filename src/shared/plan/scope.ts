@@ -5,7 +5,7 @@ import type { OutlineNode, Plan } from './schema'
  * Adjectives cascade and combine.
  */
 
-/** What one Scope states. Taken from the Outline node so the House, the Article,
+/** What one Scope states. Taken from the Section so the House, the Article,
  * and a node cannot drift apart as terms are added. */
 export type ScopeTerms = Pick<OutlineNode, 'voice' | 'adjectives'>
 
@@ -40,7 +40,7 @@ export function resolveArticleScope(plan: Plan, house: ScopeTerms = {}): Resolve
 	return resolveScope([house, plan])
 }
 
-/** What applies at one Outline node: House, the Article, then every ancestor
+/** What applies at one Section: House, the Article, then every ancestor
  * from the outermost down to the node itself. Returns null when the Plan
  * carries no node with that id. */
 export function resolveNodeScope(
@@ -54,7 +54,7 @@ export function resolveNodeScope(
 	return resolveScope([house, plan, ...path])
 }
 
-/** The chain of Outline nodes from the outermost down to `nodeId`, or null when
+/** The chain of Sections from the outermost down to `nodeId`, or null when
  * no node carries that id. The node itself is the last element. */
 export function findNodePath(
 	outline: readonly OutlineNode[],

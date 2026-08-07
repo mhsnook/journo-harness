@@ -9,7 +9,7 @@ export interface TitleBarProps {
 	title: ReactNode
 	/** Quiet text after the title — "· board", "· all articles". */
 	subtitle?: ReactNode
-	/** Right-hand side: buttons, pane pills, filters. */
+	/** Right-hand side: buttons, Panel pills, filters. */
 	actions?: ReactNode
 	className?: string
 }

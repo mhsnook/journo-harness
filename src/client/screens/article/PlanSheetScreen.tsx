@@ -4,14 +4,14 @@ import { Chip } from '../../components/Chip'
 import { Divider } from '../../components/Divider'
 import { Frame, FrameBody } from '../../components/Frame'
 import { LengthBar } from '../../components/LengthBar'
-import { Pane, PaneHeader } from '../../components/Pane'
+import { Panel, PanelHeader } from '../../components/Panel'
 import { QuoteRow } from '../../components/QuoteRow'
-import { ARTICLE_TITLE, outline, quotes, sources } from '../../mock/content'
+import { ARTICLE_TITLE, outline, quotes, references } from '../../mock/content'
 import { PlanOutline } from './PlanBlocks'
 
 /**
  * 2(e) — The plan on its own, full width. Outline, references and quotes are
- * stacked rather than columned: within a phase the eye should only travel
+ * stacked rather than columned: within a status the eye should only travel
  * down. The bar beside the outline is the shape of the piece — each section's
  * height is its share of the 2,400 words.
  */
@@ -20,12 +20,12 @@ export function PlanSheetScreen() {
 		<Frame width={680}>
 			<ArticleBar title={ARTICLE_TITLE} open={['plan']} status="draft 1" />
 			<FrameBody>
-				<Pane className="gap-5 p-5">
+				<Panel className="gap-5 p-5">
 					<section className="flex flex-col gap-3">
-						<PaneHeader
+						<PanelHeader
 							title="Outline"
 							meta="2,400 words target"
-							actions={<Chip tone="outline">voice: Reported feature</Chip>}
+							actions={<Chip variant="outline">voice: Reported feature</Chip>}
 						/>
 						<div className="flex items-start gap-5">
 							<PlanOutline sections={outline} className="flex-1" />
@@ -47,21 +47,21 @@ export function PlanSheetScreen() {
 					<Divider weight="strong" />
 
 					<section className="flex flex-col gap-3">
-						<PaneHeader title="References" meta="12 · 9 kept" />
+						<PanelHeader title="References" meta="12 · 9 kept" />
 						<div className="grid grid-cols-3 gap-2.5">
-							{[sources[0], sources[1], sources[3]].map((source) => (
+							{[references[0], references[1], references[3]].map((reference) => (
 								<div
-									key={source.id}
+									key={reference.id}
 									className="flex flex-col gap-1 rounded-md border border-edge bg-sunk p-2.5"
 								>
 									<p className="text-[0.75rem] leading-snug font-medium text-ink">
-										{source.title}
+										{reference.title}
 									</p>
 									<p className="text-[0.6875rem] text-faint">
-										{[source.outlet, source.year].filter(Boolean).join(' · ')}
+										{[reference.outlet, reference.year].filter(Boolean).join(' · ')}
 									</p>
 									<p className="mt-auto pt-1 text-[0.6875rem] text-muted">
-										{source.section ?? 'unassigned'}
+										{reference.section ?? 'unassigned'}
 									</p>
 								</div>
 							))}
@@ -71,7 +71,7 @@ export function PlanSheetScreen() {
 					<Divider weight="strong" />
 
 					<section className="flex flex-col gap-3">
-						<PaneHeader title="Quotes" meta="8 saved" />
+						<PanelHeader title="Quotes" meta="8 saved" />
 						<div className="flex flex-col gap-3">
 							{quotes.map((quote) => (
 								<QuoteRow key={quote.id} quote={quote} />
@@ -83,9 +83,9 @@ export function PlanSheetScreen() {
 					</section>
 
 					<div className="flex items-center gap-3 pt-1">
-						<Button tone="accent">start writing →</Button>
+						<Button variant="accent">start writing →</Button>
 					</div>
-				</Pane>
+				</Panel>
 			</FrameBody>
 		</Frame>
 	)

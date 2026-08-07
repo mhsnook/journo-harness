@@ -1,24 +1,24 @@
 import { cx } from '../lib/cx'
 
-export const PANES = ['chat', 'plan', 'draft', 'notes'] as const
-export type PaneId = (typeof PANES)[number]
+export const PANELS = ['chat', 'plan', 'draft', 'notes'] as const
+export type PanelId = (typeof PANELS)[number]
 
-export interface PaneRailProps {
-	/** Which panes are on screen. Order is always chat → plan → draft → notes. */
-	open: readonly PaneId[]
+export interface PanelRailProps {
+	/** Which Panels are on screen. Order is always chat → plan → draft → notes. */
+	open: readonly PanelId[]
 	/** Omit to render the rail as a static indicator. */
-	onToggle?: (pane: PaneId) => void
+	onToggle?: (Panel: PanelId) => void
 	className?: string
 }
 
 /**
- * The four-pane toggle: chat · plan · draft · notes.
+ * The four-Panel toggle: chat · plan · draft · notes.
  *
- * Deliberately *not* accented. Which panes are open is state, not a call to
+ * Deliberately *not* accented. Which Panels are open is state, not a call to
  * action, so the active pill is solid ink and the yellow stays free for the
  * one thing on screen that actually wants a decision.
  */
-export function PaneRail({ open, onToggle, className }: PaneRailProps) {
+export function PanelRail({ open, onToggle, className }: PanelRailProps) {
 	return (
 		<div
 			className={cx(
@@ -26,18 +26,18 @@ export function PaneRail({ open, onToggle, className }: PaneRailProps) {
 				className,
 			)}
 			role={onToggle ? 'group' : undefined}
-			aria-label={onToggle ? 'Visible panes' : undefined}
+			aria-label={onToggle ? 'Visible Panels' : undefined}
 		>
-			{PANES.map((pane) => {
-				const isOpen = open.includes(pane)
+			{PANELS.map((Panel) => {
+				const isOpen = open.includes(Panel)
 				const Tag = (onToggle ? 'button' : 'span') as 'button'
 				return (
 					<Tag
-						key={pane}
+						key={Panel}
 						{...(onToggle
 							? {
 									type: 'button' as const,
-									onClick: () => onToggle(pane),
+									onClick: () => onToggle(Panel),
 									'aria-pressed': isOpen,
 								}
 							: {})}
@@ -47,7 +47,7 @@ export function PaneRail({ open, onToggle, className }: PaneRailProps) {
 							onToggle && !isOpen && 'hover:bg-hush hover:text-muted',
 						)}
 					>
-						{pane}
+						{Panel}
 					</Tag>
 				)
 			})}

@@ -118,7 +118,7 @@ function checkIds(plan: Plan, ctx: z.RefinementCtx) {
 	const walk = (nodes: OutlineNode[], path: Path) => {
 		nodes.forEach((node, index) => {
 			const nodePath = [...path, index]
-			claim(nodeIds, node.id, [...nodePath, 'id'], 'Outline nodes')
+			claim(nodeIds, node.id, [...nodePath, 'id'], 'Sections')
 			walk(node.children, [...nodePath, 'children'])
 		})
 	}
@@ -132,7 +132,7 @@ function checkIds(plan: Plan, ctx: z.RefinementCtx) {
 			ctx.addIssue({
 				code: 'custom',
 				path: ['references', index, 'nodeId'],
-				message: `Reference ${reference.id} is placed at ${reference.nodeId}, which no Outline node carries.`,
+				message: `Reference ${reference.id} is placed at ${reference.nodeId}, which no Section carries.`,
 			})
 		}
 	})

@@ -15,7 +15,7 @@ export interface FrameProps {
 /**
  * The app window. Every screen sits inside one of these: it draws the outer
  * border, the single elevation used in the whole system, and clips its
- * children so panes can run edge to edge.
+ * children so Panels can run edge to edge.
  */
 export function Frame({
 	width = 720,
@@ -39,13 +39,13 @@ export function Frame({
 
 export interface FrameBodyProps {
 	children?: ReactNode
-	/** Lay the children out as horizontal panes rather than stacked blocks. */
+	/** Lay the children out as horizontal Panels rather than stacked blocks. */
 	row?: boolean
 	className?: string
 	style?: CSSProperties
 }
 
-/** The area under the title bar. `row` turns it into the horizontal pane rail. */
+/** The area under the title bar. `row` turns it into the horizontal Panel rail. */
 export function FrameBody({ children, row = false, className, style }: FrameBodyProps) {
 	return (
 		<div

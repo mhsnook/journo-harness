@@ -1,11 +1,11 @@
 import { Chip } from '../../components/Chip'
-import { CoachNote } from '../../components/CoachNote'
 import { Frame, FrameBody } from '../../components/Frame'
+import { GuidanceNote } from '../../components/GuidanceNote'
 import { MetaLabel } from '../../components/MetaLabel'
 import { draftShort } from '../../mock/content'
 
 /**
- * 4(d) — The phone. A form factor, not a phase: read the draft, triage the
+ * 4(d) — The phone. A form factor, not a status: read the draft, triage the
  * notes, and nothing else. No writing happens here.
  */
 export function PhoneNotesScreen() {
@@ -17,18 +17,18 @@ export function PhoneNotesScreen() {
 			</div>
 			<FrameBody className="gap-3.5 px-3.5 pb-4">
 				<div className="flex gap-1.5">
-					<Chip tone="solid" interactive>
+					<Chip variant="solid" interactive>
 						notes 3
 					</Chip>
-					<Chip tone="outline" interactive>
+					<Chip variant="outline" interactive>
 						read
 					</Chip>
-					<Chip tone="outline" interactive>
+					<Chip variant="outline" interactive>
 						plan
 					</Chip>
 				</div>
 
-				<CoachNote
+				<GuidanceNote
 					anchor="§3"
 					confidence="confident"
 					live
@@ -36,16 +36,16 @@ export function PhoneNotesScreen() {
 					body="§3 is meant to move to the cost of the delay."
 					actions={
 						<>
-							<Chip tone="outline" interactive>
+							<Chip variant="outline" interactive>
 								accept
 							</Chip>
-							<Chip tone="muted" interactive>
+							<Chip variant="muted" interactive>
 								later
 							</Chip>
 						</>
 					}
 				/>
-				<CoachNote
+				<GuidanceNote
 					anchor="whole piece"
 					confidence="tentative"
 					title="220 words over target"

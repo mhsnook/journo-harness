@@ -1,9 +1,9 @@
 import { cx } from '../lib/cx'
-import type { OutlineSection } from '../mock/content'
+import type { Section } from '../mock/content'
 import { Chip } from './Chip'
 
 export interface OutlineRowProps {
-	section: OutlineSection
+	section: Section
 	/** Marks the section being written; renders a quiet "now" flag. */
 	current?: boolean
 	/** Accent the word count — used when a review has just changed it. */
@@ -13,7 +13,7 @@ export interface OutlineRowProps {
 	className?: string
 }
 
-/** One row of the outline: number, title, target, and any tone instructions. */
+/** One row of the Outline: number, title, target, and any Tone instructions. */
 export function OutlineRow({
 	section,
 	current = false,
@@ -41,20 +41,20 @@ export function OutlineRow({
 						<span className="shrink-0 text-[0.6875rem] text-faint">now</span>
 					) : null}
 					{dense ? (
-						<Chip tone={changed ? 'accent' : 'default'} className="ml-auto">
+						<Chip variant={changed ? 'accent' : 'default'} className="ml-auto">
 							{section.words}w
 						</Chip>
 					) : null}
 				</div>
 				{!dense ? (
 					<div className="flex flex-wrap gap-1.5">
-						<Chip tone={changed ? 'accent' : 'default'}>{section.words}w</Chip>
+						<Chip variant={changed ? 'accent' : 'default'}>{section.words}w</Chip>
 						{section.adjectives?.map((adjective) => (
-							<Chip key={adjective} tone="outline">
+							<Chip key={adjective} variant="outline">
 								{adjective}
 							</Chip>
 						))}
-						{section.voice ? <Chip tone="outline">voice: {section.voice}</Chip> : null}
+						{section.voice ? <Chip variant="outline">voice: {section.voice}</Chip> : null}
 					</div>
 				) : null}
 			</div>

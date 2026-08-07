@@ -48,7 +48,7 @@ export function SettingsShell({
 				back="Desk"
 				title="Writer settings"
 				actions={TABS.map((name) => (
-					<Chip key={name} tone={name === tab ? 'solid' : 'outline'} interactive>
+					<Chip key={name} variant={name === tab ? 'solid' : 'outline'} interactive>
 						{name}
 					</Chip>
 				))}
@@ -106,7 +106,7 @@ export interface RuleBlockProps {
 	children: ReactNode
 }
 
-/** The prompt / definition box: what the agent is actually handed. */
+/** The prompt / definition box: what the Guide is actually handed. */
 export function RuleBlock({ label, children }: RuleBlockProps) {
 	return (
 		<div className="flex flex-col gap-1.5">
@@ -134,7 +134,7 @@ export function ScoreTest({ score, paragraph }: ScoreTestProps) {
 				<p className="label-meta">Paste to test a paragraph</p>
 				<p className="truncate text-[0.75rem] text-muted">{paragraph}</p>
 			</div>
-			<Chip tone="accent">{score}</Chip>
+			<Chip variant="accent">{score}</Chip>
 		</div>
 	)
 }

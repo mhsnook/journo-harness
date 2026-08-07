@@ -52,13 +52,13 @@ export function TableScreen() {
 				title="All articles"
 				actions={
 					<>
-						<Chip tone="solid" interactive>
+						<Chip variant="solid" interactive>
 							open
 						</Chip>
-						<Chip tone="outline" interactive>
+						<Chip variant="outline" interactive>
 							drafts
 						</Chip>
-						<Chip tone="outline" interactive>
+						<Chip variant="outline" interactive>
 							published
 						</Chip>
 					</>
@@ -81,7 +81,7 @@ export function TableScreen() {
 						</span>
 						<span className="w-20">
 							{row.attention ? (
-								<Chip tone="accent">{row.status}</Chip>
+								<Chip variant="accent">{row.status}</Chip>
 							) : (
 								<span className="text-[0.75rem] text-muted">{row.status}</span>
 							)}
