@@ -22,6 +22,7 @@ import {
  * than checking it, and this class is the table's only writer, so the columns
  * are stated as what `createOffer` parsed before writing them. */
 type OfferRow = {
+	seq: number
 	id: string
 	kind: OfferKind
 	disposition: Disposition
@@ -62,7 +63,8 @@ export class ArticleAgent extends Agent<Env, Plan> {
 	onStart(): void {
 		this.sql`
 			CREATE TABLE IF NOT EXISTS offer (
-				id TEXT PRIMARY KEY,
+				seq INTEGER PRIMARY KEY AUTOINCREMENT,
+				id TEXT NOT NULL UNIQUE,
 				kind TEXT NOT NULL,
 				disposition TEXT NOT NULL,
 				text TEXT,
@@ -95,10 +97,14 @@ export class ArticleAgent extends Agent<Env, Plan> {
 		throw new Error(`The Plan does not parse. ${reason}`)
 	}
 
-	/** Every Offer on this Article, oldest first. */
+	/** Every Offer on this Article, in the order they were recorded.
+	 *
+	 * `seq` orders it, not `created_at`: a Worker's clock does not advance
+	 * across local writes, so a research turn that records four Offers stamps
+	 * them with one or two milliseconds between them. */
 	@callable()
 	listOffers(): Offer[] {
-		return this.sql<OfferRow>`SELECT * FROM offer ORDER BY created_at, id`.map(toOffer)
+		return this.sql<OfferRow>`SELECT * FROM offer ORDER BY seq`.map(toOffer)
 	}
 
 	/** Record something the Chat turned up. It starts Undecided.

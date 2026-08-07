@@ -169,6 +169,26 @@ describe('Offers in the Article Agent', () => {
 		)
 	})
 
+	// A research turn records its Offers in one invocation, where the Worker's
+	// clock barely advances — so `created_at` cannot order them and `seq` does.
+	it('lists a batch recorded in one turn in the order it was recorded', async () => {
+		await openAgentSocket('offer-batch')
+		const stub = env.ArticleAgent.get(env.ArticleAgent.idFromName('offer-batch'))
+
+		const titles = await runInDurableObject(stub, (agent) => {
+			const recorded = ['first', 'second', 'third', 'fourth'].map((title) =>
+				agent.createOffer({ kind: 'reference', source: { title } }),
+			)
+
+			return {
+				recorded: recorded.map((offer) => offer.source?.title),
+				listed: agent.listOffers().map((offer) => offer.source?.title),
+			}
+		})
+
+		expect(titles.listed).toEqual(titles.recorded)
+	})
+
 	it('keeps its Offers through a hibernation cycle', async () => {
 		const writer = await openAgentSocket('offer-hibernation')
 		const kept = await createOffer('offer-hibernation', quote)
