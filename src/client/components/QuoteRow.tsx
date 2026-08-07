@@ -1,42 +1,46 @@
+import type { Reference } from '../../shared/plan'
 import { cx } from '../lib/cx'
-import type { Quote } from '../mock/content'
+import { citation, referenceName } from '../plan/references'
 import { Chip } from './Chip'
 
 export interface QuoteRowProps {
-	quote: Quote
-	/** Show a used/ready marker instead of the bare section chip. */
+	reference: Reference
+	/** An em dash where the caller passes none. */
+	section?: string
+	/** Unused till phase 2. */
+	used?: boolean
 	showUsage?: boolean
 	dimmed?: boolean
 	className?: string
 }
 
-/**
- * A saved quote, tagged with the section it belongs to. An em dash in place of
- * a section number means it is kept but not placed yet.
- */
 export function QuoteRow({
-	quote,
+	reference,
+	section,
+	used = false,
 	showUsage = false,
 	dimmed = false,
 	className,
 }: QuoteRowProps) {
 	return (
 		<div className={cx('flex items-start gap-2.5', dimmed && 'opacity-50', className)}>
-			<Chip variant={quote.section ? 'default' : 'muted'} className="mt-px">
-				{quote.section ?? '—'}
+			<Chip variant={section ? 'default' : 'muted'} className="mt-px">
+				{section ?? '—'}
 			</Chip>
 			<blockquote
 				className={cx(
 					'min-w-0 flex-1 border-l-2 pl-2.5',
-					quote.used ? 'border-accent-edge' : 'border-rule',
+					used ? 'border-accent-edge' : 'border-rule',
 				)}
 			>
-				<p className="text-[0.8125rem] leading-relaxed text-ink">“{quote.text}”</p>
+				<p className="text-[0.8125rem] leading-relaxed text-ink">
+					{referenceName(reference)}
+				</p>
 				<footer className="mt-1 flex items-center gap-2 text-[0.6875rem] text-faint">
-					<cite className="not-italic">{quote.attribution}</cite>
+					<cite className="not-italic">{citation(reference)}</cite>
 					{showUsage ? (
-						<span className={quote.used ? 'text-accent-ink' : undefined}>
-							· {quote.used ? 'used' : 'ready'}
+						<span className={used ? 'text-accent-ink' : undefined}>
+							· {used ? 'used' : 'ready'}
 						</span>
 					) : null}
 				</footer>

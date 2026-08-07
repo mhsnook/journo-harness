@@ -1,4 +1,4 @@
-import type { Plan, Reference } from '../../shared/plan'
+import type { Plan, Reference, ReferenceContent, Source } from '../../shared/plan'
 
 /** Reading the References list for the Panel. */
 
@@ -20,11 +20,37 @@ export function referenceMark(entry: ReferenceEntry): string {
 	return `${entry.reference.type} [${entry.number}]`
 }
 
-/** What a Reference reads as on one line: its passage, or its title. */
-export function referenceName(reference: Reference): string {
-	if (reference.text !== undefined) return `“${reference.text}”`
+/** Its passage, or its title. Takes content rather than a Reference, so an
+ * Offer reads the same way its Plan copy will. */
+export function referenceName(content: ReferenceContent): string {
+	if (content.text !== undefined) return `“${content.text}”`
 
-	return reference.source?.title ?? reference.source?.url ?? 'Untitled link'
+	return content.source?.title ?? content.source?.url ?? 'Untitled link'
+}
+
+/** The parts the record carries, widest first. */
+export function attribution(source: Source | undefined): string[] {
+	if (source === undefined) return []
+
+	return [source.author, source.publication, source.year]
+		.filter((part) => part !== undefined)
+		.map(String)
+}
+
+/** The same parts on one line, url last. A Plan Panel row has the width for a
+ * url where a Chat card's meta line does not. */
+export function sourceLine(source: Source | undefined): string {
+	return [...attribution(source), source?.url].filter(Boolean).join(' · ')
+}
+
+/** Falls back to the attribution rather than the text, which is the passage. */
+export function citation(content: ReferenceContent): string {
+	return content.source?.title ?? sourceLine(content.source)
+}
+
+/** Distinct from a stranded Offer, which is in the Plan nowhere at all — §5. */
+export function unplacedReferences(plan: Plan): Reference[] {
+	return plan.references.filter((reference) => reference.nodeId === null)
 }
 
 /** Every Reference, numbered. */

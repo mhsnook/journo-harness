@@ -66,6 +66,12 @@ export function outlineEntries(outline: readonly OutlineNode[]): OutlineEntry[] 
 	return entries
 }
 
+/** Where the number stands on its own. `ordinal` stays bare so a phrase can
+ * compose it — "Section 2". */
+export function sectionLabel(entry: Pick<OutlineEntry, 'ordinal'>): string {
+	return `§${entry.ordinal}`
+}
+
 /** What the writer calls a row at this depth. */
 export function depthName(depth: number): string {
 	return depth === 0 ? 'Section' : 'Subsection'

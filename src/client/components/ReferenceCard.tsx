@@ -1,22 +1,25 @@
+import type { Offer } from '../../shared/offer'
 import { cx } from '../lib/cx'
-import type { Reference } from '../mock/content'
+import { attribution, referenceName } from '../plan/references'
 import { Button } from './Button'
 import { Check } from './Check'
 import { Chip } from './Chip'
 
 export interface ReferenceCardProps {
-	reference: Reference
-	/**
-	 * `offer` is how a Reference arrives in the chat, to Accept or Decline.
-	 * `ledger` is the same Reference once it carries a disposition.
-	 */
+	offer: Offer
 	variant?: 'offer' | 'ledger'
-	/** Hide the summary line — the ledger runs tighter than the chat. */
 	compact?: boolean
+	/** False is stranded, and the card offers the re-add. */
+	inThePlan?: boolean
+	/** Waits on the House, at 1b. */
+	favourite?: 'author' | 'publication'
+	onAccept?: () => void
+	onDecline?: () => void
+	onRestore?: () => void
+	onAddToPlan?: () => void
 	className?: string
 }
 
-/** The star that marks a reference as coming from your favourites. */
 function FavouriteMark({ type }: { type: 'author' | 'publication' }) {
 	return (
 		<span className="inline-flex items-center gap-1 text-accent-ink">
@@ -26,18 +29,24 @@ function FavouriteMark({ type }: { type: 'author' | 'publication' }) {
 	)
 }
 
-/**
- * A research result. The same row appears in the chat when it is offered, in
- * the ledger while you decide, and in the plan once it is accepted — the state
- * changes, the row does not.
- */
+/** One Offer, in the Chat and in the Offer ledger alike. */
 export function ReferenceCard({
-	reference,
+	offer,
 	variant = 'offer',
 	compact = false,
+	inThePlan = true,
+	favourite,
+	onAccept,
+	onDecline,
+	onRestore,
+	onAddToPlan,
 	className,
 }: ReferenceCardProps) {
-	const declined = reference.state === 'declined'
+	const declined = offer.disposition === 'declined'
+	const accepted = offer.disposition === 'accepted'
+	const heading = referenceName(offer)
+	// A Quote with no source is its own heading; do not print it twice.
+	const passage = offer.text !== undefined && offer.text !== heading
 
 	return (
 		<article
@@ -48,10 +57,7 @@ export function ReferenceCard({
 			)}
 		>
 			{variant === 'ledger' && !declined ? (
-				<Check
-					checked={reference.state === 'accepted'}
-					label={`Accept ${reference.title}`}
-				/>
+				<Check checked={accepted} label={`Accept ${heading}`} onChange={onAccept} />
 			) : null}
 			{variant === 'ledger' && declined ? (
 				<span className="label-meta mt-0.5 shrink-0">declined</span>
@@ -59,47 +65,56 @@ export function ReferenceCard({
 
 			<div className="flex min-w-0 flex-1 flex-col gap-1">
 				<h4 className="text-[0.8125rem] leading-snug font-semibold text-ink">
-					{reference.title}
+					{heading}
 				</h4>
 				<p className="flex flex-wrap items-center gap-x-1.5 text-[0.6875rem] text-faint">
-					{reference.favourite ? <FavouriteMark type={reference.favourite} /> : null}
-					{[reference.author, reference.outlet, reference.year]
-						.filter(Boolean)
-						.map((part, i) => (
-							<span key={part as string}>
-								{i > 0 || reference.favourite ? <span aria-hidden>· </span> : null}
-								{part}
-							</span>
-						))}
+					{favourite ? <FavouriteMark type={favourite} /> : null}
+					{attribution(offer.source).map((part, index) => (
+						<span key={part}>
+							{index > 0 || favourite ? <span aria-hidden>· </span> : null}
+							{part}
+						</span>
+					))}
 				</p>
-				{!compact && reference.summary ? (
-					<p className="text-[0.75rem] leading-relaxed text-muted">{reference.summary}</p>
+				{passage ? (
+					<blockquote className="border-l-2 border-rule pl-2 text-[0.75rem] leading-relaxed text-ink">
+						“{offer.text}”
+					</blockquote>
 				) : null}
-				{reference.quotes ? (
-					<div className="mt-0.5 flex flex-wrap gap-1.5">
-						{Array.from({ length: reference.quotes }, (_, i) => (
-							<Chip key={i} variant="outline" interactive>
-								quote {i + 1}
-							</Chip>
-						))}
-					</div>
+				{!compact && offer.note !== undefined ? (
+					<p className="text-[0.75rem] leading-relaxed text-muted">{offer.note}</p>
 				) : null}
-				{variant === 'ledger' && reference.state === 'undecided' ? (
-					<span className="text-[0.6875rem] text-faint">undecided</span>
-				) : null}
+				<div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+					{offer.type === 'quote' ? <Chip variant="outline">quote</Chip> : null}
+					{variant === 'ledger' && offer.disposition === 'undecided' ? (
+						<span className="text-[0.6875rem] text-faint">undecided</span>
+					) : null}
+					{accepted && !inThePlan ? (
+						<span className="text-[0.6875rem] text-faint">
+							Accepted, and not in the Plan
+						</span>
+					) : null}
+				</div>
 			</div>
 
 			{variant === 'offer' ? (
 				<div className="flex shrink-0 flex-col gap-1.5">
-					<Button size="sm">keep</Button>
-					<Button size="sm" variant="quiet">
-						declined
+					<Button size="sm" onClick={onAccept}>
+						Accept
+					</Button>
+					<Button size="sm" variant="quiet" onClick={onDecline}>
+						Decline
 					</Button>
 				</div>
 			) : null}
 			{variant === 'ledger' && declined ? (
-				<Button size="sm" variant="link" className="self-start">
-					restore
+				<Button size="sm" variant="link" className="self-start" onClick={onRestore}>
+					Restore
+				</Button>
+			) : null}
+			{variant === 'ledger' && accepted && !inThePlan ? (
+				<Button size="sm" variant="link" className="self-start" onClick={onAddToPlan}>
+					Add to the Plan
 				</Button>
 			) : null}
 		</article>

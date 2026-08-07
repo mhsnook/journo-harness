@@ -6,11 +6,12 @@ import { Frame, FrameBody } from '../../components/Frame'
 import { LengthBar } from '../../components/LengthBar'
 import { Panel, PanelHeader } from '../../components/Panel'
 import { plan, sectionState } from '../../mock/content'
+import { outlineEntries, sectionLabel } from '../../plan/outline'
 import { PlanOutline, PlanReferences } from './PlanBlocks'
 
-/** What each Section is called on the References list. */
+/** Off the same walk the Panels read. */
 const placedAt = Object.fromEntries(
-	plan.outline.map((node, index) => [node.id, `§${index + 1}`]),
+	outlineEntries(plan.outline).map((entry) => [entry.node.id, sectionLabel(entry)]),
 )
 
 /**

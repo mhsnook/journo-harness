@@ -244,4 +244,39 @@ describe('the Reference invariant', () => {
 
 		expect(result.success).toBe(true)
 	})
+
+	// One Offer becomes one Reference — §5.
+	it('refuses two References copied from one Offer', () => {
+		const twice = makePlan({
+			references: [
+				makeReference({
+					id: 'r1',
+					text: 'Forty separate times.',
+					provenance: { type: 'offer', offerId: 'o1' },
+				}),
+				makeReference({
+					id: 'r2',
+					text: 'Forty separate times.',
+					provenance: { type: 'offer', offerId: 'o1' },
+				}),
+			],
+		})
+
+		const result = planSchema.safeParse(twice)
+
+		expect(result.success).toBe(false)
+		expect(firstIssuePath(result)).toBe('references.1.provenance.offerId')
+		expect(result.error?.issues[0]?.message).toContain('copied from the Offer o1')
+	})
+
+	it('takes two References the writer wrote, which name no Offer', () => {
+		const both = makePlan({
+			references: [
+				makeReference({ id: 'r1', source: { title: 'One' } }),
+				makeReference({ id: 'r2', source: { title: 'Another' } }),
+			],
+		})
+
+		expect(planSchema.safeParse(both).success).toBe(true)
+	})
 })

@@ -1,9 +1,9 @@
 import { useAgent } from 'agents/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import type { Plan, ProposalInput, Refusal } from '../../shared/plan'
+import type { Plan, Refusal } from '../../shared/plan'
 import { isPlanRefused } from '../../shared/plan'
-import { createPlanWriter } from './writer'
+import { createPlanWriter, type PlanEdit } from './writer'
 
 /**
  * The Plan Panel's connection to one Article Agent: its state blob in, and
@@ -16,9 +16,8 @@ import { createPlanWriter } from './writer'
 export type PlanConnection = {
 	/** The Plan the writer sees, and null until the first state update arrives. */
 	plan: Plan | null
-	/** Apply an edit. Takes what the builders in edits.ts return, including the
-	 * null they return for an edit with nowhere to go. */
-	edit: (ops: ProposalInput | null) => void
+	/** What the builders in edits.ts return, null included. */
+	edit: (edit: PlanEdit) => void
 	/** Why the last edit did not land, cleared by the next one. */
 	refusal: Refusal | null
 	/** What the Article Agent said when a write did not parse. Reaching this is
@@ -63,10 +62,10 @@ export function usePlan(articleId: string): PlanConnection {
 	useEffect(() => () => writer.dispose(), [writer])
 
 	const edit = useCallback(
-		(ops: ProposalInput | null) => {
+		(next: PlanEdit) => {
 			setRefusal(null)
 			setRejected(null)
-			writer.edit(ops)
+			writer.edit(next)
 		},
 		[writer],
 	)

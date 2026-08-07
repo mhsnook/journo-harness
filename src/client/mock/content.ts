@@ -1,3 +1,4 @@
+import type { Offer } from '../../shared/offer'
 import type { OutlineNode, Plan } from '../../shared/plan'
 
 /**
@@ -187,7 +188,7 @@ export const plan: Plan = {
 		{
 			id: 'ref-forty-times',
 			type: 'quote',
-			provenance: { type: 'offer', offerId: 'offer-throughput' },
+			provenance: { type: 'offer', offerId: 'offer-forty-times' },
 			text: 'We did not decide to stop building. We decided, forty separate times, that this particular building could wait.',
 			source: { title: 'Permit throughput in six mid-sized cities' },
 			nodeId: 'sec-review',
@@ -227,107 +228,6 @@ export const outlineRevised: OutlineNode[] = [
 	},
 ]
 
-export interface Reference {
-	id: string
-	title: string
-	author?: string
-	outlet?: string
-	year?: string
-	favourite?: 'author' | 'publication'
-	summary?: string
-	quotes?: number
-	state: 'undecided' | 'accepted' | 'declined'
-	section?: string
-	used?: boolean
-}
-
-export const references: Reference[] = [
-	{
-		id: 's1',
-		title: 'Permit throughput in six mid-sized cities',
-		author: 'R. Okonkwo',
-		outlet: 'the Quarterly',
-		year: '2023',
-		favourite: 'publication',
-		summary:
-			'Median approval time tripled between 2004 and 2021 while application volume stayed flat.',
-		quotes: 2,
-		state: 'accepted',
-		section: '§2',
-		used: true,
-	},
-	{
-		id: 's2',
-		title: 'Zoning and the missing middle',
-		author: 'A. Weill',
-		outlet: 'Field Notes',
-		year: '2019',
-		favourite: 'author',
-		summary:
-			'The four-to-twelve-unit building has effectively been legislated out of existence.',
-		quotes: 1,
-		state: 'accepted',
-		section: '§3',
-		used: false,
-	},
-	{
-		id: 's3',
-		title: 'The cost of discretionary review',
-		outlet: 'Municipal Review',
-		year: '2021',
-		summary: 'Estimates the carrying cost of a stalled mid-rise at £4,100 a week.',
-		quotes: 1,
-		state: 'undecided',
-	},
-	{
-		id: 's4',
-		title: 'Housing starts, quarterly series',
-		outlet: 'Office for Statistics',
-		year: '2024',
-		summary: 'Primary data. Useful for the opening figure, dry on its own.',
-		state: 'undecided',
-	},
-	{
-		id: 's5',
-		title: 'Why nobody builds anymore (opinion)',
-		outlet: 'The Evening Ledger',
-		year: '2022',
-		summary: 'Assertive, unsourced. Covers ground we already have better evidence for.',
-		state: 'declined',
-	},
-]
-
-export interface Quote {
-	id: string
-	text: string
-	attribution: string
-	section?: string
-	used?: boolean
-}
-
-export const quotes: Quote[] = [
-	{
-		id: 'q1',
-		text: 'We did not decide to stop building. We decided, forty separate times, that this particular building could wait.',
-		attribution: 'Permit throughput in six mid-sized cities',
-		section: '§2',
-		used: true,
-	},
-	{
-		id: 'q2',
-		text: 'Every objection was reasonable. The sum of them was not.',
-		attribution: 'Zoning and the missing middle',
-		section: '§3',
-		used: false,
-	},
-	{
-		id: 'q3',
-		text: 'The meter runs on an empty lot exactly as fast as it runs on a finished one.',
-		attribution: 'The cost of discretionary review',
-		used: false,
-	},
-]
-
 /* -------------------------------------------------------------------------- */
 /* Prose                                                                       */
 /* -------------------------------------------------------------------------- */
@@ -342,4 +242,93 @@ export const draftParagraphs = [
 export const draftShort = [
 	'The crane index is a silly measure and everybody in the trade uses it anyway. In 2006 the number for this city was thirty-one. Last spring it was four.',
 	'What replaced the cranes was not a decision. Nobody voted to stop building.',
+]
+
+/** The Offers behind that Plan. `offer-sze` is the stranded case: Accepted, and
+ * in the Plan nowhere. */
+export const offers: Offer[] = [
+	{
+		id: 'offer-throughput',
+		type: 'link',
+		source: {
+			title: 'Permit throughput in six mid-sized cities',
+			author: 'R. Okonkwo',
+			publication: 'the Quarterly',
+			year: 2023,
+		},
+		note: 'Median approval time tripled while application volume stayed flat.',
+		disposition: 'accepted',
+		createdAt: 1,
+		decidedAt: 11,
+	},
+	{
+		id: 'offer-middle',
+		type: 'link',
+		source: {
+			title: 'Zoning and the missing middle',
+			author: 'A. Weill',
+			publication: 'Field Notes',
+			year: 2019,
+		},
+		note: 'The four-to-twelve-unit building has been legislated out of existence.',
+		disposition: 'accepted',
+		createdAt: 2,
+		decidedAt: 12,
+	},
+	{
+		id: 'offer-forty-times',
+		type: 'quote',
+		text: 'We did not decide to stop building. We decided, forty separate times, that this particular building could wait.',
+		source: { title: 'Permit throughput in six mid-sized cities', author: 'R. Okonkwo' },
+		disposition: 'accepted',
+		createdAt: 3,
+		decidedAt: 13,
+	},
+	{
+		id: 'offer-discretionary',
+		type: 'link',
+		source: {
+			title: 'The cost of discretionary review',
+			publication: 'Municipal Review',
+			year: 2021,
+		},
+		note: 'Estimates the carrying cost of a stalled mid-rise at £4,100 a week.',
+		disposition: 'undecided',
+		createdAt: 4,
+		decidedAt: null,
+	},
+	{
+		id: 'offer-starts',
+		type: 'link',
+		source: {
+			title: 'Housing starts, quarterly series',
+			publication: 'Office for Statistics',
+			year: 2024,
+		},
+		note: 'Primary data. Useful for the opening figure, dry on its own.',
+		disposition: 'undecided',
+		createdAt: 5,
+		decidedAt: null,
+	},
+	{
+		id: 'offer-nobody-builds',
+		type: 'link',
+		source: {
+			title: 'Why nobody builds anymore (opinion)',
+			publication: 'The Evening Ledger',
+			year: 2022,
+		},
+		note: 'Assertive, unsourced. Covers ground we already have better evidence for.',
+		disposition: 'declined',
+		createdAt: 6,
+		decidedAt: 14,
+	},
+	{
+		id: 'offer-sze',
+		type: 'link',
+		source: { title: 'Interview — M. Sze, planning officer' },
+		disposition: 'accepted',
+		createdAt: 7,
+		decidedAt: 15,
+	},
 ]

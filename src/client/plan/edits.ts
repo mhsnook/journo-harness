@@ -1,3 +1,5 @@
+import { referenceForOffer, referenceFromOffer } from '../../shared/ledger'
+import type { Offer } from '../../shared/offer'
 import type {
 	Anchor,
 	OutlineNode,
@@ -153,6 +155,21 @@ export function addReference(
 			reference: { id, provenance: { type: 'writer' }, nodeId, ...content },
 		},
 	]
+}
+
+/**
+ * The same op as `addReference`, carrying the Offer's Provenance — §5. Null
+ * where the Plan already holds a copy, so a second Accept builds nothing. The
+ * Offer is the one `setOfferDisposition` returned.
+ */
+export function acceptOffer(
+	plan: Plan,
+	offer: Offer,
+	id: string = crypto.randomUUID(),
+): ProposalInput | null {
+	if (referenceForOffer(plan, offer.id) !== undefined) return null
+
+	return [{ op: 'createReference', reference: referenceFromOffer(offer, id) }]
 }
 
 /** Replace what a Reference says, keeping its id, its Provenance, and where it

@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
 
-import { plan, quotes, references, sectionState } from '../mock/content'
+import { offers, plan, sectionState } from '../mock/content'
 import { Button } from './Button'
 import { Check } from './Check'
 import { Chip } from './Chip'
@@ -114,11 +114,12 @@ export const Progress: Story = {
 export const Research: Story = {
 	render: () => (
 		<div className="flex w-[34rem] flex-col gap-4">
-			<ReferenceCard reference={references[0]} />
-			<ReferenceCard reference={references[2]} variant="ledger" />
-			<ReferenceCard reference={references[4]} variant="ledger" compact />
-			<QuoteRow quote={quotes[0]} showUsage />
-			<QuoteRow quote={quotes[2]} showUsage />
+			<ReferenceCard offer={offers[0]} favourite="publication" />
+			<ReferenceCard offer={offers[2]} variant="ledger" />
+			<ReferenceCard offer={offers[4]} variant="ledger" compact />
+			<ReferenceCard offer={offers[8]} variant="ledger" compact inThePlan={false} />
+			<QuoteRow reference={plan.references[2]} section="§2" showUsage />
+			<QuoteRow reference={plan.references[3]} showUsage />
 		</div>
 	),
 }

@@ -6,18 +6,22 @@ import { z } from 'zod'
 import { chatRequestBody } from '../shared/chat'
 import {
 	type Disposition,
+	missingOffer,
+	notDeclined,
 	type Offer,
-	type OfferContent,
-	offerContentSchema,
+	offerBatchSchema,
+	offerFingerprint,
 	type Ruling,
 	rulingSchema,
 } from '../shared/offer'
 import {
 	emptyPlan,
 	type Plan,
-	type ReferenceType,
 	type PlanRefused,
 	planSchema,
+	type ReferenceContent,
+	referenceContentSchema,
+	type ReferenceType,
 	type Source,
 } from '../shared/plan'
 import { chatTurn } from './llm/chat-turn'
@@ -51,9 +55,8 @@ function toOffer(row: OfferRow): Offer {
 	}
 }
 
-function missingOffer(id: string): Error {
-	return new Error(`No Offer carries the id ${id}.`)
-}
+/** `duplicate` means the row was already there and nothing was written. */
+export type RecordedOffer = { offer: Offer; duplicate: boolean }
 
 /**
  * One Article Agent per Article — docs/architecture.md §2, and §3 for what goes
@@ -176,13 +179,37 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 		return this.sql<OfferRow>`SELECT * FROM offer ORDER BY seq`.map(toOffer)
 	}
 
-	/** Record something the Chat turned up. It starts Undecided.
+	/**
+	 * One research turn. An entry this Article already carries comes back as it
+	 * stands, keeping the disposition the writer gave it — §5.
 	 *
-	 * Not `@callable`: the writer never authors an Offer, so the Chat's research
-	 * tool is the only caller and it runs inside this Agent (§3, rule 4). */
-	createOffer(content: OfferContent): Offer {
+	 * Not `@callable`, and neither is `createOffer`: the research tool is the
+	 * only caller and it runs inside this Agent (§3, rule 4).
+	 */
+	recordOffers(batch: unknown): RecordedOffer[] {
+		const found = offerBatchSchema.parse(batch)
+
+		// Added to as the batch is written, so a turn dedupes against itself.
+		const held = new Map(
+			this.listOffers().map((offer) => [offerFingerprint(offer), offer]),
+		)
+
+		return found.map((material) => {
+			const fingerprint = offerFingerprint(material)
+			const already = held.get(fingerprint)
+			if (already !== undefined) return { offer: already, duplicate: true }
+
+			const offer = this.createOffer(material)
+			held.set(fingerprint, offer)
+
+			return { offer, duplicate: false }
+		})
+	}
+
+	/** Starts Undecided. */
+	createOffer(content: ReferenceContent): Offer {
 		const offer: Offer = {
-			...offerContentSchema.parse(content),
+			...referenceContentSchema.parse(content),
 			id: crypto.randomUUID(),
 			disposition: 'undecided',
 			createdAt: Date.now(),
@@ -226,11 +253,7 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 		// Read first: an Offer that is Accepted and one that does not exist have
 		// to be told apart, and one conditional UPDATE cannot do that.
 		const offer = this.readOffer(id)
-		if (offer.disposition !== 'declined') {
-			throw new Error(
-				`Offer ${id} is ${offer.disposition}, and restoring undoes a Decline.`,
-			)
-		}
+		if (offer.disposition !== 'declined') throw notDeclined(offer)
 
 		const rows = this.sql<OfferRow>`
 			UPDATE offer SET disposition = 'undecided', decided_at = NULL

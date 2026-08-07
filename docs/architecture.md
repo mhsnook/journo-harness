@@ -113,7 +113,10 @@ plan: {
 ```
 
 - **The Outline is a nested tree**, sibling order carried by array position, every Section with
-  a stable ID that never changes.
+  a stable ID that never changes. What the writer reads is that position, worked out in
+  `outlineEntries`: the bare `ordinal` for a gutter of them and for a phrase that composes
+  one ("Section 2"), and `sectionLabel` for the standalone form ("§2"). Both come from the
+  one walk, so no two Panels can number a Section differently.
 - **References are flat with an optional `nodeId`**, so an Accepted Reference can sit at a
   Section or nowhere yet.
 - **Every Reference is a Link or a Quote**, and Reference is the umbrella rather than a
@@ -143,10 +146,11 @@ schemas, `outlineNodeSchema`, `referenceSchema`, and `sourceSchema`, reused insi
 Proposal's op payloads. It lives in `src/shared/plan/` with the Scope resolver and the
 word-count arithmetic.
 
-Three invariants sit above the object shape, checked in the same parse: a Section id
-is unique among Sections, a Reference id is unique among References, and a placed
-Reference names a node that exists. The last one means an op that deletes a node unplaces
-its References in the same Proposal, because the Plan is written whole and validated whole.
+Four invariants sit above the object shape, checked in the same parse: a Section id is
+unique among Sections, a Reference id is unique among References, no two References were
+copied from one Offer, and a placed Reference names a node that exists. The last one means
+an op that deletes a node unplaces its References in the same Proposal, because the Plan is
+written whole and validated whole.
 
 **Size**: a normal Plan runs about 40 KB. The soft ceiling is around 100 KB, where
 re-broadcasting on every write gets noticeable; the hard wall is 2 MB, the Durable Object
@@ -163,12 +167,41 @@ restorable. The **Ledger** is a View over Offers, not a store.
 Offers are flat. Two Quotes from one publication are two Offers.
 
 Accepting copies the Offer into the Plan as a new editable record carrying its Provenance —
-rule 5. Deduplicate a re-offered Reference on the Provenance, not on the content.
+rule 5. The cross-store half of the View is `src/shared/ledger.ts`, derived on read and
+holding nothing of its own; reading the Plan half alone is `src/client/plan/references.ts`.
+
+**The research tool carries an `execute`**, where the Proposal tool does not. An Offer is an
+inert row rather than something the writer rules on mid-turn, so suspending the call would
+buy nothing and cost the turn — a research turn returns seventeen items, and an unruled tool
+batch stalls the Chat with no orphan timeout (§11). The suspend-or-execute rule is per tool
+rather than for the registry.
+
+**Deduplication runs in two places, and neither compares the Plan's content.** A research
+turn calls `recordOffers`, which runs inside the Article Agent rather than over RPC — the
+writer never authors an Offer, so nothing on the client may. It fingerprints each entry —
+the type, the text, and the source, never the note — and hands back the row already there
+rather than writing a second one, still carrying the disposition the writer gave it.
+Asking whether an Offer is already in the Plan runs on the Provenance instead: the writer
+edits their copy, and content stops matching the moment they do.
+
+**Accepting is two writes against two stores, and nothing makes them atomic.**
+`setOfferDisposition` over RPC, then a `createReference` op through the applier like every
+other Plan edit. The row goes first, because what it returns is what the copy is built
+from. If the second write never lands, the Offer is
+Accepted and the Plan holds nothing — a **stranded** Offer, which is not the Ledger's
+"Accepted, no Section yet" group; that group is a Reference carrying `nodeId: null`. The
+Provenance pointer is what finds it: an Accepted Offer whose id appears in no
+`provenance.offerId`. The Ledger shows it and the writer re-adds, which is the second write
+on its own. No reconciliation pass, and nothing atomic to build.
 
 **The writer pastes their own References straight into the Plan**, and those carry
 `provenance: { type: 'writer' }` rather than an Offer id. They never enter the Ledger: an
 Offer is something the Chat turned up and handed over to rule on, and there is nothing to
 rule on in a passage the writer typed.
+
+**One Offer becomes one Reference**, and `planSchema` refuses a Plan carrying two copies
+of one. §5 leans on it, `referenceForOffer` answers with the first match on the strength of
+it, and a second copy would quietly stop the Ledger reporting the Offer as stranded.
 
 **A Proposal is not an Offer.** The writer rules on both the same way, but a Proposal lives
 in the Chat turn that made it, goes Stale, and leaves no record, where an Offer is a row that

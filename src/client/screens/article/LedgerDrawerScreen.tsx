@@ -1,3 +1,6 @@
+import { useState } from 'react'
+
+import type { Disposition } from '../../../shared/offer'
 import { ArticleBar } from '../../components/ArticleBar'
 import { Chip } from '../../components/Chip'
 import { EmptySlot } from '../../components/Field'
@@ -6,17 +9,31 @@ import { MetaLabel } from '../../components/MetaLabel'
 import { Panel } from '../../components/Panel'
 import { QuoteRow } from '../../components/QuoteRow'
 import { ReferenceCard } from '../../components/ReferenceCard'
-import { ARTICLE_TITLE, quotes, references } from '../../mock/content'
+import { useArticle } from '../../lib/article'
+import { useOfferLedger } from '../../lib/useOfferLedger'
+import { ARTICLE_TITLE } from '../../mock/content'
+import { outlineEntries, sectionLabel } from '../../plan/outline'
+import { referenceName, referencesAt, unplacedReferences } from '../../plan/references'
+
+type Filter = 'all' | Disposition
+
+const filters: Filter[] = ['all', 'undecided', 'accepted', 'declined']
 
 /**
- * 2(f) — The ledger, as two equal halves. Left is what has been offered and
- * nothing else; right is the plan, with accepted items sitting under the
- * section they belong to and marked used or ready.
- *
- * It is the same list at every stage — early on most rows read "undecided",
- * later most read "used". That is why there is no separate triage screen.
+ * 2(f) — The Offer ledger, as two equal halves: what has been offered, and the
+ * Plan it goes into. It is the same list at every stage, which is why there is
+ * no separate triage screen.
  */
 export function LedgerDrawerScreen() {
+	const { plan } = useArticle()
+	const { ledger, loading, failure, accept, decline, restore, addToPlan } =
+		useOfferLedger()
+	const [filter, setFilter] = useState<Filter>('all')
+
+	const shown = filter === 'all' ? ledger.offers : ledger.byDisposition[filter]
+	const stranded = new Set(ledger.stranded.map((offer) => offer.id))
+	const unplaced = unplacedReferences(plan)
+
 	return (
 		<Frame width={820}>
 			<ArticleBar title={ARTICLE_TITLE} open={['chat', 'plan']} status="ledger" />
@@ -24,7 +41,9 @@ export function LedgerDrawerScreen() {
 				<Panel divider="right" padded={false}>
 					<header className="flex items-center gap-2.5 border-b border-edge bg-sunk px-3.5 py-2.5">
 						<h3 className="text-[0.875rem] font-semibold text-ink">Offered</h3>
-						<span className="text-[0.75rem] text-faint">17 · 9 accepted</span>
+						<span className="text-[0.75rem] text-faint">
+							{ledger.counts.all} · {ledger.counts.accepted} Accepted
+						</span>
 						<button
 							type="button"
 							className="ml-auto text-[0.75rem] text-faint hover:text-ink"
@@ -34,61 +53,97 @@ export function LedgerDrawerScreen() {
 					</header>
 					<div className="flex flex-col gap-2.5 p-3.5">
 						<div className="flex flex-wrap gap-1.5">
-							<Chip variant="solid" interactive>
-								all
-							</Chip>
-							<Chip variant="outline" interactive>
-								undecided
-							</Chip>
-							<Chip variant="outline" interactive>
-								accepted
-							</Chip>
-							<Chip variant="outline" interactive>
-								declined
-							</Chip>
+							{filters.map((name) => (
+								<Chip
+									key={name}
+									variant={name === filter ? 'solid' : 'outline'}
+									interactive
+									onClick={() => setFilter(name)}
+								>
+									{name} · {ledger.counts[name]}
+								</Chip>
+							))}
 						</div>
-						<ReferenceCard reference={references[0]} variant="ledger" compact />
-						<ReferenceCard reference={references[1]} variant="ledger" compact />
-						<ReferenceCard reference={references[2]} variant="ledger" compact />
-						<ReferenceCard reference={references[4]} variant="ledger" compact />
+						{failure ? <p className="text-[0.75rem] text-ink">{failure}</p> : null}
+						{loading ? <p className="text-[0.75rem] text-faint">Reading…</p> : null}
+						{shown.map((offer) => (
+							<ReferenceCard
+								key={offer.id}
+								offer={offer}
+								variant="ledger"
+								compact
+								inThePlan={!stranded.has(offer.id)}
+								onAccept={() => accept(offer)}
+								onDecline={() => decline(offer)}
+								onRestore={() => restore(offer)}
+								onAddToPlan={() => addToPlan(offer)}
+							/>
+						))}
+						{!loading && shown.length === 0 ? (
+							<EmptySlot>Nothing {filter === 'all' ? 'offered yet' : filter}</EmptySlot>
+						) : null}
 						<p className="text-[0.6875rem] text-faint">
-							+ 13 more · accepting one sends it across →
+							Accepting one copies it across →
 						</p>
 					</div>
 				</Panel>
 
 				<Panel variant="sunk" padded={false}>
 					<header className="flex items-center gap-2.5 border-b border-edge px-3.5 py-2.5">
-						<h3 className="text-[0.875rem] font-semibold text-ink">In the plan</h3>
-						<span className="text-[0.75rem] text-faint">9 accepted · 3 used</span>
+						<h3 className="text-[0.875rem] font-semibold text-ink">In the Plan</h3>
+						<span className="text-[0.75rem] text-faint">
+							{plan.references.length} References
+						</span>
 					</header>
 					<div className="flex flex-col gap-4 p-3.5">
-						<div className="flex flex-col gap-2">
-							<MetaLabel>§2 · How review became the process</MetaLabel>
-							<div className="flex flex-col gap-2.5 pl-2">
-								<QuoteRow quote={quotes[0]} showUsage />
+						{outlineEntries(plan.outline).map((entry) => {
+							const held = referencesAt(plan, entry.node.id)
+
+							return (
+								<div key={entry.node.id} className="flex flex-col gap-2">
+									<MetaLabel>
+										{sectionLabel(entry)} · {entry.node.title}
+									</MetaLabel>
+									{held.length === 0 ? (
+										<EmptySlot className="ml-2">
+											Place an Accepted Reference here
+										</EmptySlot>
+									) : (
+										<div className="flex flex-col gap-2.5 pl-2">
+											{held.map(({ reference }) => (
+												<QuoteRow
+													key={reference.id}
+													reference={reference}
+													section={sectionLabel(entry)}
+													showUsage
+												/>
+											))}
+										</div>
+									)}
+								</div>
+							)
+						})}
+
+						{unplaced.length > 0 ? (
+							<div className="flex flex-col gap-1.5">
+								<MetaLabel count={unplaced.length}>Accepted, no Section yet</MetaLabel>
+								<p className="text-[0.75rem] text-muted">
+									{unplaced.map(referenceName).join(' · ')}
+								</p>
 							</div>
-						</div>
+						) : null}
 
-						<div className="flex flex-col gap-2">
-							<MetaLabel count="1 unused">§3 · Who actually pays for the delay</MetaLabel>
-							<div className="flex flex-col gap-2.5 pl-2">
-								<QuoteRow quote={quotes[1]} showUsage />
+						{/* Not the group above, which is placed nowhere yet — §5. */}
+						{ledger.stranded.length > 0 ? (
+							<div className="flex flex-col gap-1.5">
+								<MetaLabel count={ledger.stranded.length}>
+									Accepted, and not in the Plan
+								</MetaLabel>
+								<p className="text-[0.75rem] text-muted">
+									{ledger.stranded.map(referenceName).join(' · ')}
+								</p>
 							</div>
-						</div>
-
-						<div className="flex flex-col gap-2">
-							<MetaLabel>§4 · What a faster city would look like</MetaLabel>
-							<EmptySlot className="ml-2">Drop an accepted reference here</EmptySlot>
-						</div>
-
-						<div className="flex flex-col gap-1.5">
-							<MetaLabel count={4}>Accepted, no section yet</MetaLabel>
-							<p className="text-[0.75rem] text-muted">
-								Housing starts, quarterly series · The cost of discretionary review · two
-								more
-							</p>
-						</div>
+						) : null}
 					</div>
 				</Panel>
 			</FrameBody>

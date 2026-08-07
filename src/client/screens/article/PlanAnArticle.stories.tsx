@@ -6,6 +6,7 @@ import { applyProposal, emptyPlan } from '../../../shared/plan'
 import { Annotation } from '../../components/Annotation'
 import { Frame, FrameBody } from '../../components/Frame'
 import { plan as plannedArticle } from '../../mock/content'
+import { MockArticle } from '../../mock/MockArticle'
 import { PlanPanel } from '../../plan/PlanPanel'
 import { BlankPlanScreen } from './BlankPlanScreen'
 import { ChatWithReferencesScreen } from './ChatWithReferencesScreen'
@@ -91,9 +92,20 @@ export const C_ReadyToDraft: Story = {
 	),
 }
 
-export const D_ChatWithSources: Story = {
+export const D_ChatWithReferences: Story = {
 	name: '2(d) A turn that returned a lot',
-	render: () => <ChatWithReferencesScreen />,
+	render: () => (
+		<div className="flex flex-col">
+			<MockArticle>
+				<ChatWithReferencesScreen />
+			</MockArticle>
+			<Annotation>
+				Accept and Decline are the writer's two rulings, and they are the words everywhere
+				— the card, the Offer ledger, and the Plan. Accepting copies the Offer into the
+				Plan and leaves the row where it is.
+			</Annotation>
+		</div>
+	),
 }
 
 export const E_PlanSheet: Story = {
@@ -115,10 +127,14 @@ export const F_LedgerDrawer: Story = {
 	name: '2(f) Offer ledger',
 	render: () => (
 		<div className="flex flex-col">
-			<LedgerDrawerScreen />
+			<MockArticle>
+				<LedgerDrawerScreen />
+			</MockArticle>
 			<Annotation>
-				The same list at every stage — early on most rows read "undecided", later most
-				read "used". That is precisely why there is no separate triage screen.
+				The same list at every stage — early on most rows read Undecided, later most are
+				placed. That is precisely why there is no separate triage screen. Accepting a row
+				on the left copies it into the Plan on the right: the row keeps what was turned
+				up, and the copy is the writer's to edit.
 			</Annotation>
 		</div>
 	),
@@ -128,10 +144,13 @@ export const G_LedgerPopover: Story = {
 	name: '2(g) Offer ledger from the composer',
 	render: () => (
 		<div className="flex flex-col">
-			<LedgerPopoverScreen />
+			<MockArticle>
+				<LedgerPopoverScreen />
+			</MockArticle>
 			<Annotation>
-				The groups are the lifecycle and their order is fixed, so the undecided pile at
-				the bottom visibly shrinks as you work.
+				The groups are the lifecycle and their order is fixed, so the Undecided pile
+				visibly shrinks as you work. Used waits on the Draft, which arrives at phase 2, so
+				a placed Reference reads Ready.
 			</Annotation>
 		</div>
 	),

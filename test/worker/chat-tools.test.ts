@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { chatTools } from '../../src/server/llm/tools'
+import { chatTools, recordOffersTool } from '../../src/server/llm/tools'
 import { proposePlanChangeTool } from '../../src/shared/chat'
 import { chatOpNames } from '../../src/shared/plan'
 
@@ -28,5 +28,25 @@ describe('the Proposal tool', () => {
 		for (const op of ['createReference', 'deleteReference', 'setReference']) {
 			expect(description).not.toContain(op)
 		}
+	})
+})
+
+/**
+ * The suspend-or-execute rule is per tool rather than for the registry. A tool
+ * with no `execute` suspends for the client, and that suspension is the
+ * Proposal the writer rules on. An Offer is a row instead: nothing suspends,
+ * and the writer rules on it later in the Offer ledger.
+ */
+describe('the Offer tool', () => {
+	it('runs on the server, where the Proposal tool suspends', () => {
+		expect(chatTools[proposePlanChangeTool].execute).toBeUndefined()
+		expect(chatTools[recordOffersTool].execute).toBeTypeOf('function')
+	})
+
+	// The one rule the schema does not carry is worth stating.
+	it('teaches that Offers are flat', () => {
+		const described = chatTools[recordOffersTool].description
+
+		expect(typeof described === 'string' ? described : '').toContain('Offers are flat')
 	})
 })

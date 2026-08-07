@@ -1,11 +1,10 @@
 import { z } from 'zod'
 
-import { referenceTypeSchema, sourceSchema } from './plan/schema'
+import { type ReferenceContent, referenceContentSchema } from './plan/schema'
 
 /**
- * An Offer, as coined in context.md. Stored in the Article Agent's SQLite,
- * Offers are kept as a flat list of References and Quotes turned up from
- * research.
+ * An Offer — context.md. A flat SQLite row carrying Reference content and the
+ * row fields, so Accepting copies content onto content.
  */
 
 /** How far the writer has got with one Offer. Every Offer starts Undecided. */
@@ -15,29 +14,53 @@ export type Disposition = (typeof dispositions)[number]
 export const rulingSchema = z.enum(['accepted', 'declined'])
 export type Ruling = z.infer<typeof rulingSchema>
 
-/** What the Chat turned up. The id, the disposition, and the timestamps are
- * the Article Agent's to set, so they are not here. */
-export const offerContentSchema = z
-	.strictObject({
-		type: referenceTypeSchema,
-		text: z.string().min(1).optional(),
-		source: sourceSchema.optional(),
-		note: z.string().min(1).optional(),
-	})
-	.refine((offer) => offer.text !== undefined || offer.source !== undefined, {
-		error: 'An Offer carries a text, a source, or both. One with neither is nothing.',
-	})
-	.refine((offer) => offer.type !== 'quote' || offer.text !== undefined, {
-		error: 'An Offer of type quote carries a text.',
-	})
-
-export type OfferContent = z.infer<typeof offerContentSchema>
+/** One research turn's findings, in the order to show them. */
+export const offerBatchSchema = z.array(referenceContentSchema).min(1)
 
 /** One Offer row. `decidedAt` is null while the Offer is Undecided, and
  * returns to null when a Declined one is restored. */
-export type Offer = OfferContent & {
+export type Offer = ReferenceContent & {
 	id: string
 	disposition: Disposition
 	createdAt: number
 	decidedAt: number | null
+}
+
+/** Shared, so the Agent and the in-memory store word these the same. */
+export function missingOffer(id: string): Error {
+	return new Error(`No Offer carries the id ${id}.`)
+}
+
+/** Restoring undoes a Decline — context.md. */
+export function notDeclined(offer: Offer): Error {
+	return new Error(
+		`Offer ${offer.id} is ${offer.disposition}, and restoring undoes a Decline.`,
+	)
+}
+
+/**
+ * What makes two Offers the same thing turned up twice, so a re-offer lands on
+ * the row the writer already ruled on. The note is out because the Guide writes
+ * it fresh each session; the text is in because two Quotes from one url are two
+ * Offers.
+ */
+export function offerFingerprint(content: ReferenceContent): string {
+	const source = content.source ?? {}
+
+	// JSON, so no delimiter can turn up inside a field and shift the parts.
+	return JSON.stringify(
+		[
+			content.type,
+			content.text,
+			source.url,
+			source.title,
+			source.author,
+			source.publication,
+			source.year,
+		].map((field) =>
+			String(field ?? '')
+				.trim()
+				.toLowerCase(),
+		),
+	)
 }

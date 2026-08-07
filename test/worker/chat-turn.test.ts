@@ -197,7 +197,7 @@ describe('a Chat turn', () => {
 		expect(JSON.stringify(conversation.at(-1))).toContain('What is the opening for?')
 	})
 
-	it('offers the Proposal tool without an execute, so the call suspends', async () => {
+	it('offers both tools to the model', async () => {
 		const writer = await openAgentSocket('chat-tools')
 		const model = speaks('Noted.')
 		await scriptModel('chat-tools', model)
@@ -205,7 +205,10 @@ describe('a Chat turn', () => {
 		await writer.chat('Anything to say about the outline?', { plan })
 
 		const [call] = model.doStreamCalls
-		expect(call.tools?.map((tool) => tool.name)).toEqual(['proposePlanChange'])
+		expect(call.tools?.map((tool) => tool.name)).toEqual([
+			'proposePlanChange',
+			'recordOffers',
+		])
 	})
 
 	it('falls back to the Plan in state when the turn carries no body', async () => {

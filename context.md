@@ -180,6 +180,13 @@ The disposition of an Offer the writer has ruled out. Restorable — nothing is 
 _Avoid_: cut (the writer cuts their own prose), rejected, dismissed (a Guidance note is
 dismissed), discarded
 
+**Stranded**:
+Describes an Accepted Offer that no Reference in the Plan points back at. Accepting is two
+writes against two stores, so a Plan write that never lands leaves the row Accepted and the
+Plan holding nothing. Distinct from an Accepted Reference carrying no Section, which is in
+the Plan and waiting to be placed. The Offer ledger shows it and offers the re-add.
+_Avoid_: orphaned, dangling, lost, missing
+
 **Provenance**:
 Where a record came from. An Accepted Offer is **copied** into the Plan as a new,
 editable record that keeps its Provenance — so the Plan's copy is the writer's to change,

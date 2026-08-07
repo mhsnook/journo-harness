@@ -168,8 +168,23 @@ function checkIds(plan: Plan, ctx: z.RefinementCtx) {
 	walk(plan.outline, ['outline'])
 
 	const referenceIds = new Set<string>()
+	const offerIds = new Set<string>()
+
 	plan.references.forEach((reference, index) => {
 		claim(referenceIds, reference.id, ['references', index, 'id'], 'References')
+
+		// One Offer becomes one Reference — §5.
+		const { offerId } = reference.provenance
+		if (offerId !== undefined) {
+			if (offerIds.has(offerId)) {
+				ctx.addIssue({
+					code: 'custom',
+					path: ['references', index, 'provenance', 'offerId'],
+					message: `Two References were copied from the Offer ${offerId}.`,
+				})
+			}
+			offerIds.add(offerId)
+		}
 
 		if (reference.nodeId !== null && !nodeIds.has(reference.nodeId)) {
 			ctx.addIssue({

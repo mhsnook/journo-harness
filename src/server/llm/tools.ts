@@ -1,6 +1,10 @@
+import { getCurrentAgent } from 'agents'
 import { tool, type ToolSet } from 'ai'
+import { z } from 'zod'
 
 import { proposePlanChangeInput, proposePlanChangeTool } from '../../shared/chat'
+import { offerBatchSchema } from '../../shared/offer'
+import type { ArticleAgent } from '../article-agent'
 
 /**
  * The tools a Chat turn is given, and the descriptions that teach a model to
@@ -15,11 +19,8 @@ import { proposePlanChangeInput, proposePlanChangeTool } from '../../shared/chat
  * Do not reach for `needsApproval` or `toolApproval`. Both gate a server-side
  * `execute` this product does not have.
  *
- * #28 adds an Offer tool here. That one does carry an `execute`, because
- * recording an Offer is a row on the Article Agent rather than something the
- * writer rules on mid-turn — so the invariant is per tool rather than for the
- * registry, and `getCurrentAgent()` from `agents` is how it reaches the
- * instance without this module taking the Durable Object as a parameter.
+ * The Offer tool below carries an `execute` instead, because an Offer is a row
+ * the writer rules on later rather than mid-turn — §5.
  */
 
 const proposePlanChange = tool({
@@ -49,7 +50,46 @@ const proposePlanChange = tool({
 	inputSchema: proposePlanChangeInput,
 })
 
-/** Typed as the whole `ToolSet` rather than inferred: nothing here has an
- * `execute`, so there is no return type to infer, and the wide type is what
- * lets the Agent's `onFinish` callback fit `streamText`'s. */
-export const chatTools: ToolSet = { [proposePlanChangeTool]: proposePlanChange }
+const recordOffers = tool({
+	description: [
+		'Record what research turned up, as Offers for the writer to Accept or Decline later.',
+		'This writes nothing to the Plan: an Offer is an inert row, and only the writer moves',
+		'one into the Plan. Call it once per turn with everything worth showing.',
+		'',
+		'Offers are flat. Two passages pulled from one publication are two Offers, each of',
+		'type "quote" carrying its own "text" - never one Offer holding several. A "link" is',
+		'something to draw on, named rather than quoted, and carries a "source". Every Offer',
+		'carries a text, a source, or both.',
+		'',
+		'Offer the same source again freely: an entry this Article already carries comes back',
+		'marked a duplicate, keeping whatever the writer already decided about it, and no',
+		'second row is written.',
+	].join('\n'),
+	// An object at the top level, like the Proposal tool's input.
+	inputSchema: z.strictObject({ offers: offerBatchSchema }),
+	execute: async ({ offers }) => {
+		// The module is imported once; the instance is per turn.
+		const { agent } = getCurrentAgent<ArticleAgent>()
+		if (agent === undefined)
+			throw new Error('The Offer tool ran outside an Article Agent.')
+
+		return agent.recordOffers(offers).map(({ offer, duplicate }) => ({
+			id: offer.id,
+			name: offer.source?.title ?? offer.text,
+			disposition: offer.disposition,
+			duplicate,
+		}))
+	},
+})
+
+/** Not in shared/chat.ts, because this tool resolves server-side and no client
+ * matches on it. */
+export const recordOffersTool = 'recordOffers'
+
+/** Typed as the whole `ToolSet` rather than inferred: the Proposal tool has no
+ * `execute` and so no return type to infer, and the wide type is what lets the
+ * Agent's `onFinish` callback fit `streamText`'s. */
+export const chatTools: ToolSet = {
+	[proposePlanChangeTool]: proposePlanChange,
+	[recordOffersTool]: recordOffers,
+}

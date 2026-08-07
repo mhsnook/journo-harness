@@ -3,7 +3,7 @@ import { ChatComposer, ChatMessage } from '../../components/Chat'
 import { Frame, FrameBody } from '../../components/Frame'
 import { Panel } from '../../components/Panel'
 import { ReferenceCard } from '../../components/ReferenceCard'
-import { ARTICLE_TITLE, plan, references } from '../../mock/content'
+import { ARTICLE_TITLE, offers, plan } from '../../mock/content'
 import { PlanBlock, PlanLength, PlanOutline, PlanReferences } from './PlanBlocks'
 
 /**
@@ -25,8 +25,8 @@ export function MidChatScreen() {
 						Two that carry the argument, both from your favourites:
 					</ChatMessage>
 					<div className="flex flex-col gap-2">
-						<ReferenceCard reference={references[0]} variant="ledger" />
-						<ReferenceCard reference={references[3]} variant="ledger" compact />
+						<ReferenceCard offer={offers[0]} variant="ledger" favourite="publication" />
+						<ReferenceCard offer={offers[3]} variant="ledger" compact />
 					</div>
 					<ChatMessage from="guide">
 						The throughput study has a line that would open §2 well. I've pulled it into
