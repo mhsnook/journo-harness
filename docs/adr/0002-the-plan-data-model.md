@@ -157,6 +157,12 @@ lift from #1's typed document-operation API, now applied client-side per #11.
 writer has since fixed a typo in will be refused rather than merged, so the UI must say why
 rather than greying the Proposal out.
 
+**Amended:** #24 built the vocabulary in `src/shared/plan/ops.ts` and the applier in
+`apply.ts`, and settled the question this section left open. The op payloads reuse the piece
+schemas as they stand, `strictObject` and all, so a model that adds one field fails the tool
+call and retries with the validation error rather than having the field stripped. What that
+costs, and what to do if a model thrashes the retry, is in `docs/architecture.md` §6.
+
 ## Consequences
 
 - **The soft size ceiling is around 100 KB; the hard wall is 2 MB.** A SQLite-backed

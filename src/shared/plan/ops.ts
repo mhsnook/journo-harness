@@ -29,17 +29,17 @@ import {
  * **The payloads are strict, and a rejected tool call retries with the
  * validation error.** These schemas and the piece schemas they reuse are
  * `strictObject`, so a model that adds one field fails the whole tool call
- * rather than having the field stripped. That is the choice, paired with the
- * single retry in `docs/architecture.md` §7: stripping produces a Proposal the
- * model did not make, and the writer would rule on it without ever seeing what
- * was dropped. The cost is real — a model that adds the same field every time
- * thrashes the retry instead of converging — and the answer to that is naming
- * the field in the schema here, not loosening every payload to strip.
+ * rather than having the field stripped. If a model adds the same field every
+ * turn it will thrash that retry, and the answer is naming the field here
+ * rather than loosening every payload to strip. Reasoning in
+ * `docs/architecture.md` §6.
  */
 
-// A structural op states exactly one anchor. Both keys are optional and
-// nullable, because `afterId: null` and an absent `afterId` mean different
-// things: first child, against "this op anchors on beforeId instead".
+/** The anchor a structural op states, and what the applier reads. Both keys are
+ * optional and nullable, because `afterId: null` and an absent `afterId` mean
+ * different things: first child, against "this op anchors on beforeId". */
+export type Anchor = { afterId?: string | null; beforeId?: string | null }
+
 const anchorFields = {
 	afterId: idSchema.nullable().optional(),
 	beforeId: idSchema.nullable().optional(),
@@ -49,19 +49,23 @@ const anchorRule = {
 	error: 'A structural op states exactly one of afterId and beforeId.',
 }
 
-function statesOneAnchor(op: { afterId?: string | null; beforeId?: string | null }) {
+function statesOneAnchor(op: Anchor) {
 	return (op.afterId !== undefined) !== (op.beforeId !== undefined)
 }
 
 // Which Scope a content op acts on: an Outline node, or the Article itself.
 const scopeIdSchema = idSchema.nullable()
 
+// Where a structural op puts a node: under an Outline node, or at the root of
+// the Outline. Null means the Outline here, not the Article.
+const parentIdSchema = idSchema.nullable()
+
 /** Insert a new Outline node. The payload is `outlineNodeSchema` whole, so a
  * leaf states `children: []` and a Proposal may create a subtree in one op. */
 export const createNodeOpSchema = z
 	.strictObject({
 		op: z.literal('createNode'),
-		parentId: scopeIdSchema,
+		parentId: parentIdSchema,
 		node: outlineNodeSchema,
 		...anchorFields,
 	})
@@ -72,7 +76,7 @@ export const moveNodeOpSchema = z
 	.strictObject({
 		op: z.literal('moveNode'),
 		nodeId: idSchema,
-		parentId: scopeIdSchema,
+		parentId: parentIdSchema,
 		...anchorFields,
 	})
 	.refine(statesOneAnchor, anchorRule)
@@ -167,6 +171,3 @@ export const proposalSchema = z.array(proposalOpSchema).min(1)
 export type ProposalOp = z.infer<typeof proposalOpSchema>
 export type Proposal = z.infer<typeof proposalSchema>
 export type OpName = ProposalOp['op']
-
-/** The anchor a structural op states, read by the applier. */
-export type Anchor = Pick<z.infer<typeof createNodeOpSchema>, 'afterId' | 'beforeId'>

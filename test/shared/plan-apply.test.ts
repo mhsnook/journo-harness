@@ -43,7 +43,6 @@ function refused(proposal: Proposal, to: Plan = plan) {
 	return result.refusal
 }
 
-const titles = (nodes: { title: string }[]) => nodes.map((node) => node.title)
 const ids = (nodes: { id: string }[]) => nodes.map((node) => node.id)
 
 describe('applying a Proposal', () => {
@@ -53,7 +52,7 @@ describe('applying a Proposal', () => {
 				op: 'createNode',
 				parentId: null,
 				beforeId: 'n3',
-				node: { id: 'n4', title: 'A turn', intent: 'Turn on the memo', children: [] },
+				node: makeNode({ id: 'n4', title: 'A turn', intent: 'Turn on the memo' }),
 			},
 			{ op: 'setTarget', nodeId: 'n4', expected: null, value: 400 },
 			{
@@ -75,7 +74,7 @@ describe('applying a Proposal', () => {
 				op: 'createNode',
 				parentId: null,
 				beforeId: null,
-				node: { id: 'n4', title: 'A turn', children: [] },
+				node: makeNode({ id: 'n4', title: 'A turn' }),
 			},
 			{
 				op: 'setIntent',
@@ -108,7 +107,7 @@ describe('applying a Proposal', () => {
 				op: 'createNode',
 				parentId: null,
 				beforeId: 'n3',
-				node: { id: 'n4', title: 'A turn', children: [] },
+				node: makeNode({ id: 'n4', title: 'A turn' }),
 			},
 		]
 
@@ -123,7 +122,7 @@ describe('applying a Proposal', () => {
 					op: 'createNode',
 					parentId: null,
 					afterId: 'n2',
-					node: { id: 'n4', title: 'A turn', children: [] },
+					node: makeNode({ id: 'n4', title: 'A turn' }),
 				},
 			],
 			withoutN2,
@@ -162,13 +161,13 @@ describe('the structural ops', () => {
 				op: 'createNode',
 				parentId: 'n2',
 				afterId: null,
-				node: { id: 'n2z', title: 'First', children: [] },
+				node: makeNode({ id: 'n2z', title: 'First' }),
 			},
 			{
 				op: 'createNode',
 				parentId: 'n2',
 				beforeId: null,
-				node: { id: 'n2y', title: 'Last', children: [] },
+				node: makeNode({ id: 'n2y', title: 'Last' }),
 			},
 		])
 
@@ -181,11 +180,11 @@ describe('the structural ops', () => {
 				op: 'createNode',
 				parentId: null,
 				beforeId: null,
-				node: {
+				node: makeNode({
 					id: 'n4',
 					title: 'A turn',
 					children: [makeNode({ id: 'n4a', title: 'Its first part' })],
-				},
+				}),
 			},
 		])
 
@@ -198,7 +197,7 @@ describe('the structural ops', () => {
 				op: 'createNode',
 				parentId: null,
 				beforeId: null,
-				node: { id: 'n2a', title: 'A second n2a', children: [] },
+				node: makeNode({ id: 'n2a', title: 'A second n2a' }),
 			},
 		])
 
@@ -212,7 +211,7 @@ describe('the structural ops', () => {
 				op: 'createNode',
 				parentId: 'n2',
 				afterId: 'n3',
-				node: { id: 'n4', title: 'A turn', children: [] },
+				node: makeNode({ id: 'n4', title: 'A turn' }),
 			},
 		])
 
@@ -262,7 +261,7 @@ describe('the structural ops', () => {
 		const next = applied([{ op: 'mergeNodes', nodeId: 'n2', intoId: 'n3' }])
 
 		expect(ids(next.outline)).toEqual(['n1', 'n3'])
-		expect(titles(next.outline)).toEqual(['Opening', 'Close'])
+		expect(next.outline.map((node) => node.title)).toEqual(['Opening', 'Close'])
 		expect(ids(next.outline[1].children)).toEqual(['n2a', 'n2b'])
 		expect(next.references.map((reference) => reference.nodeId)).toEqual([
 			'n2a',

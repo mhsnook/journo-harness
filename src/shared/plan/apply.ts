@@ -70,18 +70,21 @@ export function applyProposal(plan: Plan, proposal: unknown): ApplyResult {
 }
 
 function applyOp(plan: Plan, op: ProposalOp, index: number): Refusal | null {
-	const refuse = (
-		kind: RefusalKind,
-		message: string,
-		values?: { expected: unknown; found: unknown },
-	): Refusal => ({ kind, index, op: op.op, message, ...values })
+	const refuse = (kind: RefusalKind, message: string): Refusal => ({
+		kind,
+		index,
+		op: op.op,
+		message,
+	})
 
-	const stale = (where: string, expected: unknown, found: unknown) =>
-		refuse(
+	const stale = (where: string, expected: unknown, found: unknown): Refusal => ({
+		...refuse(
 			'stale',
-			`${op.op} on ${where} expected ${show(expected)} and the Plan carries ${show(found)}.`,
-			{ expected, found },
-		)
+			`${op.op} on ${where} expected ${JSON.stringify(expected)} and the Plan carries ${JSON.stringify(found)}.`,
+		),
+		expected,
+		found,
+	})
 
 	const absent = (what: string) =>
 		refuse('missing', `${op.op} names ${what}, which the Plan does not carry.`)
@@ -92,25 +95,20 @@ function applyOp(plan: Plan, op: ProposalOp, index: number): Refusal | null {
 			if (siblings === null) return absent(`parent ${op.parentId}`)
 
 			const at = insertionIndex(siblings, op)
-			if (at === null) {
-				return refuse(
-					'missing',
-					`${op.op} ${anchorPhrase(op)}, which ${under(op.parentId)}.`,
-				)
-			}
+			if (at === null) return refuse('missing', anchorMissing(op))
 
-			const added = subtreeIds(op.node)
-			const taken = plan.outline.flatMap(subtreeIds)
-			const clash = added.find((id) => taken.includes(id))
-			if (clash !== undefined) {
-				return refuse(
-					'invalid',
-					`${op.op} carries the id ${clash}, which an Outline node already carries.`,
-				)
-			}
-			const twice = added.find((id, position) => added.indexOf(id) !== position)
-			if (twice !== undefined) {
-				return refuse('invalid', `${op.op} carries the id ${twice} twice.`)
+			// The final parse catches a repeated id through checkIds, but that
+			// refusal cannot say which op carried it. Claiming the ids here is what
+			// lets this one name the op, so the duplication is the point.
+			const taken = new Set(plan.outline.flatMap(subtreeIds))
+			for (const id of subtreeIds(op.node)) {
+				if (taken.has(id)) {
+					return refuse(
+						'invalid',
+						`${op.op} would leave two Outline nodes carrying the id ${id}.`,
+					)
+				}
+				taken.add(id)
 			}
 
 			siblings.splice(at, 0, op.node)
@@ -135,12 +133,7 @@ function applyOp(plan: Plan, op: ProposalOp, index: number): Refusal | null {
 			if (siblings === null) return absent(`parent ${op.parentId}`)
 
 			const at = insertionIndex(siblings, op)
-			if (at === null) {
-				return refuse(
-					'missing',
-					`${op.op} ${anchorPhrase(op)}, which ${under(op.parentId)}.`,
-				)
-			}
+			if (at === null) return refuse('missing', anchorMissing(op))
 
 			siblings.splice(at, 0, node)
 			return null
@@ -177,10 +170,10 @@ function applyOp(plan: Plan, op: ProposalOp, index: number): Refusal | null {
 			const site = locate(plan.outline, op.nodeId)
 			if (site === null) return absent(`node ${op.nodeId}`)
 
-			const gone = subtreeIds(site.siblings[site.index])
+			const gone = new Set(subtreeIds(site.siblings[site.index]))
 			site.siblings.splice(site.index, 1)
 			for (const reference of plan.references) {
-				if (reference.nodeId !== null && gone.includes(reference.nodeId))
+				if (reference.nodeId !== null && gone.has(reference.nodeId))
 					reference.nodeId = null
 			}
 			return null
@@ -211,6 +204,10 @@ function applyOp(plan: Plan, op: ProposalOp, index: number): Refusal | null {
 		}
 
 		case 'setTarget': {
+			// setTitle and setVoice reach both Scopes through scopeOf, and this op
+			// and setAdjectives cannot: the Article spells its target `totalTarget`,
+			// and its Adjectives are a required field where a node's are optional.
+			// The op vocabulary unifies the two Scopes further than the Plan does.
 			if (op.nodeId === null) {
 				if (!matches(op.expected, plan.totalTarget)) {
 					return stale(scopeName(null), op.expected, plan.totalTarget)
@@ -354,49 +351,42 @@ function scopeName(nodeId: string | null): string {
 	return nodeId === null ? 'the Article' : `node ${nodeId}`
 }
 
-function anchorPhrase(anchor: Anchor): string {
-	return anchor.afterId !== undefined
-		? `anchors after ${anchor.afterId}`
-		: `anchors before ${anchor.beforeId}`
-}
+/** Why a structural op refused: the anchor it stated, and where it looked. */
+function anchorMissing(op: Anchor & { op: OpName; parentId: string | null }): string {
+	const anchor =
+		op.afterId !== undefined ? `after ${op.afterId}` : `before ${op.beforeId}`
+	const holder = op.parentId === null ? 'the Outline' : `node ${op.parentId}`
 
-function under(parentId: string | null): string {
-	return parentId === null
-		? 'the Outline does not carry'
-		: `node ${parentId} does not carry`
-}
-
-function show(value: unknown): string {
-	return JSON.stringify(value)
+	return `${op.op} anchors ${anchor}, which ${holder} does not carry.`
 }
 
 function malformed(error: z.ZodError): Refusal {
 	const issue = error.issues[0]
+	// A Proposal is a bare array of ops, so the first path segment is the op's
+	// position. Wrapping the array in ops.ts would silently make this null.
 	const index = typeof issue.path[0] === 'number' ? issue.path[0] : null
-	const field = issue.path.slice(1).join('.')
 
 	return {
 		kind: 'malformed',
 		index,
 		op: null,
-		message:
-			field === ''
-				? `An op does not match the vocabulary: ${issue.message}`
-				: `An op does not match the vocabulary at ${field}: ${issue.message}`,
+		message: `An op does not match the vocabulary${at(issue.path.slice(1))}: ${issue.message}`,
 	}
 }
 
 function invalidPlan(error: z.ZodError): Refusal {
 	const issue = error.issues[0]
-	const at = issue.path.join('.')
 
 	return {
 		kind: 'invalid',
 		index: null,
 		op: null,
-		message:
-			at === ''
-				? `The Proposal would leave a Plan the schema refuses: ${issue.message}`
-				: `The Proposal would leave a Plan the schema refuses at ${at}: ${issue.message}`,
+		message: `The Proposal would leave a Plan the schema refuses${at(issue.path)}: ${issue.message}`,
 	}
+}
+
+/** Which field a zod issue names, as a phrase, and nothing when it names the
+ * whole value. */
+function at(path: PropertyKey[]): string {
+	return path.length === 0 ? '' : ` at ${path.join('.')}`
 }

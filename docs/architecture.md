@@ -208,9 +208,8 @@ says so with a `setIntent` op in the same batch.
 
 **The applier refuses with a reason**, in `src/shared/plan/apply.ts`. `applyProposal` returns
 either a new Plan or a refusal naming which op failed, its position in the Proposal, and what
-it expected against what it found. Four kinds: `malformed` (outside the vocabulary), `missing`
-(an anchor that is gone), `stale` (an `expected` that no longer matches), and `invalid` (the
-ops resolve, but the result would not be a Plan). It parses the Plan it produces, so a
+it expected against what it found. It sorts refusals into four kinds, listed on `RefusalKind`
+where they cannot drift away from the union. It also parses the Plan it produces, so a
 Proposal the Article Agent would reject is refused here, where there is a reason to show,
 rather than there, where there is none.
 
