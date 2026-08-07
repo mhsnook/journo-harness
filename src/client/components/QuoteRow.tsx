@@ -22,6 +22,10 @@ export function QuoteRow({
 	dimmed = false,
 	className,
 }: QuoteRowProps) {
+	// Empty where the heading already said the whole record — a Quote carrying
+	// no source, or a Link with nothing but a url.
+	const cite = citation(reference)
+
 	return (
 		<div className={cx('flex items-start gap-2.5', dimmed && 'opacity-50', className)}>
 			<Chip variant={section ? 'default' : 'muted'} className="mt-px">
@@ -36,14 +40,17 @@ export function QuoteRow({
 				<p className="text-[0.8125rem] leading-relaxed text-ink">
 					{referenceName(reference)}
 				</p>
-				<footer className="mt-1 flex items-center gap-2 text-[0.6875rem] text-faint">
-					<cite className="not-italic">{citation(reference)}</cite>
-					{showUsage ? (
-						<span className={used ? 'text-accent-ink' : undefined}>
-							· {used ? 'used' : 'ready'}
-						</span>
-					) : null}
-				</footer>
+				{cite === '' && !showUsage ? null : (
+					<footer className="mt-1 flex items-center gap-2 text-[0.6875rem] text-faint">
+						{cite === '' ? null : <cite className="not-italic">{cite}</cite>}
+						{showUsage ? (
+							<span className={used ? 'text-accent-ink' : undefined}>
+								{cite === '' ? null : <span aria-hidden>· </span>}
+								{used ? 'used' : 'ready'}
+							</span>
+						) : null}
+					</footer>
+				)}
 			</blockquote>
 		</div>
 	)

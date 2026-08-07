@@ -57,7 +57,13 @@ export function ReferenceCard({
 			)}
 		>
 			{variant === 'ledger' && !declined ? (
-				<Check checked={accepted} label={`Accept ${heading}`} onChange={onAccept} />
+				// No handler once Accepted, which disables the tick: restoring undoes a
+				// Decline and nothing undoes an Accept, so there is no state to go back to.
+				<Check
+					checked={accepted}
+					label={`Accept ${heading}`}
+					onChange={accepted ? undefined : onAccept}
+				/>
 			) : null}
 			{variant === 'ledger' && declined ? (
 				<span className="label-meta mt-0.5 shrink-0">declined</span>
