@@ -78,10 +78,6 @@ export class ArticleAgent extends Agent<Env, Plan> {
 	/**
 	 * The only guard on the blob. Every write is parsed, whatever its source:
 	 * the client is the Plan's one writer, so a server write is already a bug.
-	 *
-	 * The throw is what refuses the write. The SDK turns it into a fixed
-	 * `cf_agent_state_error` string and logs the rest, so the `plan_refused`
-	 * frame is what carries the reason back to the writer's own connection.
 	 */
 	validateStateChange(nextState: Plan, source: Connection | 'server'): void {
 		const result = planSchema.safeParse(nextState)
@@ -96,9 +92,7 @@ export class ArticleAgent extends Agent<Env, Plan> {
 		throw new Error(`The Plan does not parse. ${reason}`)
 	}
 
-	/** Every Offer on this Article, oldest first. The Ledger filters by
-	 * disposition and counts, and it does that over this list — it is a View
-	 * over Offers rather than a store, and one Article's Offers are few. */
+	/** Every Offer on this Article, oldest first. */
 	@callable()
 	listOffers(): Offer[] {
 		return this.sql<OfferRow>`SELECT * FROM offer ORDER BY created_at, id`.map(toOffer)
@@ -132,9 +126,7 @@ export class ArticleAgent extends Agent<Env, Plan> {
 		return offer
 	}
 
-	/** Rule on an Offer: Accept it into the Plan, or Decline it. Accepting does
-	 * not touch the Plan — the client copies the Offer in and keeps its
-	 * Provenance (§3, rule 5). */
+	/** Mark an Offer as having been Accepted or Declined by the client. */
 	@callable()
 	setOfferDisposition(id: string, disposition: Ruling): Offer {
 		const ruling = z.enum(rulings).parse(disposition)
@@ -147,9 +139,7 @@ export class ArticleAgent extends Agent<Env, Plan> {
 		return this.readOffer(id)
 	}
 
-	/** Put a Declined Offer back to Undecided. Declining is restorable and
-	 * nothing is deleted, so this is the undo of a Decline rather than a third
-	 * ruling. */
+	/** Restore a Declined Offer back to Undecided. */
 	@callable()
 	restoreOffer(id: string): Offer {
 		const offer = this.readOffer(id)

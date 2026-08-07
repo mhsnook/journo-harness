@@ -18,9 +18,7 @@ export default defineConfig({
 			},
 			{
 				plugins: [
-					// The same decorator transform vite.config.ts carries. This file does
-					// not read that one, and a worker test builds the Article Agent, so
-					// leaving it out here fails every worker test on a parse error.
+					// Cloudflare's workaround for `@callable` support in Vite 8.
 					agents(),
 					// `cloudflareTest` is the current API. Most docs still show
 					// `defineWorkersConfig` with `poolOptions.workers`, which no longer
