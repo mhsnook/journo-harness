@@ -73,6 +73,11 @@ state the Ledger groups by, not an absence, and a blob written whole should not 
 spellings of it. The schema also rejects a `nodeId` naming a node the Outline does not
 carry, so deleting a node unplaces its References in the same Proposal.
 
+**Amended:** the second half of that reason is general and was stated here only because
+`nodeId` is where it first came up. #24 applied it to the rest of the Plan — a node's
+Adjectives took both an absent key and an empty list — and `docs/architecture.md` §4 now
+carries it as a rule of the data model.
+
 ## Provenance names what kind of thing a Reference came from
 
 `{ kind: 'offer', offerId }` for a Reference copied from an Offer, and `{ kind: 'writer' }`
@@ -156,6 +161,12 @@ lift from #1's typed document-operation API, now applied client-side per #11.
 **Consequence:** whole-field comparison is conservative. Rewording an intent note the
 writer has since fixed a typo in will be refused rather than merged, so the UI must say why
 rather than greying the Proposal out.
+
+**Amended:** #24 built the vocabulary in `src/shared/plan/ops.ts` and the applier in
+`apply.ts`, and settled the question this section left open. The op payloads reuse the piece
+schemas as they stand, `strictObject` and all, so a model that adds one field fails the tool
+call and retries with the validation error rather than having the field stripped. What that
+costs, and what to do if a model thrashes the retry, is in `docs/architecture.md` §6.
 
 ## Consequences
 

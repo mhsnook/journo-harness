@@ -55,7 +55,7 @@ rather than synced. D1 also carries the backup story, because a Durable Object's
 no export path and D1 has `wrangler d1 export`.
 
 **Three source roots**: `src/client`, `src/server`, and `src/shared` for the modules both
-sides import — the Plan schema and, next, the Proposal applier. Nothing in `src/shared`
+sides import — the Plan schema, the Proposal ops, and the applier. Nothing in `src/shared`
 touches a Worker binding or React, and each tsconfig lists the root once rather than
 naming each domain.
 
@@ -118,6 +118,13 @@ plan: {
   under a somber middle is somber unless it says otherwise.
 - **The word-count total is stored and nothing is derived.** The parts may disagree with the
   whole; the gap is information. Auto-distributing the remainder is rejected.
+- **One spelling per state.** A field that may be absent says "nothing here" by being absent,
+  and never also by an empty string or an empty list — the blob is written whole, compared
+  whole-field by a Proposal's `expected`, and sent whole in every prompt pack, so a second
+  spelling is a second Plan for the same content. Three fields carry their key always and say
+  "nothing here" with a value: a Reference's `nodeId`, which is null until it is placed, the
+  Article's `adjectives`, and an Outline node's `children`, both of them the empty list. A
+  node's own `adjectives` is the other way round, and says it by being absent.
 
 **The schema guards client writes.** `validateStateChange` parses the whole Plan on every
 write, and nothing the model emits ever goes through it — the Chat proposes and the client
@@ -181,7 +188,7 @@ A list of ops, applied all-or-nothing.
 
 ```
 proposal: [
-  { op: 'createNode', parentId, beforeId, node: { id, title, intent } },
+  { op: 'createNode', parentId, beforeId, node: { id, title, intent, children: [] } },
   { op: 'setTarget',  nodeId, expected: null, value: 400 },
 ]
 ```
@@ -195,6 +202,31 @@ proposal: [
 - **If any op's `expected` fails, the whole Proposal is Stale.** The UI must say why rather
   than greying it out — whole-field comparison is conservative and will refuse a Proposal
   against a field the writer has since touched.
+
+**Ten ops**, in `src/shared/plan/ops.ts`: `createNode`, `moveNode`, `mergeNodes`,
+`deleteNode`, `setTitle`, `setIntent`, `setTarget`, `setVoice`, `setAdjectives`,
+`placeReference`. A content op reads `nodeId: null` as the Article Scope, so setting the
+Article's Voice and setting one node's Voice are one op rather than two. Two ops carry a
+consequence worth stating: **`deleteNode` unplaces every Reference placed at the node it
+removes or at any node below it**, because the Plan is written whole and a Reference naming a
+node that is gone does not parse; and **`mergeNodes` keeps the target's own fields**, moving the source's children
+and placed References onto it, so a Proposal that wants the source's intent note carried over
+says so with a `setIntent` op in the same batch.
+
+**The applier refuses with a reason**, in `src/shared/plan/apply.ts`. `applyProposal` returns
+either a new Plan or a refusal naming which op failed, its position in the Proposal, and what
+it expected against what it found. It sorts refusals into four kinds, listed on `RefusalKind`
+where they cannot drift away from the union. It also parses the Plan it produces, so a
+Proposal the Article Agent would reject is refused here, where there is a reason to show,
+rather than there, where there is none.
+
+**The op payloads are strict, and a rejected tool call retries with the validation error.**
+The piece schemas the payloads reuse are `strictObject`, so a model that adds one field fails
+the whole tool call rather than having the field stripped. Stripping would produce a Proposal
+the model did not make and the writer would rule on it without seeing what was dropped. The
+cost is real: a model that adds the same field every time thrashes the retry instead of
+converging, and the answer to that is naming the field in the schema, not loosening every
+payload to strip.
 
 **Staleness is not a multi-client problem.** It comes from the gap between generating a
 Proposal and applying it, and inference is slower than typing, so it exists with one writer

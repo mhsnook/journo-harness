@@ -1,8 +1,8 @@
 # Journo Harness
 
-A writing harness where the writer writes the prose and an AI acts as a guide. The
-requirements source is [docs/ux-outline.md](./docs/ux-outline.md); this file fixes the
-words, and nothing else.
+A writing harness where the writer writes the prose and an AI acts as a guide. What is
+true now is [docs/architecture.md](./docs/architecture.md), and what is deferred is
+[docs/later.md](./docs/later.md); this file fixes the words, and nothing else.
 
 ## The app
 
