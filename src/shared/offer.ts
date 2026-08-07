@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import { sourceSchema } from './plan'
+import { sourceSchema } from './plan/schema'
 
 /**
  * An Offer, as coined in context.md. Stored in the Article Agent's SQLite,
@@ -15,8 +15,8 @@ export type OfferKind = (typeof offerKinds)[number]
 export const dispositions = ['undecided', 'accepted', 'declined'] as const
 export type Disposition = (typeof dispositions)[number]
 
-export const rulings = ['accepted', 'declined'] as const
-export type Ruling = (typeof rulings)[number]
+export const rulingSchema = z.enum(['accepted', 'declined'])
+export type Ruling = z.infer<typeof rulingSchema>
 
 /** What the Chat turned up. The id, the disposition, and the timestamps are
  * the Article Agent's to set, so they are not here. */

@@ -22,23 +22,22 @@ export async function openAgentSocket(name: string) {
 		throw new Error(`The Agent route answered ${response.status}, not a socket.`)
 	socket.accept()
 
+	/** Frames that have arrived and not yet been taken. `take` splices what it
+	 * returns, so what is left is exactly what a later call may still match. */
 	const frames: Frame[] = []
-	const taken = new Set<number>()
 	socket.addEventListener('message', (event) => {
 		frames.push(JSON.parse(event.data as string) as Frame)
 	})
 
-	/** The first frame this test has not yet taken that the predicate accepts.
-	 * Polls, because a broadcast arrives whenever the Agent sends it. */
+	/** The first untaken frame the predicate accepts. Polls, because a broadcast
+	 * arrives whenever the Agent sends it. */
 	async function take(match: (frame: Frame) => boolean, wanted: string): Promise<Frame> {
-		for (let attempt = 0; attempt < 200; attempt++) {
-			for (let index = 0; index < frames.length; index++) {
-				if (taken.has(index) || !match(frames[index])) continue
-				taken.add(index)
-				return frames[index]
-			}
+		const deadline = Date.now() + 2000
+		do {
+			const index = frames.findIndex(match)
+			if (index !== -1) return frames.splice(index, 1)[0]
 			await wait(10)
-		}
+		} while (Date.now() < deadline)
 
 		throw new Error(`No ${wanted} frame arrived on the ${name} socket.`)
 	}
@@ -75,11 +74,7 @@ export async function openAgentSocket(name: string) {
 		async quiet(type: string): Promise<Frame[]> {
 			await wait(50)
 
-			return frames.filter((frame, index) => !taken.has(index) && frame.type === type)
-		},
-
-		close() {
-			socket.close()
+			return frames.filter((frame) => frame.type === type)
 		},
 	}
 }

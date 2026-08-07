@@ -8,7 +8,7 @@ import {
 	type OfferKind,
 	offerContentSchema,
 	type Ruling,
-	rulings,
+	rulingSchema,
 } from '../shared/offer'
 import {
 	emptyPlan,
@@ -18,12 +18,13 @@ import {
 	type Source,
 } from '../shared/plan'
 
-/** One Offer row as SQLite returns it. The column names are snake_case and the
- * source is a JSON string, so nothing here is handed to a client unmapped. */
+/** One Offer row as SQLite returns it. `this.sql` asserts the row type rather
+ * than checking it, and this class is the table's only writer, so the columns
+ * are stated as what `createOffer` parsed before writing them. */
 type OfferRow = {
 	id: string
-	kind: string
-	disposition: string
+	kind: OfferKind
+	disposition: Disposition
 	text: string | null
 	source: string | null
 	note: string | null
@@ -31,19 +32,21 @@ type OfferRow = {
 	decided_at: number | null
 }
 
-/** A row back into an Offer. The casts restate what `createOffer` parsed before
- * writing the row — this class is the only writer of the table. */
 function toOffer(row: OfferRow): Offer {
 	return {
 		id: row.id,
-		kind: row.kind as OfferKind,
-		disposition: row.disposition as Disposition,
+		kind: row.kind,
+		disposition: row.disposition,
 		text: row.text ?? undefined,
 		source: row.source === null ? undefined : (JSON.parse(row.source) as Source),
 		note: row.note ?? undefined,
 		createdAt: row.created_at,
 		decidedAt: row.decided_at,
 	}
+}
+
+function missingOffer(id: string): Error {
+	return new Error(`No Offer carries the id ${id}.`)
 }
 
 /**
@@ -53,9 +56,9 @@ function toOffer(row: OfferRow): Offer {
 export class ArticleAgent extends Agent<Env, Plan> {
 	initialState = emptyPlan()
 
-	/** Runs on every wake, including the wake after a hibernation. A later
-	 * column arrives as another statement here rather than as an edit to this
-	 * one, so an Article Agent that has been asleep for a month still migrates. */
+	/** Runs on every wake, so every statement here has to be idempotent. A new
+	 * table can join this one. A new column cannot — SQLite has no ADD COLUMN
+	 * IF NOT EXISTS, so the second wake throws on a duplicate column. */
 	onStart(): void {
 		this.sql`
 			CREATE TABLE IF NOT EXISTS offer (
@@ -129,19 +132,22 @@ export class ArticleAgent extends Agent<Env, Plan> {
 	/** Mark an Offer as having been Accepted or Declined by the client. */
 	@callable()
 	setOfferDisposition(id: string, disposition: Ruling): Offer {
-		const ruling = z.enum(rulings).parse(disposition)
-		this.readOffer(id)
+		const ruling = rulingSchema.parse(disposition)
 
-		this.sql`
-			UPDATE offer SET disposition = ${ruling}, decided_at = ${Date.now()} WHERE id = ${id}
+		const rows = this.sql<OfferRow>`
+			UPDATE offer SET disposition = ${ruling}, decided_at = ${Date.now()}
+			WHERE id = ${id} RETURNING *
 		`
+		if (rows.length === 0) throw missingOffer(id)
 
-		return this.readOffer(id)
+		return toOffer(rows[0])
 	}
 
 	/** Restore a Declined Offer back to Undecided. */
 	@callable()
 	restoreOffer(id: string): Offer {
+		// Read first: an Offer that is Accepted and one that does not exist have
+		// to be told apart, and one conditional UPDATE cannot do that.
 		const offer = this.readOffer(id)
 		if (offer.disposition !== 'declined') {
 			throw new Error(
@@ -149,16 +155,17 @@ export class ArticleAgent extends Agent<Env, Plan> {
 			)
 		}
 
-		this.sql`
-			UPDATE offer SET disposition = 'undecided', decided_at = NULL WHERE id = ${id}
+		const rows = this.sql<OfferRow>`
+			UPDATE offer SET disposition = 'undecided', decided_at = NULL
+			WHERE id = ${id} RETURNING *
 		`
 
-		return this.readOffer(id)
+		return toOffer(rows[0])
 	}
 
 	private readOffer(id: string): Offer {
 		const rows = this.sql<OfferRow>`SELECT * FROM offer WHERE id = ${id}`
-		if (rows.length === 0) throw new Error(`No Offer carries the id ${id}.`)
+		if (rows.length === 0) throw missingOffer(id)
 
 		return toOffer(rows[0])
 	}

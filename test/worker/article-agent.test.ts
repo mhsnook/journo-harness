@@ -153,6 +153,17 @@ describe('Offers in the Article Agent', () => {
 		)
 	})
 
+	it('refuses to rule on or restore an Offer that does not exist', async () => {
+		const writer = await openAgentSocket('offer-unknown-id')
+
+		await expect(writer.call('setOfferDisposition', 'nope', 'declined')).rejects.toThrow(
+			/No Offer carries the id nope/,
+		)
+		await expect(writer.call('restoreOffer', 'nope')).rejects.toThrow(
+			/No Offer carries the id nope/,
+		)
+	})
+
 	it('keeps its Offers through a hibernation cycle', async () => {
 		const writer = await openAgentSocket('offer-hibernation')
 		const kept = await writer.call<Offer>('createOffer', quote)
