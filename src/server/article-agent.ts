@@ -180,7 +180,8 @@ export class ArticleAgent extends Agent<Env, Plan> {
  * pre-standard calling convention, which hands `callable()` the prototype
  * instead of the method: registration then lands on the wrong object and every
  * RPC call is refused at runtime with "is not callable". Both were measured
- * against oxc 0.127, and neither is a setting away from working.
+ * against the oxc inside rolldown 1.2.3, and neither is a setting away from
+ * working.
  *
  * So this calls the decorator rather than writing it, which is the same
  * registration by the same function. Adding a callable method means adding it

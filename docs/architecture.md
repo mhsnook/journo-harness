@@ -371,7 +371,8 @@ Settings and known defects. None is a decision to make; all are things to get ri
   `decorator.legacy` option does transform, to the pre-standard calling convention, which
   hands `callable()` the prototype instead of the method: registration lands on the wrong
   object and every RPC call is refused at runtime with "is not callable". Both measured
-  against oxc 0.127. `src/server/article-agent.ts` therefore calls `callable()` on each
+  against the oxc inside rolldown 1.2.3, which Vite 8.2 bundles with — Vite 7 used
+  esbuild, which lowers these. `src/server/article-agent.ts` therefore calls `callable()` on each
   method instead of decorating it, which is the same registration by the same function,
   and a test names the set so a method left out fails loudly. Recovering the syntax means
   lowering decorators ahead of oxc, in both `vite.config.ts` and `vitest.config.ts`.
