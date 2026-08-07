@@ -1,12 +1,14 @@
 import type { ReactNode } from 'react'
 
+import type { Reference } from '../../../shared/plan'
 import { Chip } from '../../components/Chip'
 import { EmptySlot, Field } from '../../components/Field'
 import { OutlineRow } from '../../components/OutlineRow'
 import { PanelHeader } from '../../components/Panel'
 import { QuoteRow } from '../../components/QuoteRow'
 import { cx } from '../../lib/cx'
-import type { Section, Quote, Reference } from '../../mock/content'
+import { attribution, referenceHeading } from '../../lib/reference'
+import type { Section } from '../../mock/content'
 
 export interface PlanLengthProps {
 	words?: number
@@ -118,12 +120,10 @@ export function PlanReferences({ references, justAddedId }: PlanReferencesProps)
 						<p className="label-meta">★ just added</p>
 					) : null}
 					<p className="text-[0.75rem] leading-snug font-medium text-ink">
-						{reference.title}
+						{referenceHeading(reference)}
 					</p>
 					<p className="text-[0.6875rem] text-faint">
-						{[reference.outlet, reference.year, reference.section]
-							.filter(Boolean)
-							.join(' · ')}
+						{attribution(reference.source).join(' · ')}
 					</p>
 				</div>
 			))}
@@ -132,7 +132,7 @@ export function PlanReferences({ references, justAddedId }: PlanReferencesProps)
 }
 
 export interface PlanQuotesProps {
-	quotes: Quote[]
+	quotes: Reference[]
 	showUsage?: boolean
 	footer?: ReactNode
 }
@@ -141,7 +141,7 @@ export function PlanQuotes({ quotes, showUsage = false, footer }: PlanQuotesProp
 	return (
 		<div className="flex flex-col gap-2.5">
 			{quotes.map((quote) => (
-				<QuoteRow key={quote.id} quote={quote} showUsage={showUsage} />
+				<QuoteRow key={quote.id} reference={quote} showUsage={showUsage} />
 			))}
 			{footer ? <p className="text-[0.6875rem] text-faint">{footer}</p> : null}
 		</div>

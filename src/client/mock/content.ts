@@ -1,9 +1,12 @@
+import type { Offer } from '../../shared/offer'
+import type { Plan } from '../../shared/plan'
+
 /**
  * Sample content for the showcase.
  *
- * None of this is wired to anything — it exists so the components can be read
- * as a real product rather than as grey boxes. Swap it for API data when the
- * back end lands; the shapes here are a reasonable first sketch of it.
+ * The Offers and the Plan below are in the shapes the Article Agent holds, so a
+ * story exercises the real Offer ledger rather than a sketch of it. Everything
+ * above them is still wireframe shapes waiting on their own ticket.
  */
 
 export interface Article {
@@ -157,106 +160,188 @@ export const outlineRevised: Section[] = [
 	},
 ]
 
-export interface Reference {
-	id: string
-	title: string
-	author?: string
-	outlet?: string
-	year?: string
-	favourite?: 'author' | 'publication'
-	summary?: string
-	quotes?: number
-	state: 'undecided' | 'accepted' | 'declined'
-	section?: string
-	used?: boolean
-}
+/* -------------------------------------------------------------------------- */
+/* Its Offers and its Plan, in the shapes the Article Agent actually holds      */
+/* -------------------------------------------------------------------------- */
 
-export const references: Reference[] = [
+/**
+ * Eight Offers, as one research turn and one follow-up would have left them.
+ * The dispositions are spread across all three so a story shows every filter
+ * with something in it, and `o9` is Accepted with nothing in the Plan — the
+ * stranded case the Offer ledger has to surface.
+ */
+export const offers: Offer[] = [
 	{
-		id: 's1',
-		title: 'Permit throughput in six mid-sized cities',
-		author: 'R. Okonkwo',
-		outlet: 'the Quarterly',
-		year: '2023',
-		favourite: 'publication',
-		summary:
-			'Median approval time tripled between 2004 and 2021 while application volume stayed flat.',
-		quotes: 2,
-		state: 'accepted',
-		section: '§2',
-		used: true,
+		id: 'o1',
+		type: 'reference',
+		source: {
+			title: 'Permit throughput in six mid-sized cities',
+			author: 'R. Okonkwo',
+			publication: 'the Quarterly',
+			year: 2023,
+		},
+		note: 'Median approval time tripled between 2004 and 2021 while application volume stayed flat.',
+		disposition: 'accepted',
+		createdAt: 1,
+		decidedAt: 9,
 	},
 	{
-		id: 's2',
-		title: 'Zoning and the missing middle',
-		author: 'A. Weill',
-		outlet: 'Field Notes',
-		year: '2019',
-		favourite: 'author',
-		summary:
-			'The four-to-twelve-unit building has effectively been legislated out of existence.',
-		quotes: 1,
-		state: 'accepted',
-		section: '§3',
-		used: false,
+		id: 'o2',
+		type: 'reference',
+		source: {
+			title: 'Zoning and the missing middle',
+			author: 'A. Weill',
+			publication: 'Field Notes',
+			year: 2019,
+		},
+		note: 'The four-to-twelve-unit building has effectively been legislated out of existence.',
+		disposition: 'accepted',
+		createdAt: 2,
+		decidedAt: 10,
 	},
 	{
-		id: 's3',
-		title: 'The cost of discretionary review',
-		outlet: 'Municipal Review',
-		year: '2021',
-		summary: 'Estimates the carrying cost of a stalled mid-rise at £4,100 a week.',
-		quotes: 1,
-		state: 'undecided',
+		id: 'o3',
+		type: 'reference',
+		source: {
+			title: 'The cost of discretionary review',
+			publication: 'Municipal Review',
+			year: 2021,
+		},
+		note: 'Estimates the carrying cost of a stalled mid-rise at £4,100 a week.',
+		disposition: 'undecided',
+		createdAt: 3,
+		decidedAt: null,
 	},
 	{
-		id: 's4',
-		title: 'Housing starts, quarterly series',
-		outlet: 'Office for Statistics',
-		year: '2024',
-		summary: 'Primary data. Useful for the opening figure, dry on its own.',
-		state: 'undecided',
+		id: 'o4',
+		type: 'reference',
+		source: {
+			title: 'Housing starts, quarterly series',
+			publication: 'Office for Statistics',
+			year: 2024,
+		},
+		note: 'Primary data. Useful for the opening figure, dry on its own.',
+		disposition: 'undecided',
+		createdAt: 4,
+		decidedAt: null,
 	},
 	{
-		id: 's5',
-		title: 'Why nobody builds anymore (opinion)',
-		outlet: 'The Evening Ledger',
-		year: '2022',
-		summary: 'Assertive, unsourced. Covers ground we already have better evidence for.',
-		state: 'declined',
+		id: 'o5',
+		type: 'reference',
+		source: {
+			title: 'Why nobody builds anymore (opinion)',
+			publication: 'The Evening Ledger',
+			year: 2022,
+		},
+		note: 'Assertive, unsourced. Covers ground we already have better evidence for.',
+		disposition: 'declined',
+		createdAt: 5,
+		decidedAt: 11,
 	},
-]
-
-export interface Quote {
-	id: string
-	text: string
-	attribution: string
-	section?: string
-	used?: boolean
-}
-
-export const quotes: Quote[] = [
 	{
-		id: 'q1',
+		id: 'o6',
+		type: 'quote',
 		text: 'We did not decide to stop building. We decided, forty separate times, that this particular building could wait.',
-		attribution: 'Permit throughput in six mid-sized cities',
-		section: '§2',
-		used: true,
+		source: { title: 'Permit throughput in six mid-sized cities', author: 'R. Okonkwo' },
+		disposition: 'accepted',
+		createdAt: 6,
+		decidedAt: 12,
 	},
 	{
-		id: 'q2',
+		id: 'o7',
+		type: 'quote',
 		text: 'Every objection was reasonable. The sum of them was not.',
-		attribution: 'Zoning and the missing middle',
-		section: '§3',
-		used: false,
+		source: { title: 'Zoning and the missing middle', author: 'A. Weill' },
+		disposition: 'accepted',
+		createdAt: 7,
+		decidedAt: 13,
 	},
 	{
-		id: 'q3',
+		id: 'o8',
+		type: 'quote',
 		text: 'The meter runs on an empty lot exactly as fast as it runs on a finished one.',
-		attribution: 'The cost of discretionary review',
-		used: false,
+		source: { title: 'The cost of discretionary review' },
+		disposition: 'undecided',
+		createdAt: 8,
+		decidedAt: null,
+	},
+	{
+		id: 'o9',
+		type: 'reference',
+		source: { title: 'Interview — M. Sze, planning officer' },
+		disposition: 'accepted',
+		createdAt: 9,
+		decidedAt: 14,
 	},
 ]
+
+/** The same Article's Plan. Four Sections, four References copied in from
+ * Offers, and one the writer typed themselves. `o9` is Accepted and appears
+ * here nowhere, which is what makes it stranded. */
+export const articlePlan: Plan = {
+	title: ARTICLE_TITLE,
+	totalTarget: 2400,
+	voice: 'Reported feature',
+	adjectives: ['well researched'],
+	outline: [
+		{ id: 'n1', title: 'The year the cranes stopped', target: 300, children: [] },
+		{
+			id: 'n2',
+			title: 'How review became the process',
+			target: 700,
+			voice: 'Explainer',
+			children: [],
+		},
+		{ id: 'n3', title: 'Who actually pays for the delay', target: 900, children: [] },
+		{
+			id: 'n4',
+			title: 'What a faster city would look like',
+			target: 500,
+			adjectives: ['unhurried'],
+			children: [],
+		},
+	],
+	references: [
+		{
+			id: 'r1',
+			type: 'reference',
+			provenance: { type: 'offer', offerId: 'o1' },
+			source: offers[0].source,
+			nodeId: 'n2',
+		},
+		{
+			id: 'r2',
+			type: 'reference',
+			provenance: { type: 'offer', offerId: 'o2' },
+			source: offers[1].source,
+			nodeId: null,
+		},
+		{
+			id: 'r3',
+			type: 'quote',
+			provenance: { type: 'offer', offerId: 'o6' },
+			text: offers[5].text,
+			source: offers[5].source,
+			nodeId: 'n2',
+		},
+		{
+			id: 'r4',
+			type: 'quote',
+			provenance: { type: 'offer', offerId: 'o7' },
+			text: offers[6].text,
+			source: offers[6].source,
+			nodeId: 'n3',
+		},
+		{
+			id: 'r5',
+			type: 'reference',
+			provenance: { type: 'writer' },
+			source: { title: 'Review board minutes, 2019–2024' },
+			note: 'Mine, from the archive. Never offered.',
+			nodeId: null,
+		},
+	],
+}
 
 /* -------------------------------------------------------------------------- */
 /* Prose                                                                       */

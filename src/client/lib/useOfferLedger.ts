@@ -1,0 +1,119 @@
+import { useEffect, useRef, useState } from 'react'
+
+import { acceptIntoPlan, offerLedger, type OfferLedger } from '../../shared/ledger'
+import type { Offer } from '../../shared/offer'
+import { useArticle } from './article'
+
+/**
+ * The Offer ledger, live. It reads the Offers once when the Panel opens, which
+ * is what the row store is for — `@callable` RPC is request and response, so
+ * nothing tells a client a row changed (§3). The Plan half arrives reactively
+ * through Article Agent state, so the View is re-derived on every render.
+ */
+
+export type OfferLedgerHandle = {
+	ledger: OfferLedger
+	/** True until the first `listOffers` answers. */
+	loading: boolean
+	/** The last write that did not land, in one sentence for the writer. */
+	failure: string | null
+	accept: (offer: Offer) => void
+	decline: (offer: Offer) => void
+	restore: (offer: Offer) => void
+	/** The second half of Accepting, on its own — the re-add for a stranded
+	 * Offer, whose row is Accepted and whose copy never reached the Plan. */
+	addToPlan: (offer: Offer) => void
+}
+
+export function useOfferLedger(): OfferLedgerHandle {
+	const { offers: store, plan, setPlan } = useArticle()
+	const [rows, setRows] = useState<Offer[] | null>(null)
+	const [failure, setFailure] = useState<string | null>(null)
+
+	// Two Accepts in quick succession both read the Plan. Through the render's
+	// own `plan` the second would read the first's input and drop its Reference,
+	// so the writes read the latest one instead.
+	const latest = useRef(plan)
+	latest.current = plan
+
+	useEffect(() => {
+		let live = true
+
+		store.listOffers().then(
+			(listed) => {
+				if (live) setRows(listed)
+			},
+			(error: unknown) => {
+				if (live) setFailure(`The Offers did not load. ${reasonFor(error)}`)
+			},
+		)
+
+		return () => {
+			live = false
+		}
+	}, [store])
+
+	/** Replace one row in place: the Ledger's order is the order the Article
+	 * Agent recorded them, and a ruling does not change it. */
+	function replace(ruled: Offer) {
+		setRows((held) =>
+			(held ?? []).map((offer) => (offer.id === ruled.id ? ruled : offer)),
+		)
+	}
+
+	function copyIntoPlan(offer: Offer) {
+		const { plan: next, alreadyThere } = acceptIntoPlan(
+			latest.current,
+			offer,
+			crypto.randomUUID(),
+		)
+		if (!alreadyThere) setPlan(next)
+	}
+
+	function run(what: string, write: () => Promise<Offer>, then: (ruled: Offer) => void) {
+		setFailure(null)
+		write().then(then, (error: unknown) => setFailure(`${what} ${reasonFor(error)}`))
+	}
+
+	return {
+		ledger: offerLedger(plan, rows ?? []),
+		loading: rows === null,
+		failure,
+
+		// Accepting is two writes against two stores and nothing makes them
+		// atomic. The row goes first, because it is what carries the Provenance
+		// the copy needs — and if the second write never lands, the Offer shows
+		// in the Ledger as stranded rather than as nothing at all.
+		accept(offer) {
+			run(
+				'This Offer was not Accepted.',
+				() => store.setOfferDisposition(offer.id, 'accepted'),
+				(ruled) => {
+					replace(ruled)
+					copyIntoPlan(ruled)
+				},
+			)
+		},
+
+		decline(offer) {
+			run(
+				'This Offer was not Declined.',
+				() => store.setOfferDisposition(offer.id, 'declined'),
+				replace,
+			)
+		},
+
+		restore(offer) {
+			run('This Offer was not restored.', () => store.restoreOffer(offer.id), replace)
+		},
+
+		addToPlan(offer) {
+			setFailure(null)
+			copyIntoPlan(offer)
+		},
+	}
+}
+
+function reasonFor(error: unknown): string {
+	return error instanceof Error ? error.message : String(error)
+}

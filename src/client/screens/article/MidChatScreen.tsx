@@ -3,7 +3,7 @@ import { ChatComposer, ChatMessage } from '../../components/Chat'
 import { Frame, FrameBody } from '../../components/Frame'
 import { Panel } from '../../components/Panel'
 import { ReferenceCard } from '../../components/ReferenceCard'
-import { ARTICLE_TITLE, outline, quotes, references } from '../../mock/content'
+import { ARTICLE_TITLE, articlePlan, offers, outline } from '../../mock/content'
 import {
 	PlanBlock,
 	PlanLength,
@@ -31,8 +31,8 @@ export function MidChatScreen() {
 						Two that carry the argument, both from your favourites:
 					</ChatMessage>
 					<div className="flex flex-col gap-2">
-						<ReferenceCard reference={references[0]} variant="ledger" />
-						<ReferenceCard reference={references[3]} variant="ledger" compact />
+						<ReferenceCard offer={offers[0]} variant="ledger" favourite="publication" />
+						<ReferenceCard offer={offers[3]} variant="ledger" compact />
 					</div>
 					<ChatMessage from="guide">
 						The throughput study has a line that would open §2 well. I've pulled it into
@@ -52,12 +52,12 @@ export function MidChatScreen() {
 					</PlanBlock>
 					<PlanBlock title="References" meta="5">
 						<PlanReferences
-							references={[references[0], references[1]]}
-							justAddedId={references[0].id}
+							references={articlePlan.references.slice(0, 2)}
+							justAddedId="r1"
 						/>
 					</PlanBlock>
 					<PlanBlock title="Quotes" meta="3">
-						<PlanQuotes quotes={[quotes[0], quotes[2]]} />
+						<PlanQuotes quotes={articlePlan.references.slice(2, 4)} />
 					</PlanBlock>
 				</Panel>
 			</FrameBody>

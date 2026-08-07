@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 
 import { Annotation } from '../../components/Annotation'
+import { MockArticle } from '../../mock/MockArticle'
 import { BlankPlanScreen } from './BlankPlanScreen'
 import { ChatWithReferencesScreen } from './ChatWithReferencesScreen'
 import { LedgerDrawerScreen } from './LedgerDrawerScreen'
@@ -12,6 +13,15 @@ import { ReadyToDraftScreen } from './ReadyToDraftScreen'
 const meta = {
 	title: 'Screens/2 Plan an article',
 	parameters: { layout: 'centered' },
+	// The Offer ledger screens read and write a real Article. This one is held
+	// in memory, so Accepting in a story moves the row and the Plan together.
+	decorators: [
+		(Story: () => React.ReactElement) => (
+			<MockArticle>
+				<Story />
+			</MockArticle>
+		),
+	],
 } satisfies Meta
 
 export default meta
@@ -58,9 +68,18 @@ export const C_ReadyToDraft: Story = {
 	),
 }
 
-export const D_ChatWithSources: Story = {
+export const D_ChatWithReferences: Story = {
 	name: '2(d) A turn that returned a lot',
-	render: () => <ChatWithReferencesScreen />,
+	render: () => (
+		<div className="flex flex-col">
+			<ChatWithReferencesScreen />
+			<Annotation>
+				Accept and Decline are the writer's two rulings, and they are the words everywhere
+				— the card, the Offer ledger, and the Plan. Accepting copies the Offer into the
+				Plan and leaves the row where it is.
+			</Annotation>
+		</div>
+	),
 }
 
 export const E_PlanSheet: Story = {
@@ -83,8 +102,10 @@ export const F_LedgerDrawer: Story = {
 		<div className="flex flex-col">
 			<LedgerDrawerScreen />
 			<Annotation>
-				The same list at every stage — early on most rows read "undecided", later most
-				read "used". That is precisely why there is no separate triage screen.
+				The same list at every stage — early on most rows read Undecided, later most are
+				placed. That is precisely why there is no separate triage screen. Accepting a row
+				on the left copies it into the Plan on the right: the row keeps what was turned
+				up, and the copy is the writer's to edit.
 			</Annotation>
 		</div>
 	),
@@ -96,8 +117,9 @@ export const G_LedgerPopover: Story = {
 		<div className="flex flex-col">
 			<LedgerPopoverScreen />
 			<Annotation>
-				The groups are the lifecycle and their order is fixed, so the undecided pile at
-				the bottom visibly shrinks as you work.
+				The groups are the lifecycle and their order is fixed, so the Undecided pile
+				visibly shrinks as you work. Used waits on the Draft, which arrives at phase 2, so
+				a placed Reference reads Ready.
 			</Annotation>
 		</div>
 	),

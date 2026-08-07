@@ -1,3 +1,4 @@
+import { outlineEntries } from '../../../shared/plan'
 import { ArticleBar } from '../../components/ArticleBar'
 import { Button } from '../../components/Button'
 import { Chip } from '../../components/Chip'
@@ -6,8 +7,15 @@ import { Frame, FrameBody } from '../../components/Frame'
 import { LengthBar } from '../../components/LengthBar'
 import { Panel, PanelHeader } from '../../components/Panel'
 import { QuoteRow } from '../../components/QuoteRow'
-import { ARTICLE_TITLE, outline, quotes, references } from '../../mock/content'
+import { attribution, referenceHeading } from '../../lib/reference'
+import { ARTICLE_TITLE, articlePlan, outline } from '../../mock/content'
 import { PlanOutline } from './PlanBlocks'
+
+/** A Section's number is its position, never a stored field — so the label is
+ * worked out rather than read off the record. */
+const sectionLabels = new Map(
+	outlineEntries(articlePlan.outline).map((entry) => [entry.node.id, entry.label]),
+)
 
 /**
  * 2(e) — The plan on its own, full width. Outline, references and quotes are
@@ -47,21 +55,21 @@ export function PlanSheetScreen() {
 					<Divider weight="strong" />
 
 					<section className="flex flex-col gap-3">
-						<PanelHeader title="References" meta="12 · 9 kept" />
+						<PanelHeader title="References" meta="12 · 9 Accepted" />
 						<div className="grid grid-cols-3 gap-2.5">
-							{[references[0], references[1], references[3]].map((reference) => (
+							{articlePlan.references.slice(0, 3).map((reference) => (
 								<div
 									key={reference.id}
 									className="flex flex-col gap-1 rounded-md border border-edge bg-sunk p-2.5"
 								>
 									<p className="text-[0.75rem] leading-snug font-medium text-ink">
-										{reference.title}
+										{referenceHeading(reference)}
 									</p>
 									<p className="text-[0.6875rem] text-faint">
-										{[reference.outlet, reference.year].filter(Boolean).join(' · ')}
+										{attribution(reference.source).join(' · ')}
 									</p>
 									<p className="mt-auto pt-1 text-[0.6875rem] text-muted">
-										{reference.section ?? 'unassigned'}
+										{sectionLabels.get(reference.nodeId ?? '') ?? 'no Section yet'}
 									</p>
 								</div>
 							))}
@@ -73,9 +81,15 @@ export function PlanSheetScreen() {
 					<section className="flex flex-col gap-3">
 						<PanelHeader title="Quotes" meta="8 saved" />
 						<div className="flex flex-col gap-3">
-							{quotes.map((quote) => (
-								<QuoteRow key={quote.id} quote={quote} />
-							))}
+							{articlePlan.references
+								.filter((reference) => reference.type === 'quote')
+								.map((quote) => (
+									<QuoteRow
+										key={quote.id}
+										reference={quote}
+										section={sectionLabels.get(quote.nodeId ?? '')}
+									/>
+								))}
 							<p className="text-[0.6875rem] text-faint">
 								+ 5 more · drag a quote onto a section to place it
 							</p>
