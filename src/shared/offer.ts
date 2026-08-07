@@ -1,15 +1,12 @@
 import { z } from 'zod'
 
-import { sourceSchema } from './plan/schema'
+import { referenceTypeSchema, sourceSchema } from './plan/schema'
 
 /**
  * An Offer, as coined in context.md. Stored in the Article Agent's SQLite,
  * Offers are kept as a flat list of References and Quotes turned up from
  * research.
  */
-
-export const offerKinds = ['reference', 'quote'] as const
-export type OfferKind = (typeof offerKinds)[number]
 
 /** How far the writer has got with one Offer. Every Offer starts Undecided. */
 export const dispositions = ['undecided', 'accepted', 'declined'] as const
@@ -22,7 +19,7 @@ export type Ruling = z.infer<typeof rulingSchema>
  * the Article Agent's to set, so they are not here. */
 export const offerContentSchema = z
 	.strictObject({
-		kind: z.enum(offerKinds),
+		type: referenceTypeSchema,
 		text: z.string().min(1).optional(),
 		source: sourceSchema.optional(),
 		note: z.string().min(1).optional(),
@@ -30,9 +27,8 @@ export const offerContentSchema = z
 	.refine((offer) => offer.text !== undefined || offer.source !== undefined, {
 		error: 'An Offer carries a text, a source, or both. One with neither is nothing.',
 	})
-	.refine((offer) => offer.kind !== 'quote' || offer.text !== undefined, {
-		error:
-			'A Quote is a Reference that carries a text, so an Offer of kind quote has one.',
+	.refine((offer) => offer.type !== 'quote' || offer.text !== undefined, {
+		error: 'An Offer of type quote carries a text.',
 	})
 
 export type OfferContent = z.infer<typeof offerContentSchema>

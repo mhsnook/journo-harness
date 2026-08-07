@@ -34,13 +34,13 @@ const orphaned = {
 }
 
 const quote = {
-	kind: 'quote' as const,
+	type: 'quote' as const,
 	text: 'We did not decide to stop building.',
 	source: { title: 'Permit throughput in six mid-sized cities', year: 2023 },
 }
 
 const reference = {
-	kind: 'reference' as const,
+	type: 'reference' as const,
 	source: { title: 'Zoning and the missing middle', author: 'A. Weill' },
 	note: 'Primary data for the opening figure.',
 }
@@ -121,7 +121,7 @@ describe('Offers in the Article Agent', () => {
 		const offer = await createOffer('offer-create', quote)
 
 		expect(offer).toMatchObject({
-			kind: 'quote',
+			type: 'quote',
 			disposition: 'undecided',
 			decidedAt: null,
 		})
@@ -132,7 +132,7 @@ describe('Offers in the Article Agent', () => {
 	// one refuses without the Article Agent ever reaching its table.
 	it('refuses an Offer carrying neither a text nor a source', async () => {
 		await expect(
-			createOffer('offer-empty', { kind: 'reference' } as OfferContent),
+			createOffer('offer-empty', { type: 'reference' } as OfferContent),
 		).rejects.toThrow(/text, a source, or both/)
 	})
 
@@ -167,6 +167,26 @@ describe('Offers in the Article Agent', () => {
 		await expect(writer.call('restoreOffer', 'nope')).rejects.toThrow(
 			/No Offer carries the id nope/,
 		)
+	})
+
+	// A research turn records its Offers in one invocation, where the Worker's
+	// clock barely advances — so `created_at` cannot order them and `seq` does.
+	it('lists a batch recorded in one turn in the order it was recorded', async () => {
+		await openAgentSocket('offer-batch')
+		const stub = env.ArticleAgent.get(env.ArticleAgent.idFromName('offer-batch'))
+
+		const titles = await runInDurableObject(stub, (agent) => {
+			const recorded = ['first', 'second', 'third', 'fourth'].map((title) =>
+				agent.createOffer({ type: 'reference', source: { title } }),
+			)
+
+			return {
+				recorded: recorded.map((offer) => offer.source?.title),
+				listed: agent.listOffers().map((offer) => offer.source?.title),
+			}
+		})
+
+		expect(titles.listed).toEqual(titles.recorded)
 	})
 
 	it('keeps its Offers through a hibernation cycle', async () => {

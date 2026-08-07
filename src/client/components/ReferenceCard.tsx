@@ -17,11 +17,11 @@ export interface ReferenceCardProps {
 }
 
 /** The star that marks a reference as coming from your favourites. */
-function FavouriteMark({ kind }: { kind: 'author' | 'publication' }) {
+function FavouriteMark({ type }: { type: 'author' | 'publication' }) {
 	return (
 		<span className="inline-flex items-center gap-1 text-accent-ink">
 			<span aria-hidden>★</span>
-			<span>favourite {kind}</span>
+			<span>favourite {type}</span>
 		</span>
 	)
 }
@@ -62,7 +62,7 @@ export function ReferenceCard({
 					{reference.title}
 				</h4>
 				<p className="flex flex-wrap items-center gap-x-1.5 text-[0.6875rem] text-faint">
-					{reference.favourite ? <FavouriteMark kind={reference.favourite} /> : null}
+					{reference.favourite ? <FavouriteMark type={reference.favourite} /> : null}
 					{[reference.author, reference.outlet, reference.year]
 						.filter(Boolean)
 						.map((part, i) => (

@@ -102,7 +102,7 @@ plan: {
   title, totalTarget,
   voice, adjectives: [],
   outline: [ { id, title, intent?, target?, voice?, adjectives?: [], children: [] } ],
-  references: [ { id, provenance, text?, source?, nodeId, note? } ],
+  references: [ { id, type, provenance, text?, source?, nodeId, note? } ],
 }
 ```
 
@@ -110,8 +110,12 @@ plan: {
   a stable ID that never changes.
 - **References are flat with an optional `nodeId`**, so an Accepted Reference can sit at a
   Section or nowhere yet.
-- **A Quote is a Reference that carries a `text`.** One structure: a pulled passage, an
-  attribution, or both, with at least one present.
+- **A Quote is a Reference of that `type`.** One structure: a pulled passage, an
+  attribution, or both, with at least one present. The type is **stored, not derived from
+  the text**, so an Offer and the Reference it was Accepted into carry one answer and the
+  Offer ledger and the Plan Panel cannot label an item differently. A Quote carries a text;
+  a Reference may carry one without being a Quote. Amended in
+  [ADR 0002](./adr/0002-the-plan-data-model.md).
 - **Voice replaces; Adjectives compose.** One Voice applies at a time and the nearest Scope
   wins outright. Adjectives accumulate. Resolution runs House, then Article, then
   Section, **at read time**. A Section's ancestors take part in that same order, so a Subsection
@@ -215,7 +219,7 @@ says so with a `setIntent` op in the same batch.
 
 **The applier refuses with a reason**, in `src/shared/plan/apply.ts`. `applyProposal` returns
 either a new Plan or a refusal naming which op failed, its position in the Proposal, and what
-it expected against what it found. It sorts refusals into four kinds, listed on `RefusalKind`
+it expected against what it found. It sorts refusals into four types, listed on `RefusalType`
 where they cannot drift away from the union. It also parses the Plan it produces, so a
 Proposal the Article Agent would reject is refused here, where there is a reason to show,
 rather than there, where there is none.
@@ -338,7 +342,7 @@ Decided now so 1a cannot paint itself into a corner. Not built.
   persisting to SQLite embedded in the Durable Object. Findings #7 and #18 are suspended, not
   withdrawn — correct, not load-bearing until then, and not to be assumed before.
 - **Notes is the fourth Panel.** A **Review** is an intentional pass producing a batch of
-  Guidance notes at once, accumulating in numbered **Rounds**, grouped by **Kind**, which the
+  Guidance notes at once, accumulating in numbered **Rounds**, grouped by **type**, which the
   writer selects among and hands back to the Chat.
 - **The guide loop is client-initiated. There is no server-side timer anywhere in v1.** The
   client knows when typing stopped; the server cannot tell "still thinking" from "left the

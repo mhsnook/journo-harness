@@ -159,10 +159,38 @@ describe('the Plan schema', () => {
 describe('the Reference invariant', () => {
 	const base = makeReference({ id: 'r1' })
 
-	it('accepts a Reference carrying only a text — which is a Quote', () => {
+	it('accepts a Reference carrying only a text', () => {
 		const result = referenceSchema.safeParse({ ...base, text: 'They knew by March.' })
 
 		expect(result.success).toBe(true)
+	})
+
+	it('accepts a Quote, which is a Reference of that type carrying a text', () => {
+		const result = referenceSchema.safeParse({
+			...base,
+			type: 'quote',
+			text: 'They knew by March.',
+		})
+
+		expect(result.success).toBe(true)
+	})
+
+	// The type is stored rather than read off the text, so a text does not make
+	// a Reference a Quote and the two Panels cannot disagree about which it is.
+	it('leaves a Reference carrying a text a Reference, not a Quote', () => {
+		const result = referenceSchema.safeParse({ ...base, text: 'They knew by March.' })
+
+		expect(result.success && result.data.type).toBe('reference')
+	})
+
+	it('rejects a Quote carrying no text', () => {
+		const result = referenceSchema.safeParse({
+			...base,
+			type: 'quote',
+			source: { publication: 'The Guardian', year: 2024 },
+		})
+
+		expect(result.success).toBe(false)
 	})
 
 	it('accepts a Reference carrying only a source', () => {
@@ -201,7 +229,7 @@ describe('the Reference invariant', () => {
 		const result = referenceSchema.safeParse({
 			...base,
 			text: 'They knew by March.',
-			provenance: { kind: 'offer' },
+			provenance: { type: 'offer' },
 		})
 
 		expect(result.success).toBe(false)
@@ -211,7 +239,7 @@ describe('the Reference invariant', () => {
 		const result = referenceSchema.safeParse({
 			...base,
 			text: 'They knew by March.',
-			provenance: { kind: 'offer', offerId: 'o1' },
+			provenance: { type: 'offer', offerId: 'o1' },
 		})
 
 		expect(result.success).toBe(true)

@@ -5,7 +5,6 @@ import {
 	type Disposition,
 	type Offer,
 	type OfferContent,
-	type OfferKind,
 	offerContentSchema,
 	type Ruling,
 	rulingSchema,
@@ -13,6 +12,7 @@ import {
 import {
 	emptyPlan,
 	type Plan,
+	type ReferenceType,
 	type PlanRefused,
 	planSchema,
 	type Source,
@@ -22,8 +22,9 @@ import {
  * than checking it, and this class is the table's only writer, so the columns
  * are stated as what `createOffer` parsed before writing them. */
 type OfferRow = {
+	seq: number
 	id: string
-	kind: OfferKind
+	type: ReferenceType
 	disposition: Disposition
 	text: string | null
 	source: string | null
@@ -35,7 +36,7 @@ type OfferRow = {
 function toOffer(row: OfferRow): Offer {
 	return {
 		id: row.id,
-		kind: row.kind,
+		type: row.type,
 		disposition: row.disposition,
 		text: row.text ?? undefined,
 		source: row.source === null ? undefined : (JSON.parse(row.source) as Source),
@@ -62,8 +63,9 @@ export class ArticleAgent extends Agent<Env, Plan> {
 	onStart(): void {
 		this.sql`
 			CREATE TABLE IF NOT EXISTS offer (
-				id TEXT PRIMARY KEY,
-				kind TEXT NOT NULL,
+				seq INTEGER PRIMARY KEY AUTOINCREMENT,
+				id TEXT NOT NULL UNIQUE,
+				type TEXT NOT NULL,
 				disposition TEXT NOT NULL,
 				text TEXT,
 				source TEXT,
@@ -95,10 +97,14 @@ export class ArticleAgent extends Agent<Env, Plan> {
 		throw new Error(`The Plan does not parse. ${reason}`)
 	}
 
-	/** Every Offer on this Article, oldest first. */
+	/** Every Offer on this Article, in the order they were recorded.
+	 *
+	 * `seq` orders it, not `created_at`: a Worker's clock does not advance
+	 * across local writes, so a research turn that records four Offers stamps
+	 * them with one or two milliseconds between them. */
 	@callable()
 	listOffers(): Offer[] {
-		return this.sql<OfferRow>`SELECT * FROM offer ORDER BY created_at, id`.map(toOffer)
+		return this.sql<OfferRow>`SELECT * FROM offer ORDER BY seq`.map(toOffer)
 	}
 
 	/** Record something the Chat turned up. It starts Undecided.
@@ -115,10 +121,10 @@ export class ArticleAgent extends Agent<Env, Plan> {
 		}
 
 		this.sql`
-			INSERT INTO offer (id, kind, disposition, text, source, note, created_at, decided_at)
+			INSERT INTO offer (id, type, disposition, text, source, note, created_at, decided_at)
 			VALUES (
 				${offer.id},
-				${offer.kind},
+				${offer.type},
 				${offer.disposition},
 				${offer.text ?? null},
 				${offer.source === undefined ? null : JSON.stringify(offer.source)},
