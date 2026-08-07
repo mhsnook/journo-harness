@@ -148,6 +148,15 @@ stored on the record rather than read off the text. That is what stops the Offer
 and the Plan Panel naming one item two ways.
 _Avoid_: excerpt, passage, snippet, pull quote
 
+**Reference material**:
+The code word for what a Reference and an Offer both carry — the type, the text, the
+source, and the note, and the two rules over them: at least one of the text and the source
+is present, and a Quote carries a text. Named `referenceMaterial` in `src/shared/plan`, and
+spread into each schema rather than shared as one, because the two carry different identity
+fields around it. Accepting maps one definition onto itself where it would otherwise map
+two onto each other.
+_Avoid_: the phrase anywhere the writer can read it; body, content, payload
+
 **Ledger**:
 The View of an Article's Offers and what the writer decided about each — a query over
 Offers, not a store of its own. Name it the **Offer ledger** wherever the phrase stands on
@@ -169,6 +178,13 @@ _Avoid_: kept, approved, selected, promoted
 The disposition of an Offer the writer has ruled out. Restorable — nothing is deleted.
 _Avoid_: cut (the writer cuts their own prose), rejected, dismissed (a Guidance note is
 dismissed), discarded
+
+**Stranded**:
+Describes an Accepted Offer that no Reference in the Plan points back at. Accepting is two
+writes against two stores, so a Plan write that never lands leaves the row Accepted and the
+Plan holding nothing. Distinct from an Accepted Reference carrying no Section, which is in
+the Plan and waiting to be placed. The Offer ledger shows it and offers the re-add.
+_Avoid_: orphaned, dangling, lost, missing
 
 **Provenance**:
 Where a record came from. An Accepted Offer is **copied** into the Plan as a new,

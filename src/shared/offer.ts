@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import { referenceTypeSchema, sourceSchema } from './plan/schema'
+import { carriesSomething, quoteCarriesText, referenceMaterial } from './plan/schema'
 
 /**
  * An Offer, as coined in context.md. Stored in the Article Agent's SQLite,
@@ -15,29 +15,61 @@ export type Disposition = (typeof dispositions)[number]
 export const rulingSchema = z.enum(['accepted', 'declined'])
 export type Ruling = z.infer<typeof rulingSchema>
 
-/** What the Chat turned up. The id, the disposition, and the timestamps are
- * the Article Agent's to set, so they are not here. */
-export const offerContentSchema = z
-	.strictObject({
-		type: referenceTypeSchema,
-		text: z.string().min(1).optional(),
-		source: sourceSchema.optional(),
-		note: z.string().min(1).optional(),
-	})
-	.refine((offer) => offer.text !== undefined || offer.source !== undefined, {
+/** What the Chat turned up: Reference material, and nothing else. The id, the
+ * disposition, and the timestamps are the Article Agent's to set, so they are
+ * not here. */
+export const offerMaterialSchema = z
+	.strictObject(referenceMaterial)
+	.refine(carriesSomething, {
 		error: 'An Offer carries a text, a source, or both. One with neither is nothing.',
 	})
-	.refine((offer) => offer.type !== 'quote' || offer.text !== undefined, {
+	.refine(quoteCarriesText, {
 		error: 'An Offer of type quote carries a text.',
 	})
 
-export type OfferContent = z.infer<typeof offerContentSchema>
+export type OfferMaterial = z.infer<typeof offerMaterialSchema>
+
+/** What the research tool hands the Article Agent — one turn's findings, in the
+ * order the model wants them shown. */
+export const offerBatchSchema = z.array(offerMaterialSchema).min(1)
 
 /** One Offer row. `decidedAt` is null while the Offer is Undecided, and
  * returns to null when a Declined one is restored. */
-export type Offer = OfferContent & {
+export type Offer = OfferMaterial & {
 	id: string
 	disposition: Disposition
 	createdAt: number
 	decidedAt: number | null
+}
+
+/**
+ * What makes two Offers the same thing turned up twice, so that research
+ * repeating itself next session lands on the row the writer already ruled on
+ * rather than on a second one.
+ *
+ * The note is left out: the Guide writes it fresh each session and it says
+ * nothing about which source this is. The text is in, because Offers are flat —
+ * two Quotes from one publication are two Offers, and a url on its own would
+ * fold them into one.
+ */
+export function offerFingerprint(material: OfferMaterial): string {
+	const source = material.source ?? {}
+
+	// A JSON array rather than a joined string: any delimiter that can appear
+	// inside a field lets two Offers that differ fingerprint the same.
+	return JSON.stringify(
+		[
+			material.type,
+			material.text,
+			source.url,
+			source.title,
+			source.author,
+			source.publication,
+			source.year,
+		].map((field) =>
+			String(field ?? '')
+				.trim()
+				.toLowerCase(),
+		),
+	)
 }

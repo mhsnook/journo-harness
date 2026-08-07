@@ -37,6 +37,32 @@ export const sourceSchema = z
 		error: 'A source carries at least one of title, author, publication, year, or url.',
 	})
 
+/**
+ * Reference material: the four fields a Reference and an Offer both carry —
+ * context.md. Spread into each schema rather than shared as one schema, because
+ * `.refine()` returns a type that cannot be `.extend()`ed and the two carry
+ * different identity fields around it.
+ */
+export const referenceMaterial = {
+	type: referenceTypeSchema,
+	text: z.string().min(1).optional(),
+	source: sourceSchema.optional(),
+	note: z.string().min(1).optional(),
+}
+
+/** The invariant over the material: an entry carrying neither is nothing. Each
+ * schema refines with this and states the error in its own noun, so a refused
+ * Offer does not tell the writer about a Reference. */
+export const carriesSomething = (material: { text?: string; source?: Source }): boolean =>
+	material.text !== undefined || material.source !== undefined
+
+/** The second invariant. The type is stored rather than read off the text, so a
+ * Reference may carry a text without being a Quote but not the other way. */
+export const quoteCarriesText = (material: {
+	type: ReferenceType
+	text?: string
+}): boolean => material.type !== 'quote' || material.text !== undefined
+
 /** Where a record came from. */
 export const provenanceSchema = z
 	.strictObject({
@@ -54,17 +80,14 @@ export const provenanceSchema = z
 export const referenceSchema = z
 	.strictObject({
 		id: idSchema,
-		type: referenceTypeSchema,
+		...referenceMaterial,
 		provenance: provenanceSchema,
-		text: z.string().min(1).optional(),
-		source: sourceSchema.optional(),
 		nodeId: idSchema.nullable(),
-		note: z.string().min(1).optional(),
 	})
-	.refine((reference) => reference.text !== undefined || reference.source !== undefined, {
+	.refine(carriesSomething, {
 		error: 'A Reference carries a text, a source, or both. One with neither is nothing.',
 	})
-	.refine((reference) => reference.type !== 'quote' || reference.text !== undefined, {
+	.refine(quoteCarriesText, {
 		error: 'A Reference of type quote carries a text.',
 	})
 
