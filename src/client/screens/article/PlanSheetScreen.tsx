@@ -7,7 +7,7 @@ import { Frame, FrameBody } from '../../components/Frame'
 import { LengthBar } from '../../components/LengthBar'
 import { Panel, PanelHeader } from '../../components/Panel'
 import { QuoteRow } from '../../components/QuoteRow'
-import { attribution, referenceHeading } from '../../lib/reference'
+import { attributionLine, referenceHeading } from '../../lib/reference'
 import { ARTICLE_TITLE, articlePlan, outline } from '../../mock/content'
 import { PlanOutline } from './PlanBlocks'
 
@@ -66,7 +66,7 @@ export function PlanSheetScreen() {
 										{referenceHeading(reference)}
 									</p>
 									<p className="text-[0.6875rem] text-faint">
-										{attribution(reference.source).join(' · ')}
+										{attributionLine(reference.source)}
 									</p>
 									<p className="mt-auto pt-1 text-[0.6875rem] text-muted">
 										{sectionLabels.get(reference.nodeId ?? '') ?? 'no Section yet'}

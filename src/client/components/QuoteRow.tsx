@@ -1,6 +1,6 @@
 import type { Reference } from '../../shared/plan'
 import { cx } from '../lib/cx'
-import { attribution, referenceHeading } from '../lib/reference'
+import { citation, referenceHeading } from '../lib/reference'
 import { Chip } from './Chip'
 
 export interface QuoteRowProps {
@@ -22,8 +22,6 @@ export function QuoteRow({
 	dimmed = false,
 	className,
 }: QuoteRowProps) {
-	const cite = reference.source?.title ?? attribution(reference.source).join(' · ')
-
 	return (
 		<div className={cx('flex items-start gap-2.5', dimmed && 'opacity-50', className)}>
 			<Chip variant={section ? 'default' : 'muted'} className="mt-px">
@@ -39,7 +37,7 @@ export function QuoteRow({
 					“{reference.text ?? referenceHeading(reference)}”
 				</p>
 				<footer className="mt-1 flex items-center gap-2 text-[0.6875rem] text-faint">
-					<cite className="not-italic">{cite}</cite>
+					<cite className="not-italic">{citation(reference)}</cite>
 					{showUsage ? (
 						<span className={used ? 'text-accent-ink' : undefined}>
 							· {used ? 'used' : 'ready'}

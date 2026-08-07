@@ -9,9 +9,9 @@ import type { OutlineNode } from './schema'
 
 export type OutlineEntry = {
 	node: OutlineNode
-	/** 0 is a Section and 1 is a Subsection — context.md, **Node**. */
-	depth: number
-	/** What the writer reads: "§2", and "§2.1" for a Subsection. */
+	/** What the writer reads: "§2", and "§2.1" for a Subsection. Both Panels and
+	 * the prompt packs name a Section this way, so it is not the client's to
+	 * spell. */
 	label: string
 }
 
@@ -24,7 +24,7 @@ export function outlineEntries(
 		const numbering = [...prefix, index + 1]
 
 		return [
-			{ node, depth: prefix.length, label: `§${numbering.join('.')}` },
+			{ node, label: `§${numbering.join('.')}` },
 			...outlineEntries(node.children, numbering),
 		]
 	})

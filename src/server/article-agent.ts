@@ -3,6 +3,8 @@ import { z } from 'zod'
 
 import {
 	type Disposition,
+	missingOffer,
+	notDeclined,
 	type Offer,
 	offerBatchSchema,
 	offerFingerprint,
@@ -46,10 +48,6 @@ function toOffer(row: OfferRow): Offer {
 		createdAt: row.created_at,
 		decidedAt: row.decided_at,
 	}
-}
-
-function missingOffer(id: string): Error {
-	return new Error(`No Offer carries the id ${id}.`)
 }
 
 /** One entry of a research turn, once the Article Agent has placed it.
@@ -192,11 +190,7 @@ export class ArticleAgent extends Agent<Env, Plan> {
 		// Read first: an Offer that is Accepted and one that does not exist have
 		// to be told apart, and one conditional UPDATE cannot do that.
 		const offer = this.readOffer(id)
-		if (offer.disposition !== 'declined') {
-			throw new Error(
-				`Offer ${id} is ${offer.disposition}, and restoring undoes a Decline.`,
-			)
-		}
+		if (offer.disposition !== 'declined') throw notDeclined(offer)
 
 		const rows = this.sql<OfferRow>`
 			UPDATE offer SET disposition = 'undecided', decided_at = NULL

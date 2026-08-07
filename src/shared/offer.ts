@@ -42,6 +42,20 @@ export type Offer = OfferMaterial & {
 	decidedAt: number | null
 }
 
+/** Refusals the writer may meet either way they reach an Offer. The wording
+ * lives with the rule so the Article Agent and the in-memory store cannot say
+ * one thing two ways. */
+export function missingOffer(id: string): Error {
+	return new Error(`No Offer carries the id ${id}.`)
+}
+
+/** Restoring undoes a Decline, so an Offer in any other disposition refuses. */
+export function notDeclined(offer: Offer): Error {
+	return new Error(
+		`Offer ${offer.id} is ${offer.disposition}, and restoring undoes a Decline.`,
+	)
+}
+
 /**
  * What makes two Offers the same thing turned up twice, so that research
  * repeating itself next session lands on the row the writer already ruled on

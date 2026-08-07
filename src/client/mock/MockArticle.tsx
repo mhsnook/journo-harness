@@ -1,6 +1,6 @@
 import { type ReactNode, useMemo, useState } from 'react'
 
-import type { Offer, Ruling } from '../../shared/offer'
+import { missingOffer, notDeclined, type Offer, type Ruling } from '../../shared/offer'
 import type { Plan } from '../../shared/plan'
 import { ArticleProvider, type OfferStore } from '../lib/article'
 import { articlePlan, offers as seeded } from './content'
@@ -26,7 +26,7 @@ function memoryOfferStore(seed: readonly Offer[]): OfferStore {
 
 	const find = (id: string): Offer => {
 		const offer = rows.find((held) => held.id === id)
-		if (offer === undefined) throw new Error(`No Offer carries the id ${id}.`)
+		if (offer === undefined) throw missingOffer(id)
 
 		return offer
 	}
@@ -50,13 +50,7 @@ function memoryOfferStore(seed: readonly Offer[]): OfferStore {
 
 		restoreOffer: (id: string) => {
 			const offer = find(id)
-			if (offer.disposition !== 'declined') {
-				return Promise.reject(
-					new Error(
-						`Offer ${id} is ${offer.disposition}, and restoring undoes a Decline.`,
-					),
-				)
-			}
+			if (offer.disposition !== 'declined') return Promise.reject(notDeclined(offer))
 
 			return rule(offer, 'undecided', null)
 		},

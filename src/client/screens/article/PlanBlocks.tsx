@@ -7,7 +7,7 @@ import { OutlineRow } from '../../components/OutlineRow'
 import { PanelHeader } from '../../components/Panel'
 import { QuoteRow } from '../../components/QuoteRow'
 import { cx } from '../../lib/cx'
-import { attribution, referenceHeading } from '../../lib/reference'
+import { attributionLine, referenceHeading } from '../../lib/reference'
 import type { Section } from '../../mock/content'
 
 export interface PlanLengthProps {
@@ -123,7 +123,7 @@ export function PlanReferences({ references, justAddedId }: PlanReferencesProps)
 						{referenceHeading(reference)}
 					</p>
 					<p className="text-[0.6875rem] text-faint">
-						{attribution(reference.source).join(' · ')}
+						{attributionLine(reference.source)}
 					</p>
 				</div>
 			))}

@@ -20,8 +20,10 @@ export type OfferStore = {
 export type Article = {
 	offers: OfferStore
 	plan: Plan
-	/** Replaces the whole blob, which is the only way to write it. */
-	setPlan: (plan: Plan) => void
+	/** Replaces the whole blob, which is the only way to write it. Takes an
+	 * updater, because only whoever holds the Plan can answer what it is now —
+	 * a caller deriving one from the last render would write a stale copy. */
+	setPlan: (update: (held: Plan) => Plan) => void
 }
 
 const ArticleContext = createContext<Article | null>(null)

@@ -20,7 +20,7 @@ export type LedgerSection = OutlineEntry & { references: Reference[] }
 
 export type OfferLedger = {
 	/** Every Offer, in the order the Article Agent recorded them. */
-	offers: Offer[]
+	offers: readonly Offer[]
 	byDisposition: Record<Disposition, Offer[]>
 	/** The filter counts, `all` included so the chips read from one place. */
 	counts: Record<'all' | Disposition, number>
@@ -101,7 +101,7 @@ export function offerLedger(plan: Plan, offers: readonly Offer[]): OfferLedger {
 	}
 
 	return {
-		offers: [...offers],
+		offers,
 		byDisposition,
 		counts: {
 			all: offers.length,

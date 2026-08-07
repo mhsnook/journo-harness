@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { acceptIntoPlan, offerLedger, type OfferLedger } from '../../shared/ledger'
 import type { Offer } from '../../shared/offer'
@@ -30,12 +30,6 @@ export function useOfferLedger(): OfferLedgerHandle {
 	const [rows, setRows] = useState<Offer[] | null>(null)
 	const [failure, setFailure] = useState<string | null>(null)
 
-	// Two Accepts in quick succession both read the Plan. Through the render's
-	// own `plan` the second would read the first's input and drop its Reference,
-	// so the writes read the latest one instead.
-	const latest = useRef(plan)
-	latest.current = plan
-
 	useEffect(() => {
 		let live = true
 
@@ -61,13 +55,12 @@ export function useOfferLedger(): OfferLedgerHandle {
 		)
 	}
 
+	// `acceptIntoPlan` hands back the Plan it was given where a copy is already
+	// there, so a second Accept returns the same object and React re-renders
+	// nothing. The id is drawn out here to keep the update pure.
 	function copyIntoPlan(offer: Offer) {
-		const { plan: next, alreadyThere } = acceptIntoPlan(
-			latest.current,
-			offer,
-			crypto.randomUUID(),
-		)
-		if (!alreadyThere) setPlan(next)
+		const id = crypto.randomUUID()
+		setPlan((held) => acceptIntoPlan(held, offer, id).plan)
 	}
 
 	function run(what: string, write: () => Promise<Offer>, then: (ruled: Offer) => void) {
