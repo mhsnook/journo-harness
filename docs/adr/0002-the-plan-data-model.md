@@ -111,6 +111,12 @@ The cost is that the type can now be wrong in a way it could not be when it was 
 so `referenceSchema` refines that a Quote carries a text, and `offerContentSchema` refines
 the same for an Offer. `context.md` carries the vocabulary.
 
+**Amended again:** the two type values are now `'link'` and `'quote'`, where the first was
+`'reference'`. Reference is the umbrella and never a type of its own, so "a Reference of
+type reference" was a tautology and the Panel printed it — a list headed References with
+its rows labelled reference. Most Links carry a url and some do not, which is why the
+field that holds the address keeps the name `url` and the type does not take it.
+
 **Consequence:** three quotes from one publication carry three copies of the attribution,
 so correcting a year is three edits. This is the same denormalisation #11 accepted when it
 chose copy-with-Provenance.

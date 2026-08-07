@@ -1,12 +1,14 @@
 import type { Offer } from '../../shared/offer'
-import type { Plan } from '../../shared/plan'
+import type { OutlineNode, Plan } from '../../shared/plan'
 
 /**
  * Sample content for the showcase.
  *
- * The Offers and the Plan below are in the shapes the Article Agent holds, so a
- * story exercises the real Offer ledger rather than a sketch of it. Everything
- * above them is still wireframe shapes waiting on their own ticket.
+ * None of this is wired to anything — it exists so the components can be read
+ * as a real product rather than as grey boxes. The Plan below is the exception
+ * and carries the real schema, because the Plan Panel is wired: the showcase
+ * and the app render one Plan through one set of components. Everything still
+ * typed here is a sketch, and each one is replaced as its ticket lands.
  */
 
 export interface Article {
@@ -114,187 +116,43 @@ export const portfolioBacklist = [
 
 export const ARTICLE_TITLE = 'Why Cities Stopped Building'
 
-export interface Section {
-	n: number
-	title: string
-	words: number
-	adjectives?: string[]
-	voice?: string
-	state?: 'done' | 'current' | 'planned'
-}
-
-export const outline: Section[] = [
-	{
-		n: 1,
-		title: 'The year the cranes stopped',
-		words: 300,
-		adjectives: ['high energy'],
-		state: 'done',
-	},
-	{
-		n: 2,
-		title: 'How review became the process',
-		words: 700,
-		adjectives: ['well researched'],
-		voice: 'Explainer',
-		state: 'done',
-	},
-	{ n: 3, title: 'Who actually pays for the delay', words: 900, state: 'current' },
-	{
-		n: 4,
-		title: 'What a faster city would look like',
-		words: 500,
-		adjectives: ['unhurried'],
-		state: 'planned',
-	},
-]
-
-export const outlineRevised: Section[] = [
-	{ n: 1, title: 'The year the cranes stopped', words: 300 },
-	{ n: 2, title: 'How review became the process', words: 700 },
-	{ n: 3, title: 'Who actually pays for the delay', words: 700 },
-	{
-		n: 4,
-		title: 'What a faster city would look like — and the argument for it',
-		words: 700,
-	},
-]
-
-/* -------------------------------------------------------------------------- */
-/* Its Offers and its Plan, in the shapes the Article Agent actually holds      */
-/* -------------------------------------------------------------------------- */
-
 /**
- * Eight Offers, as one research turn and one follow-up would have left them.
- * The dispositions are spread across all three so a story shows every filter
- * with something in it, and `o9` is Accepted with nothing in the Plan — the
- * stranded case the Offer ledger has to surface.
+ * The Plan, in the shape the Article Agent actually holds — `src/shared/plan`.
+ * The screens read it through the same components the live Plan Panel uses, so
+ * a change to the schema breaks the showcase rather than letting it drift.
  */
-export const offers: Offer[] = [
-	{
-		id: 'o1',
-		type: 'reference',
-		source: {
-			title: 'Permit throughput in six mid-sized cities',
-			author: 'R. Okonkwo',
-			publication: 'the Quarterly',
-			year: 2023,
-		},
-		note: 'Median approval time tripled between 2004 and 2021 while application volume stayed flat.',
-		disposition: 'accepted',
-		createdAt: 1,
-		decidedAt: 9,
-	},
-	{
-		id: 'o2',
-		type: 'reference',
-		source: {
-			title: 'Zoning and the missing middle',
-			author: 'A. Weill',
-			publication: 'Field Notes',
-			year: 2019,
-		},
-		note: 'The four-to-twelve-unit building has effectively been legislated out of existence.',
-		disposition: 'accepted',
-		createdAt: 2,
-		decidedAt: 10,
-	},
-	{
-		id: 'o3',
-		type: 'reference',
-		source: {
-			title: 'The cost of discretionary review',
-			publication: 'Municipal Review',
-			year: 2021,
-		},
-		note: 'Estimates the carrying cost of a stalled mid-rise at £4,100 a week.',
-		disposition: 'undecided',
-		createdAt: 3,
-		decidedAt: null,
-	},
-	{
-		id: 'o4',
-		type: 'reference',
-		source: {
-			title: 'Housing starts, quarterly series',
-			publication: 'Office for Statistics',
-			year: 2024,
-		},
-		note: 'Primary data. Useful for the opening figure, dry on its own.',
-		disposition: 'undecided',
-		createdAt: 4,
-		decidedAt: null,
-	},
-	{
-		id: 'o5',
-		type: 'reference',
-		source: {
-			title: 'Why nobody builds anymore (opinion)',
-			publication: 'The Evening Ledger',
-			year: 2022,
-		},
-		note: 'Assertive, unsourced. Covers ground we already have better evidence for.',
-		disposition: 'declined',
-		createdAt: 5,
-		decidedAt: 11,
-	},
-	{
-		id: 'o6',
-		type: 'quote',
-		text: 'We did not decide to stop building. We decided, forty separate times, that this particular building could wait.',
-		source: { title: 'Permit throughput in six mid-sized cities', author: 'R. Okonkwo' },
-		disposition: 'accepted',
-		createdAt: 6,
-		decidedAt: 12,
-	},
-	{
-		id: 'o7',
-		type: 'quote',
-		text: 'Every objection was reasonable. The sum of them was not.',
-		source: { title: 'Zoning and the missing middle', author: 'A. Weill' },
-		disposition: 'accepted',
-		createdAt: 7,
-		decidedAt: 13,
-	},
-	{
-		id: 'o8',
-		type: 'quote',
-		text: 'The meter runs on an empty lot exactly as fast as it runs on a finished one.',
-		source: { title: 'The cost of discretionary review' },
-		disposition: 'undecided',
-		createdAt: 8,
-		decidedAt: null,
-	},
-	{
-		id: 'o9',
-		type: 'reference',
-		source: { title: 'Interview — M. Sze, planning officer' },
-		disposition: 'accepted',
-		createdAt: 9,
-		decidedAt: 14,
-	},
-]
-
-/** The same Article's Plan. Four Sections, four References copied in from
- * Offers, and one the writer typed themselves. `o9` is Accepted and appears
- * here nowhere, which is what makes it stranded. */
-export const articlePlan: Plan = {
+export const plan: Plan = {
 	title: ARTICLE_TITLE,
 	totalTarget: 2400,
 	voice: 'Reported feature',
-	adjectives: ['well researched'],
+	adjectives: [],
 	outline: [
-		{ id: 'n1', title: 'The year the cranes stopped', target: 300, children: [] },
 		{
-			id: 'n2',
-			title: 'How review became the process',
-			target: 700,
-			voice: 'Explainer',
+			id: 'sec-cranes',
+			title: 'The year the cranes stopped',
+			intent: 'Open on the count, and make the drop concrete before any argument.',
+			target: 300,
+			adjectives: ['high energy'],
 			children: [],
 		},
-		{ id: 'n3', title: 'Who actually pays for the delay', target: 900, children: [] },
 		{
-			id: 'n4',
+			id: 'sec-review',
+			title: 'How review became the process',
+			intent: 'The mechanism: eleven points at which one objection resets the clock.',
+			target: 700,
+			voice: 'Explainer',
+			adjectives: ['well researched'],
+			children: [],
+		},
+		{
+			id: 'sec-cost',
+			title: 'Who actually pays for the delay',
+			intent: 'The human cost, carried by the developers who would not go on record.',
+			target: 900,
+			children: [],
+		},
+		{
+			id: 'sec-faster',
 			title: 'What a faster city would look like',
 			target: 500,
 			adjectives: ['unhurried'],
@@ -303,45 +161,72 @@ export const articlePlan: Plan = {
 	],
 	references: [
 		{
-			id: 'r1',
-			type: 'reference',
-			provenance: { type: 'offer', offerId: 'o1' },
-			source: offers[0].source,
-			nodeId: 'n2',
+			id: 'ref-throughput',
+			type: 'link',
+			provenance: { type: 'offer', offerId: 'offer-throughput' },
+			source: {
+				title: 'Permit throughput in six mid-sized cities',
+				author: 'R. Okonkwo',
+				publication: 'the Quarterly',
+				year: 2023,
+			},
+			nodeId: 'sec-review',
+			note: 'Median approval time tripled while application volume stayed flat.',
 		},
 		{
-			id: 'r2',
-			type: 'reference',
-			provenance: { type: 'offer', offerId: 'o2' },
-			source: offers[1].source,
-			nodeId: null,
+			id: 'ref-middle',
+			type: 'link',
+			provenance: { type: 'offer', offerId: 'offer-middle' },
+			source: {
+				title: 'Zoning and the missing middle',
+				author: 'A. Weill',
+				publication: 'Field Notes',
+				year: 2019,
+			},
+			nodeId: 'sec-cost',
 		},
 		{
-			id: 'r3',
+			id: 'ref-forty-times',
 			type: 'quote',
-			provenance: { type: 'offer', offerId: 'o6' },
-			text: offers[5].text,
-			source: offers[5].source,
-			nodeId: 'n2',
+			provenance: { type: 'offer', offerId: 'offer-forty-times' },
+			text: 'We did not decide to stop building. We decided, forty separate times, that this particular building could wait.',
+			source: { title: 'Permit throughput in six mid-sized cities' },
+			nodeId: 'sec-review',
 		},
 		{
-			id: 'r4',
+			id: 'ref-meter',
 			type: 'quote',
-			provenance: { type: 'offer', offerId: 'o7' },
-			text: offers[6].text,
-			source: offers[6].source,
-			nodeId: 'n3',
-		},
-		{
-			id: 'r5',
-			type: 'reference',
 			provenance: { type: 'writer' },
-			source: { title: 'Review board minutes, 2019–2024' },
-			note: 'Mine, from the archive. Never offered.',
+			text: 'The meter runs on an empty lot exactly as fast as it runs on a finished one.',
+			source: { title: 'The cost of discretionary review' },
 			nodeId: null,
 		},
 	],
 }
+
+export const outline: OutlineNode[] = plan.outline
+
+/** Which Section the writer is in, and which are drafted. Not the Plan's to
+ * carry: the Draft is a flat run of Blocks and a Boundary is inferred. */
+export const sectionState: Record<string, 'done' | 'current' | 'planned'> = {
+	'sec-cranes': 'done',
+	'sec-review': 'done',
+	'sec-cost': 'current',
+	'sec-faster': 'planned',
+}
+
+/** The same Outline after a Review, for the screen that shows what changed. */
+export const outlineRevised: OutlineNode[] = [
+	{ id: 'sec-cranes', title: 'The year the cranes stopped', target: 300, children: [] },
+	{ id: 'sec-review', title: 'How review became the process', target: 700, children: [] },
+	{ id: 'sec-cost', title: 'Who actually pays for the delay', target: 700, children: [] },
+	{
+		id: 'sec-faster',
+		title: 'What a faster city would look like — and the argument for it',
+		target: 700,
+		children: [],
+	},
+]
 
 /* -------------------------------------------------------------------------- */
 /* Prose                                                                       */
@@ -357,4 +242,98 @@ export const draftParagraphs = [
 export const draftShort = [
 	'The crane index is a silly measure and everybody in the trade uses it anyway. In 2006 the number for this city was thirty-one. Last spring it was four.',
 	'What replaced the cranes was not a decision. Nobody voted to stop building.',
+]
+
+/**
+ * The Offers behind that Plan, and a few the writer has not taken. Three were
+ * Accepted and are the Provenance the References above name; the rest spread
+ * across the other dispositions so a story shows every filter with something in
+ * it. `offer-sze` is Accepted with nothing in the Plan — the stranded case the
+ * Offer ledger has to surface.
+ */
+export const offers: Offer[] = [
+	{
+		id: 'offer-throughput',
+		type: 'link',
+		source: {
+			title: 'Permit throughput in six mid-sized cities',
+			author: 'R. Okonkwo',
+			publication: 'the Quarterly',
+			year: 2023,
+		},
+		note: 'Median approval time tripled while application volume stayed flat.',
+		disposition: 'accepted',
+		createdAt: 1,
+		decidedAt: 11,
+	},
+	{
+		id: 'offer-middle',
+		type: 'link',
+		source: {
+			title: 'Zoning and the missing middle',
+			author: 'A. Weill',
+			publication: 'Field Notes',
+			year: 2019,
+		},
+		note: 'The four-to-twelve-unit building has been legislated out of existence.',
+		disposition: 'accepted',
+		createdAt: 2,
+		decidedAt: 12,
+	},
+	{
+		id: 'offer-forty-times',
+		type: 'quote',
+		text: 'We did not decide to stop building. We decided, forty separate times, that this particular building could wait.',
+		source: { title: 'Permit throughput in six mid-sized cities', author: 'R. Okonkwo' },
+		disposition: 'accepted',
+		createdAt: 3,
+		decidedAt: 13,
+	},
+	{
+		id: 'offer-discretionary',
+		type: 'link',
+		source: {
+			title: 'The cost of discretionary review',
+			publication: 'Municipal Review',
+			year: 2021,
+		},
+		note: 'Estimates the carrying cost of a stalled mid-rise at £4,100 a week.',
+		disposition: 'undecided',
+		createdAt: 4,
+		decidedAt: null,
+	},
+	{
+		id: 'offer-starts',
+		type: 'link',
+		source: {
+			title: 'Housing starts, quarterly series',
+			publication: 'Office for Statistics',
+			year: 2024,
+		},
+		note: 'Primary data. Useful for the opening figure, dry on its own.',
+		disposition: 'undecided',
+		createdAt: 5,
+		decidedAt: null,
+	},
+	{
+		id: 'offer-nobody-builds',
+		type: 'link',
+		source: {
+			title: 'Why nobody builds anymore (opinion)',
+			publication: 'The Evening Ledger',
+			year: 2022,
+		},
+		note: 'Assertive, unsourced. Covers ground we already have better evidence for.',
+		disposition: 'declined',
+		createdAt: 6,
+		decidedAt: 14,
+	},
+	{
+		id: 'offer-sze',
+		type: 'link',
+		source: { title: 'Interview — M. Sze, planning officer' },
+		disposition: 'accepted',
+		createdAt: 7,
+		decidedAt: 15,
+	},
 ]

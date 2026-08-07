@@ -9,7 +9,7 @@ export interface MetaLabelProps {
 	className?: string
 }
 
-/** The small uppercase mono label that heads a list or a group. */
+/** The small mono label that heads a list or a group. */
 export function MetaLabel({ children, count, className }: MetaLabelProps) {
 	return (
 		<div className={cx('label-meta', className)}>

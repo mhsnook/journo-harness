@@ -37,10 +37,7 @@ export function BlankPlanScreen() {
 						</EmptySlot>
 					</PlanBlock>
 					<PlanBlock title="References" meta="0">
-						<EmptySlot>Tick a reference in the chat</EmptySlot>
-					</PlanBlock>
-					<PlanBlock title="Quotes" meta="0">
-						<EmptySlot>Or paste your own</EmptySlot>
+						<EmptySlot>Tick a reference in the chat, or paste your own</EmptySlot>
 					</PlanBlock>
 					<p className="mt-auto text-[0.6875rem] text-faint">
 						Scrolls. Nothing here is locked, and nothing has to be finished before you

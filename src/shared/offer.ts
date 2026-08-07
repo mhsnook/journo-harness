@@ -1,11 +1,14 @@
 import { z } from 'zod'
 
-import { carriesSomething, quoteCarriesText, referenceMaterial } from './plan/schema'
+import { type ReferenceContent, referenceContentSchema } from './plan/schema'
 
 /**
  * An Offer, as coined in context.md. Stored in the Article Agent's SQLite,
- * Offers are kept as a flat list of References and Quotes turned up from
- * research.
+ * Offers are kept as a flat list of Links and Quotes turned up from research.
+ *
+ * An Offer carries **Reference content** and nothing of its own beyond the row
+ * fields, so Accepting one copies content onto content — the two cannot drift
+ * into disagreeing about what a Reference says.
  */
 
 /** How far the writer has got with one Offer. Every Offer starts Undecided. */
@@ -15,27 +18,13 @@ export type Disposition = (typeof dispositions)[number]
 export const rulingSchema = z.enum(['accepted', 'declined'])
 export type Ruling = z.infer<typeof rulingSchema>
 
-/** What the Chat turned up: Reference material, and nothing else. The id, the
- * disposition, and the timestamps are the Article Agent's to set, so they are
- * not here. */
-export const offerMaterialSchema = z
-	.strictObject(referenceMaterial)
-	.refine(carriesSomething, {
-		error: 'An Offer carries a text, a source, or both. One with neither is nothing.',
-	})
-	.refine(quoteCarriesText, {
-		error: 'An Offer of type quote carries a text.',
-	})
-
-export type OfferMaterial = z.infer<typeof offerMaterialSchema>
-
 /** What the research tool hands the Article Agent — one turn's findings, in the
  * order the model wants them shown. */
-export const offerBatchSchema = z.array(offerMaterialSchema).min(1)
+export const offerBatchSchema = z.array(referenceContentSchema).min(1)
 
 /** One Offer row. `decidedAt` is null while the Offer is Undecided, and
  * returns to null when a Declined one is restored. */
-export type Offer = OfferMaterial & {
+export type Offer = ReferenceContent & {
 	id: string
 	disposition: Disposition
 	createdAt: number
@@ -66,15 +55,15 @@ export function notDeclined(offer: Offer): Error {
  * two Quotes from one publication are two Offers, and a url on its own would
  * fold them into one.
  */
-export function offerFingerprint(material: OfferMaterial): string {
-	const source = material.source ?? {}
+export function offerFingerprint(content: ReferenceContent): string {
+	const source = content.source ?? {}
 
 	// A JSON array rather than a joined string: any delimiter that can appear
 	// inside a field lets two Offers that differ fingerprint the same.
 	return JSON.stringify(
 		[
-			material.type,
-			material.text,
+			content.type,
+			content.text,
 			source.url,
 			source.title,
 			source.author,

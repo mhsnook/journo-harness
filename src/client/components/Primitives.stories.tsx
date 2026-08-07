@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
 
-import { articlePlan, offers, outline } from '../mock/content'
+import { offers, plan, sectionState } from '../mock/content'
 import { Button } from './Button'
 import { Check } from './Check'
 import { Chip } from './Chip'
@@ -98,10 +98,10 @@ export const Progress: Story = {
 			</Row>
 			<Row label="Length bar — the shape of the piece">
 				<LengthBar
-					segments={outline.map((s) => ({
-						label: s.title,
-						words: s.words,
-						state: s.state,
+					segments={plan.outline.map((node) => ({
+						label: node.title,
+						words: node.target ?? 0,
+						state: sectionState[node.id],
 					}))}
 					height={160}
 					accentCurrent
@@ -118,8 +118,8 @@ export const Research: Story = {
 			<ReferenceCard offer={offers[2]} variant="ledger" />
 			<ReferenceCard offer={offers[4]} variant="ledger" compact />
 			<ReferenceCard offer={offers[8]} variant="ledger" compact inThePlan={false} />
-			<QuoteRow reference={articlePlan.references[2]} section="§2" showUsage />
-			<QuoteRow reference={articlePlan.references[3]} showUsage />
+			<QuoteRow reference={plan.references[2]} section="§2" showUsage />
+			<QuoteRow reference={plan.references[3]} showUsage />
 		</div>
 	),
 }
@@ -159,9 +159,9 @@ export const Notes: Story = {
 export const PlanPieces: Story = {
 	render: () => (
 		<div className="flex w-[26rem] flex-col gap-4">
-			<OutlineRow section={outline[1]} />
-			<OutlineRow section={outline[2]} current />
-			<OutlineRow section={outline[3]} dense />
+			<OutlineRow node={plan.outline[1]} ordinal="2" />
+			<OutlineRow node={plan.outline[2]} ordinal="3" current />
+			<OutlineRow node={plan.outline[3]} ordinal="4" dense />
 			<div className="flex flex-col gap-2 pt-2">
 				<PolarityHeading polarity="yes" count={3}>
 					Sounds like this

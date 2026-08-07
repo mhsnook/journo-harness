@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 
-import { acceptIntoPlan, offerLedger, type OfferLedger } from '../../shared/ledger'
+import { offerLedger, type OfferLedger } from '../../shared/ledger'
 import type { Offer } from '../../shared/offer'
+import { acceptOffer } from '../plan/edits'
 import { useArticle } from './article'
 
 /**
@@ -26,7 +27,7 @@ export type OfferLedgerHandle = {
 }
 
 export function useOfferLedger(): OfferLedgerHandle {
-	const { offers: store, plan, setPlan } = useArticle()
+	const { offers: store, plan, edit } = useArticle()
 	const [rows, setRows] = useState<Offer[] | null>(null)
 	const [failure, setFailure] = useState<string | null>(null)
 
@@ -55,14 +56,6 @@ export function useOfferLedger(): OfferLedgerHandle {
 		)
 	}
 
-	// `acceptIntoPlan` hands back the Plan it was given where a copy is already
-	// there, so a second Accept returns the same object and React re-renders
-	// nothing. The id is drawn out here to keep the update pure.
-	function copyIntoPlan(offer: Offer) {
-		const id = crypto.randomUUID()
-		setPlan((held) => acceptIntoPlan(held, offer, id).plan)
-	}
-
 	function run(what: string, write: () => Promise<Offer>, then: (ruled: Offer) => void) {
 		setFailure(null)
 		write().then(then, (error: unknown) => setFailure(`${what} ${reasonFor(error)}`))
@@ -82,7 +75,7 @@ export function useOfferLedger(): OfferLedgerHandle {
 				() => store.setOfferDisposition(offer.id, 'accepted'),
 				(ruled) => {
 					replace(ruled)
-					copyIntoPlan(ruled)
+					edit(acceptOffer(plan, ruled))
 				},
 			)
 		},
@@ -101,7 +94,7 @@ export function useOfferLedger(): OfferLedgerHandle {
 
 		addToPlan(offer) {
 			setFailure(null)
-			copyIntoPlan(offer)
+			edit(acceptOffer(plan, offer))
 		},
 	}
 }

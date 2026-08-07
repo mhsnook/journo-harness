@@ -5,7 +5,6 @@
 
 export * from './apply'
 export * from './ops'
-export * from './outline'
 export * from './refusal'
 export * from './schema'
 export * from './scope'

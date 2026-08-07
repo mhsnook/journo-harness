@@ -1,24 +1,39 @@
 import { type ReactNode, useMemo, useState } from 'react'
 
 import { missingOffer, notDeclined, type Offer, type Ruling } from '../../shared/offer'
-import type { Plan } from '../../shared/plan'
+import type { Plan, ProposalInput } from '../../shared/plan'
+import { applyProposal } from '../../shared/plan'
 import { ArticleProvider, type OfferStore } from '../lib/article'
-import { articlePlan, offers as seeded } from './content'
+import { offers as seeded, plan as seededPlan } from './content'
 
 /**
  * An Article held in memory, so a story exercises the real Offer ledger without
  * a Worker. It answers the same three methods the Article Agent exposes over
- * RPC, and the route that connects the real one swaps this provider for
- * `useAgent`.
+ * RPC and applies edits through the same applier, so what a story shows is what
+ * the Panel does.
+ *
+ * What it leaves out is what only the socket needs: `usePlan` debounces its
+ * writes and surfaces a refusal, and there is neither a wire to spare nor a
+ * place to show one here.
  */
 export function MockArticle({ children }: { children: ReactNode }) {
-	const [plan, setPlan] = useState<Plan>(articlePlan)
+	const [plan, setPlan] = useState<Plan>(seededPlan)
 
 	// One store for the life of the story: the Ledger reads its rows once, the
 	// way it will read them when a Panel opens.
 	const offers = useMemo(() => memoryOfferStore(seeded), [])
 
-	return <ArticleProvider value={{ offers, plan, setPlan }}>{children}</ArticleProvider>
+	const edit = (ops: ProposalInput | null) => {
+		if (ops === null) return
+
+		setPlan((held) => {
+			const result = applyProposal(held, ops)
+
+			return result.ok ? result.plan : held
+		})
+	}
+
+	return <ArticleProvider value={{ offers, plan, edit }}>{children}</ArticleProvider>
 }
 
 function memoryOfferStore(seed: readonly Offer[]): OfferStore {

@@ -1,6 +1,6 @@
 import type { Offer } from '../../shared/offer'
 import { cx } from '../lib/cx'
-import { attribution, referenceHeading } from '../lib/reference'
+import { attribution, referenceName } from '../plan/references'
 import { Button } from './Button'
 import { Check } from './Check'
 import { Chip } from './Chip'
@@ -48,7 +48,7 @@ export function ReferenceCard({
 }: ReferenceCardProps) {
 	const declined = offer.disposition === 'declined'
 	const accepted = offer.disposition === 'accepted'
-	const heading = referenceHeading(offer)
+	const heading = referenceName(offer)
 	// A Quote pulled without a source is its own heading, so printing the
 	// passage again below it would say one thing twice.
 	const passage = offer.text !== undefined && offer.text !== heading

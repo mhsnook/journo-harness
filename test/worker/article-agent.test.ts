@@ -2,9 +2,9 @@ import { env, evictDurableObject, runInDurableObject } from 'cloudflare:test'
 import { describe, expect, it } from 'vitest'
 
 import type { RecordedOffer } from '../../src/server/article-agent'
-import { acceptIntoPlan, offerLedger } from '../../src/shared/ledger'
-import type { Offer, OfferMaterial } from '../../src/shared/offer'
-import type { Plan } from '../../src/shared/plan'
+import { offerLedger, referenceFromOffer } from '../../src/shared/ledger'
+import type { Offer } from '../../src/shared/offer'
+import type { Plan, ReferenceContent } from '../../src/shared/plan'
 import { emptyPlan, isPlanRefused } from '../../src/shared/plan'
 import { makeNode, makePlan, makeReference } from '../shared/plan-fixtures'
 import { openAgentSocket } from './agent-socket'
@@ -13,10 +13,10 @@ import { openAgentSocket } from './agent-socket'
  * `createOffer` is deliberately not `@callable`, so a test reaches it the same
  * way the research tool does. The Article Agent must already be awake, which
  * every caller here arranges by opening a socket first. */
-function createOffer(name: string, material: OfferMaterial): Promise<Offer> {
+function createOffer(name: string, content: ReferenceContent): Promise<Offer> {
 	const stub = env.ArticleAgent.get(env.ArticleAgent.idFromName(name))
 
-	return runInDurableObject(stub, (agent) => agent.createOffer(material))
+	return runInDurableObject(stub, (agent) => agent.createOffer(content))
 }
 
 /** One research turn, the way the tool will run it. */
@@ -50,7 +50,7 @@ const quote = {
 }
 
 const reference = {
-	type: 'reference' as const,
+	type: 'link' as const,
 	source: { title: 'Zoning and the missing middle', author: 'A. Weill' },
 	note: 'Primary data for the opening figure.',
 }
@@ -142,7 +142,7 @@ describe('Offers in the Article Agent', () => {
 	// one refuses without the Article Agent ever reaching its table.
 	it('refuses an Offer carrying neither a text nor a source', async () => {
 		await expect(
-			createOffer('offer-empty', { type: 'reference' } as OfferMaterial),
+			createOffer('offer-empty', { type: 'link' } as ReferenceContent),
 		).rejects.toThrow(/text, a source, or both/)
 	})
 
@@ -187,7 +187,7 @@ describe('Offers in the Article Agent', () => {
 
 		const titles = await runInDurableObject(stub, (agent) => {
 			const recorded = ['first', 'second', 'third', 'fourth'].map((title) =>
-				agent.createOffer({ type: 'reference', source: { title } }),
+				agent.createOffer({ type: 'link', source: { title } }),
 			)
 
 			return {
@@ -298,6 +298,12 @@ describe('Accepting an Offer into the Plan', () => {
 		return frame.state as Plan
 	}
 
+	/** The Plan after Accepting, which the client builds and sends whole. The op
+	 * that does it in the app is `acceptOffer`, tested in test/client. */
+	function copiedInto(held: Plan, offer: Offer): Plan {
+		return { ...held, references: [...held.references, referenceFromOffer(offer, 'r1')] }
+	}
+
 	const opening = makePlan({
 		title: 'The permit queue',
 		outline: [makeNode({ id: 'n1', title: 'The opening' })],
@@ -310,7 +316,7 @@ describe('Accepting an Offer into the Plan', () => {
 		const [{ offer }] = await recordOffers('accept-and-edit', [quote])
 
 		const ruled = await writer.call<Offer>('setOfferDisposition', offer.id, 'accepted')
-		writer.setState(acceptIntoPlan(opening, ruled, 'r1').plan)
+		writer.setState(copiedInto(opening, ruled))
 
 		const accepted = await readPlan('accept-and-edit')
 		expect(accepted.references).toEqual([
@@ -369,9 +375,9 @@ describe('Accepting an Offer into the Plan', () => {
 		expect(ledger.stranded).toEqual([ruled])
 
 		// The re-add is the same second write, and it is the only one missing.
-		writer.setState(acceptIntoPlan(opening, ruled, 'r1').plan)
-		const after = offerLedger(await readPlan('accept-stranded'), [ruled])
-		expect(after.stranded).toEqual([])
-		expect(after.unplaced.map((held) => held.provenance.offerId)).toEqual([offer.id])
+		writer.setState(copiedInto(opening, ruled))
+		const replaced = await readPlan('accept-stranded')
+		expect(offerLedger(replaced, [ruled]).stranded).toEqual([])
+		expect(replaced.references.map((held) => held.provenance.offerId)).toEqual([offer.id])
 	})
 })

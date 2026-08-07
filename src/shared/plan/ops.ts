@@ -6,6 +6,8 @@ import {
 	idSchema,
 	intentSchema,
 	outlineNodeSchema,
+	referenceContentSchema,
+	referenceSchema,
 	targetSchema,
 	voiceSchema,
 } from './schema'
@@ -136,7 +138,37 @@ export const placeReferenceOpSchema = z.strictObject({
 	value: idSchema.nullable(),
 })
 
-export const proposalOpSchema = z.discriminatedUnion('op', [
+/**
+ * The three ops below are the writer's own References — the ones they paste in
+ * rather than Accept from an Offer, which is why the payload states its
+ * Provenance.
+ *
+ * The applier understanding an op does not mean the Chat may propose it. What
+ * the model is offered is the tool schema, and research reaches the Plan
+ * through the Ledger — architecture §5. Leave these out of that schema.
+ */
+export const createReferenceOpSchema = z.strictObject({
+	op: z.literal('createReference'),
+	reference: referenceSchema,
+})
+
+export const deleteReferenceOpSchema = z.strictObject({
+	op: z.literal('deleteReference'),
+	referenceId: idSchema,
+})
+
+/** Replaces what a Reference says and leaves its id, its Provenance, and its
+ * placement alone. `expected` is the whole of what it said, compared key by
+ * key, because a Reference's content is short and one field. */
+export const setReferenceOpSchema = z.strictObject({
+	op: z.literal('setReference'),
+	referenceId: idSchema,
+	expected: referenceContentSchema,
+	value: referenceContentSchema,
+})
+
+/** The Outline and what a Scope says, which the Chat and the writer both change. */
+const planOps = [
 	createNodeOpSchema,
 	moveNodeOpSchema,
 	mergeNodesOpSchema,
@@ -147,10 +179,43 @@ export const proposalOpSchema = z.discriminatedUnion('op', [
 	setVoiceOpSchema,
 	setAdjectivesOpSchema,
 	placeReferenceOpSchema,
-])
+] as const
+
+/** The writer's own References, which only the writer writes. */
+const referenceOps = [
+	createReferenceOpSchema,
+	deleteReferenceOpSchema,
+	setReferenceOpSchema,
+] as const
+
+export const proposalOpSchema = z.discriminatedUnion('op', [...planOps, ...referenceOps])
 
 /** The whole Proposal, applied as one ordered batch. An empty list is not one. */
 export const proposalSchema = z.array(proposalOpSchema).min(1)
+
+/**
+ * What the Chat may propose, against `proposalSchema`, which is everything the
+ * applier understands. The Reference ops are left out: research reaches the
+ * Plan by being Accepted from an Offer, and the Ledger is that bridge —
+ * `docs/architecture.md` §5. A model handed `createReference` could put a
+ * source in the Plan that the writer never ruled on.
+ *
+ * This is the schema the Proposal tool declares, in `src/shared/chat.ts`.
+ */
+export const chatProposalSchema = z.array(z.discriminatedUnion('op', [...planOps])).min(1)
+
+/**
+ * The names of those ops, read off the schema rather than listed again — a
+ * second list is a list that drifts. The Proposal tool's description has to
+ * teach every one of them, and a test holds it to that: an op added to
+ * `planOps` reaches the model whether or not anything tells the model what it
+ * does.
+ */
+export const chatOpNames: OpName[] = (
+	chatProposalSchema.element as unknown as {
+		options: { shape: { op: { value: OpName } } }[]
+	}
+).options.map((option) => option.shape.op.value)
 
 export type ProposalOp = z.infer<typeof proposalOpSchema>
 export type Proposal = z.infer<typeof proposalSchema>

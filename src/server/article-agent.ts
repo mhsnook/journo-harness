@@ -1,6 +1,9 @@
-import { Agent, callable, type Connection } from 'agents'
+import { AIChatAgent, type OnChatMessageOptions } from '@cloudflare/ai-chat'
+import { callable, type Connection } from 'agents'
+import { type GenerateTextOnFinishCallback, type LanguageModel, type ToolSet } from 'ai'
 import { z } from 'zod'
 
+import { chatRequestBody } from '../shared/chat'
 import {
 	type Disposition,
 	missingOffer,
@@ -8,19 +11,21 @@ import {
 	type Offer,
 	offerBatchSchema,
 	offerFingerprint,
-	type OfferMaterial,
-	offerMaterialSchema,
 	type Ruling,
 	rulingSchema,
 } from '../shared/offer'
 import {
 	emptyPlan,
 	type Plan,
-	type ReferenceType,
 	type PlanRefused,
 	planSchema,
+	type ReferenceContent,
+	referenceContentSchema,
+	type ReferenceType,
 	type Source,
 } from '../shared/plan'
+import { chatTurn } from './llm/chat-turn'
+import { model } from './llm/model'
 
 /** One Offer row as SQLite returns it. `this.sql` asserts the row type rather
  * than checking it, and this class is the table's only writer, so the columns
@@ -56,9 +61,11 @@ export type RecordedOffer = { offer: Offer; duplicate: boolean }
 
 /**
  * One Article Agent per Article — docs/architecture.md §2, and §3 for what goes
- * in the state blob against what goes in its SQLite.
+ * in the state blob against what goes in its SQLite. `AIChatAgent` adds the
+ * Chat: it keeps the transcript in its own SQLite tables, which nothing
+ * mirrors, and routes a turn to `onChatMessage` below (§6).
  */
-export class ArticleAgent extends Agent<Env, Plan> {
+export class ArticleAgent extends AIChatAgent<Env, Plan> {
 	initialState = emptyPlan()
 
 	/** Runs on every wake, so every statement here has to be idempotent. A new
@@ -82,6 +89,68 @@ export class ArticleAgent extends Agent<Env, Plan> {
 
 	async onRequest(_request: Request): Promise<Response> {
 		return Response.json({ agent: 'ArticleAgent', name: this.name })
+	}
+
+	/** The model a Chat turn runs on. Named for the Chat even though one model
+	 * currently serves every call (§7): "model" alone does not say which of the
+	 * app's several meanings is meant, and a Review or a Guide pass choosing its
+	 * own model later is a likely enough change to leave room for.
+	 *
+	 * `llm/model.ts` is the boundary; this reads it so a workerd test, which has
+	 * no Workers AI binding to reach, can put a scripted model behind it. */
+	chatModel(): LanguageModel {
+		return model(this.env)
+	}
+
+	/**
+	 * One Chat turn. `llm/chat-turn.ts` composes it; this supplies the three
+	 * things only the Article Agent holds — the model, the Plan, and the
+	 * transcript — and hands back the stream.
+	 */
+	async onChatMessage(
+		onFinish: GenerateTextOnFinishCallback<ToolSet>,
+		options?: OnChatMessageOptions,
+	): Promise<Response> {
+		return chatTurn({
+			model: this.chatModel(),
+			plan: this.planForTurn(options?.body),
+			messages: this.messages,
+			abortSignal: options?.abortSignal,
+			onFinish,
+		})
+	}
+
+	/**
+	 * The Plan the turn is about. The client sends it in `body`, never in
+	 * `metadata`, which persists on the `UIMessage` and re-rides every turn
+	 * (§6).
+	 *
+	 * **The body wins over state, and the two can disagree.** A client that
+	 * applies a Proposal and sends the next turn before its `setState` lands
+	 * holds a newer Plan than the Agent stored, and the turn should be about the
+	 * one the writer is looking at. Nothing reconciles them, so the model can be
+	 * shown a Plan this Agent never stored — which is correct here and is a fact
+	 * #26 has to build for.
+	 *
+	 * An absent Plan is ordinary: a turn the client did not originate carries no
+	 * body, and state is the only Plan there is. One that is present and does
+	 * not parse is a bug, and refusing the turn is what says so.
+	 */
+	private planForTurn(body: Record<string, unknown> | undefined): Plan {
+		const sent = chatRequestBody.safeParse(body ?? {})
+		if (!sent.success) {
+			// Same shape as validateStateChange: the frame carries which rule
+			// failed, because whatever renders a thrown turn will not. It goes to
+			// every connection rather than to one, since onChatMessage is not told
+			// which of them sent the turn.
+			const reason = z.prettifyError(sent.error)
+			const refusal: PlanRefused = { type: 'plan_refused', error: reason }
+			this.broadcast(JSON.stringify(refusal))
+
+			throw new Error(`The Plan sent with this turn does not parse. ${reason}`)
+		}
+
+		return sent.data.plan ?? this.state
 	}
 
 	/**
@@ -144,9 +213,9 @@ export class ArticleAgent extends Agent<Env, Plan> {
 	}
 
 	/** Record one thing the Chat turned up. It starts Undecided. */
-	createOffer(material: OfferMaterial): Offer {
+	createOffer(content: ReferenceContent): Offer {
 		const offer: Offer = {
-			...offerMaterialSchema.parse(material),
+			...referenceContentSchema.parse(content),
 			id: crypto.randomUUID(),
 			disposition: 'undecided',
 			createdAt: Date.now(),

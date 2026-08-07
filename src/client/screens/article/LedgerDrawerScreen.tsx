@@ -10,9 +10,10 @@ import { Panel } from '../../components/Panel'
 import { QuoteRow } from '../../components/QuoteRow'
 import { ReferenceCard } from '../../components/ReferenceCard'
 import { useArticle } from '../../lib/article'
-import { referenceHeading } from '../../lib/reference'
 import { useOfferLedger } from '../../lib/useOfferLedger'
 import { ARTICLE_TITLE } from '../../mock/content'
+import { outlineEntries } from '../../plan/outline'
+import { referenceName, referencesAt } from '../../plan/references'
 
 type Filter = 'all' | Disposition
 
@@ -34,6 +35,7 @@ export function LedgerDrawerScreen() {
 
 	const shown = filter === 'all' ? ledger.offers : ledger.byDisposition[filter]
 	const stranded = new Set(ledger.stranded.map((offer) => offer.id))
+	const unplaced = plan.references.filter((reference) => reference.nodeId === null)
 
 	return (
 		<Frame width={820}>
@@ -97,35 +99,39 @@ export function LedgerDrawerScreen() {
 						</span>
 					</header>
 					<div className="flex flex-col gap-4 p-3.5">
-						{ledger.sections.map((section) => (
-							<div key={section.node.id} className="flex flex-col gap-2">
-								<MetaLabel>
-									{section.label} · {section.node.title}
-								</MetaLabel>
-								{section.references.length === 0 ? (
-									<EmptySlot className="ml-2">Place an Accepted Reference here</EmptySlot>
-								) : (
-									<div className="flex flex-col gap-2.5 pl-2">
-										{section.references.map((reference) => (
-											<QuoteRow
-												key={reference.id}
-												reference={reference}
-												section={section.label}
-												showUsage
-											/>
-										))}
-									</div>
-								)}
-							</div>
-						))}
+						{outlineEntries(plan.outline).map((entry) => {
+							const held = referencesAt(plan, entry.node.id)
 
-						{ledger.unplaced.length > 0 ? (
+							return (
+								<div key={entry.node.id} className="flex flex-col gap-2">
+									<MetaLabel>
+										§{entry.ordinal} · {entry.node.title}
+									</MetaLabel>
+									{held.length === 0 ? (
+										<EmptySlot className="ml-2">
+											Place an Accepted Reference here
+										</EmptySlot>
+									) : (
+										<div className="flex flex-col gap-2.5 pl-2">
+											{held.map(({ reference }) => (
+												<QuoteRow
+													key={reference.id}
+													reference={reference}
+													section={`§${entry.ordinal}`}
+													showUsage
+												/>
+											))}
+										</div>
+									)}
+								</div>
+							)
+						})}
+
+						{unplaced.length > 0 ? (
 							<div className="flex flex-col gap-1.5">
-								<MetaLabel count={ledger.unplaced.length}>
-									Accepted, no Section yet
-								</MetaLabel>
+								<MetaLabel count={unplaced.length}>Accepted, no Section yet</MetaLabel>
 								<p className="text-[0.75rem] text-muted">
-									{ledger.unplaced.map(referenceHeading).join(' · ')}
+									{unplaced.map(referenceName).join(' · ')}
 								</p>
 							</div>
 						) : null}
@@ -138,7 +144,7 @@ export function LedgerDrawerScreen() {
 									Accepted, and not in the Plan
 								</MetaLabel>
 								<p className="text-[0.75rem] text-muted">
-									{ledger.stranded.map(referenceHeading).join(' · ')}
+									{ledger.stranded.map(referenceName).join(' · ')}
 								</p>
 							</div>
 						) : null}

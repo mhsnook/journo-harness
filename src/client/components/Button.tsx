@@ -15,8 +15,17 @@ export interface ButtonProps extends Omit<
 	 */
 	variant?: ButtonVariant
 	size?: ButtonSize
+	/** "You are here" — the chosen one of a set. State rather than a call to
+	 * action, so it takes ink rather than the accent, the way a solid Chip does. */
+	pressed?: boolean
 	children?: ReactNode
 }
+
+// `pressed` replaces the variant rather than layering over it. Two utilities
+// setting the same property resolve by their order in the stylesheet, not by
+// the order they are written in, so `bg-ink` next to `bg-surface` is a coin
+// toss — and it landed on ink fill with ink text.
+const pressedClass = 'border border-ink bg-ink text-paper hover:brightness-125'
 
 const variantClass: Record<ButtonVariant, string> = {
 	default: 'border border-edge bg-surface text-ink hover:border-ink/40 hover:bg-hush',
@@ -34,6 +43,7 @@ const sizeClass: Record<ButtonSize, string> = {
 export function Button({
 	variant = 'default',
 	size = 'md',
+	pressed,
 	className,
 	children,
 	type = 'button',
@@ -42,15 +52,42 @@ export function Button({
 	return (
 		<button
 			type={type}
+			aria-pressed={pressed}
 			className={cx(
-				'inline-flex shrink-0 items-center justify-center font-medium whitespace-nowrap transition-[background-color,border-color,color,filter]',
+				'inline-flex shrink-0 items-center justify-center font-medium whitespace-nowrap transition-[background-color,border-color,color,filter] disabled:pointer-events-none disabled:opacity-40',
 				variant === 'link' ? 'h-auto text-[0.8125rem]' : sizeClass[size],
-				variantClass[variant],
+				pressed ? pressedClass : variantClass[variant],
 				className,
 			)}
 			{...rest}
 		>
 			{children}
 		</button>
+	)
+}
+
+export interface ButtonGroupProps {
+	/** Names the set for a screen reader: "Where the Section goes". */
+	label: string
+	children: ReactNode
+	className?: string
+}
+
+/**
+ * Buttons that belong together, joined into one control. Two related choices
+ * read as one decision this way, where two loose pills read as two.
+ */
+export function ButtonGroup({ label, children, className }: ButtonGroupProps) {
+	return (
+		<div
+			aria-label={label}
+			className={cx(
+				'inline-flex [&>*]:rounded-none [&>*+*]:-ml-px [&>*:first-child]:rounded-l-full [&>*:last-child]:rounded-r-full',
+				className,
+			)}
+			role="group"
+		>
+			{children}
+		</div>
 	)
 }

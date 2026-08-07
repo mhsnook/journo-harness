@@ -1,6 +1,6 @@
 import type { Reference } from '../../shared/plan'
 import { cx } from '../lib/cx'
-import { citation, referenceHeading } from '../lib/reference'
+import { citation, referenceName } from '../plan/references'
 import { Chip } from './Chip'
 
 export interface QuoteRowProps {
@@ -34,7 +34,9 @@ export function QuoteRow({
 				)}
 			>
 				<p className="text-[0.8125rem] leading-relaxed text-ink">
-					“{reference.text ?? referenceHeading(reference)}”
+					{reference.text === undefined
+						? referenceName(reference)
+						: `“${reference.text}”`}
 				</p>
 				<footer className="mt-1 flex items-center gap-2 text-[0.6875rem] text-faint">
 					<cite className="not-italic">{citation(reference)}</cite>

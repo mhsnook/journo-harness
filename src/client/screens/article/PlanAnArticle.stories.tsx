@@ -1,7 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
+import { useState } from 'react'
 
+import type { Plan, ProposalInput, Refusal } from '../../../shared/plan'
+import { applyProposal, emptyPlan } from '../../../shared/plan'
 import { Annotation } from '../../components/Annotation'
+import { Frame, FrameBody } from '../../components/Frame'
+import { plan as plannedArticle } from '../../mock/content'
 import { MockArticle } from '../../mock/MockArticle'
+import { PlanPanel } from '../../plan/PlanPanel'
 import { BlankPlanScreen } from './BlankPlanScreen'
 import { ChatWithReferencesScreen } from './ChatWithReferencesScreen'
 import { LedgerDrawerScreen } from './LedgerDrawerScreen'
@@ -13,19 +19,37 @@ import { ReadyToDraftScreen } from './ReadyToDraftScreen'
 const meta = {
 	title: 'Screens/2 Plan an article',
 	parameters: { layout: 'centered' },
-	// The Offer ledger screens read and write a real Article. This one is held
-	// in memory, so Accepting in a story moves the row and the Plan together.
-	decorators: [
-		(Story: () => React.ReactElement) => (
-			<MockArticle>
-				<Story />
-			</MockArticle>
-		),
-	],
 } satisfies Meta
 
 export default meta
 type Story = StoryObj<typeof meta>
+
+/**
+ * The Plan Panel, with the applier behind it and local state standing in for
+ * the Article Agent. Every edit runs the ops the app runs, so a refusal shows
+ * up here the way the writer would meet it.
+ */
+function EditablePlan({ start }: { start: Plan }) {
+	const [plan, setPlan] = useState(start)
+	const [refusal, setRefusal] = useState<Refusal | null>(null)
+
+	const edit = (ops: ProposalInput | null) => {
+		if (ops === null) return
+
+		setRefusal(null)
+		const result = applyProposal(plan, ops)
+		if (result.ok) setPlan(result.plan)
+		else setRefusal(result.refusal)
+	}
+
+	return (
+		<Frame width={520}>
+			<FrameBody>
+				<PlanPanel edit={edit} plan={plan} refusal={refusal} />
+			</FrameBody>
+		</Frame>
+	)
+}
 
 export const A_BlankPlan: Story = {
 	name: '2(a) Blank page',
@@ -72,7 +96,9 @@ export const D_ChatWithReferences: Story = {
 	name: '2(d) A turn that returned a lot',
 	render: () => (
 		<div className="flex flex-col">
-			<ChatWithReferencesScreen />
+			<MockArticle>
+				<ChatWithReferencesScreen />
+			</MockArticle>
 			<Annotation>
 				Accept and Decline are the writer's two rulings, and they are the words everywhere
 				— the card, the Offer ledger, and the Plan. Accepting copies the Offer into the
@@ -88,9 +114,10 @@ export const E_PlanSheet: Story = {
 		<div className="flex flex-col">
 			<PlanSheetScreen />
 			<Annotation>
-				Outline, references and quotes are stacked, never columned: inside a status the
-				eye should only have to travel one way. The bar beside the outline is the shape of
-				the piece — 300 / 700 / 900 / 500 of 2,400.
+				The Outline and the References are stacked, never columned: inside a status the
+				eye should only have to travel one way. One list holds both Links and Quotes,
+				because the type is a field on the record. The bar beside the Outline is the shape
+				of the piece — 300 / 700 / 900 / 500 of 2,400.
 			</Annotation>
 		</div>
 	),
@@ -100,7 +127,9 @@ export const F_LedgerDrawer: Story = {
 	name: '2(f) Offer ledger',
 	render: () => (
 		<div className="flex flex-col">
-			<LedgerDrawerScreen />
+			<MockArticle>
+				<LedgerDrawerScreen />
+			</MockArticle>
 			<Annotation>
 				The same list at every stage — early on most rows read Undecided, later most are
 				placed. That is precisely why there is no separate triage screen. Accepting a row
@@ -115,11 +144,40 @@ export const G_LedgerPopover: Story = {
 	name: '2(g) Offer ledger from the composer',
 	render: () => (
 		<div className="flex flex-col">
-			<LedgerPopoverScreen />
+			<MockArticle>
+				<LedgerPopoverScreen />
+			</MockArticle>
 			<Annotation>
 				The groups are the lifecycle and their order is fixed, so the Undecided pile
 				visibly shrinks as you work. Used waits on the Draft, which arrives at phase 2, so
 				a placed Reference reads Ready.
+			</Annotation>
+		</div>
+	),
+}
+
+export const H_PlanPanelBlank: Story = {
+	name: '2(h) The Plan Panel, new Article',
+	render: () => (
+		<div className="flex flex-col">
+			<EditablePlan start={emptyPlan()} />
+			<Annotation>
+				The wired Panel, not a wireframe. A new Article opens into this: a title, no
+				length, no Tone, and one button that makes the first Section.
+			</Annotation>
+		</div>
+	),
+}
+
+export const I_PlanPanelWired: Story = {
+	name: '2(i) The Plan Panel, under way',
+	render: () => (
+		<div className="flex flex-col">
+			<EditablePlan start={plannedArticle} />
+			<Annotation>
+				Every field here writes through the same ops the Chat proposes in, so the Panel
+				cannot make a change the applier would refuse. Typing debounces: the Plan is one
+				blob re-broadcast on every write, and a keystroke is not a write.
 			</Annotation>
 		</div>
 	),

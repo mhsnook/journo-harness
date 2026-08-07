@@ -1,9 +1,11 @@
 import { Chip } from '../../components/Chip'
 import { Frame, FrameBody } from '../../components/Frame'
 import { MetaLabel } from '../../components/MetaLabel'
+import { useArticle } from '../../lib/article'
 import { cx } from '../../lib/cx'
-import { referenceHeading } from '../../lib/reference'
 import { useOfferLedger } from '../../lib/useOfferLedger'
+import { outlineEntries } from '../../plan/outline'
+import { referenceName, referencesAt } from '../../plan/references'
 
 type Row = { key: string; text: string; section?: string }
 type Group = { label: string; rows: Row[]; variant?: 'ready' | 'plain' | 'declined' }
@@ -17,39 +19,39 @@ type Group = { label: string; rows: Row[]; variant?: 'ready' | 'plain' | 'declin
  * phase 2, so a placed Reference reads Ready and Used waits for it.
  */
 export function LedgerPopoverScreen() {
+	const { plan } = useArticle()
 	const { ledger } = useOfferLedger()
 
 	const groups: Group[] = [
 		{
 			label: 'Ready in the Plan',
 			variant: 'ready',
-			rows: ledger.sections.flatMap((section) =>
-				section.references.map((reference) => ({
+			rows: outlineEntries(plan.outline).flatMap((entry) =>
+				referencesAt(plan, entry.node.id).map(({ reference }) => ({
 					key: reference.id,
-					text: referenceHeading(reference),
-					section: section.label,
+					text: referenceName(reference),
+					section: `§${entry.ordinal}`,
 				})),
 			),
 		},
 		{
 			label: 'Accepted, no Section yet',
-			rows: ledger.unplaced.map((reference) => ({
-				key: reference.id,
-				text: referenceHeading(reference),
-			})),
+			rows: plan.references
+				.filter((reference) => reference.nodeId === null)
+				.map((reference) => ({ key: reference.id, text: referenceName(reference) })),
 		},
 		{
 			label: 'Accepted, and not in the Plan',
 			rows: ledger.stranded.map((offer) => ({
 				key: offer.id,
-				text: referenceHeading(offer),
+				text: referenceName(offer),
 			})),
 		},
 		{
 			label: 'Offered, Undecided',
 			rows: ledger.byDisposition.undecided.map((offer) => ({
 				key: offer.id,
-				text: referenceHeading(offer),
+				text: referenceName(offer),
 			})),
 		},
 		{
@@ -57,7 +59,7 @@ export function LedgerPopoverScreen() {
 			variant: 'declined',
 			rows: ledger.byDisposition.declined.map((offer) => ({
 				key: offer.id,
-				text: referenceHeading(offer),
+				text: referenceName(offer),
 			})),
 		},
 	]

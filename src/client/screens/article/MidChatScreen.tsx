@@ -3,14 +3,8 @@ import { ChatComposer, ChatMessage } from '../../components/Chat'
 import { Frame, FrameBody } from '../../components/Frame'
 import { Panel } from '../../components/Panel'
 import { ReferenceCard } from '../../components/ReferenceCard'
-import { ARTICLE_TITLE, articlePlan, offers, outline } from '../../mock/content'
-import {
-	PlanBlock,
-	PlanLength,
-	PlanOutline,
-	PlanQuotes,
-	PlanReferences,
-} from './PlanBlocks'
+import { ARTICLE_TITLE, offers, plan } from '../../mock/content'
+import { PlanBlock, PlanLength, PlanOutline, PlanReferences } from './PlanBlocks'
 
 /**
  * 2(b) — Mid-chat. Ticking a reference in the chat sends it straight into
@@ -42,22 +36,19 @@ export function MidChatScreen() {
 				</Panel>
 
 				<Panel variant="sunk">
-					<PlanLength words={2400} voice="Reported feature" />
+					<PlanLength total={plan.totalTarget} voice={plan.voice} />
 					<PlanBlock title="Outline" meta="3 of ~4">
 						<PlanOutline
-							sections={outline.slice(0, 2)}
+							outline={plan.outline.slice(0, 2)}
 							typing="Who actually pays for the delay"
 							showAdd
 						/>
 					</PlanBlock>
-					<PlanBlock title="References" meta="5">
+					<PlanBlock title="References" meta="4">
 						<PlanReferences
-							references={articlePlan.references.slice(0, 2)}
-							justAddedId="r1"
+							references={plan.references.slice(0, 3)}
+							justAddedId={plan.references[0].id}
 						/>
-					</PlanBlock>
-					<PlanBlock title="Quotes" meta="3">
-						<PlanQuotes quotes={articlePlan.references.slice(2, 4)} />
 					</PlanBlock>
 				</Panel>
 			</FrameBody>

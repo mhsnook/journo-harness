@@ -1,13 +1,14 @@
 import { createContext, useContext } from 'react'
 
 import type { Offer, Ruling } from '../../shared/offer'
-import type { Plan } from '../../shared/plan'
+import type { Plan, ProposalInput } from '../../shared/plan'
 
 /**
  * The seam one Article Agent arrives through, in two stores because the Plan
  * and the Offers are held apart on the server — architecture §3, rules 1 and 2.
- * `useAgent`'s typed stub satisfies `OfferStore` as it stands, so the route
- * passes `agent.stub` and writes no adapter.
+ * The Plan half is the shape `usePlan` returns and the Offers half is the shape
+ * `useAgent`'s typed stub already has, so the route passes both straight
+ * through and writes no adapter.
  */
 
 /** The Article Agent's three writer-facing `@callable` methods. */
@@ -20,10 +21,9 @@ export type OfferStore = {
 export type Article = {
 	offers: OfferStore
 	plan: Plan
-	/** Replaces the whole blob, which is the only way to write it. Takes an
-	 * updater, because only whoever holds the Plan can answer what it is now —
-	 * a caller deriving one from the last render would write a stale copy. */
-	setPlan: (update: (held: Plan) => Plan) => void
+	/** Apply an edit, in the op vocabulary every other Plan write uses. Takes
+	 * the null a builder returns for an edit with nowhere to go. */
+	edit: (ops: ProposalInput | null) => void
 }
 
 const ArticleContext = createContext<Article | null>(null)

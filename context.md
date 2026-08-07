@@ -128,34 +128,35 @@ _Avoid_: level, tier, inheritance chain
 ## Offers and the Ledger
 
 **Offer**:
-Something the Chat turns up and hands to the writer to rule on. Two types so far,
-References and Quotes, and Offers stay flat — two Quotes from one publication are two
-Offers, not a Quote nested in something else.
+Something the Chat turns up and hands to the writer to rule on. Two types so far, Links
+and Quotes, and Offers stay flat — two Quotes from one publication are two Offers, not a
+Quote nested in something else.
 _Avoid_: offering, result, finding, suggestion, candidate, card
 
 **Reference**:
-Something the writer is drawing on. It carries a **text** — a passage pulled from the
-source, whether a quotation, a clip, or a key pullout — or a **source** — the attribution,
-with a title, an author or publication, a year, and a url, each of them optional. At
-least one of the two is present; an entry with neither is nothing.
-_Avoid_: source (a source is the attribution _inside_ a Reference), citation, cite
+The umbrella, and never a type of its own: **every Reference is a Link or a Quote.** It
+carries a **text** — a passage pulled from the source, whether a quotation, a clip, or a
+key pullout — or a **source** — the attribution, with a title, an author or publication, a
+year, and a url, each of them optional. At least one of the two is present; an entry with
+neither is nothing.
+_Avoid_: Reference for a Link (that is what made "a Reference of type reference" a
+tautology), source (a source is the attribution _inside_ a Reference), citation, cite
+
+**Link**:
+A Reference of type Link — something the writer is drawing on, named rather than quoted.
+Most carry a url and some do not: a print citation with an author, a publication, and a
+year is a Link, and so is a broadcast nobody has put online. Naming them for the common
+case is deliberate, and the field that holds the address is the **url**, so the two never
+share a word.
+_Avoid_: reference (see above), source, citation, cite, bookmark
 
 **Quote**:
 A Reference of type Quote — a passage pulled from the source rather than the attribution
-alone. Not a separate entity: one structure carries both, and the type says which. A Quote
-carries a text, and a Reference may carry one without being a Quote, because the type is
-stored on the record rather than read off the text. That is what stops the Offer ledger
-and the Plan Panel naming one item two ways.
+alone. Not a separate entity from a Link: one structure carries both, and the type says
+which. A Quote carries a text, and a Link may carry one without being a Quote, because
+the type is stored on the record rather than read off the text. That is what stops the
+Offer ledger and the Plan Panel naming one item two ways.
 _Avoid_: excerpt, passage, snippet, pull quote
-
-**Reference material**:
-The code word for what a Reference and an Offer both carry — the type, the text, the
-source, and the note, and the two rules over them: at least one of the text and the source
-is present, and a Quote carries a text. Named `referenceMaterial` in `src/shared/plan`, and
-spread into each schema rather than shared as one, because the two carry different identity
-fields around it. Accepting maps one definition onto itself where it would otherwise map
-two onto each other.
-_Avoid_: the phrase anywhere the writer can read it; body, content, payload
 
 **Ledger**:
 The View of an Article's Offers and what the writer decided about each — a query over
@@ -235,8 +236,8 @@ What sort of thing a record is, named after the record it belongs to — an Offe
 note type, a refusal type. For a Guidance note: structure, tone drift, citations,
 repetition, budget, pacing, plan divergence — illustrative rather than a fixed taxonomy,
 and the Notes Panel groups by it. A note about the Voice and a note about an Adjective are
-both tone drift, because the writer reads them the same way. For an Offer: Reference,
-Quote, and whatever comes later. The field is `type` throughout, and it reads the way the
+both tone drift, because the writer reads them the same way. For a Reference and for an
+Offer: Link, Quote, and whatever comes later. The field is `type` throughout, and it reads the way the
 phrase does: `offer.type`, not "the kind of an Offer".
 _Avoid_: kind, category, tag, label
 
