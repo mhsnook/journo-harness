@@ -141,8 +141,11 @@ least one of the two is present; an entry with neither is nothing.
 _Avoid_: source (a source is the attribution _inside_ a Reference), citation, cite
 
 **Quote**:
-A Reference that carries a text. Not a separate entity — the Plan Panel counts References
-and Quotes separately, and that is a display filter rather than a schema fact.
+A Reference of Kind Quote — a passage pulled from the source rather than the attribution
+alone. Not a separate entity: one structure carries both, and the Kind says which. A Quote
+carries a text, and a Reference may carry one without being a Quote, because the Kind is
+stored on the record rather than read off the text. That is what stops the Offer ledger
+and the Plan Panel naming one item two ways.
 _Avoid_: excerpt, passage, snippet, pull quote
 
 **Ledger**:

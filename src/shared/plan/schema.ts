@@ -15,6 +15,12 @@ export const adjectiveSchema = z.string().min(1)
 export const intentSchema = z.string().min(1)
 export const targetSchema = z.number().int().positive()
 
+/** Which Kind of Reference this is. Stored on the record rather than derived
+ * from whether a text is present, so an Offer and the Reference it was copied
+ * into carry one answer and the two Panels cannot label it differently. */
+export const referenceKindSchema = z.enum(['reference', 'quote'])
+export type ReferenceKind = z.infer<typeof referenceKindSchema>
+
 // strictObject throughout: the Plan has one writer, so an unknown key is a bug
 // rather than a forward-compatible extension — §3, rule 1.
 
@@ -48,6 +54,7 @@ export const provenanceSchema = z
 export const referenceSchema = z
 	.strictObject({
 		id: idSchema,
+		kind: referenceKindSchema,
 		provenance: provenanceSchema,
 		text: z.string().min(1).optional(),
 		source: sourceSchema.optional(),
@@ -56,6 +63,9 @@ export const referenceSchema = z
 	})
 	.refine((reference) => reference.text !== undefined || reference.source !== undefined, {
 		error: 'A Reference carries a text, a source, or both. One with neither is nothing.',
+	})
+	.refine((reference) => reference.kind !== 'quote' || reference.text !== undefined, {
+		error: 'A Reference of Kind quote carries a text.',
 	})
 
 /** The unit of structure in the Plan. */

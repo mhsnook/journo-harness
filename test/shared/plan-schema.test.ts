@@ -159,10 +159,38 @@ describe('the Plan schema', () => {
 describe('the Reference invariant', () => {
 	const base = makeReference({ id: 'r1' })
 
-	it('accepts a Reference carrying only a text — which is a Quote', () => {
+	it('accepts a Reference carrying only a text', () => {
 		const result = referenceSchema.safeParse({ ...base, text: 'They knew by March.' })
 
 		expect(result.success).toBe(true)
+	})
+
+	it('accepts a Quote, which is a Reference of that Kind carrying a text', () => {
+		const result = referenceSchema.safeParse({
+			...base,
+			kind: 'quote',
+			text: 'They knew by March.',
+		})
+
+		expect(result.success).toBe(true)
+	})
+
+	// The Kind is stored rather than read off the text, so a text does not make
+	// a Reference a Quote and the two Panels cannot disagree about which it is.
+	it('leaves a Reference carrying a text a Reference, not a Quote', () => {
+		const result = referenceSchema.safeParse({ ...base, text: 'They knew by March.' })
+
+		expect(result.success && result.data.kind).toBe('reference')
+	})
+
+	it('rejects a Quote carrying no text', () => {
+		const result = referenceSchema.safeParse({
+			...base,
+			kind: 'quote',
+			source: { publication: 'The Guardian', year: 2024 },
+		})
+
+		expect(result.success).toBe(false)
 	})
 
 	it('accepts a Reference carrying only a source', () => {

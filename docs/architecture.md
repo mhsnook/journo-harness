@@ -102,7 +102,7 @@ plan: {
   title, totalTarget,
   voice, adjectives: [],
   outline: [ { id, title, intent?, target?, voice?, adjectives?: [], children: [] } ],
-  references: [ { id, provenance, text?, source?, nodeId, note? } ],
+  references: [ { id, kind, provenance, text?, source?, nodeId, note? } ],
 }
 ```
 
@@ -110,8 +110,12 @@ plan: {
   a stable ID that never changes.
 - **References are flat with an optional `nodeId`**, so an Accepted Reference can sit at a
   Section or nowhere yet.
-- **A Quote is a Reference that carries a `text`.** One structure: a pulled passage, an
-  attribution, or both, with at least one present.
+- **A Quote is a Reference of that `kind`.** One structure: a pulled passage, an
+  attribution, or both, with at least one present. The Kind is **stored, not derived from
+  the text**, so an Offer and the Reference it was Accepted into carry one answer and the
+  Offer ledger and the Plan Panel cannot label an item differently. A Quote carries a text;
+  a Reference may carry one without being a Quote. Amended in
+  [ADR 0002](./adr/0002-the-plan-data-model.md).
 - **Voice replaces; Adjectives compose.** One Voice applies at a time and the nearest Scope
   wins outright. Adjectives accumulate. Resolution runs House, then Article, then
   Section, **at read time**. A Section's ancestors take part in that same order, so a Subsection

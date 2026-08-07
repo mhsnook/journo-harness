@@ -5,7 +5,6 @@ import {
 	type Disposition,
 	type Offer,
 	type OfferContent,
-	type OfferKind,
 	offerContentSchema,
 	type Ruling,
 	rulingSchema,
@@ -13,6 +12,7 @@ import {
 import {
 	emptyPlan,
 	type Plan,
+	type ReferenceKind,
 	type PlanRefused,
 	planSchema,
 	type Source,
@@ -24,7 +24,7 @@ import {
 type OfferRow = {
 	seq: number
 	id: string
-	kind: OfferKind
+	kind: ReferenceKind
 	disposition: Disposition
 	text: string | null
 	source: string | null

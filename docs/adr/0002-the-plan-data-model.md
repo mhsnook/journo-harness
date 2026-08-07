@@ -17,7 +17,7 @@ plan: {
   title, totalTarget,
   voice, adjectives: [],
   outline: [ { id, title, intent?, target?, voice?, adjectives?: [], children: [] } ],
-  references: [ { id, provenance, text?, source?, nodeId, note? } ],
+  references: [ { id, kind, provenance, text?, source?, nodeId, note? } ],
 }
 ```
 
@@ -89,13 +89,27 @@ It is a flat object with a `kind` rather than a discriminated union, because `ge
 handles a flat object more reliably than an `anyOf`. The pairing rule — `offer` names an
 `offerId` and `writer` names none — is a refinement instead.
 
-## A Quote is a Reference that carries a text
+## A Quote is a Reference of that Kind
 
 One structure, not two. It holds a `text` — a passage pulled from the source, whether a
 quotation, a clip, or a key pullout — or a `source` — the attribution, each field optional
 inside it because a book has no url and a leaked memo has no author. **At least one of the
-two is present.** The Plan Panel's separate "References" and "Quotes" counts are a display
-filter.
+two is present.**
+
+**Amended:** this section first said a Quote is a Reference that carries a text, and that
+the Plan Panel's separate counts are a display filter rather than a schema fact. The Kind
+is now a stored field on `referenceSchema`, and a Reference may carry a text without being
+a Quote.
+
+What changed the answer is that #23 gave the Offer a `kind` column, which the Ledger reads.
+Deriving the Kind in the Plan and storing it on the Offer means one item is labelled twice
+by two rules: Accepting a `kind: 'reference'` Offer that carries a text would drop the Kind
+on the way in, and the Plan Panel would then call a Quote what the Ledger called a
+Reference. Storing it in both places is what removes the second rule.
+
+The cost is that the Kind can now be wrong in a way it could not be when it was derived —
+so `referenceSchema` refines that a Quote carries a text, and `offerContentSchema` refines
+the same for an Offer. `context.md` carries the vocabulary.
 
 **Consequence:** three quotes from one publication carry three copies of the attribution,
 so correcting a year is three edits. This is the same denormalisation #11 accepted when it
