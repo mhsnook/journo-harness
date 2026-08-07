@@ -54,12 +54,6 @@ export function citation(content: ReferenceContent): string {
 		.join(' · ')
 }
 
-/** The ones no Section holds. In the Plan and ordinary — `ReferenceList` reads
- * the same state as "not placed" on its Section select. */
-export function unplacedReferences(plan: Plan): Reference[] {
-	return plan.references.filter((reference) => reference.nodeId === null)
-}
-
 /** Every Reference, numbered. */
 export function referenceEntries(plan: Plan): ReferenceEntry[] {
 	return plan.references.map((reference, index) => ({ reference, number: index + 1 }))

@@ -164,10 +164,12 @@ The Chat turns up **Offers** — Links and Quotes — as SQLite rows in the Arti
 Each carries a disposition: **Undecided**, **Accepted**, or **Declined**, and Declining is
 restorable. The **Ledger** is a View over Offers, not a store.
 
-**The Ledger shows the ruling and stops there.** Its groups are the three dispositions.
-Once the writer Accepts, the Reference is the Plan's, and where it sits is the Plan Panel's
-to show — Section by Section, which it already does. A Ledger group about placement would
-be the Ledger restating the Panel beside it.
+**The Ledger belongs to the Chat Panel and reads nothing outside it.** It opens over the
+Chat, it closes, and the Plan Panel beside it does not move — which is why the `close ×`
+sits on the Ledger rather than on the screen. Its groups are the three dispositions, and
+Accepting sends the Reference across. Once it has gone across it is the Plan's: where it
+sits, and whether it sits anywhere yet, are the Plan Panel's to show and it shows both
+already. A Ledger group about placement is the Ledger restating the Panel next to it.
 
 Offers are flat. Two Quotes from one publication are two Offers.
 
@@ -382,6 +384,11 @@ already reactive through Article Agent state and, at 1b, party-db's TanStack DB 
 
 **The Article screen has four Panels** — Chat, Plan, Draft, Notes — which become tabs on a
 narrow screen. The **Areas** are Articles (with Board and Archive Views), House, and Team.
+
+**A View over a Panel covers that Panel and no other.** The Offer ledger is the one at 1a:
+it opens over the Chat, and the Plan Panel beside it carries on unchanged. A screen that
+shows the two together renders the ordinary Plan Panel rather than its own reading of the
+Plan — §5.
 
 **The Plan Panel's edits are ops, and the applier applies them.** A field the writer types
 in builds the same op a Proposal would carry, `src/client/plan/edits.ts` reads its

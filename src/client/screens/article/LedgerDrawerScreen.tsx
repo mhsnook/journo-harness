@@ -5,37 +5,37 @@ import { ArticleBar } from '../../components/ArticleBar'
 import { Chip } from '../../components/Chip'
 import { EmptySlot } from '../../components/Field'
 import { Frame, FrameBody } from '../../components/Frame'
-import { MetaLabel } from '../../components/MetaLabel'
 import { Panel } from '../../components/Panel'
-import { QuoteRow } from '../../components/QuoteRow'
 import { ReferenceCard } from '../../components/ReferenceCard'
 import { useArticle } from '../../lib/article'
 import { useOfferLedger } from '../../lib/useOfferLedger'
 import { ARTICLE_TITLE } from '../../mock/content'
-import { outlineEntries, sectionLabel } from '../../plan/outline'
-import { referencesAt, unplacedReferences } from '../../plan/references'
+import { PlanPanel } from '../../plan/PlanPanel'
 
 type Filter = 'all' | Disposition
 
 const filters: Filter[] = ['all', 'undecided', 'accepted', 'declined']
 
 /**
- * 2(f) — The Offer ledger, as two equal halves: what has been offered, and the
- * Plan it goes into. It is the same list at every stage, which is why there is
- * no separate triage screen.
+ * 2(f) — The Offer ledger, open over the Chat.
  *
- * The left half says what the writer ruled and nothing else. Where a Reference
- * sits is the right half's to show, and it shows it Section by Section.
+ * The Ledger is a view on the Chat Panel and covers only that half: it is the
+ * record of what the Chat offered and what the writer ruled, and the `close ×`
+ * is on it because it is the half that opened. Accepting sends the Reference
+ * across.
+ *
+ * The Plan Panel beside it is the ordinary one, rendered here so the screen
+ * reads as the writer meets it. Nothing on this screen reaches into it — where
+ * a Reference sits, and which sit nowhere yet, are its own to show.
  */
 export function LedgerDrawerScreen() {
-	const { plan } = useArticle()
+	const { plan, edit } = useArticle()
 	const { ledger, loading, failure, accept, decline, restore, addToPlan } =
 		useOfferLedger()
 	const [filter, setFilter] = useState<Filter>('all')
 
 	const shown = filter === 'all' ? ledger.offers : ledger.byDisposition[filter]
 	const stranded = new Set(ledger.stranded.map((offer) => offer.id))
-	const unplaced = unplacedReferences(plan)
 
 	return (
 		<Frame width={820}>
@@ -91,56 +91,7 @@ export function LedgerDrawerScreen() {
 					</div>
 				</Panel>
 
-				<Panel variant="sunk" padded={false}>
-					<header className="flex items-center gap-2.5 border-b border-edge px-3.5 py-2.5">
-						<h3 className="text-[0.875rem] font-semibold text-ink">In the Plan</h3>
-						<span className="text-[0.75rem] text-faint">
-							{plan.references.length} References
-						</span>
-					</header>
-					<div className="flex flex-col gap-4 p-3.5">
-						{outlineEntries(plan.outline).map((entry) => {
-							const held = referencesAt(plan, entry.node.id)
-
-							return (
-								<div key={entry.node.id} className="flex flex-col gap-2">
-									<MetaLabel>
-										{sectionLabel(entry)} · {entry.node.title}
-									</MetaLabel>
-									{held.length === 0 ? (
-										<EmptySlot className="ml-2">
-											Place an Accepted Reference here
-										</EmptySlot>
-									) : (
-										<div className="flex flex-col gap-2.5 pl-2">
-											{held.map(({ reference }) => (
-												<QuoteRow
-													key={reference.id}
-													reference={reference}
-													section={sectionLabel(entry)}
-													showUsage
-												/>
-											))}
-										</div>
-									)}
-								</div>
-							)
-						})}
-
-						{/* In the Plan, and held by no Section — so the count above accounts
-						    for it. "Not placed" is the word the Panel's Section select uses. */}
-						{unplaced.length > 0 ? (
-							<div className="flex flex-col gap-2">
-								<MetaLabel count={unplaced.length}>Not placed</MetaLabel>
-								<div className="flex flex-col gap-2.5 pl-2">
-									{unplaced.map((reference) => (
-										<QuoteRow key={reference.id} reference={reference} showUsage />
-									))}
-								</div>
-							</div>
-						) : null}
-					</div>
-				</Panel>
+				<PlanPanel plan={plan} edit={edit} />
 			</FrameBody>
 		</Frame>
 	)
