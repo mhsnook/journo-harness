@@ -3,7 +3,7 @@ import type { z } from 'zod'
 import type { Anchor, OpName, ProposalOp } from './ops'
 import { proposalSchema } from './ops'
 import type { OutlineNode, Plan } from './schema'
-import { planSchema } from './schema'
+import { planSchema, referenceContent } from './schema'
 
 /**
  * The client-side applier, working on a copy so that the first op to refuse
@@ -275,6 +275,48 @@ function applyOp(plan: Plan, op: ProposalOp, index: number): Refusal | null {
 			reference.nodeId = op.value
 			return null
 		}
+
+		case 'createReference': {
+			// checkIds catches a repeated id at the final parse, the same way it
+			// catches a repeated Section id, and cannot say which op carried it.
+			if (plan.references.some((held) => held.id === op.reference.id)) {
+				return refuse(
+					'invalid',
+					`${op.op} would leave two References carrying the id ${op.reference.id}.`,
+				)
+			}
+			if (op.reference.nodeId !== null && findNode(plan, op.reference.nodeId) === null)
+				return absent(`node ${op.reference.nodeId}`)
+
+			plan.references.push(op.reference)
+			return null
+		}
+
+		case 'deleteReference': {
+			const at = plan.references.findIndex((held) => held.id === op.referenceId)
+			if (at === -1) return absent(`Reference ${op.referenceId}`)
+
+			plan.references.splice(at, 1)
+			return null
+		}
+
+		case 'setReference': {
+			const reference = plan.references.find((held) => held.id === op.referenceId)
+			if (reference === undefined) return absent(`Reference ${op.referenceId}`)
+
+			const found = referenceContent(reference)
+			if (!matches(op.expected, found)) {
+				return stale(`Reference ${op.referenceId}`, op.expected, found)
+			}
+
+			// The content is replaced whole, so a field the op leaves out is a
+			// field the Reference no longer carries — §4's one spelling per state.
+			delete reference.text
+			delete reference.source
+			delete reference.note
+			Object.assign(reference, op.value)
+			return null
+		}
 	}
 }
 
@@ -338,16 +380,33 @@ function dropEmptyAdjectives(node: OutlineNode) {
 	node.children.forEach(dropEmptyAdjectives)
 }
 
-/** Whole-field comparison. Adjectives are the one list a content op sets, and
- * order counts there. */
+/**
+ * Whole-field comparison. Adjectives are the one list a content op sets, and
+ * order counts there. A Reference's content is the one field carrying an object,
+ * and it compares key by key — a key that is absent and a key that is undefined
+ * say the same thing, which is what lets an op leave a field out.
+ */
 function matches(expected: unknown, found: unknown): boolean {
-	if (Array.isArray(expected) && Array.isArray(found)) {
+	if (Array.isArray(expected) || Array.isArray(found)) {
+		if (!Array.isArray(expected) || !Array.isArray(found)) return false
+
 		return (
-			expected.length === found.length && expected.every((term, at) => term === found[at])
+			expected.length === found.length &&
+			expected.every((term, at) => matches(term, found[at]))
 		)
 	}
 
+	if (isRecord(expected) && isRecord(found)) {
+		const keys = new Set([...Object.keys(expected), ...Object.keys(found)])
+
+		return [...keys].every((key) => matches(expected[key], found[key]))
+	}
+
 	return expected === found
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === 'object' && value !== null
 }
 
 function scopeName(nodeId: string | null): string {

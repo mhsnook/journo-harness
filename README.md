@@ -14,7 +14,8 @@ Node 22 and pnpm 11.
 pnpm install
 pnpm dev        # the client and the Worker together, on http://localhost:5173
 pnpm storybook  # the components and screens on their own, on http://localhost:6006
-pnpm test       # builds the client, then runs the smoke tests in workerd
+pnpm test       # builds the client, then runs every project
+                # `pnpm test:shared` and `pnpm test:client` skip the build and workerd
 pnpm typecheck
 pnpm lint       # oxlint
 pnpm format     # oxfmt, in place. `pnpm format:check` reports instead
@@ -62,13 +63,16 @@ Access gate, and requiring the header would make the app unrunnable in developme
 | Path                          | What it holds                                                         |
 | ----------------------------- | --------------------------------------------------------------------- |
 | `src/client/routes/`          | TanStack Router routes, one file each                                 |
-| `src/client/components/`      | The primitives: `Frame`, `PaneRail`, `Chip`, `SourceCard`, …          |
+| `src/client/components/`      | The primitives: `Frame`, `PanelRail`, `Chip`, `ReferenceCard`, …      |
+| `src/client/plan/`            | The Plan Panel: its op builders, its writer, and its fields           |
 | `src/client/screens/`         | The wireframed screens, built against mock data                       |
 | `src/client/styles/theme.css` | The Tailwind v4 `@theme` tokens                                       |
 | `src/server/`                 | The Hono Worker entry and the `ArticleAgent` Durable Object           |
 | `src/server/llm/`             | The model boundary, the Chat turn's prompt pack, and the tools        |
-| `test/`                       | Tests running in workerd through `@cloudflare/vitest-pool-workers`    |
+| `test/`                       | Tests, in three projects: `shared`, `client`, and `worker`            |
 | `docs/`                       | The architecture document, the ADRs, and [the UI notes](./docs/ui.md) |
 
 The screens are wireframes with nothing wired to them. They are superseded one at a time as
-the routes that replace them land, so treat them as reference rather than as a library.
+the routes that replace them land, so treat them as reference rather than as a library. The
+Plan Panel is the first one wired: `src/client/plan/` holds it, and the screens now render
+the same Plan through the same components.

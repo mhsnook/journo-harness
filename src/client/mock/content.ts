@@ -1,9 +1,13 @@
+import type { OutlineNode, Plan } from '../../shared/plan'
+
 /**
  * Sample content for the showcase.
  *
  * None of this is wired to anything — it exists so the components can be read
- * as a real product rather than as grey boxes. Swap it for API data when the
- * back end lands; the shapes here are a reasonable first sketch of it.
+ * as a real product rather than as grey boxes. The Plan below is the exception
+ * and carries the real schema, because the Plan Panel is wired: the showcase
+ * and the app render one Plan through one set of components. Everything still
+ * typed here is a sketch, and each one is replaced as its ticket lands.
  */
 
 export interface Article {
@@ -111,49 +115,115 @@ export const portfolioBacklist = [
 
 export const ARTICLE_TITLE = 'Why Cities Stopped Building'
 
-export interface Section {
-	n: number
-	title: string
-	words: number
-	adjectives?: string[]
-	voice?: string
-	state?: 'done' | 'current' | 'planned'
+/**
+ * The Plan, in the shape the Article Agent actually holds — `src/shared/plan`.
+ * The screens read it through the same components the live Plan Panel uses, so
+ * a change to the schema breaks the showcase rather than letting it drift.
+ */
+export const plan: Plan = {
+	title: ARTICLE_TITLE,
+	totalTarget: 2400,
+	voice: 'Reported feature',
+	adjectives: [],
+	outline: [
+		{
+			id: 'sec-cranes',
+			title: 'The year the cranes stopped',
+			intent: 'Open on the count, and make the drop concrete before any argument.',
+			target: 300,
+			adjectives: ['high energy'],
+			children: [],
+		},
+		{
+			id: 'sec-review',
+			title: 'How review became the process',
+			intent: 'The mechanism: eleven points at which one objection resets the clock.',
+			target: 700,
+			voice: 'Explainer',
+			adjectives: ['well researched'],
+			children: [],
+		},
+		{
+			id: 'sec-cost',
+			title: 'Who actually pays for the delay',
+			intent: 'The human cost, carried by the developers who would not go on record.',
+			target: 900,
+			children: [],
+		},
+		{
+			id: 'sec-faster',
+			title: 'What a faster city would look like',
+			target: 500,
+			adjectives: ['unhurried'],
+			children: [],
+		},
+	],
+	references: [
+		{
+			id: 'ref-throughput',
+			type: 'link',
+			provenance: { type: 'offer', offerId: 'offer-throughput' },
+			source: {
+				title: 'Permit throughput in six mid-sized cities',
+				author: 'R. Okonkwo',
+				publication: 'the Quarterly',
+				year: 2023,
+			},
+			nodeId: 'sec-review',
+			note: 'Median approval time tripled while application volume stayed flat.',
+		},
+		{
+			id: 'ref-middle',
+			type: 'link',
+			provenance: { type: 'offer', offerId: 'offer-middle' },
+			source: {
+				title: 'Zoning and the missing middle',
+				author: 'A. Weill',
+				publication: 'Field Notes',
+				year: 2019,
+			},
+			nodeId: 'sec-cost',
+		},
+		{
+			id: 'ref-forty-times',
+			type: 'quote',
+			provenance: { type: 'offer', offerId: 'offer-throughput' },
+			text: 'We did not decide to stop building. We decided, forty separate times, that this particular building could wait.',
+			source: { title: 'Permit throughput in six mid-sized cities' },
+			nodeId: 'sec-review',
+		},
+		{
+			id: 'ref-meter',
+			type: 'quote',
+			provenance: { type: 'writer' },
+			text: 'The meter runs on an empty lot exactly as fast as it runs on a finished one.',
+			source: { title: 'The cost of discretionary review' },
+			nodeId: null,
+		},
+	],
 }
 
-export const outline: Section[] = [
-	{
-		n: 1,
-		title: 'The year the cranes stopped',
-		words: 300,
-		adjectives: ['high energy'],
-		state: 'done',
-	},
-	{
-		n: 2,
-		title: 'How review became the process',
-		words: 700,
-		adjectives: ['well researched'],
-		voice: 'Explainer',
-		state: 'done',
-	},
-	{ n: 3, title: 'Who actually pays for the delay', words: 900, state: 'current' },
-	{
-		n: 4,
-		title: 'What a faster city would look like',
-		words: 500,
-		adjectives: ['unhurried'],
-		state: 'planned',
-	},
-]
+export const outline: OutlineNode[] = plan.outline
 
-export const outlineRevised: Section[] = [
-	{ n: 1, title: 'The year the cranes stopped', words: 300 },
-	{ n: 2, title: 'How review became the process', words: 700 },
-	{ n: 3, title: 'Who actually pays for the delay', words: 700 },
+/** Which Section the writer is in, and which are drafted. Not the Plan's to
+ * carry: the Draft is a flat run of Blocks and a Boundary is inferred. */
+export const sectionState: Record<string, 'done' | 'current' | 'planned'> = {
+	'sec-cranes': 'done',
+	'sec-review': 'done',
+	'sec-cost': 'current',
+	'sec-faster': 'planned',
+}
+
+/** The same Outline after a Review, for the screen that shows what changed. */
+export const outlineRevised: OutlineNode[] = [
+	{ id: 'sec-cranes', title: 'The year the cranes stopped', target: 300, children: [] },
+	{ id: 'sec-review', title: 'How review became the process', target: 700, children: [] },
+	{ id: 'sec-cost', title: 'Who actually pays for the delay', target: 700, children: [] },
 	{
-		n: 4,
+		id: 'sec-faster',
 		title: 'What a faster city would look like — and the argument for it',
-		words: 700,
+		target: 700,
+		children: [],
 	},
 ]
 

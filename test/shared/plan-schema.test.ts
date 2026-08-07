@@ -180,7 +180,7 @@ describe('the Reference invariant', () => {
 	it('leaves a Reference carrying a text a Reference, not a Quote', () => {
 		const result = referenceSchema.safeParse({ ...base, text: 'They knew by March.' })
 
-		expect(result.success && result.data.type).toBe('reference')
+		expect(result.success && result.data.type).toBe('link')
 	})
 
 	it('rejects a Quote carrying no text', () => {

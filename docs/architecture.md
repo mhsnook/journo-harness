@@ -116,12 +116,12 @@ plan: {
   a stable ID that never changes.
 - **References are flat with an optional `nodeId`**, so an Accepted Reference can sit at a
   Section or nowhere yet.
-- **A Quote is a Reference of that `type`.** One structure: a pulled passage, an
-  attribution, or both, with at least one present. The type is **stored, not derived from
-  the text**, so an Offer and the Reference it was Accepted into carry one answer and the
-  Offer ledger and the Plan Panel cannot label an item differently. A Quote carries a text;
-  a Reference may carry one without being a Quote. Amended in
-  [ADR 0002](./adr/0002-the-plan-data-model.md).
+- **Every Reference is a Link or a Quote**, and Reference is the umbrella rather than a
+  type of its own. One structure: a pulled passage, an attribution, or both, with at least
+  one present. The type is **stored, not derived from the text**, so an Offer and the
+  Reference it was Accepted into carry one answer and the Offer ledger and the Plan Panel
+  cannot label an item differently. A Quote carries a text; a Link may carry one without
+  being a Quote. Amended in [ADR 0002](./adr/0002-the-plan-data-model.md).
 - **Voice replaces; Adjectives compose.** One Voice applies at a time and the nearest Scope
   wins outright. Adjectives accumulate. Resolution runs House, then Article, then
   Section, **at read time**. A Section's ancestors take part in that same order, so a Subsection
@@ -156,7 +156,7 @@ relief valve is moving References into SQLite rows, which is the phase 2 move an
 
 ## 5. Offers and the Ledger
 
-The Chat turns up **Offers** — References and Quotes — as SQLite rows in the Article Agent.
+The Chat turns up **Offers** — Links and Quotes — as SQLite rows in the Article Agent.
 Each carries a disposition: **Undecided**, **Accepted**, or **Declined**, and Declining is
 restorable. The **Ledger** is a View over Offers, not a store.
 
@@ -164,6 +164,11 @@ Offers are flat. Two Quotes from one publication are two Offers.
 
 Accepting copies the Offer into the Plan as a new editable record carrying its Provenance —
 rule 5. Deduplicate a re-offered Reference on the Provenance, not on the content.
+
+**The writer pastes their own References straight into the Plan**, and those carry
+`provenance: { type: 'writer' }` rather than an Offer id. They never enter the Ledger: an
+Offer is something the Chat turned up and handed over to rule on, and there is nothing to
+rule on in a passage the writer typed.
 
 **A Proposal is not an Offer.** The writer rules on both the same way, but a Proposal lives
 in the Chat turn that made it, goes Stale, and leaves no record, where an Offer is a row that
@@ -217,9 +222,17 @@ proposal: [
   than greying it out — whole-field comparison is conservative and will refuse a Proposal
   against a field the writer has since touched.
 
-**Ten ops**, in `src/shared/plan/ops.ts`: `createNode`, `moveNode`, `mergeNodes`,
+**Thirteen ops**, in `src/shared/plan/ops.ts`: `createNode`, `moveNode`, `mergeNodes`,
 `deleteNode`, `setTitle`, `setIntent`, `setTarget`, `setVoice`, `setAdjectives`,
-`placeReference`. A content op reads `nodeId: null` as the Article Scope, so setting the
+`placeReference`, `createReference`, `deleteReference`, `setReference`.
+
+**The Chat is offered ten of them.** The three Reference ops are how the writer pastes a
+Reference in themselves, and `chatProposalSchema` leaves them out of the tool the model
+sees — research reaches the Plan by being Accepted from an Offer, and handing a model
+`createReference` would be a way round the Ledger (§5). The applier takes all thirteen,
+because the writer's own paste goes through it too.
+
+A content op reads `nodeId: null` as the Article Scope, so setting the
 Article's Voice and setting one node's Voice are one op rather than two. Two ops carry a
 consequence worth stating: **`deleteNode` unplaces every Reference placed at the node it
 removes or at any node below it**, because the Plan is written whole and a Reference naming a
@@ -328,6 +341,20 @@ already reactive through Article Agent state and, at 1b, party-db's TanStack DB 
 
 **The Article screen has four Panels** — Chat, Plan, Draft, Notes — which become tabs on a
 narrow screen. The **Areas** are Articles (with Board and Archive Views), House, and Team.
+
+**The Plan Panel's edits are ops, and the applier applies them.** A field the writer types
+in builds the same op a Proposal would carry, `src/client/plan/edits.ts` reads its
+`expected` out of the Plan on screen, and `applyProposal` produces the Plan that goes to
+`setState`. One write path means the Panel cannot make a change the applier would refuse,
+and a structural edit gets the consequences the ops already state — deleting a Section
+unplaces its References. The writer's own edits never go Stale: staleness is the gap
+between generating a Proposal and applying it, and there is no gap here.
+
+**One writer holds the Plan and the debounce**, in `src/client/plan/writer.ts`. It applies
+each edit locally, sends after a pause for the four ops a keystroke produces, and sends at
+once for everything else. An update arriving from the Article Agent over an unsent edit is
+the echo of an older write and is dropped — the client is the Plan's only writer, so there
+is nothing else it can be.
 
 **The Article Agent's WebSocket is multiplexed.** It carries `cf_agent_*` control frames for
 state, RPC, and scheduling on one socket. In phase 1 this is free, because the SDK's own

@@ -17,5 +17,13 @@
     "composite": true,
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.worker.tsbuildinfo"
   },
-  "include": ["src/shared", "src/server", "test", "worker-configuration.d.ts"]
+  // test/client holds pure client modules and belongs to the client project.
+  // A folder under test/ named in neither project is typechecked by neither.
+  "include": [
+    "src/shared",
+    "src/server",
+    "test/shared",
+    "test/worker",
+    "worker-configuration.d.ts"
+  ]
 }
