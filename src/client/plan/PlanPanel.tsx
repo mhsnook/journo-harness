@@ -39,9 +39,11 @@ export function PlanPanel({
 	className,
 }: PlanPanelProps) {
 	// One Section is open at a time. `made` is the one the writer has just
-	// added, which takes the caret as it opens.
+	// added, which takes the caret as it opens, and `shown` is the Reference a
+	// Section row has just sent them down to.
 	const [openId, setOpenId] = useState<string | null>(null)
 	const [made, setMade] = useState<string | null>(null)
+	const [shown, setShown] = useState<string | null>(null)
 
 	const entries = outlineEntries(plan.outline)
 	const allocation = planAllocation(plan)
@@ -117,6 +119,7 @@ export function PlanPanel({
 								edit={edit}
 								entry={entry}
 								onOpen={setOpenId}
+								onShowReference={setShown}
 								open={entry.node.id === openId}
 								plan={plan}
 								takeCaret={entry.node.id === made}
@@ -138,7 +141,9 @@ export function PlanPanel({
 				className="flex flex-col items-stretch gap-1.5"
 				edit={edit}
 				entries={entries}
+				onShown={() => setShown(null)}
 				plan={plan}
+				shown={shown}
 			/>
 		</Panel>
 	)

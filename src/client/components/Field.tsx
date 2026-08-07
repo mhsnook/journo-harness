@@ -65,6 +65,8 @@ export interface TextFieldProps {
 	hiddenLabel?: string
 	value: string
 	onChange: (value: string) => void
+	/** Where Enter means something — closing the Section being edited, say. */
+	onKeyDown?: (event: KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => void
 	placeholder?: string
 	suffix?: ReactNode
 	size?: 'sm' | 'md'
@@ -79,6 +81,7 @@ export function TextField({
 	hiddenLabel,
 	value,
 	onChange,
+	onKeyDown,
 	placeholder,
 	suffix,
 	size = 'md',
@@ -106,6 +109,7 @@ export function TextField({
 						aria-label={hiddenLabel}
 						className={cx(inputClass, 'resize-none leading-snug')}
 						onChange={handle}
+						onKeyDown={onKeyDown}
 						placeholder={placeholder}
 						rows={rows}
 						value={value}
@@ -115,6 +119,7 @@ export function TextField({
 						aria-label={hiddenLabel}
 						className={inputClass}
 						onChange={handle}
+						onKeyDown={onKeyDown}
 						placeholder={placeholder}
 						type="text"
 						value={value}

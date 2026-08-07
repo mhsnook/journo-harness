@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import type { Plan, ProposalInput, Reference } from '../../shared/plan'
 import { Button } from '../components/Button'
 import { Chip } from '../components/Chip'
 import { EmptySlot } from '../components/Field'
+import { cx } from '../lib/cx'
 import { addReference, deleteReference, placeReference, setReference } from './edits'
 import type { OutlineEntry } from './outline'
 import { ReferenceForm } from './ReferenceForm'
@@ -23,10 +24,24 @@ export interface ReferenceListProps {
 	plan: Plan
 	entries: OutlineEntry[]
 	edit: (ops: ProposalInput | null) => void
+	/** A Reference a Section row has sent the writer down to. It scrolls into
+	 * view and takes the accent for a moment, which is the whole of the answer
+	 * to "which one did I mean?" */
+	shown?: string | null
+	/** Said once the Reference has been shown, so the next click on the same one
+	 * shows it again. */
+	onShown?: () => void
 	className?: string
 }
 
-export function ReferenceList({ plan, entries, edit, className }: ReferenceListProps) {
+export function ReferenceList({
+	plan,
+	entries,
+	edit,
+	shown = null,
+	onShown,
+	className,
+}: ReferenceListProps) {
 	// One Reference is open at a time, and `adding` is the blank form.
 	const [openId, setOpenId] = useState<string | null>(null)
 	const [adding, setAdding] = useState(false)
@@ -61,7 +76,9 @@ export function ReferenceList({ plan, entries, edit, className }: ReferenceListP
 						entries={entries}
 						onOpen={() => setOpenId(reference.id)}
 						onPlace={(nodeId) => edit(placeReference(plan, reference.id, nodeId))}
+						onShown={onShown}
 						reference={reference}
+						shown={reference.id === shown}
 					/>
 				),
 			)}
@@ -88,9 +105,31 @@ interface ReferenceRowProps {
 	entries: OutlineEntry[]
 	onOpen: () => void
 	onPlace: (nodeId: string | null) => void
+	shown: boolean
+	onShown?: () => void
 }
 
-function ReferenceRow({ reference, entries, onOpen, onPlace }: ReferenceRowProps) {
+function ReferenceRow({
+	reference,
+	entries,
+	onOpen,
+	onPlace,
+	shown,
+	onShown,
+}: ReferenceRowProps) {
+	const row = useRef<HTMLDivElement>(null)
+
+	useEffect(() => {
+		if (!shown) return
+
+		row.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+		// The wash is a pointer, not a state the row is in, so it lets go by
+		// itself rather than waiting for the writer to dismiss it.
+		const held = setTimeout(() => onShown?.(), 1600)
+
+		return () => clearTimeout(held)
+	}, [shown, onShown])
+
 	const attribution = [
 		reference.source?.author,
 		reference.source?.publication,
@@ -101,7 +140,13 @@ function ReferenceRow({ reference, entries, onOpen, onPlace }: ReferenceRowProps
 		.join(' · ')
 
 	return (
-		<div className="flex flex-col gap-1.5 rounded-md border border-edge bg-surface p-2">
+		<div
+			ref={row}
+			className={cx(
+				'flex flex-col gap-1.5 rounded-md border p-2 transition-colors',
+				shown ? 'border-accent-edge bg-accent-soft' : 'border-edge bg-surface',
+			)}
+		>
 			<div className="flex items-baseline gap-2">
 				<Chip variant="outline">{reference.type}</Chip>
 				{reference.source?.title ? (

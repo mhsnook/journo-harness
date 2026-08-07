@@ -21,6 +21,12 @@ export interface ButtonProps extends Omit<
 	children?: ReactNode
 }
 
+// `pressed` replaces the variant rather than layering over it. Two utilities
+// setting the same property resolve by their order in the stylesheet, not by
+// the order they are written in, so `bg-ink` next to `bg-surface` is a coin
+// toss — and it landed on ink fill with ink text.
+const pressedClass = 'border border-ink bg-ink text-paper hover:brightness-125'
+
 const variantClass: Record<ButtonVariant, string> = {
 	default: 'border border-edge bg-surface text-ink hover:border-ink/40 hover:bg-hush',
 	accent: 'border border-accent-edge bg-accent text-accent-ink hover:brightness-[0.97]',
@@ -50,8 +56,7 @@ export function Button({
 			className={cx(
 				'inline-flex shrink-0 items-center justify-center font-medium whitespace-nowrap transition-[background-color,border-color,color,filter] disabled:pointer-events-none disabled:opacity-40',
 				variant === 'link' ? 'h-auto text-[0.8125rem]' : sizeClass[size],
-				variantClass[variant],
-				pressed && 'border-ink bg-ink text-paper hover:bg-ink',
+				pressed ? pressedClass : variantClass[variant],
 				className,
 			)}
 			{...rest}

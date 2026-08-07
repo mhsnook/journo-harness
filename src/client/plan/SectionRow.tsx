@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 
-import type { Plan, ProposalInput } from '../../shared/plan'
+import type { Plan, ProposalInput, Reference } from '../../shared/plan'
 import { nodeAllocation, resolveNodeScope } from '../../shared/plan'
 import { Button } from '../components/Button'
 import { InlineInput, TextField } from '../components/Field'
@@ -44,6 +44,8 @@ export interface SectionRowProps {
 	onOpen: (nodeId: string | null) => void
 	/** Take the caret, because the writer just made this Section. */
 	takeCaret?: boolean
+	/** Show a Reference placed here, down in the References list. */
+	onShowReference: (referenceId: string) => void
 	className?: string
 }
 
@@ -54,6 +56,7 @@ export function SectionRow({
 	open,
 	onOpen,
 	takeCaret = false,
+	onShowReference,
 	className,
 }: SectionRowProps) {
 	const [armed, setArmed] = useState(false)
@@ -63,6 +66,8 @@ export function SectionRow({
 	const scopeName = `${name} ${ordinal}`
 	const title = useRef<HTMLInputElement>(null)
 	const row = useRef<HTMLDivElement>(null)
+
+	const placed = plan.references.filter((reference) => reference.nodeId === node.id)
 
 	// Opening a Section puts the caret in its title. Without it the focus stays
 	// on the closed row's button, which this row has just replaced — so it falls
@@ -74,24 +79,58 @@ export function SectionRow({
 		if (takeCaret) row.current?.scrollIntoView({ block: 'nearest' })
 	}, [open, takeCaret])
 
+	/** Enter is done. Nothing is lost by leaving — the Section reopens on a
+	 * click, and the write has already gone. */
+	const doneOnEnter = (event: { key: string; preventDefault: () => void }) => {
+		if (event.key !== 'Enter') return
+		event.preventDefault()
+		onOpen(null)
+	}
+
+	const references =
+		placed.length === 0 ? null : (
+			<div className="flex flex-col gap-0.5 pl-[1.375rem]">
+				{placed.map((reference) => (
+					<button
+						key={reference.id}
+						className="flex items-baseline gap-1.5 truncate text-left text-[0.6875rem] text-muted hover:text-ink"
+						onClick={() => onShowReference(reference.id)}
+						type="button"
+					>
+						<span className="label-meta shrink-0">{reference.type}</span>
+						<span className="truncate">{nameOfReference(reference)}</span>
+					</button>
+				))}
+			</div>
+		)
+
 	if (!open) {
 		return (
-			<button
-				className={cx(
-					'-mx-1.5 rounded-md px-1.5 py-1 text-left hover:bg-hush',
-					className,
-				)}
-				onClick={() => onOpen(node.id)}
+			<div
+				className={cx('flex flex-col gap-1', className)}
 				style={{ marginLeft: depth * 20 }}
-				type="button"
 			>
-				<OutlineRow node={node} ordinal={ordinal} />
-				{node.intent ? (
-					<p className="mt-1 truncate pl-[1.375rem] text-[0.75rem] text-muted">
-						{node.intent}
-					</p>
-				) : null}
-			</button>
+				<button
+					className="-mx-1.5 rounded-md px-1.5 py-1 text-left hover:bg-hush"
+					onClick={() => onOpen(node.id)}
+					// Opening on mousedown, because the Section that is open closes on
+					// the focus leaving it — which relays out the list and moves this
+					// row out from under the pointer before the click lands.
+					onMouseDown={(event) => {
+						event.preventDefault()
+						onOpen(node.id)
+					}}
+					type="button"
+				>
+					<OutlineRow node={node} ordinal={ordinal} />
+					{node.intent ? (
+						<p className="mt-1 truncate pl-[1.375rem] text-[0.75rem] text-muted">
+							{node.intent}
+						</p>
+					) : null}
+				</button>
+				{references}
+			</div>
 		)
 	}
 
@@ -130,12 +169,14 @@ export function SectionRow({
 						className="min-w-0 flex-1 text-[0.8125rem] leading-snug font-medium"
 						label={`Title of ${scopeName}`}
 						onChange={(typed) => edit(setTitle(plan, node.id, typed))}
+						onKeyDown={doneOnEnter}
 						placeholder={`Untitled ${name.toLowerCase()}`}
 						value={node.title}
 					/>
 					<TargetField
 						className="w-28 shrink-0"
 						hiddenLabel={`Word-count target for ${scopeName}`}
+						onKeyDown={doneOnEnter}
 						onTarget={(target) => edit(setTarget(plan, node.id, target))}
 						placeholder="—"
 						target={node.target ?? null}
@@ -168,6 +209,8 @@ export function SectionRow({
 					scopeName={scopeName}
 					voice={node.voice ?? null}
 				/>
+
+				{references}
 
 				<div className="flex items-center gap-1.5 pt-0.5">
 					<Button
@@ -213,4 +256,11 @@ export function SectionRow({
 			</div>
 		</div>
 	)
+}
+
+/** What a Reference reads as on one line: its passage, or its title. */
+function nameOfReference(reference: Reference): string {
+	if (reference.text !== undefined) return `“${reference.text}”`
+
+	return reference.source?.title ?? reference.source?.url ?? 'Untitled reference'
 }

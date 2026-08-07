@@ -1,4 +1,5 @@
 import type { Allocation } from '../../shared/plan'
+import type { TextFieldProps } from '../components/Field'
 import { TextField } from '../components/Field'
 
 /**
@@ -10,6 +11,7 @@ import { TextField } from '../components/Field'
 export interface TargetFieldProps {
 	label?: string
 	hiddenLabel?: string
+	onKeyDown?: TextFieldProps['onKeyDown']
 	/** The stored target, and null where none is stated. */
 	target: number | null
 	onTarget: (target: number | null) => void
@@ -21,6 +23,7 @@ export interface TargetFieldProps {
 export function TargetField({
 	label,
 	hiddenLabel,
+	onKeyDown,
 	target,
 	onTarget,
 	placeholder = 'no target',
@@ -41,6 +44,7 @@ export function TargetField({
 			hiddenLabel={hiddenLabel}
 			label={label}
 			onChange={read}
+			onKeyDown={onKeyDown}
 			placeholder={placeholder}
 			size={size}
 			suffix={<span className="shrink-0 text-[0.6875rem] text-faint">words</span>}
