@@ -84,7 +84,7 @@ describe('applying a Proposal', () => {
 			},
 		])
 
-		expect(refusal.kind).toBe('stale')
+		expect(refusal.type).toBe('stale')
 		expect(refusal.index).toBe(1)
 		expect(refusal.op).toBe('setIntent')
 		expect(refusal.expected).toBe('Open on the dawn raid')
@@ -128,7 +128,7 @@ describe('applying a Proposal', () => {
 			withoutN2,
 		)
 
-		expect(refusal.kind).toBe('missing')
+		expect(refusal.type).toBe('missing')
 		expect(refusal.op).toBe('createNode')
 		expect(refusal.message).toContain('after n2')
 	})
@@ -136,7 +136,7 @@ describe('applying a Proposal', () => {
 	it('refuses a Proposal that does not match the vocabulary', () => {
 		const refusal = refused([{ op: 'setTone', nodeId: 'n1' }] as unknown as ProposalInput)
 
-		expect(refusal.kind).toBe('malformed')
+		expect(refusal.type).toBe('malformed')
 		expect(refusal.index).toBe(0)
 	})
 
@@ -149,7 +149,7 @@ describe('applying a Proposal', () => {
 			broken,
 		)
 
-		expect(refusal.kind).toBe('invalid')
+		expect(refusal.type).toBe('invalid')
 		expect(refusal.message).toContain('references.0.nodeId')
 	})
 })
@@ -233,7 +233,7 @@ describe('the structural ops', () => {
 			},
 		])
 
-		expect(refusal.kind).toBe('invalid')
+		expect(refusal.type).toBe('invalid')
 		expect(refusal.message).toContain('n2a')
 	})
 
@@ -247,7 +247,7 @@ describe('the structural ops', () => {
 			},
 		])
 
-		expect(refusal.kind).toBe('missing')
+		expect(refusal.type).toBe('missing')
 		expect(refusal.message).toContain('node n2 does not carry')
 	})
 
@@ -274,7 +274,7 @@ describe('the structural ops', () => {
 			{ op: 'moveNode', nodeId: 'n2', parentId: null, afterId: 'n2' },
 		])
 
-		expect(refusal.kind).toBe('invalid')
+		expect(refusal.type).toBe('invalid')
 		expect(refusal.message).toContain('cannot anchor n2 to itself')
 	})
 
@@ -283,7 +283,7 @@ describe('the structural ops', () => {
 			{ op: 'moveNode', nodeId: 'n2', parentId: 'n2a', beforeId: null },
 		])
 
-		expect(refusal.kind).toBe('invalid')
+		expect(refusal.type).toBe('invalid')
 		expect(refusal.message).toContain('a node it contains')
 	})
 
@@ -325,7 +325,7 @@ describe('the structural ops', () => {
 	it('refuses to merge a node into one it contains', () => {
 		const refusal = refused([{ op: 'mergeNodes', nodeId: 'n2', intoId: 'n2b' }])
 
-		expect(refusal.kind).toBe('invalid')
+		expect(refusal.type).toBe('invalid')
 		expect(refusal.message).toContain('which it contains')
 	})
 })
@@ -375,7 +375,7 @@ describe('the content ops', () => {
 			{ op: 'setAdjectives', nodeId: null, expected: ['warm', 'funny'], value: [] },
 		])
 
-		expect(refusal.kind).toBe('stale')
+		expect(refusal.type).toBe('stale')
 		expect(refusal.found).toEqual(['funny'])
 	})
 
@@ -397,7 +397,7 @@ describe('the content ops', () => {
 			{ op: 'placeReference', referenceId: 'r2', expected: null, value: 'gone' },
 		])
 
-		expect(refusal.kind).toBe('missing')
+		expect(refusal.type).toBe('missing')
 		expect(refusal.message).toContain('node gone')
 	})
 
@@ -406,7 +406,7 @@ describe('the content ops', () => {
 			{ op: 'placeReference', referenceId: 'r1', expected: null, value: 'n1' },
 		])
 
-		expect(refusal.kind).toBe('stale')
+		expect(refusal.type).toBe('stale')
 		expect(refusal.found).toBe('n2a')
 	})
 
@@ -415,7 +415,7 @@ describe('the content ops', () => {
 			{ op: 'setTitle', nodeId: 'gone', expected: '', value: 'A title' },
 		])
 
-		expect(refusal.kind).toBe('missing')
+		expect(refusal.type).toBe('missing')
 		expect(refusal.op).toBe('setTitle')
 		expect(refusal.message).toContain('node gone')
 	})

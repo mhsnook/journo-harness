@@ -34,13 +34,13 @@ const orphaned = {
 }
 
 const quote = {
-	kind: 'quote' as const,
+	type: 'quote' as const,
 	text: 'We did not decide to stop building.',
 	source: { title: 'Permit throughput in six mid-sized cities', year: 2023 },
 }
 
 const reference = {
-	kind: 'reference' as const,
+	type: 'reference' as const,
 	source: { title: 'Zoning and the missing middle', author: 'A. Weill' },
 	note: 'Primary data for the opening figure.',
 }
@@ -121,7 +121,7 @@ describe('Offers in the Article Agent', () => {
 		const offer = await createOffer('offer-create', quote)
 
 		expect(offer).toMatchObject({
-			kind: 'quote',
+			type: 'quote',
 			disposition: 'undecided',
 			decidedAt: null,
 		})
@@ -132,7 +132,7 @@ describe('Offers in the Article Agent', () => {
 	// one refuses without the Article Agent ever reaching its table.
 	it('refuses an Offer carrying neither a text nor a source', async () => {
 		await expect(
-			createOffer('offer-empty', { kind: 'reference' } as OfferContent),
+			createOffer('offer-empty', { type: 'reference' } as OfferContent),
 		).rejects.toThrow(/text, a source, or both/)
 	})
 
@@ -177,7 +177,7 @@ describe('Offers in the Article Agent', () => {
 
 		const titles = await runInDurableObject(stub, (agent) => {
 			const recorded = ['first', 'second', 'third', 'fourth'].map((title) =>
-				agent.createOffer({ kind: 'reference', source: { title } }),
+				agent.createOffer({ type: 'reference', source: { title } }),
 			)
 
 			return {

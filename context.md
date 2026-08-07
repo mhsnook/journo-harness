@@ -128,7 +128,7 @@ _Avoid_: level, tier, inheritance chain
 ## Offers and the Ledger
 
 **Offer**:
-Something the Chat turns up and hands to the writer to rule on. Two Kinds so far,
+Something the Chat turns up and hands to the writer to rule on. Two types so far,
 References and Quotes, and Offers stay flat — two Quotes from one publication are two
 Offers, not a Quote nested in something else.
 _Avoid_: offering, result, finding, suggestion, candidate, card
@@ -141,9 +141,9 @@ least one of the two is present; an entry with neither is nothing.
 _Avoid_: source (a source is the attribution _inside_ a Reference), citation, cite
 
 **Quote**:
-A Reference of Kind Quote — a passage pulled from the source rather than the attribution
-alone. Not a separate entity: one structure carries both, and the Kind says which. A Quote
-carries a text, and a Reference may carry one without being a Quote, because the Kind is
+A Reference of type Quote — a passage pulled from the source rather than the attribution
+alone. Not a separate entity: one structure carries both, and the type says which. A Quote
+carries a text, and a Reference may carry one without being a Quote, because the type is
 stored on the record rather than read off the text. That is what stops the Offer ledger
 and the Plan Panel naming one item two ways.
 _Avoid_: excerpt, passage, snippet, pull quote
@@ -210,17 +210,19 @@ notes. The same model in dialogue is the Chat.
 _Avoid_: coach, assistant, agent (an Agent is a Durable Object class)
 
 **Guidance note**:
-One observation from the Guide — a Kind, an anchor to a Section or a paragraph range,
+One observation from the Guide — a type, an anchor to a Section or a paragraph range,
 and a body of one or two sentences. The unit that fills the Notes Panel.
 _Avoid_: finding, suggestion, comment, tip, feedback
 
-**Kind**:
-What sort of thing a record is. For a Guidance note: structure, tone drift, citations,
+**Type**:
+What sort of thing a record is, named after the record it belongs to — an Offer type, a
+note type, a refusal type. For a Guidance note: structure, tone drift, citations,
 repetition, budget, pacing, plan divergence — illustrative rather than a fixed taxonomy,
 and the Notes Panel groups by it. A note about the Voice and a note about an Adjective are
 both tone drift, because the writer reads them the same way. For an Offer: Reference,
-Quote, and whatever comes later.
-_Avoid_: category, type, tag, label
+Quote, and whatever comes later. The field is `type` throughout, and it reads the way the
+phrase does: `offer.type`, not "the kind of an Offer".
+_Avoid_: kind, category, tag, label
 
 **Review**:
 An intentional pass by the Guide over the whole Article or a chosen Scope, producing a

@@ -19,10 +19,10 @@ import { planSchema } from './schema'
  * - `invalid` — the ops resolve, but applying them would leave something that is
  *   not a Plan.
  */
-export type RefusalKind = 'malformed' | 'missing' | 'stale' | 'invalid'
+export type RefusalType = 'malformed' | 'missing' | 'stale' | 'invalid'
 
 export type Refusal = {
-	kind: RefusalKind
+	type: RefusalType
 	/** Which op refused, counting from 0, and null when the refusal is about the
 	 * Proposal as a whole. */
 	index: number | null
@@ -60,8 +60,8 @@ export function applyProposal(plan: Plan, proposal: unknown): ApplyResult {
 }
 
 function applyOp(plan: Plan, op: ProposalOp, index: number): Refusal | null {
-	const refuse = (kind: RefusalKind, message: string): Refusal => ({
-		kind,
+	const refuse = (type: RefusalType, message: string): Refusal => ({
+		type,
 		index,
 		op: op.op,
 		message,
@@ -369,7 +369,7 @@ function malformed(error: z.ZodError): Refusal {
 	const index = typeof issue.path[0] === 'number' ? issue.path[0] : null
 
 	return {
-		kind: 'malformed',
+		type: 'malformed',
 		index,
 		op: null,
 		message: `An op does not match the vocabulary${at(issue.path.slice(1))}: ${issue.message}`,
@@ -380,7 +380,7 @@ function invalidPlan(error: z.ZodError): Refusal {
 	const issue = error.issues[0]
 
 	return {
-		kind: 'invalid',
+		type: 'invalid',
 		index: null,
 		op: null,
 		message: `The Proposal would leave a Plan the schema refuses${at(issue.path)}: ${issue.message}`,

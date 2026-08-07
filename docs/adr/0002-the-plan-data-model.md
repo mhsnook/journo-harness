@@ -17,7 +17,7 @@ plan: {
   title, totalTarget,
   voice, adjectives: [],
   outline: [ { id, title, intent?, target?, voice?, adjectives?: [], children: [] } ],
-  references: [ { id, kind, provenance, text?, source?, nodeId, note? } ],
+  references: [ { id, type, provenance, text?, source?, nodeId, note? } ],
 }
 ```
 
@@ -78,18 +78,18 @@ carry, so deleting a node unplaces its References in the same Proposal.
 Adjectives took both an absent key and an empty list — and `docs/architecture.md` §4 now
 carries it as a rule of the data model.
 
-## Provenance names what kind of thing a Reference came from
+## Provenance names what sort of thing a Reference came from
 
-`{ kind: 'offer', offerId }` for a Reference copied from an Offer, and `{ kind: 'writer' }`
+`{ type: 'offer', offerId }` for a Reference copied from an Offer, and `{ type: 'writer' }`
 for one the writer typed in. The writer case has to be sayable: a Reference reaching the
 Plan without passing through the Chat is ordinary, and the Ledger deduplicates on
 Provenance, so "came from nowhere in particular" needs a name rather than an empty field.
 
-It is a flat object with a `kind` rather than a discriminated union, because `generateObject`
+It is a flat object with a `type` rather than a discriminated union, because `generateObject`
 handles a flat object more reliably than an `anyOf`. The pairing rule — `offer` names an
 `offerId` and `writer` names none — is a refinement instead.
 
-## A Quote is a Reference of that Kind
+## A Quote is a Reference of that type
 
 One structure, not two. It holds a `text` — a passage pulled from the source, whether a
 quotation, a clip, or a key pullout — or a `source` — the attribution, each field optional
@@ -97,17 +97,17 @@ inside it because a book has no url and a leaked memo has no author. **At least 
 two is present.**
 
 **Amended:** this section first said a Quote is a Reference that carries a text, and that
-the Plan Panel's separate counts are a display filter rather than a schema fact. The Kind
+the Plan Panel's separate counts are a display filter rather than a schema fact. The type
 is now a stored field on `referenceSchema`, and a Reference may carry a text without being
 a Quote.
 
-What changed the answer is that #23 gave the Offer a `kind` column, which the Ledger reads.
-Deriving the Kind in the Plan and storing it on the Offer means one item is labelled twice
-by two rules: Accepting a `kind: 'reference'` Offer that carries a text would drop the Kind
+What changed the answer is that #23 gave the Offer a `type` column, which the Ledger reads.
+Deriving the type in the Plan and storing it on the Offer means one item is labelled twice
+by two rules: Accepting a `type: 'reference'` Offer that carries a text would drop the type
 on the way in, and the Plan Panel would then call a Quote what the Ledger called a
 Reference. Storing it in both places is what removes the second rule.
 
-The cost is that the Kind can now be wrong in a way it could not be when it was derived —
+The cost is that the type can now be wrong in a way it could not be when it was derived —
 so `referenceSchema` refines that a Quote carries a text, and `offerContentSchema` refines
 the same for an Offer. `context.md` carries the vocabulary.
 

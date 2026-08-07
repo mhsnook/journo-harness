@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import { referenceKindSchema, sourceSchema } from './plan/schema'
+import { referenceTypeSchema, sourceSchema } from './plan/schema'
 
 /**
  * An Offer, as coined in context.md. Stored in the Article Agent's SQLite,
@@ -19,7 +19,7 @@ export type Ruling = z.infer<typeof rulingSchema>
  * the Article Agent's to set, so they are not here. */
 export const offerContentSchema = z
 	.strictObject({
-		kind: referenceKindSchema,
+		type: referenceTypeSchema,
 		text: z.string().min(1).optional(),
 		source: sourceSchema.optional(),
 		note: z.string().min(1).optional(),
@@ -27,8 +27,8 @@ export const offerContentSchema = z
 	.refine((offer) => offer.text !== undefined || offer.source !== undefined, {
 		error: 'An Offer carries a text, a source, or both. One with neither is nothing.',
 	})
-	.refine((offer) => offer.kind !== 'quote' || offer.text !== undefined, {
-		error: 'An Offer of Kind quote carries a text.',
+	.refine((offer) => offer.type !== 'quote' || offer.text !== undefined, {
+		error: 'An Offer of type quote carries a text.',
 	})
 
 export type OfferContent = z.infer<typeof offerContentSchema>

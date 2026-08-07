@@ -12,7 +12,7 @@ import {
 import {
 	emptyPlan,
 	type Plan,
-	type ReferenceKind,
+	type ReferenceType,
 	type PlanRefused,
 	planSchema,
 	type Source,
@@ -24,7 +24,7 @@ import {
 type OfferRow = {
 	seq: number
 	id: string
-	kind: ReferenceKind
+	type: ReferenceType
 	disposition: Disposition
 	text: string | null
 	source: string | null
@@ -36,7 +36,7 @@ type OfferRow = {
 function toOffer(row: OfferRow): Offer {
 	return {
 		id: row.id,
-		kind: row.kind,
+		type: row.type,
 		disposition: row.disposition,
 		text: row.text ?? undefined,
 		source: row.source === null ? undefined : (JSON.parse(row.source) as Source),
@@ -65,7 +65,7 @@ export class ArticleAgent extends Agent<Env, Plan> {
 			CREATE TABLE IF NOT EXISTS offer (
 				seq INTEGER PRIMARY KEY AUTOINCREMENT,
 				id TEXT NOT NULL UNIQUE,
-				kind TEXT NOT NULL,
+				type TEXT NOT NULL,
 				disposition TEXT NOT NULL,
 				text TEXT,
 				source TEXT,
@@ -121,10 +121,10 @@ export class ArticleAgent extends Agent<Env, Plan> {
 		}
 
 		this.sql`
-			INSERT INTO offer (id, kind, disposition, text, source, note, created_at, decided_at)
+			INSERT INTO offer (id, type, disposition, text, source, note, created_at, decided_at)
 			VALUES (
 				${offer.id},
-				${offer.kind},
+				${offer.type},
 				${offer.disposition},
 				${offer.text ?? null},
 				${offer.source === undefined ? null : JSON.stringify(offer.source)},
