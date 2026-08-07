@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import type { Plan, Proposal } from '../../src/shared/plan'
+import type { Plan, ProposalInput } from '../../src/shared/plan'
 import { applyProposal } from '../../src/shared/plan'
 import { makeNode, makePlan, makeReference } from './plan-fixtures'
 
@@ -28,7 +28,7 @@ const plan = makePlan({
 })
 
 /** The Plan a Proposal produced, or a failed assertion naming the refusal. */
-function applied(proposal: Proposal, to: Plan = plan): Plan {
+function applied(proposal: ProposalInput, to: Plan = plan): Plan {
 	const result = applyProposal(to, proposal)
 	if (!result.ok) throw new Error(`Refused: ${result.refusal.message}`)
 
@@ -36,7 +36,7 @@ function applied(proposal: Proposal, to: Plan = plan): Plan {
 }
 
 /** The refusal a Proposal produced, or a failed assertion. */
-function refused(proposal: Proposal, to: Plan = plan) {
+function refused(proposal: ProposalInput, to: Plan = plan) {
 	const result = applyProposal(to, proposal)
 	if (result.ok) throw new Error('The Proposal applied, and the test expected a refusal.')
 
@@ -102,7 +102,7 @@ describe('applying a Proposal', () => {
 
 	it('applies an insert whose anchor survived an unrelated sibling being deleted', () => {
 		const withoutN2 = applied([{ op: 'deleteNode', nodeId: 'n2' }])
-		const insert: Proposal = [
+		const insert: ProposalInput = [
 			{
 				op: 'createNode',
 				parentId: null,
@@ -134,7 +134,7 @@ describe('applying a Proposal', () => {
 	})
 
 	it('refuses a Proposal that does not match the vocabulary', () => {
-		const refusal = refused([{ op: 'setTone', nodeId: 'n1' }] as unknown as Proposal)
+		const refusal = refused([{ op: 'setTone', nodeId: 'n1' }] as unknown as ProposalInput)
 
 		expect(refusal.kind).toBe('malformed')
 		expect(refusal.index).toBe(0)
@@ -172,6 +172,38 @@ describe('the structural ops', () => {
 		])
 
 		expect(ids(first.outline[1].children)).toEqual(['n2z', 'n2a', 'n2b', 'n2y'])
+	})
+
+	it('takes a payload that leaves out children, and stores the Plan spelling', () => {
+		const next = applied([
+			{
+				op: 'createNode',
+				parentId: null,
+				beforeId: null,
+				node: { id: 'n4', title: 'A turn' },
+			},
+		])
+
+		expect(next.outline[3].children).toEqual([])
+	})
+
+	it('takes a payload stating an empty Adjectives list, and stores it as absent', () => {
+		const next = applied([
+			{
+				op: 'createNode',
+				parentId: null,
+				beforeId: null,
+				node: {
+					id: 'n4',
+					title: 'A turn',
+					adjectives: [],
+					children: [{ id: 'n4a', title: 'Its first part', adjectives: [] }],
+				},
+			},
+		])
+
+		expect(next.outline[3].adjectives).toBeUndefined()
+		expect(next.outline[3].children[0].adjectives).toBeUndefined()
 	})
 
 	it('creates a subtree in one op', () => {
@@ -237,6 +269,15 @@ describe('the structural ops', () => {
 		expect(ids(next.outline[1].children)).toEqual(['n2a', 'n3', 'n2b'])
 	})
 
+	it('refuses to anchor a move to the node being moved, and says so', () => {
+		const refusal = refused([
+			{ op: 'moveNode', nodeId: 'n2', parentId: null, afterId: 'n2' },
+		])
+
+		expect(refusal.kind).toBe('invalid')
+		expect(refusal.message).toContain('cannot anchor n2 to itself')
+	})
+
 	it('refuses to move a node under one it contains', () => {
 		const refusal = refused([
 			{ op: 'moveNode', nodeId: 'n2', parentId: 'n2a', beforeId: null },
@@ -267,6 +308,17 @@ describe('the structural ops', () => {
 			'n2a',
 			null,
 			'n3',
+		])
+	})
+
+	it('merges a child into its own parent, lifting what it held', () => {
+		const next = applied([{ op: 'mergeNodes', nodeId: 'n2a', intoId: 'n2' }])
+
+		expect(ids(next.outline[1].children)).toEqual(['n2b'])
+		expect(next.references.map((reference) => reference.nodeId)).toEqual([
+			'n2',
+			null,
+			'n2',
 		])
 	})
 

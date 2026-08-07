@@ -1,5 +1,6 @@
 import { z } from 'zod'
 
+import type { OutlineNode } from './schema'
 import {
 	adjectiveSchema,
 	idSchema,
@@ -38,13 +39,32 @@ function statesOneAnchor(op: Anchor) {
 const scopeIdSchema = idSchema.nullable()
 const parentIdSchema = idSchema.nullable()
 
-/** The payload is `outlineNodeSchema` whole, so a node with nothing under it
- * states `children: []`, and one op may create a node with its children. */
+/**
+ * The node a `createNode` op carries: `outlineNodeSchema` loosened at its two
+ * list fields, so a model is never made to state one empty list while being
+ * refused the other. `children` may be left out and `adjectives` may arrive
+ * empty; the applier writes the Plan's spelling of both.
+ *
+ * The leniency lives here rather than on `outlineNodeSchema` because
+ * `validateStateChange` guards a write without rewriting it — a default there
+ * would let a node reach the blob carrying no `children` key at all, which
+ * every reader of a Plan assumes it has.
+ */
+export const createdNodeSchema: z.ZodType<OutlineNode, CreatedNode> =
+	outlineNodeSchema.extend({
+		adjectives: z.array(adjectiveSchema).optional(),
+		get children() {
+			return z.array(createdNodeSchema).default([])
+		},
+	})
+
+type CreatedNode = Omit<OutlineNode, 'children'> & { children?: CreatedNode[] }
+
 export const createNodeOpSchema = z
 	.strictObject({
 		op: z.literal('createNode'),
 		parentId: parentIdSchema,
-		node: outlineNodeSchema,
+		node: createdNodeSchema,
 		...anchorFields,
 	})
 	.refine(statesOneAnchor, anchorRule)
@@ -135,3 +155,7 @@ export const proposalSchema = z.array(proposalOpSchema).min(1)
 export type ProposalOp = z.infer<typeof proposalOpSchema>
 export type Proposal = z.infer<typeof proposalSchema>
 export type OpName = ProposalOp['op']
+
+/** What a caller may write, against `Proposal`, which is what the parse returns.
+ * They differ where `createdNodeSchema` is lenient. */
+export type ProposalInput = z.input<typeof proposalSchema>

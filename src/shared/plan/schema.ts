@@ -7,7 +7,8 @@ import { z } from 'zod'
  */
 
 // `.min(1)` throughout, so that a field carries one spelling of "nothing here"
-// rather than two — §4.
+// rather than two — §4. A title is the exception below and carries no floor: it
+// is empty from the moment a node is made until the writer types into it.
 export const idSchema = z.string().min(1)
 export const voiceSchema = z.string().min(1)
 export const adjectiveSchema = z.string().min(1)

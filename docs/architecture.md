@@ -121,9 +121,10 @@ plan: {
 - **One spelling per state.** A field that may be absent says "nothing here" by being absent,
   and never also by an empty string or an empty list — the blob is written whole, compared
   whole-field by a Proposal's `expected`, and sent whole in every prompt pack, so a second
-  spelling is a second Plan for the same content. Two fields carry their key always and say
-  "nothing here" with a value: a Reference's `nodeId`, which is null until it is placed, and
-  the Article's `adjectives`, which is the empty list.
+  spelling is a second Plan for the same content. Three fields carry their key always and say
+  "nothing here" with a value: a Reference's `nodeId`, which is null until it is placed, the
+  Article's `adjectives`, and an Outline node's `children`, both of them the empty list. A
+  node's own `adjectives` is the other way round, and says it by being absent.
 
 **The schema guards client writes.** `validateStateChange` parses the whole Plan on every
 write, and nothing the model emits ever goes through it — the Chat proposes and the client

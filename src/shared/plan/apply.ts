@@ -100,6 +100,7 @@ function applyOp(plan: Plan, op: ProposalOp, index: number): Refusal | null {
 				taken.add(id)
 			}
 
+			dropEmptyAdjectives(op.node)
 			siblings.splice(at, 0, op.node)
 			return null
 		}
@@ -115,7 +116,16 @@ function applyOp(plan: Plan, op: ProposalOp, index: number): Refusal | null {
 					`${op.op} would move ${op.nodeId} under a node it contains.`,
 				)
 			}
+			// Caught here rather than as a missing anchor, which is what it becomes
+			// once the node is out of the Outline, and which would say the Plan does
+			// not carry a node it does.
+			if (op.afterId === op.nodeId || op.beforeId === op.nodeId) {
+				return refuse('invalid', `${op.op} cannot anchor ${op.nodeId} to itself.`)
+			}
 
+			// The node comes out before the destination is known good. That is safe
+			// only because a refusal discards this whole copy: a dry run, or applying
+			// an op in place, would need every check above the splice.
 			site.siblings.splice(site.index, 1)
 
 			const siblings = childrenOf(plan, op.parentId)
@@ -319,6 +329,13 @@ function insertionIndex(siblings: OutlineNode[], anchor: Anchor): number | null 
 
 function subtreeIds(node: Pick<OutlineNode, 'id' | 'children'>): string[] {
 	return [node.id, ...node.children.flatMap(subtreeIds)]
+}
+
+/** The payload of a createNode op may state an empty Adjectives list where the
+ * Plan says absent — §4. */
+function dropEmptyAdjectives(node: OutlineNode) {
+	if (node.adjectives?.length === 0) delete node.adjectives
+	node.children.forEach(dropEmptyAdjectives)
 }
 
 /** Whole-field comparison. Adjectives are the one list a content op sets, and
