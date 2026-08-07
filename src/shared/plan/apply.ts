@@ -94,7 +94,7 @@ function applyOp(plan: Plan, op: ProposalOp, index: number): Refusal | null {
 				if (taken.has(id)) {
 					return refuse(
 						'invalid',
-						`${op.op} would leave two Outline nodes carrying the id ${id}.`,
+						`${op.op} would leave two Sections carrying the id ${id}.`,
 					)
 				}
 				taken.add(id)

@@ -1,10 +1,10 @@
 import { ArticleBar } from '../../components/ArticleBar'
 import { Button } from '../../components/Button'
-import { ChatComposer, ChatMessage, ChatSuggestions } from '../../components/Chat'
+import { ChatComposer, ChatMessage, ChatReplies } from '../../components/Chat'
 import { Chip } from '../../components/Chip'
 import { Frame, FrameBody } from '../../components/Frame'
 import { MetaLabel } from '../../components/MetaLabel'
-import { Pane, PaneHeader } from '../../components/Pane'
+import { Panel, PanelHeader } from '../../components/Panel'
 import { ARTICLE_TITLE, outlineRevised } from '../../mock/content'
 import { PlanOutline } from '../article/PlanBlocks'
 
@@ -19,7 +19,7 @@ export function NotesToChatScreen() {
 		<Frame width={800}>
 			<ArticleBar title={ARTICLE_TITLE} open={['chat', 'plan']} status="after review 2" />
 			<FrameBody row className="min-h-[21rem]">
-				<Pane divider="right" className="gap-3">
+				<Panel divider="right" className="gap-3">
 					<ChatMessage from="me">
 						<MetaLabel className="mb-1.5">4 accepted notes, pasted in</MetaLabel>
 						<ol className="flex list-decimal flex-col gap-1 pl-4">
@@ -30,33 +30,33 @@ export function NotesToChatScreen() {
 						</ol>
 					</ChatMessage>
 
-					<ChatMessage from="agent">
+					<ChatMessage from="guide">
 						Notes 1 and 2 are the same problem: §3 is doing §4's job. If §3 loses the
 						throughput quote and §4 absorbs the argument, the unused quotes stop being
-						unused — one gets cut for good. Want me to redo the outline that way?
+						unused — one gets declined for good. Want me to redo the outline that way?
 					</ChatMessage>
 
-					<ChatSuggestions>
-						<Chip tone="accent" interactive>
+					<ChatReplies>
+						<Chip variant="accent" interactive>
 							yes, update the plan
 						</Chip>
-						<Chip tone="outline" interactive>
+						<Chip variant="outline" interactive>
 							leave it, I'll do it
 						</Chip>
-					</ChatSuggestions>
+					</ChatReplies>
 
 					<ChatComposer />
-				</Pane>
+				</Panel>
 
-				<Pane tone="sunk" padded={false}>
+				<Panel variant="sunk" padded={false}>
 					<div className="flex flex-1 flex-col gap-3.5 p-3.5">
-						<PaneHeader title="Plan" meta="revised just now" />
+						<PanelHeader title="Plan" meta="revised just now" />
 						<PlanOutline sections={outlineRevised} dense changedFrom={3} />
 
 						<div className="flex flex-col gap-2">
 							<MetaLabel>Quotes</MetaLabel>
 							<div className="flex items-center gap-2.5">
-								<Chip tone="accent">3 / 4</Chip>
+								<Chip variant="accent">3 / 4</Chip>
 								<span className="text-[0.75rem] text-faint">was 3 / 5</span>
 							</div>
 							<div className="flex items-start gap-2.5 opacity-55">
@@ -75,7 +75,7 @@ export function NotesToChatScreen() {
 						<Button>back to the draft →</Button>
 						<span className="text-[0.75rem] text-faint">round 3 whenever</span>
 					</div>
-				</Pane>
+				</Panel>
 			</FrameBody>
 		</Frame>
 	)

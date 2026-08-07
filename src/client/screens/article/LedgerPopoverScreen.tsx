@@ -7,14 +7,14 @@ interface Group {
 	label: string
 	count: number
 	items: Array<{ text: string; section?: string }>
-	tone?: 'used' | 'plain' | 'cut'
+	variant?: 'used' | 'plain' | 'declined'
 }
 
 const groups: Group[] = [
 	{
 		label: 'Used in the draft',
 		count: 3,
-		tone: 'used',
+		variant: 'used',
 		items: [
 			{ section: '§2', text: 'Permit throughput in six mid-sized cities' },
 			{ section: '§2', text: '“We did not decide to stop building…”' },
@@ -43,9 +43,9 @@ const groups: Group[] = [
 		items: [{ text: 'Transit-adjacent density pilot' }],
 	},
 	{
-		label: 'Cut',
+		label: 'Declined',
 		count: 5,
-		tone: 'cut',
+		variant: 'declined',
 		items: [{ text: 'Why nobody builds anymore (opinion)' }],
 	},
 ]
@@ -72,13 +72,16 @@ export function LedgerPopoverScreen() {
 				{groups.map((group) => (
 					<section
 						key={group.label}
-						className={cx('flex flex-col gap-1.5', group.tone === 'cut' && 'opacity-50')}
+						className={cx(
+							'flex flex-col gap-1.5',
+							group.variant === 'declined' && 'opacity-50',
+						)}
 					>
 						<MetaLabel count={group.count}>{group.label}</MetaLabel>
 						{group.items.map((item) => (
 							<div key={item.text} className="flex items-start gap-2">
 								{item.section ? (
-									<Chip tone={group.tone === 'used' ? 'accent' : 'outline'}>
+									<Chip variant={group.variant === 'used' ? 'accent' : 'outline'}>
 										{item.section}
 									</Chip>
 								) : null}

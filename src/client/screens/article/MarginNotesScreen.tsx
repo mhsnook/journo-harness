@@ -1,7 +1,7 @@
 import { ArticleBar } from '../../components/ArticleBar'
 import { Chip } from '../../components/Chip'
-import { CoachNote } from '../../components/CoachNote'
 import { Frame, FrameBody } from '../../components/Frame'
+import { GuidanceNote } from '../../components/GuidanceNote'
 import { ARTICLE_TITLE, draftParagraphs } from '../../mock/content'
 
 /**
@@ -25,7 +25,7 @@ export function MarginNotesScreen() {
 					<div className="prose-draft min-w-0 flex-1 border-l-2 border-accent-edge pl-4">
 						<p className="text-[0.9375rem]">{draftParagraphs[1]}</p>
 					</div>
-					<CoachNote
+					<GuidanceNote
 						anchor="§3"
 						confidence="confident"
 						live
@@ -33,10 +33,10 @@ export function MarginNotesScreen() {
 						body="The permit-process argument already landed. §3 is meant to be the cost of the delay to people."
 						actions={
 							<>
-								<Chip tone="outline" interactive>
+								<Chip variant="outline" interactive>
 									accept
 								</Chip>
-								<Chip tone="muted" interactive>
+								<Chip variant="muted" interactive>
 									×
 								</Chip>
 							</>

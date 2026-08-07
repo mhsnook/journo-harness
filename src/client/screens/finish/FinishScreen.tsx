@@ -2,7 +2,7 @@ import { Button } from '../../components/Button'
 import { Chip } from '../../components/Chip'
 import { Frame, FrameBody } from '../../components/Frame'
 import { MetaLabel } from '../../components/MetaLabel'
-import { Pane } from '../../components/Pane'
+import { Panel } from '../../components/Panel'
 import { TitleBar } from '../../components/TitleBar'
 import { ARTICLE_TITLE } from '../../mock/content'
 
@@ -16,15 +16,15 @@ export function FinishScreen() {
 		<Frame width={560}>
 			<TitleBar back={ARTICLE_TITLE} title="Finish" />
 			<FrameBody>
-				<Pane className="gap-4 p-4">
+				<Panel className="gap-4 p-4">
 					<div className="flex items-center gap-2">
-						<Chip tone="solid" interactive>
+						<Chip variant="solid" interactive>
 							markdown
 						</Chip>
-						<Chip tone="outline" interactive>
+						<Chip variant="outline" interactive>
 							html
 						</Chip>
-						<Chip tone="outline" interactive>
+						<Chip variant="outline" interactive>
 							docx
 						</Chip>
 						<span className="ml-1 text-[0.75rem] text-faint">footnotes included</span>
@@ -34,15 +34,15 @@ export function FinishScreen() {
 						<MetaLabel>House style — footnote template</MetaLabel>
 						<div className="flex flex-col gap-2 rounded-md border border-edge bg-sunk p-2.5">
 							<div className="flex flex-wrap items-center gap-1.5">
-								<Chip tone="default">author</Chip>
+								<Chip variant="default">author</Chip>
 								<span className="text-[0.75rem] text-muted">,</span>
-								<Chip tone="default">title</Chip>
+								<Chip variant="default">title</Chip>
 								<span className="text-[0.75rem] text-muted">,</span>
-								<Chip tone="default">publication</Chip>
+								<Chip variant="default">publication</Chip>
 								<span className="text-[0.75rem] text-muted">(</span>
-								<Chip tone="default">date</Chip>
+								<Chip variant="default">date</Chip>
 								<span className="text-[0.75rem] text-muted">),</span>
-								<Chip tone="default">url</Chip>
+								<Chip variant="default">url</Chip>
 							</div>
 							<p className="text-[0.6875rem] text-faint">
 								Drag the fields into order; type literal text between them.
@@ -67,30 +67,30 @@ export function FinishScreen() {
 					<div className="flex flex-wrap gap-2">
 						<Button>download</Button>
 						<Button>copy</Button>
-						<Button tone="accent">mark as sent →</Button>
+						<Button variant="accent">mark as sent →</Button>
 					</div>
 
 					<div className="flex items-center gap-3 rounded-md border border-edge bg-sunk p-2.5">
 						<div className="flex min-w-0 flex-1 flex-col gap-1.5">
 							<MetaLabel>Remind me to chase it</MetaLabel>
 							<div className="flex flex-wrap gap-1.5">
-								<Chip tone="outline" interactive>
+								<Chip variant="outline" interactive>
 									3 days
 								</Chip>
-								<Chip tone="default" interactive>
+								<Chip variant="default" interactive>
 									1 week
 								</Chip>
-								<Chip tone="outline" interactive>
+								<Chip variant="outline" interactive>
 									2 weeks
 								</Chip>
-								<Chip tone="outline" interactive>
+								<Chip variant="outline" interactive>
 									a date…
 								</Chip>
 							</div>
 						</div>
 						<Button size="sm">set</Button>
 					</div>
-				</Pane>
+				</Panel>
 			</FrameBody>
 		</Frame>
 	)

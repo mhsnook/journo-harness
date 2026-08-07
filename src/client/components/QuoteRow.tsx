@@ -22,7 +22,7 @@ export function QuoteRow({
 }: QuoteRowProps) {
 	return (
 		<div className={cx('flex items-start gap-2.5', dimmed && 'opacity-50', className)}>
-			<Chip tone={quote.section ? 'default' : 'muted'} className="mt-px">
+			<Chip variant={quote.section ? 'default' : 'muted'} className="mt-px">
 				{quote.section ?? '—'}
 			</Chip>
 			<blockquote

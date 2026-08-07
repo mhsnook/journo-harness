@@ -12,7 +12,7 @@ export interface ArticleCardProps {
 
 /**
  * An in-progress article. The progress bar is deliberately unlabelled — the
- * phase word underneath is the honest signal; the bar is just a shape.
+ * status word underneath is the honest signal; the bar is just a shape.
  */
 export function ArticleCard({ article, variant = 'card', className }: ArticleCardProps) {
 	const compact = variant === 'column'
@@ -39,12 +39,12 @@ export function ArticleCard({ article, variant = 'card', className }: ArticleCar
 				</p>
 			) : null}
 			<ProgressBar value={article.progress} className="mt-0.5" />
-			<p className="text-[0.6875rem] text-faint">{article.phaseLabel}</p>
+			<p className="text-[0.6875rem] text-faint">{article.statusLabel}</p>
 			{article.voice || article.chips?.length ? (
 				<div className="flex flex-wrap gap-1.5">
-					{article.voice ? <Chip tone="outline">{article.voice}</Chip> : null}
+					{article.voice ? <Chip variant="outline">{article.voice}</Chip> : null}
 					{article.chips?.map((chip) => (
-						<Chip key={chip} tone={article.needsAttention ? 'accent' : 'default'}>
+						<Chip key={chip} variant={article.needsAttention ? 'accent' : 'default'}>
 							{chip}
 						</Chip>
 					))}

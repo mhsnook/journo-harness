@@ -51,7 +51,7 @@ describe('the Scope resolver', () => {
 		})
 	})
 
-	it('lets the nearest Outline node win the Voice outright, across all three Scopes', () => {
+	it('lets the nearest Section win the Voice outright, across all three Scopes', () => {
 		expect(resolveNodeScope(plan, 'n1', house)).toEqual({
 			voice: 'academic',
 			adjectives: ['well researched', 'funny', 'somber'],

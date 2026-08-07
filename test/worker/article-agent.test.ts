@@ -16,7 +16,7 @@ function createOffer(name: string, content: OfferContent): Promise<Offer> {
 	return runInDurableObject(stub, (agent) => agent.createOffer(content))
 }
 
-/** A Plan that parses: one Outline node, and one Reference placed at it. */
+/** A Plan that parses: one Section, and one Reference placed at it. */
 const plan = makePlan({
 	title: 'The permit queue',
 	totalTarget: 1200,
@@ -96,7 +96,7 @@ describe('the Plan in Article Agent state', () => {
 		const frame = await writer.next('plan_refused')
 
 		expect(isPlanRefused(frame)).toBe(true)
-		expect(frame.error).toContain('which no Outline node carries')
+		expect(frame.error).toContain('which no Section carries')
 	})
 })
 

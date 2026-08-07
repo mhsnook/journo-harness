@@ -2,10 +2,10 @@ import { ArticleBar } from '../../components/ArticleBar'
 import { Button } from '../../components/Button'
 import { Check } from '../../components/Check'
 import { Chip } from '../../components/Chip'
-import { CoachNote } from '../../components/CoachNote'
 import { DraftSurface } from '../../components/DraftSurface'
 import { Frame, FrameBody } from '../../components/Frame'
-import { PaneHeader } from '../../components/Pane'
+import { GuidanceNote } from '../../components/GuidanceNote'
+import { PanelHeader } from '../../components/Panel'
 import { ARTICLE_TITLE, draftParagraphs } from '../../mock/content'
 
 /**
@@ -20,8 +20,8 @@ export function NotesRailScreen() {
 				<DraftSurface paragraphs={draftParagraphs} measure="narrow" caret />
 
 				<aside className="flex w-[13rem] shrink-0 flex-col gap-3 border-l border-edge bg-sunk p-3.5">
-					<PaneHeader title="Notes" meta="3 new" />
-					<CoachNote
+					<PanelHeader title="Notes" meta="3 new" />
+					<GuidanceNote
 						anchor="§3"
 						confidence="confident"
 						live
@@ -29,23 +29,23 @@ export function NotesRailScreen() {
 						body="You're supposed to be moving into the human cost."
 						actions={
 							<>
-								<Chip tone="outline" interactive>
+								<Chip variant="outline" interactive>
 									accept
 								</Chip>
-								<Chip tone="muted" interactive>
+								<Chip variant="muted" interactive>
 									dismiss
 								</Chip>
 							</>
 						}
 					/>
-					<CoachNote
+					<GuidanceNote
 						anchor="whole piece"
 						confidence="tentative"
 						title="220 words over target"
 						body="With §4 still to write, something in §3 has to give."
 					/>
 
-					<PaneHeader title="Accepted" meta="2" className="mt-1" />
+					<PanelHeader title="Accepted" meta="2" className="mt-1" />
 					<ul className="flex flex-col gap-2">
 						<li className="flex items-start gap-2">
 							<Check />
@@ -61,7 +61,7 @@ export function NotesRailScreen() {
 						</li>
 					</ul>
 
-					<Button size="sm" tone="quiet" className="mt-auto self-start">
+					<Button size="sm" variant="quiet" className="mt-auto self-start">
 						hide notes
 					</Button>
 				</aside>

@@ -1,74 +1,74 @@
 import { Frame, FrameBody } from '../../components/Frame'
-import { PaneRail, type PaneId } from '../../components/PaneRail'
+import { PanelRail, type PanelId } from '../../components/PanelRail'
 import { cx } from '../../lib/cx'
 
 interface Combo {
-	open: PaneId[]
-	widths: Array<{ pane: PaneId; flex: number }>
+	open: PanelId[]
+	widths: Array<{ Panel: PanelId; flex: number }>
 }
 
 const combos: Combo[] = [
 	{
 		open: ['chat', 'plan'],
 		widths: [
-			{ pane: 'chat', flex: 1 },
-			{ pane: 'plan', flex: 1 },
+			{ Panel: 'chat', flex: 1 },
+			{ Panel: 'plan', flex: 1 },
 		],
 	},
 	{
 		open: ['plan', 'draft'],
 		widths: [
-			{ pane: 'plan', flex: 0.38 },
-			{ pane: 'draft', flex: 1 },
+			{ Panel: 'plan', flex: 0.38 },
+			{ Panel: 'draft', flex: 1 },
 		],
 	},
 	{
 		open: ['draft', 'notes'],
 		widths: [
-			{ pane: 'draft', flex: 1 },
-			{ pane: 'notes', flex: 0.26 },
+			{ Panel: 'draft', flex: 1 },
+			{ Panel: 'notes', flex: 0.26 },
 		],
 	},
 	{
 		open: ['chat', 'notes'],
 		widths: [
-			{ pane: 'chat', flex: 0.5 },
-			{ pane: 'notes', flex: 0.5 },
+			{ Panel: 'chat', flex: 0.5 },
+			{ Panel: 'notes', flex: 0.5 },
 		],
 	},
 	{
 		open: ['plan', 'draft', 'notes'],
 		widths: [
-			{ pane: 'plan', flex: 0.24 },
-			{ pane: 'draft', flex: 1 },
-			{ pane: 'notes', flex: 0.24 },
+			{ Panel: 'plan', flex: 0.24 },
+			{ Panel: 'draft', flex: 1 },
+			{ Panel: 'notes', flex: 0.24 },
 		],
 	},
 ]
 
 /**
- * 4(e) — Recap: which panes can be open at once. Order never changes, panes
- * never stack, and the two support panes are always the narrow ones.
+ * 4(e) — Recap: which Panels can be open at once. Order never changes, Panels
+ * never stack, and the two support Panels are always the narrow ones.
  */
-export function PaneCombosScreen() {
+export function PanelCombosScreen() {
 	return (
 		<Frame width={360}>
 			<FrameBody className="gap-4 p-4">
 				{combos.map((combo, i) => (
 					<div key={i} className="flex flex-col gap-2">
-						<PaneRail open={combo.open} />
+						<PanelRail open={combo.open} />
 						<div className="flex h-10 overflow-hidden rounded-md border border-edge">
-							{combo.widths.map(({ pane, flex }, j) => (
+							{combo.widths.map(({ Panel, flex }, j) => (
 								<div
-									key={pane}
+									key={Panel}
 									style={{ flex }}
 									className={cx(
 										'grid place-items-center text-[0.625rem] text-faint',
 										j > 0 && 'border-l border-edge',
-										pane === 'draft' ? 'bg-surface' : 'bg-sunk',
+										Panel === 'draft' ? 'bg-surface' : 'bg-sunk',
 									)}
 								>
-									{pane}
+									{Panel}
 								</div>
 							))}
 						</div>

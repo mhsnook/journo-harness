@@ -1,10 +1,10 @@
 import { Chip } from '../../components/Chip'
 import { ProgressBar } from '../../components/ProgressBar'
 import { cx } from '../../lib/cx'
-import type { OutlineSection } from '../../mock/content'
+import type { Section } from '../../mock/content'
 
 export interface PlanRailProps {
-	sections: OutlineSection[]
+	sections: Section[]
 	/** Written words per section, in the same order. */
 	written: number[]
 	/** Chips at the foot of the rail: refs, quotes, notes. */
@@ -46,7 +46,7 @@ export function PlanRail({ sections, written, counts, className }: PlanRailProps
 						<ProgressBar
 							value={written[i] / section.words}
 							label={`${section.title} progress`}
-							tone={written[i] / section.words > 1 ? 'attention' : 'quiet'}
+							variant={written[i] / section.words > 1 ? 'attention' : 'quiet'}
 						/>
 					</div>
 				)
@@ -60,7 +60,7 @@ export function PlanRail({ sections, written, counts, className }: PlanRailProps
 			{counts?.length ? (
 				<div className="flex flex-wrap gap-1.5">
 					{counts.map((count) => (
-						<Chip key={count} tone="outline">
+						<Chip key={count} variant="outline">
 							{count}
 						</Chip>
 					))}

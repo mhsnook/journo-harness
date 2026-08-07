@@ -18,7 +18,7 @@ export function Divider({ weight = 'hair', className }: DividerProps) {
 	)
 }
 
-export interface SectionHeadingProps {
+export interface GroupHeadingProps {
 	children: React.ReactNode
 	/** "24", "9 · 3 used" — sits after the label, always quiet. */
 	count?: React.ReactNode
@@ -30,12 +30,7 @@ export interface SectionHeadingProps {
  * A run-on heading: label, count, a hairline that eats the remaining width,
  * then an optional link. Used for every list on the desk and in the plan.
  */
-export function SectionHeading({
-	children,
-	count,
-	action,
-	className,
-}: SectionHeadingProps) {
+export function GroupHeading({ children, count, action, className }: GroupHeadingProps) {
 	return (
 		<div className={cx('flex items-center gap-2.5', className)}>
 			<span className="label-meta shrink-0">

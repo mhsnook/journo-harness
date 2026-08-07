@@ -1,5 +1,5 @@
 import { Button } from '../../components/Button'
-import { SectionHeading } from '../../components/Divider'
+import { GroupHeading } from '../../components/Divider'
 import { Field } from '../../components/Field'
 import { Frame, FrameBody } from '../../components/Frame'
 import { MetaLabel } from '../../components/MetaLabel'
@@ -20,7 +20,7 @@ export function ArchiveScreen() {
 			/>
 			<FrameBody className="gap-4 p-4">
 				<section className="flex flex-col gap-2.5">
-					<SectionHeading count={2}>Submitted</SectionHeading>
+					<GroupHeading count={2}>Submitted</GroupHeading>
 					<div className="flex flex-col gap-2.5 rounded-lg border border-edge p-3">
 						<div className="flex items-baseline gap-2.5">
 							<h3 className="text-[0.875rem] font-semibold text-ink">
@@ -31,7 +31,7 @@ export function ArchiveScreen() {
 							</span>
 						</div>
 						<div className="flex items-center gap-2.5">
-							<Button tone="accent" size="sm">
+							<Button variant="accent" size="sm">
 								mark published
 							</Button>
 							<Field size="sm" placeholder="where it ran (url)" className="flex-1" />
@@ -44,7 +44,7 @@ export function ArchiveScreen() {
 				</section>
 
 				<section className="flex flex-col gap-2.5">
-					<SectionHeading count={9}>Published</SectionHeading>
+					<GroupHeading count={9}>Published</GroupHeading>
 					<div className="grid grid-cols-2 gap-2.5">
 						{publishedArticles.map((article) => (
 							<article

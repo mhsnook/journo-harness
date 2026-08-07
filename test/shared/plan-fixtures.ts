@@ -6,7 +6,7 @@ export function makePlan(overrides: Partial<Plan> = {}): Plan {
 	return { ...emptyPlan('The article'), ...overrides }
 }
 
-/** An Outline node. `children` is always present, so a test states only the
+/** An Section. `children` is always present, so a test states only the
  * fields it is about. */
 export function makeNode(node: Partial<OutlineNode> & { id: string }): OutlineNode {
 	return { title: `Node ${node.id}`, children: [], ...node }

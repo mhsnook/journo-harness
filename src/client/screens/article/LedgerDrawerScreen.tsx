@@ -3,10 +3,10 @@ import { Chip } from '../../components/Chip'
 import { EmptySlot } from '../../components/Field'
 import { Frame, FrameBody } from '../../components/Frame'
 import { MetaLabel } from '../../components/MetaLabel'
-import { Pane } from '../../components/Pane'
+import { Panel } from '../../components/Panel'
 import { QuoteRow } from '../../components/QuoteRow'
-import { SourceCard } from '../../components/SourceCard'
-import { ARTICLE_TITLE, quotes, sources } from '../../mock/content'
+import { ReferenceCard } from '../../components/ReferenceCard'
+import { ARTICLE_TITLE, quotes, references } from '../../mock/content'
 
 /**
  * 2(f) — The ledger, as two equal halves. Left is what has been offered and
@@ -21,7 +21,7 @@ export function LedgerDrawerScreen() {
 		<Frame width={820}>
 			<ArticleBar title={ARTICLE_TITLE} open={['chat', 'plan']} status="ledger" />
 			<FrameBody row className="min-h-[22rem]">
-				<Pane divider="right" padded={false}>
+				<Panel divider="right" padded={false}>
 					<header className="flex items-center gap-2.5 border-b border-edge bg-sunk px-3.5 py-2.5">
 						<h3 className="text-[0.875rem] font-semibold text-ink">Offered</h3>
 						<span className="text-[0.75rem] text-faint">17 · 9 accepted</span>
@@ -34,30 +34,30 @@ export function LedgerDrawerScreen() {
 					</header>
 					<div className="flex flex-col gap-2.5 p-3.5">
 						<div className="flex flex-wrap gap-1.5">
-							<Chip tone="solid" interactive>
+							<Chip variant="solid" interactive>
 								all
 							</Chip>
-							<Chip tone="outline" interactive>
+							<Chip variant="outline" interactive>
 								undecided
 							</Chip>
-							<Chip tone="outline" interactive>
+							<Chip variant="outline" interactive>
 								accepted
 							</Chip>
-							<Chip tone="outline" interactive>
-								cut
+							<Chip variant="outline" interactive>
+								declined
 							</Chip>
 						</div>
-						<SourceCard source={sources[0]} variant="ledger" compact />
-						<SourceCard source={sources[1]} variant="ledger" compact />
-						<SourceCard source={sources[2]} variant="ledger" compact />
-						<SourceCard source={sources[4]} variant="ledger" compact />
+						<ReferenceCard reference={references[0]} variant="ledger" compact />
+						<ReferenceCard reference={references[1]} variant="ledger" compact />
+						<ReferenceCard reference={references[2]} variant="ledger" compact />
+						<ReferenceCard reference={references[4]} variant="ledger" compact />
 						<p className="text-[0.6875rem] text-faint">
 							+ 13 more · accepting one sends it across →
 						</p>
 					</div>
-				</Pane>
+				</Panel>
 
-				<Pane tone="sunk" padded={false}>
+				<Panel variant="sunk" padded={false}>
 					<header className="flex items-center gap-2.5 border-b border-edge px-3.5 py-2.5">
 						<h3 className="text-[0.875rem] font-semibold text-ink">In the plan</h3>
 						<span className="text-[0.75rem] text-faint">9 accepted · 3 used</span>
@@ -79,7 +79,7 @@ export function LedgerDrawerScreen() {
 
 						<div className="flex flex-col gap-2">
 							<MetaLabel>§4 · What a faster city would look like</MetaLabel>
-							<EmptySlot className="ml-2">Drop an accepted source here</EmptySlot>
+							<EmptySlot className="ml-2">Drop an accepted reference here</EmptySlot>
 						</div>
 
 						<div className="flex flex-col gap-1.5">
@@ -90,7 +90,7 @@ export function LedgerDrawerScreen() {
 							</p>
 						</div>
 					</div>
-				</Pane>
+				</Panel>
 			</FrameBody>
 		</Frame>
 	)

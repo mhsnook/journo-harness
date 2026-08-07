@@ -64,19 +64,19 @@ describe('the Plan schema', () => {
 		expect(planSchema.safeParse(makePlan({ adjectives: [''] })).success).toBe(false)
 	})
 
-	it('accepts an Outline node with an empty title, because one is typed after it is made', () => {
+	it('accepts a Section with an empty title, because one is typed after it is made', () => {
 		const plan = makePlan({ outline: [makeNode({ id: 'n1', title: '' })] })
 
 		expect(planSchema.safeParse(plan).success).toBe(true)
 	})
 
-	it('rejects an Outline node with no id', () => {
+	it('rejects a Section with no id', () => {
 		const plan = makePlan({ outline: [makeNode({ id: '' })] })
 
 		expect(planSchema.safeParse(plan).success).toBe(false)
 	})
 
-	it('holds an Outline node to the same field rules as the Plan', () => {
+	it('holds a Section to the same field rules as the Plan', () => {
 		const withNode = (fields: Partial<OutlineNode>) =>
 			planSchema.safeParse(makePlan({ outline: [makeNode({ id: 'n1', ...fields })] }))
 				.success
@@ -116,7 +116,7 @@ describe('the Plan schema', () => {
 		expect(firstIssuePath(result)).toBe('outline.0.children.0.children.0.target')
 	})
 
-	it('rejects two Outline nodes carrying one id, however deep', () => {
+	it('rejects two Sections carrying one id, however deep', () => {
 		const plan = makePlan({
 			outline: [
 				makeNode({ id: 'n1', children: [makeNode({ id: 'shared' })] }),
@@ -142,7 +142,7 @@ describe('the Plan schema', () => {
 		expect(firstIssuePath(result)).toBe('references.1.id')
 	})
 
-	it('rejects a Reference placed at an Outline node that is not there', () => {
+	it('rejects a Reference placed at a Section that is not there', () => {
 		const plan = makePlan({
 			outline: [makeNode({ id: 'n1' })],
 			references: [

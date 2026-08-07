@@ -3,17 +3,17 @@ import { Button } from '../../components/Button'
 import { Check } from '../../components/Check'
 import { Frame, FrameBody } from '../../components/Frame'
 import { MetaLabel } from '../../components/MetaLabel'
-import { Pane, PaneHeader } from '../../components/Pane'
+import { Panel, PanelHeader } from '../../components/Panel'
 import { ARTICLE_TITLE } from '../../mock/content'
 
-interface Finding {
+interface Note {
 	id: string
 	text: string
 	anchor: string
 	accepted?: boolean
 }
 
-const structure: Finding[] = [
+const structure: Note[] = [
 	{
 		id: 'f1',
 		text: 'The crane-index image carries §1 and then carries §4 again. The second use costs you the ending.',
@@ -27,11 +27,11 @@ const structure: Finding[] = [
 	},
 ]
 
-const other: Finding[] = [
+const other: Note[] = [
 	{
 		id: 'f3',
 		text: '§3 drifts into Newsletter aside — three asides in four paragraphs, where the piece is marked Reported feature.',
-		anchor: 'voice',
+		anchor: 'tone drift',
 	},
 	{
 		id: 'f4',
@@ -40,15 +40,15 @@ const other: Finding[] = [
 	},
 ]
 
-function FindingRow({ finding }: { finding: Finding }) {
+function NoteRow({ note }: { note: Note }) {
 	return (
 		<li className="flex items-start gap-2.5">
-			<Check checked={finding.accepted} label={`Accept: ${finding.text}`} />
+			<Check checked={note.accepted} label={`Accept: ${note.text}`} />
 			<div className="flex min-w-0 flex-1 flex-col gap-0.5">
-				<p className="text-[0.8125rem] leading-relaxed text-ink">{finding.text}</p>
+				<p className="text-[0.8125rem] leading-relaxed text-ink">{note.text}</p>
 				<p className="text-[0.6875rem] text-faint">
-					{finding.anchor}
-					{finding.accepted ? ' · accepted' : ''}
+					{note.anchor}
+					{note.accepted ? ' · accepted' : ''}
 				</p>
 			</div>
 		</li>
@@ -65,8 +65,8 @@ export function FullReviewScreen() {
 		<Frame width={720}>
 			<ArticleBar title={ARTICLE_TITLE} open={['notes']} status="round 2" />
 			<FrameBody>
-				<Pane className="gap-4 p-5">
-					<PaneHeader title="Review of draft 2" meta="2,610 words · 6 findings" />
+				<Panel className="gap-4 p-5">
+					<PanelHeader title="Review of draft 2" meta="2,610 words · 6 notes" />
 
 					<div className="flex flex-col gap-1.5">
 						<MetaLabel>The shape of it</MetaLabel>
@@ -81,26 +81,26 @@ export function FullReviewScreen() {
 						<section className="flex flex-col gap-2.5">
 							<MetaLabel count={2}>Structure</MetaLabel>
 							<ul className="flex flex-col gap-2.5">
-								{structure.map((finding) => (
-									<FindingRow key={finding.id} finding={finding} />
+								{structure.map((note) => (
+									<NoteRow key={note.id} note={note} />
 								))}
 							</ul>
 						</section>
 						<section className="flex flex-col gap-2.5">
-							<MetaLabel>Voice · 1 · Citations · 3</MetaLabel>
+							<MetaLabel>Tone drift · 1 · Citations · 3</MetaLabel>
 							<ul className="flex flex-col gap-2.5">
-								{other.map((finding) => (
-									<FindingRow key={finding.id} finding={finding} />
+								{other.map((note) => (
+									<NoteRow key={note.id} note={note} />
 								))}
 							</ul>
 						</section>
 					</div>
 
 					<div className="flex items-center gap-2.5 border-t border-edge pt-3.5">
-						<Button tone="accent">keep 3, back to the draft →</Button>
+						<Button variant="accent">keep 3, back to the draft →</Button>
 						<Button>send notes to chat</Button>
 					</div>
-				</Pane>
+				</Panel>
 			</FrameBody>
 		</Frame>
 	)

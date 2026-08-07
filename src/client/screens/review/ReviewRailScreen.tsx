@@ -8,8 +8,8 @@ import { MetaLabel } from '../../components/MetaLabel'
 import { ARTICLE_TITLE, draftParagraphs } from '../../mock/content'
 
 /**
- * 4(b) — Back in the draft with the review's findings in the rail. The
- * findings became a checklist; the prose has gone quiet behind it because you
+ * 4(b) — Back in the draft with the Review's notes in the rail. The
+ * notes became a checklist; the prose has gone quiet behind it because you
  * are reading, not writing, for a moment.
  */
 export function ReviewRailScreen() {
@@ -63,10 +63,10 @@ export function ReviewRailScreen() {
 									2 of 5 planned quotes unused
 								</p>
 								<div className="flex flex-wrap gap-1.5">
-									<Chip tone="outline" interactive>
+									<Chip variant="outline" interactive>
 										ledger
 									</Chip>
-									<Chip tone="muted" interactive>
+									<Chip variant="muted" interactive>
 										fine as is
 									</Chip>
 								</div>
@@ -76,7 +76,7 @@ export function ReviewRailScreen() {
 
 					<div className="mt-auto flex flex-wrap gap-2">
 						<Button size="sm">send notes to chat</Button>
-						<Button size="sm" tone="quiet">
+						<Button size="sm" variant="quiet">
 							finish →
 						</Button>
 					</div>

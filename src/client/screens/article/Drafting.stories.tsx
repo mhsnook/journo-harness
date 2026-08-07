@@ -48,7 +48,7 @@ export const C_ChatAndDraft: Story = {
 		<div className="flex flex-col">
 			<ChatAndDraftScreen />
 			<Annotation>
-				The chat pane never takes more than half. Anything it produces lands in the plan,
+				The chat Panel never takes more than half. Anything it produces lands in the plan,
 				not in the prose — the writing stays yours.
 			</Annotation>
 		</div>

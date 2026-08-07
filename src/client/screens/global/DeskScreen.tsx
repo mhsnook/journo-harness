@@ -1,6 +1,6 @@
 import { ArticleCard } from '../../components/ArticleCard'
 import { Button } from '../../components/Button'
-import { SectionHeading } from '../../components/Divider'
+import { GroupHeading } from '../../components/Divider'
 import { Frame, FrameBody } from '../../components/Frame'
 import { ListRow } from '../../components/ListRow'
 import { TitleBar } from '../../components/TitleBar'
@@ -17,7 +17,7 @@ export function DeskScreen() {
 				title="Desk"
 				actions={
 					<>
-						<Button tone="quiet" size="sm">
+						<Button variant="quiet" size="sm">
 							settings
 						</Button>
 						<Button size="sm">+ new article</Button>
@@ -26,16 +26,16 @@ export function DeskScreen() {
 			/>
 			<FrameBody className="gap-6 p-4">
 				<div className="flex flex-col gap-3">
-					<SectionHeading
+					<GroupHeading
 						count={activeArticles.length}
 						action={
-							<Button tone="quiet" size="sm">
+							<Button variant="quiet" size="sm">
 								board view
 							</Button>
 						}
 					>
 						In progress
-					</SectionHeading>
+					</GroupHeading>
 					<div className="flex flex-wrap gap-3">
 						{activeArticles.map((article) => (
 							<ArticleCard key={article.id} article={article} />
@@ -44,17 +44,17 @@ export function DeskScreen() {
 				</div>
 
 				<div className="flex flex-col gap-1">
-					<SectionHeading
+					<GroupHeading
 						count={24}
 						action={
-							<Button tone="link" size="sm">
+							<Button variant="link" size="sm">
 								see all drafts
 							</Button>
 						}
 						className="mb-1.5"
 					>
 						Older drafts
-					</SectionHeading>
+					</GroupHeading>
 					{olderDrafts.map((draft) => (
 						<ListRow
 							key={draft.id}
@@ -68,14 +68,14 @@ export function DeskScreen() {
 				</div>
 
 				<div className="flex flex-col gap-1">
-					<SectionHeading
+					<GroupHeading
 						count={9}
 						action={
 							<span className="flex items-center gap-3">
-								<Button tone="link" size="sm">
+								<Button variant="link" size="sm">
 									portfolio
 								</Button>
-								<Button tone="link" size="sm">
+								<Button variant="link" size="sm">
 									see all
 								</Button>
 							</span>
@@ -83,7 +83,7 @@ export function DeskScreen() {
 						className="mb-1.5"
 					>
 						Published
-					</SectionHeading>
+					</GroupHeading>
 					{publishedArticles.map((article) => (
 						<ListRow
 							key={article.id}

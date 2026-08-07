@@ -66,7 +66,7 @@ Recorded in [ADR 0001](./adr/0001-phase-1-storage-shape.md).
 Five rules. Apply them to anything new without reopening the question.
 
 1. **Article Agent state holds only the Plan, and only the client writes it.** `setState`
-   replaces the entire blob, so a write meant to change one Outline node rewrites every
+   replaces the entire blob, so a write meant to change one Section rewrites every
    field from whatever version the client last read. A second writer's changes vanish with
    no conflict and no error.
 2. **Every other per-Article record is a SQLite row in the Article Agent**, read and written
@@ -75,7 +75,7 @@ Five rules. Apply them to anything new without reopening the question.
    the writer Declines an Offer and neither erases the other. Adding a per-Article record
    type needs no endpoint, no store, and no sync library.
 3. **A request is an action when it runs a model, and CRUD otherwise.** Actions: sending a
-   Chat turn, running a Review, running research. CRUD: editing an Outline node, editing a
+   Chat turn, running a Review, running research. CRUD: editing a Section, editing a
    Reference, Accepting a Proposal, Declining an Offer, retitling the Article. Accepting is
    CRUD even though a model produced the thing being accepted, because applying it is a
    plain write.
@@ -106,15 +106,15 @@ plan: {
 }
 ```
 
-- **The Outline is a nested tree**, sibling order carried by array position, every node with
+- **The Outline is a nested tree**, sibling order carried by array position, every Section with
   a stable ID that never changes.
-- **References are flat with an optional `nodeId`**, so an Accepted Reference can sit at an
-  Outline node or nowhere yet.
+- **References are flat with an optional `nodeId`**, so an Accepted Reference can sit at a
+  Section or nowhere yet.
 - **A Quote is a Reference that carries a `text`.** One structure: a pulled passage, an
   attribution, or both, with at least one present.
 - **Voice replaces; Adjectives compose.** One Voice applies at a time and the nearest Scope
-  wins outright. Adjectives accumulate. Resolution runs House, then Article, then Outline
-  node, **at read time**. A node's ancestors take part in that same order, so a subsection
+  wins outright. Adjectives accumulate. Resolution runs House, then Article, then
+  Section, **at read time**. A Section's ancestors take part in that same order, so a Subsection
   under a somber middle is somber unless it says otherwise.
 - **The word-count total is stored and nothing is derived.** The parts may disagree with the
   whole; the gap is information. Auto-distributing the remainder is rejected.
@@ -123,8 +123,8 @@ plan: {
   whole-field by a Proposal's `expected`, and sent whole in every prompt pack, so a second
   spelling is a second Plan for the same content. Three fields carry their key always and say
   "nothing here" with a value: a Reference's `nodeId`, which is null until it is placed, the
-  Article's `adjectives`, and an Outline node's `children`, both of them the empty list. A
-  node's own `adjectives` is the other way round, and says it by being absent.
+  Article's `adjectives`, and a Section's `children`, both of them the empty list. A
+  Section's own `adjectives` is the other way round, and says it by being absent.
 
 **The schema guards client writes.** `validateStateChange` parses the whole Plan on every
 write, and nothing the model emits ever goes through it — the Chat proposes and the client
@@ -133,8 +133,8 @@ schemas, `outlineNodeSchema`, `referenceSchema`, and `sourceSchema`, reused insi
 Proposal's op payloads. It lives in `src/shared/plan/` with the Scope resolver and the
 word-count arithmetic.
 
-Three invariants sit above the object shape, checked in the same parse: an Outline node id
-is unique among Outline nodes, a Reference id is unique among References, and a placed
+Three invariants sit above the object shape, checked in the same parse: a Section id
+is unique among Sections, a Reference id is unique among References, and a placed
 Reference names a node that exists. The last one means an op that deletes a node unplaces
 its References in the same Proposal, because the Plan is written whole and validated whole.
 
@@ -196,7 +196,7 @@ proposal: [
 - **`expected` is content-addressed staleness** — it names the value the Proposal thinks is
   there, not a version. Compared **whole-field**, because Plan fields are short.
 - **Structural ops anchor on IDs and carry no `expected`.** Exactly one of `afterId` or
-  `beforeId`, so the model anchors to whichever neighbour its insertion relates to: a section
+  `beforeId`, so the model anchors to whichever neighbour its insertion relates to: a Section
   leading into §3 says `before: §3` and survives §2 being deleted. `afterId: null` means
   first child, `beforeId: null` means last child.
 - **If any op's `expected` fails, the whole Proposal is Stale.** The UI must say why rather
@@ -263,12 +263,12 @@ the Article Agent, with one retry that includes the validation error.
 Plan, then the volatile Draft or deltas. Cached input costs $0.26 per million against $1.40
 uncached, so the ordering is a five-fold saving on the repeated part of every pass.
 
-| Pack       | Contents                                                                            |
-| ---------- | ----------------------------------------------------------------------------------- |
-| Chat turn  | The conversation, plus the Plan                                                     |
-| Proposal   | The affected span, plus adjacent Outline node titles and intent notes. Nothing else |
-| Guide pass | The Plan, the Draft or active Section with neighbours, recent deltas. **No Chat**   |
-| Review     | The same, plus the existing Notes. **No Chat**                                      |
+| Pack       | Contents                                                                          |
+| ---------- | --------------------------------------------------------------------------------- |
+| Chat turn  | The Chat transcript, plus the Plan                                                |
+| Proposal   | The affected span, plus adjacent Section titles and intent notes. Nothing else    |
+| Guide pass | The Plan, the Draft or active Section with neighbours, recent deltas. **No Chat** |
+| Review     | The same, plus the existing Notes. **No Chat**                                    |
 
 Research reaches a Review only by being Accepted into the Plan. The Ledger is the bridge, and
 curation is forced rather than assumed.
@@ -376,8 +376,8 @@ Settings and known defects. None is a decision to make; all are things to get ri
   callable" — a silent failure where the missing plugin is a loud one.
 - **An abandoned tool batch parks indefinitely.** Cloudflare's `ai-chat` enforces batch
   completeness server-side with **no orphan timeout**, so a Proposal the writer neither
-  Accepts nor Declines stalls the conversation silently. Surface it in the UI.
-- **Local development** is unsolved: running the Worker with seeded data so an agent
+  Accepts nor Declines stalls the Chat silently. Surface it in the UI.
+- **Local development** is unsolved: running the Worker with seeded data so a coding agent
   executing a build ticket can run what it writes.
 
 ## 12. Out of scope

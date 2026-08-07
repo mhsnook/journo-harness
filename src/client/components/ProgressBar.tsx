@@ -1,10 +1,10 @@
 import { cx } from '../lib/cx'
 
 export interface ProgressBarProps {
-	/** 0–1. Values above 1 clamp the fill but flip the tone to `attention`. */
+	/** 0–1. Values above 1 clamp the fill but flip the variant to `attention`. */
 	value: number
 	/** `attention` is the accented state — used when you are over target. */
-	tone?: 'quiet' | 'attention'
+	variant?: 'quiet' | 'attention'
 	thickness?: number
 	label?: string
 	className?: string
@@ -17,14 +17,14 @@ export interface ProgressBarProps {
  */
 export function ProgressBar({
 	value,
-	tone = 'quiet',
+	variant = 'quiet',
 	thickness = 3,
 	label,
 	className,
 }: ProgressBarProps) {
 	const over = value > 1
 	const filled = Math.max(0, Math.min(1, value))
-	const accented = tone === 'attention' || over
+	const accented = variant === 'attention' || over
 
 	return (
 		<div

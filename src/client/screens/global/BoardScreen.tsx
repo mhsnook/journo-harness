@@ -13,7 +13,7 @@ const columns = [
 ] as const
 
 /**
- * 1(b) — Board by phase. A familiar layout for the same articles; the only
+ * 1(b) — Board by status. A familiar layout for the same articles; the only
  * thing it adds over the desk is where each piece sits in the loop.
  */
 export function BoardScreen() {
@@ -22,12 +22,12 @@ export function BoardScreen() {
 			<TitleBar
 				back="Desk"
 				title="Board"
-				subtitle="by phase"
+				subtitle="by status"
 				actions={<Button size="sm">+ new</Button>}
 			/>
 			<FrameBody row className="gap-3 p-4">
 				{columns.map((column) => {
-					const items = activeArticles.filter((article) => article.phase === column.key)
+					const items = activeArticles.filter((article) => article.status === column.key)
 					return (
 						<div key={column.key} className="flex min-w-0 flex-1 flex-col gap-2">
 							<MetaLabel count={items.length}>{column.label}</MetaLabel>
