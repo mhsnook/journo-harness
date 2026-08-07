@@ -7,7 +7,7 @@ import { EmptySlot } from '../../components/Field'
 import { Frame, FrameBody } from '../../components/Frame'
 import { Panel } from '../../components/Panel'
 import { ReferenceCard } from '../../components/ReferenceCard'
-import { useArticle } from '../../lib/article'
+import { useArticle, useArticlePlan } from '../../lib/article'
 import { useOfferLedger } from '../../lib/useOfferLedger'
 import { ARTICLE_TITLE } from '../../mock/content'
 import { PlanPanel } from '../../plan/PlanPanel'
@@ -29,7 +29,8 @@ const filters: Filter[] = ['all', 'undecided', 'accepted', 'declined']
  * a Reference sits, and which sit nowhere yet, are its own to show.
  */
 export function LedgerDrawerScreen() {
-	const { plan, edit } = useArticle()
+	const { edit } = useArticle().plan
+	const plan = useArticlePlan()
 	const { ledger, loading, failure, accept, decline, restore } = useOfferLedger()
 	const [filter, setFilter] = useState<Filter>('all')
 

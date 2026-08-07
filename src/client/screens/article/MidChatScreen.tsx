@@ -1,56 +1,27 @@
+import { ChatPanel } from '../../chat/ChatPanel'
 import { ArticleBar } from '../../components/ArticleBar'
-import { ChatComposer, ChatMessage } from '../../components/Chat'
 import { Frame, FrameBody } from '../../components/Frame'
-import { Panel } from '../../components/Panel'
-import { ReferenceCard } from '../../components/ReferenceCard'
-import { ARTICLE_TITLE, offers, plan } from '../../mock/content'
-import { PlanBlock, PlanLength, PlanOutline, PlanReferences } from './PlanBlocks'
+import { useArticle, useArticlePlan } from '../../lib/article'
+import { useMockChat } from '../../mock/MockChat'
+import { midChat } from '../../mock/transcript'
+import { PlanPanel } from '../../plan/PlanPanel'
 
 /**
- * 2(b) — Mid-chat. Ticking a reference in the chat sends it straight into
- * References; there is no interstitial approval screen. Meanwhile section 3 is
- * being typed by hand in the plan, which is equally allowed.
+ * 2(b) — Mid-chat. The Chat has proposed a Section and a new total, and the
+ * Proposal waits on the writer. Accepting applies it through the same writer
+ * the Plan Panel beside it types into, so the Outline moves as you rule.
  */
 export function MidChatScreen() {
-	return (
-		<Frame width={800}>
-			<ArticleBar title={ARTICLE_TITLE} open={['chat', 'plan']} status="planning" />
-			<FrameBody row className="h-[24rem]">
-				<Panel divider="right" className="gap-3">
-					<ChatMessage from="me">
-						The process, then — but I want one developer in it so it isn't all
-						spreadsheets.
-					</ChatMessage>
-					<ChatMessage from="guide">
-						Two that carry the argument, both from your favourites:
-					</ChatMessage>
-					<div className="flex flex-col gap-2">
-						<ReferenceCard offer={offers[0]} variant="ledger" favourite="publication" />
-						<ReferenceCard offer={offers[3]} variant="ledger" compact />
-					</div>
-					<ChatMessage from="guide">
-						The throughput study has a line that would open §2 well. I've pulled it into
-						quotes.
-					</ChatMessage>
-					<ChatComposer />
-				</Panel>
+	const { edit, refusal } = useArticle().plan
+	const plan = useArticlePlan()
+	const chat = useMockChat(midChat)
 
-				<Panel variant="sunk">
-					<PlanLength total={plan.totalTarget} voice={plan.voice} />
-					<PlanBlock title="Outline" meta="3 of ~4">
-						<PlanOutline
-							outline={plan.outline.slice(0, 2)}
-							typing="Who actually pays for the delay"
-							showAdd
-						/>
-					</PlanBlock>
-					<PlanBlock title="References" meta="4">
-						<PlanReferences
-							references={plan.references.slice(0, 3)}
-							justAddedId={plan.references[0].id}
-						/>
-					</PlanBlock>
-				</Panel>
+	return (
+		<Frame width={880}>
+			<ArticleBar title={plan.title} open={['chat', 'plan']} status="planning" />
+			<FrameBody row className="h-[26rem]">
+				<ChatPanel {...chat} className="border-r border-edge" plan={plan} />
+				<PlanPanel edit={edit} plan={plan} refusal={refusal} />
 			</FrameBody>
 		</Frame>
 	)

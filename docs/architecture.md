@@ -238,6 +238,21 @@ server is what consumes it.
 
 **The Chat proposes; the client applies.** The Chat never writes to the Plan.
 
+**The Chat Panel is `src/client/chat/`.** `useArticleChat` is the wiring — the transcript,
+the composer, and the two rulings — and `ChatPanel` is the surface, taking a transcript and
+the rulings the way `PlanPanel` takes a Plan and one `edit`. The rule itself is
+`ruleProposal`, a pure function the app and the showcase both run, so a story cannot rule
+differently from the product.
+
+**Accepting is `edit(ops)`, the same call every Plan edit makes.** The Proposal's ops go
+through `createPlanWriter` rather than a `setState` of their own: the writer holds the Plan
+the writer sees, debounces, and drops an incoming update over an unsent write, and a second
+writer around it would undo what is on screen (§3, rule 1).
+
+**A refused Accept answers nothing and leaves the card open.** The card shows the applier's
+sentence, the writer may fix the Plan and Accept again, and Declining sends that sentence
+back — so the model learns the Plan moved rather than that the writer said no.
+
 **Proposals are `execute`-less tools** (AI SDK v7). A tool with no `execute` suspends for the
 client, which is the Proposal. Four API details, each easy to get wrong:
 
@@ -398,6 +413,11 @@ so a Panel header that should stay put is `sticky` inside its own Panel. The `st
 Vitest project holds every story to that in a real browser, so a class chain that reads as
 though it works has to measure as though it does — see `.storybook/vitest.setup.ts`.
 
+A sticky footer wants one thing more: the Panel's bottom padding is inside the scrollport,
+so the Panel gives it up — `pb-0` — and the footer takes that padding itself. The Chat
+composer is the one that does. Without it a card scrolls into the padding and shows below
+the composer.
+
 **The Plan Panel's edits are ops, and the applier applies them.** A field the writer types
 in builds the same op a Proposal would carry, `src/client/plan/edits.ts` reads its
 `expected` out of the Plan on screen, and `applyProposal` produces the Plan that goes to
@@ -415,6 +435,13 @@ is nothing else it can be.
 **The Article Agent's WebSocket is multiplexed.** It carries `cf_agent_*` control frames for
 state, RPC, and scheduling on one socket. In phase 1 this is free, because the SDK's own
 client handles them. It becomes work if a party-db transport ever shares that socket.
+
+**One connection per Article, opened above the Panels.** `useArticleAgent` makes the single
+`useAgent` call and hands out three things: the Plan channel, the Offer store built on the
+same socket's RPC, and the client itself, which is what `useAgentChat` takes. The Panels read
+it through `ArticleProvider` rather than connecting themselves. A Panel opening its own would
+be a second socket, a second `createPlanWriter`, and a second debounce timer against a blob
+whose whole design is that it has one writer.
 
 ## 9. Auth
 
@@ -494,7 +521,8 @@ Settings and known defects. None is a decision to make; all are things to get ri
   callable" — a silent failure where the missing plugin is a loud one.
 - **An abandoned tool batch parks indefinitely.** Cloudflare's `ai-chat` enforces batch
   completeness server-side with **no orphan timeout**, so a Proposal the writer neither
-  Accepts nor Declines stalls the Chat silently. Surface it in the UI.
+  Accepts nor Declines stalls the Chat silently. The composer counts the suspended calls and
+  says what it is waiting on rather than sitting dead; nothing expires them.
 - **Local development** is unsolved: running the Worker with seeded data so a coding agent
   executing a build ticket can run what it writes.
 

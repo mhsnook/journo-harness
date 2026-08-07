@@ -1,22 +1,28 @@
 import { type ReactNode, useMemo, useState } from 'react'
 
 import { missingOffer, notDeclined, type Offer, type Ruling } from '../../shared/offer'
-import type { Plan } from '../../shared/plan'
+import type { Plan, Refusal } from '../../shared/plan'
 import { ArticleProvider, type OfferStore } from '../lib/article'
 import { createPlanWriter } from '../plan/writer'
 import { offers as seeded, plan as seededPlan } from './content'
 
 /**
  * An Article held in memory, so a story runs the real Ledger and the real
- * applier without a Worker. A refusal has nowhere to go here, where `usePlan`
- * surfaces one.
+ * applier without a Worker. It supplies the same two halves the Article Agent
+ * does — the Plan connection and the Offer rows — and the writer behind it is
+ * the real one, with a `send` that goes nowhere.
  */
 export function MockArticle({ children }: { children: ReactNode }) {
 	const [plan, setPlan] = useState<Plan>(seededPlan)
+	const [refusal, setRefusal] = useState<Refusal | null>(null)
 
 	// The real writer, without a socket: only `send` is debounced.
 	const writer = useMemo(() => {
-		const held = createPlanWriter({ send: () => {}, onPlan: setPlan })
+		const held = createPlanWriter({
+			send: () => {},
+			onPlan: setPlan,
+			onRefusal: setRefusal,
+		})
 		held.receive(seededPlan)
 
 		return held
@@ -25,8 +31,14 @@ export function MockArticle({ children }: { children: ReactNode }) {
 	// One store per story: the Ledger reads its rows once.
 	const offers = useMemo(() => memoryOfferStore(seeded), [])
 
+	const edit = (next: Parameters<typeof writer.edit>[0]) => {
+		setRefusal(null)
+
+		return writer.edit(next)
+	}
+
 	return (
-		<ArticleProvider value={{ offers, plan, edit: writer.edit }}>
+		<ArticleProvider value={{ offers, plan: { plan, edit, refusal, rejected: null } }}>
 			{children}
 		</ArticleProvider>
 	)

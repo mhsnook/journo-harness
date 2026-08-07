@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { offerLedger, type OfferLedger } from '../../shared/ledger'
 import type { Offer } from '../../shared/offer'
@@ -9,6 +9,10 @@ import { useArticle } from './article'
  * The Offer ledger, live. Rows are read once when the Panel opens, because
  * nothing tells a client a row changed — §3. It holds no Plan: Accepting writes
  * one through `edit` and reads nothing back.
+ *
+ * A research turn is the one thing that changes the list without the writer
+ * touching it, and it writes its rows inside the Article Agent. The Chat calls
+ * `reload` when a turn records some, which is the only signal there is.
  */
 
 export type OfferLedgerHandle = {
@@ -20,12 +24,18 @@ export type OfferLedgerHandle = {
 	accept: (offer: Offer) => void
 	decline: (offer: Offer) => void
 	restore: (offer: Offer) => void
+	/** Read the rows again, after a turn recorded some. */
+	reload: () => void
 }
 
 export function useOfferLedger(): OfferLedgerHandle {
-	const { offers: store, edit } = useArticle()
+	const { offers: store, plan } = useArticle()
+	const { edit } = plan
 	const [rows, setRows] = useState<Offer[] | null>(null)
 	const [failure, setFailure] = useState<string | null>(null)
+	const [reads, setReads] = useState(0)
+
+	const reload = useCallback(() => setReads((count) => count + 1), [])
 
 	useEffect(() => {
 		let live = true
@@ -42,7 +52,7 @@ export function useOfferLedger(): OfferLedgerHandle {
 		return () => {
 			live = false
 		}
-	}, [store])
+	}, [store, reads])
 
 	/** In place: a ruling does not change the recorded order. */
 	function replace(ruled: Offer) {
@@ -60,6 +70,7 @@ export function useOfferLedger(): OfferLedgerHandle {
 		ledger: offerLedger(rows ?? []),
 		loading: rows === null,
 		failure,
+		reload,
 
 		// Two writes against two stores, decoupled — §5. The Plan goes first and
 		// lands locally, because the copy is built from what the Offer says and

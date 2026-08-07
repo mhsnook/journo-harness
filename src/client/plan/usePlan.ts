@@ -1,4 +1,3 @@
-import { useAgent } from 'agents/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import type { Plan, Refusal } from '../../shared/plan'
@@ -6,18 +5,26 @@ import { isPlanRefused } from '../../shared/plan'
 import { createPlanWriter, type PlanEdit } from './writer'
 
 /**
- * The Plan Panel's connection to one Article Agent: its state blob in, and
- * every edit back out through `setState` — docs/architecture.md §3, rule 1.
+ * The Plan's half of one Article Agent: its state blob in, and every edit back
+ * out through `setState` — docs/architecture.md §3, rule 1.
  *
- * The socket is multiplexed, so the Chat Panel shares this one and does not
- * open its own — §8.
+ * **It does not open the socket.** The socket is multiplexed and the Chat rides
+ * the same one (§8), so `useArticleAgent` opens it once above both Panels and
+ * hands this channel the two `useAgent` handlers the Plan needs. Opening a
+ * second one would mean two writers, two debounce timers, and a blob whose
+ * whole design is that it has one writer.
  */
 
 export type PlanConnection = {
 	/** The Plan the writer sees, and null until the first state update arrives. */
 	plan: Plan | null
-	/** What the builders in edits.ts return, null included. */
-	edit: (edit: PlanEdit) => void
+	/**
+	 * What the builders in edits.ts return, null included, and it hands back why
+	 * the edit did not land. The Plan Panel reads that off `refusal` below, and a
+	 * caller ruling on a Proposal needs it in the same turn: Declining answers
+	 * the tool call with the reason.
+	 */
+	edit: (edit: PlanEdit) => Refusal | null
 	/** Why the last edit did not land, cleared by the next one. */
 	refusal: Refusal | null
 	/** What the Article Agent said when a write did not parse. Reaching this is
@@ -25,14 +32,28 @@ export type PlanConnection = {
 	rejected: string | null
 }
 
-export function usePlan(articleId: string): PlanConnection {
+/** All the writer needs of the socket. */
+export type PlanSocket = { setState: (plan: Plan) => void }
+
+export type PlanChannel = {
+	connection: PlanConnection
+	/** Hand it the socket. `useAgent` has none to give on the first render and
+	 * replaces it on every reconnect, so the owner calls this in an effect. */
+	attach: (socket: PlanSocket) => void
+	/** The two `useAgent` handlers the Plan needs. Both are stable, because
+	 * `useAgent` reads its options once. */
+	onStateUpdate: (state: Plan, source: 'server' | 'client') => void
+	onMessage: (event: MessageEvent) => void
+}
+
+export function usePlanChannel(): PlanChannel {
 	const [plan, setPlan] = useState<Plan | null>(null)
 	const [refusal, setRefusal] = useState<Refusal | null>(null)
 	const [rejected, setRejected] = useState<string | null>(null)
 
 	// The socket is not built yet when the writer is, and it is replaced on every
 	// reconnect, so the writer sends through a ref rather than holding one.
-	const socket = useRef<{ setState: (plan: Plan) => void } | null>(null)
+	const socket = useRef<PlanSocket | null>(null)
 	const held = useRef<ReturnType<typeof createPlanWriter> | null>(null)
 	held.current ??= createPlanWriter({
 		send: (next) => socket.current?.setState(next),
@@ -41,9 +62,24 @@ export function usePlan(articleId: string): PlanConnection {
 	})
 	const writer = held.current
 
-	const agent = useAgent<Plan>({
-		agent: 'article-agent',
-		name: articleId,
+	// Flushing on the way out is what keeps the last keystroke of a burst.
+	useEffect(() => () => writer.dispose(), [writer])
+
+	const edit = useCallback(
+		(next: PlanEdit) => {
+			setRefusal(null)
+			setRejected(null)
+
+			return writer.edit(next)
+		},
+		[writer],
+	)
+
+	const wiring = useRef<Omit<PlanChannel, 'connection'> | null>(null)
+	wiring.current ??= {
+		attach: (next) => {
+			socket.current = next
+		},
 		onStateUpdate: (state, source) => {
 			// A client update is the echo of a write the writer already holds.
 			if (source === 'server') writer.receive(state)
@@ -52,25 +88,9 @@ export function usePlan(articleId: string): PlanConnection {
 			const frame = parse(event.data)
 			if (isPlanRefused(frame)) setRejected(frame.error)
 		},
-	})
+	}
 
-	useEffect(() => {
-		socket.current = agent
-	})
-
-	// Flushing on the way out is what keeps the last keystroke of a burst.
-	useEffect(() => () => writer.dispose(), [writer])
-
-	const edit = useCallback(
-		(next: PlanEdit) => {
-			setRefusal(null)
-			setRejected(null)
-			writer.edit(next)
-		},
-		[writer],
-	)
-
-	return { plan, edit, refusal, rejected }
+	return { connection: { plan, edit, refusal, rejected }, ...wiring.current }
 }
 
 /** The socket carries frames this Panel does not read, and a binary one is not

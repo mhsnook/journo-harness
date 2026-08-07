@@ -2,7 +2,11 @@ import { getCurrentAgent } from 'agents'
 import { tool, type ToolSet } from 'ai'
 import { z } from 'zod'
 
-import { proposePlanChangeInput, proposePlanChangeTool } from '../../shared/chat'
+import {
+	proposePlanChangeInput,
+	proposePlanChangeTool,
+	recordOffersTool,
+} from '../../shared/chat'
 import { offerBatchSchema } from '../../shared/offer'
 import type { ArticleAgent } from '../article-agent'
 
@@ -81,10 +85,6 @@ const recordOffers = tool({
 		}))
 	},
 })
-
-/** Not in shared/chat.ts, because this tool resolves server-side and no client
- * matches on it. */
-export const recordOffersTool = 'recordOffers'
 
 /** Typed as the whole `ToolSet` rather than inferred: the Proposal tool has no
  * `execute` and so no return type to infer, and the wide type is what lets the
