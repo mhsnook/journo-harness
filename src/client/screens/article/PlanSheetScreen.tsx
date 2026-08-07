@@ -5,35 +5,39 @@ import { Divider } from '../../components/Divider'
 import { Frame, FrameBody } from '../../components/Frame'
 import { LengthBar } from '../../components/LengthBar'
 import { Panel, PanelHeader } from '../../components/Panel'
-import { QuoteRow } from '../../components/QuoteRow'
-import { ARTICLE_TITLE, outline, quotes, references } from '../../mock/content'
-import { PlanOutline } from './PlanBlocks'
+import { plan, sectionState } from '../../mock/content'
+import { PlanOutline, PlanReferences } from './PlanBlocks'
+
+/** What each Section is called on the References list. */
+const placedAt = Object.fromEntries(
+	plan.outline.map((node, index) => [node.id, `§${index + 1}`]),
+)
 
 /**
- * 2(e) — The plan on its own, full width. Outline, references and quotes are
+ * 2(e) — The Plan on its own, full width. The Outline and the References are
  * stacked rather than columned: within a status the eye should only travel
- * down. The bar beside the outline is the shape of the piece — each section's
+ * down. The bar beside the Outline is the shape of the piece — each Section's
  * height is its share of the 2,400 words.
  */
 export function PlanSheetScreen() {
 	return (
 		<Frame width={680}>
-			<ArticleBar title={ARTICLE_TITLE} open={['plan']} status="draft 1" />
+			<ArticleBar title={plan.title} open={['plan']} status="draft 1" />
 			<FrameBody>
 				<Panel className="gap-5 p-5">
 					<section className="flex flex-col gap-3">
 						<PanelHeader
 							title="Outline"
 							meta="2,400 words target"
-							actions={<Chip variant="outline">voice: Reported feature</Chip>}
+							actions={<Chip variant="outline">voice: {plan.voice}</Chip>}
 						/>
 						<div className="flex items-start gap-5">
-							<PlanOutline sections={outline} className="flex-1" />
+							<PlanOutline outline={plan.outline} className="flex-1" />
 							<LengthBar
-								segments={outline.map((section) => ({
-									label: section.title,
-									words: section.words,
-									state: section.state,
+								segments={plan.outline.map((node) => ({
+									label: node.title,
+									words: node.target ?? 0,
+									state: sectionState[node.id],
 								}))}
 								height={188}
 							/>
@@ -47,39 +51,12 @@ export function PlanSheetScreen() {
 					<Divider weight="strong" />
 
 					<section className="flex flex-col gap-3">
-						<PanelHeader title="References" meta="12 · 9 kept" />
-						<div className="grid grid-cols-3 gap-2.5">
-							{[references[0], references[1], references[3]].map((reference) => (
-								<div
-									key={reference.id}
-									className="flex flex-col gap-1 rounded-md border border-edge bg-sunk p-2.5"
-								>
-									<p className="text-[0.75rem] leading-snug font-medium text-ink">
-										{reference.title}
-									</p>
-									<p className="text-[0.6875rem] text-faint">
-										{[reference.outlet, reference.year].filter(Boolean).join(' · ')}
-									</p>
-									<p className="mt-auto pt-1 text-[0.6875rem] text-muted">
-										{reference.section ?? 'unassigned'}
-									</p>
-								</div>
-							))}
-						</div>
-					</section>
-
-					<Divider weight="strong" />
-
-					<section className="flex flex-col gap-3">
-						<PanelHeader title="Quotes" meta="8 saved" />
-						<div className="flex flex-col gap-3">
-							{quotes.map((quote) => (
-								<QuoteRow key={quote.id} quote={quote} />
-							))}
-							<p className="text-[0.6875rem] text-faint">
-								+ 5 more · drag a quote onto a section to place it
-							</p>
-						</div>
+						<PanelHeader title="References" meta="4 · 3 placed" />
+						<PlanReferences references={plan.references} placedAt={placedAt} />
+						<p className="text-[0.6875rem] text-faint">
+							A Quote is a Reference of that type, so one list holds both — drag one onto
+							a Section to place it.
+						</p>
 					</section>
 
 					<div className="flex items-center gap-3 pt-1">

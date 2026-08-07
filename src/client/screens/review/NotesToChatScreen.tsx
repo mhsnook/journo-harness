@@ -51,7 +51,7 @@ export function NotesToChatScreen() {
 				<Panel variant="sunk" padded={false}>
 					<div className="flex flex-1 flex-col gap-3.5 p-3.5">
 						<PanelHeader title="Plan" meta="revised just now" />
-						<PlanOutline sections={outlineRevised} dense changedFrom={3} />
+						<PlanOutline outline={outlineRevised} dense changedFrom={3} />
 
 						<div className="flex flex-col gap-2">
 							<MetaLabel>Quotes</MetaLabel>

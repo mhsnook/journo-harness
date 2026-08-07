@@ -3,7 +3,7 @@ import { Button } from '../../components/Button'
 import { ChatComposer, ChatMessage } from '../../components/Chat'
 import { Frame, FrameBody } from '../../components/Frame'
 import { Panel } from '../../components/Panel'
-import { ARTICLE_TITLE, outline } from '../../mock/content'
+import { ARTICLE_TITLE, plan } from '../../mock/content'
 import { PlanBlock, PlanLength, PlanOutline } from './PlanBlocks'
 
 /**
@@ -35,9 +35,9 @@ export function ReadyToDraftScreen() {
 
 				<Panel variant="sunk" padded={false}>
 					<div className="flex flex-1 flex-col gap-3.5 p-3.5">
-						<PlanLength words={2400} />
+						<PlanLength total={plan.totalTarget} />
 						<PlanBlock title="Outline" meta="4 sections">
-							<PlanOutline sections={outline} dense />
+							<PlanOutline outline={plan.outline} dense />
 						</PlanBlock>
 						<p className="text-[0.75rem] text-muted">13 references · 8 quotes</p>
 					</div>

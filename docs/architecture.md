@@ -329,6 +329,20 @@ already reactive through Article Agent state and, at 1b, party-db's TanStack DB 
 **The Article screen has four Panels** — Chat, Plan, Draft, Notes — which become tabs on a
 narrow screen. The **Areas** are Articles (with Board and Archive Views), House, and Team.
 
+**The Plan Panel's edits are ops, and the applier applies them.** A field the writer types
+in builds the same op a Proposal would carry, `src/client/plan/edits.ts` reads its
+`expected` out of the Plan on screen, and `applyProposal` produces the Plan that goes to
+`setState`. One write path means the Panel cannot make a change the applier would refuse,
+and a structural edit gets the consequences the ops already state — deleting a Section
+unplaces its References. The writer's own edits never go Stale: staleness is the gap
+between generating a Proposal and applying it, and there is no gap here.
+
+**One writer holds the Plan and the debounce**, in `src/client/plan/writer.ts`. It applies
+each edit locally, sends after a pause for the four ops a keystroke produces, and sends at
+once for everything else. An update arriving from the Article Agent over an unsent edit is
+the echo of an older write and is dropped — the client is the Plan's only writer, so there
+is nothing else it can be.
+
 **The Article Agent's WebSocket is multiplexed.** It carries `cf_agent_*` control frames for
 state, RPC, and scheduling on one socket. In phase 1 this is free, because the SDK's own
 client handles them. It becomes work if a party-db transport ever shares that socket.

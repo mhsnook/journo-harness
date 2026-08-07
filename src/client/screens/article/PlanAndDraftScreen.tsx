@@ -1,7 +1,7 @@
 import { ArticleBar } from '../../components/ArticleBar'
 import { DraftSurface } from '../../components/DraftSurface'
 import { Frame, FrameBody } from '../../components/Frame'
-import { ARTICLE_TITLE, draftParagraphs, outline } from '../../mock/content'
+import { ARTICLE_TITLE, draftParagraphs, plan } from '../../mock/content'
 import { PlanRail } from './PlanRail'
 
 /**
@@ -14,8 +14,9 @@ export function PlanAndDraftScreen() {
 			<ArticleBar title={ARTICLE_TITLE} open={['plan', 'draft']} status="draft 1" />
 			<FrameBody row className="min-h-[19rem]">
 				<PlanRail
-					sections={outline}
+					outline={plan.outline}
 					written={[300, 700, 520, 0]}
+					currentId="sec-cost"
 					counts={['refs 2/12', 'quotes 4/6', 'notes 1/3']}
 				/>
 				<DraftSurface paragraphs={draftParagraphs} measure="narrow" caret />

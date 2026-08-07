@@ -43,7 +43,7 @@ export function Button({
 		<button
 			type={type}
 			className={cx(
-				'inline-flex shrink-0 items-center justify-center font-medium whitespace-nowrap transition-[background-color,border-color,color,filter]',
+				'inline-flex shrink-0 items-center justify-center font-medium whitespace-nowrap transition-[background-color,border-color,color,filter] disabled:pointer-events-none disabled:opacity-40',
 				variant === 'link' ? 'h-auto text-[0.8125rem]' : sizeClass[size],
 				variantClass[variant],
 				className,

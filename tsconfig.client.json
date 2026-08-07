@@ -18,5 +18,13 @@
     "composite": true,
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.client.tsbuildinfo"
   },
-  "include": ["src/shared", "src/client", ".storybook"]
+  // The Plan fixtures are named one by one rather than by folder: the rest of
+  // test/shared is the worker project's.
+  "include": [
+    "src/shared",
+    "src/client",
+    "test/client",
+    "test/shared/plan-fixtures.ts",
+    ".storybook"
+  ]
 }
