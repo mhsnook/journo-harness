@@ -78,20 +78,20 @@ export const E_PlanSheet: Story = {
 }
 
 export const F_LedgerDrawer: Story = {
-	name: '2(f) The Ledger',
+	name: '2(f) Offer ledger',
 	render: () => (
 		<div className="flex flex-col">
 			<LedgerDrawerScreen />
 			<Annotation>
-				The same list at every stage — early on most rows read "offered", later most read
-				"used". That is precisely why there is no separate triage screen.
+				The same list at every stage — early on most rows read "undecided", later most
+				read "used". That is precisely why there is no separate triage screen.
 			</Annotation>
 		</div>
 	),
 }
 
 export const G_LedgerPopover: Story = {
-	name: '2(g) Ledger from the composer',
+	name: '2(g) Offer ledger from the composer',
 	render: () => (
 		<div className="flex flex-col">
 			<LedgerPopoverScreen />

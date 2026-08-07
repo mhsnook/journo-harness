@@ -13,7 +13,7 @@ import { ARTICLE_TITLE, quotes, references } from '../../mock/content'
  * nothing else; right is the plan, with accepted items sitting under the
  * section they belong to and marked used or ready.
  *
- * It is the same list at every stage — early on most rows read "offered",
+ * It is the same list at every stage — early on most rows read "undecided",
  * later most read "used". That is why there is no separate triage screen.
  */
 export function LedgerDrawerScreen() {

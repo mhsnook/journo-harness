@@ -59,7 +59,7 @@ export function LedgerPopoverScreen() {
 	return (
 		<Frame width={340}>
 			<div className="flex items-center gap-2.5 border-b border-edge bg-sunk px-3.5 py-2.5">
-				<h3 className="text-[0.875rem] font-semibold text-ink">Ledger</h3>
+				<h3 className="text-[0.875rem] font-semibold text-ink">Offer ledger</h3>
 				<span className="text-[0.75rem] text-faint">17</span>
 				<button
 					type="button"

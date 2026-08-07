@@ -147,8 +147,12 @@ _Avoid_: excerpt, passage, snippet, pull quote
 
 **Ledger**:
 The View of an Article's Offers and what the writer decided about each — a query over
-Offers, not a store of its own.
-_Avoid_: inbox, tray, queue, history
+Offers, not a store of its own. Name it the **Offer ledger** wherever the phrase stands on
+its own, in a heading, a story name, or a menu item: a bare "Ledger" makes the reader
+supply the noun, and the qualifier costs one word. Drop to "the Ledger" only in running
+prose that has already named it.
+_Avoid_: source ledger (a source is the attribution inside a Reference), inbox, tray,
+queue, history
 
 **Undecided**:
 The disposition of an Offer the writer has not ruled on. The starting state.
