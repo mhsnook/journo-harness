@@ -54,7 +54,7 @@ export function PlanSheetScreen() {
 						<PanelHeader title="References" meta="4 · 3 placed" />
 						<PlanReferences references={plan.references} placedAt={placedAt} />
 						<p className="text-[0.6875rem] text-faint">
-							A Quote is a Reference of that type, so one list holds both — drag one onto
+							Every Reference is a Link or a Quote, so one list holds both — drag one onto
 							a Section to place it.
 						</p>
 					</section>

@@ -32,7 +32,7 @@ export function ReferenceForm({
 	onCancel,
 	onDelete,
 }: ReferenceFormProps) {
-	const [type, setType] = useState<ReferenceType>(reference?.type ?? 'reference')
+	const [type, setType] = useState<ReferenceType>(reference?.type ?? 'link')
 	const [text, setText] = useState(reference?.text ?? '')
 	const [note, setNote] = useState(reference?.note ?? '')
 	const [source, setSource] = useState<SourceDraft>({
@@ -68,12 +68,8 @@ export function ReferenceForm({
 			}}
 		>
 			<ButtonGroup label="What sort of Reference this is">
-				<Button
-					onClick={() => setType('reference')}
-					pressed={type === 'reference'}
-					size="sm"
-				>
-					reference
+				<Button onClick={() => setType('link')} pressed={type === 'link'} size="sm">
+					link
 				</Button>
 				<Button onClick={() => setType('quote')} pressed={type === 'quote'} size="sm">
 					quote
@@ -125,9 +121,9 @@ export function ReferenceForm({
 					size="sm"
 					value={source.year}
 				/>
-				<span className="label-meta text-muted">Link</span>
+				<span className="label-meta text-muted">URL</span>
 				<TextField
-					hiddenLabel="Link"
+					hiddenLabel="URL"
 					onChange={field('url')}
 					placeholder="https://"
 					size="sm"

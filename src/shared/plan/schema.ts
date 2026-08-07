@@ -15,10 +15,11 @@ export const adjectiveSchema = z.string().min(1)
 export const intentSchema = z.string().min(1)
 export const targetSchema = z.number().int().positive()
 
-/** Which type of Reference this is. Stored on the record rather than derived
- * from whether a text is present, so an Offer and the Reference it was copied
- * into carry one answer and the two Panels cannot label it differently. */
-export const referenceTypeSchema = z.enum(['reference', 'quote'])
+/** Which type of Reference this is: a Link or a Quote. Stored on the record
+ * rather than derived from whether a text is present, so an Offer and the
+ * Reference it was copied into carry one answer and the two Panels cannot
+ * label it differently. */
+export const referenceTypeSchema = z.enum(['link', 'quote'])
 export type ReferenceType = z.infer<typeof referenceTypeSchema>
 
 // strictObject throughout: the Plan has one writer, so an unknown key is a bug

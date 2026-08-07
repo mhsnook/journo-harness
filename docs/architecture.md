@@ -116,12 +116,12 @@ plan: {
   a stable ID that never changes.
 - **References are flat with an optional `nodeId`**, so an Accepted Reference can sit at a
   Section or nowhere yet.
-- **A Quote is a Reference of that `type`.** One structure: a pulled passage, an
-  attribution, or both, with at least one present. The type is **stored, not derived from
-  the text**, so an Offer and the Reference it was Accepted into carry one answer and the
-  Offer ledger and the Plan Panel cannot label an item differently. A Quote carries a text;
-  a Reference may carry one without being a Quote. Amended in
-  [ADR 0002](./adr/0002-the-plan-data-model.md).
+- **Every Reference is a Link or a Quote**, and Reference is the umbrella rather than a
+  type of its own. One structure: a pulled passage, an attribution, or both, with at least
+  one present. The type is **stored, not derived from the text**, so an Offer and the
+  Reference it was Accepted into carry one answer and the Offer ledger and the Plan Panel
+  cannot label an item differently. A Quote carries a text; a Link may carry one without
+  being a Quote. Amended in [ADR 0002](./adr/0002-the-plan-data-model.md).
 - **Voice replaces; Adjectives compose.** One Voice applies at a time and the nearest Scope
   wins outright. Adjectives accumulate. Resolution runs House, then Article, then
   Section, **at read time**. A Section's ancestors take part in that same order, so a Subsection
@@ -156,7 +156,7 @@ relief valve is moving References into SQLite rows, which is the phase 2 move an
 
 ## 5. Offers and the Ledger
 
-The Chat turns up **Offers** — References and Quotes — as SQLite rows in the Article Agent.
+The Chat turns up **Offers** — Links and Quotes — as SQLite rows in the Article Agent.
 Each carries a disposition: **Undecided**, **Accepted**, or **Declined**, and Declining is
 restorable. The **Ledger** is a View over Offers, not a store.
 

@@ -103,7 +103,7 @@ export const E_PlanSheet: Story = {
 			<PlanSheetScreen />
 			<Annotation>
 				The Outline and the References are stacked, never columned: inside a status the
-				eye should only have to travel one way. One list holds both Quotes and References,
+				eye should only have to travel one way. One list holds both Links and Quotes,
 				because the type is a field on the record. The bar beside the Outline is the shape
 				of the piece — 300 / 700 / 900 / 500 of 2,400.
 			</Annotation>

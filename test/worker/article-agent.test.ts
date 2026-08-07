@@ -40,7 +40,7 @@ const quote = {
 }
 
 const reference = {
-	type: 'reference' as const,
+	type: 'link' as const,
 	source: { title: 'Zoning and the missing middle', author: 'A. Weill' },
 	note: 'Primary data for the opening figure.',
 }
@@ -132,7 +132,7 @@ describe('Offers in the Article Agent', () => {
 	// one refuses without the Article Agent ever reaching its table.
 	it('refuses an Offer carrying neither a text nor a source', async () => {
 		await expect(
-			createOffer('offer-empty', { type: 'reference' } as OfferContent),
+			createOffer('offer-empty', { type: 'link' } as OfferContent),
 		).rejects.toThrow(/text, a source, or both/)
 	})
 
@@ -177,7 +177,7 @@ describe('Offers in the Article Agent', () => {
 
 		const titles = await runInDurableObject(stub, (agent) => {
 			const recorded = ['first', 'second', 'third', 'fourth'].map((title) =>
-				agent.createOffer({ type: 'reference', source: { title } }),
+				agent.createOffer({ type: 'link', source: { title } }),
 			)
 
 			return {

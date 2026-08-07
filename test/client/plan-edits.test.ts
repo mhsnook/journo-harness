@@ -186,9 +186,7 @@ describe('the References', () => {
 
 	it('builds no edit for a Reference the Plan does not carry', () => {
 		expect(placeReference(plan, 'gone', 'a')).toBeNull()
-		expect(
-			setReference(plan, 'gone', { type: 'reference', text: 'A passage' }),
-		).toBeNull()
+		expect(setReference(plan, 'gone', { type: 'link', text: 'A passage' })).toBeNull()
 	})
 
 	it('pastes one in, carrying the writer as its Provenance', () => {

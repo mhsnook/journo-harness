@@ -10,21 +10,21 @@ export type ReferenceEntry = {
 
 /**
  * What a Reference is called where there is one line to say it in: its type,
- * then its number in the References list — `ref [2]`, `quote [3]`.
+ * then its number in the References list — `link [2]`, `quote [3]`.
  *
  * The number is the position in the list rather than anything stored, the way a
  * footnote number is. Deleting one renumbers the rest, and nothing refers to a
  * Reference by it.
  */
 export function referenceMark(entry: ReferenceEntry): string {
-	return `${entry.reference.type === 'quote' ? 'quote' : 'ref'} [${entry.number}]`
+	return `${entry.reference.type} [${entry.number}]`
 }
 
 /** What a Reference reads as on one line: its passage, or its title. */
 export function referenceName(reference: Reference): string {
 	if (reference.text !== undefined) return `“${reference.text}”`
 
-	return reference.source?.title ?? reference.source?.url ?? 'Untitled reference'
+	return reference.source?.title ?? reference.source?.url ?? 'Untitled link'
 }
 
 /** Every Reference, numbered. */

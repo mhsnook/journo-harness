@@ -15,5 +15,5 @@ export function makeNode(node: Partial<OutlineNode> & { id: string }): OutlineNo
 /** A Reference the writer wrote themselves, unplaced. It carries neither a text
  * nor a source, so a test states whichever the invariant it is about needs. */
 export function makeReference(reference: Partial<Reference> & { id: string }): Reference {
-	return { type: 'reference', provenance: { type: 'writer' }, nodeId: null, ...reference }
+	return { type: 'link', provenance: { type: 'writer' }, nodeId: null, ...reference }
 }

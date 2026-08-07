@@ -436,7 +436,7 @@ describe('the content ops', () => {
 				op: 'createReference',
 				reference: {
 					id: 'r4',
-					type: 'reference',
+					type: 'link',
 					provenance: { type: 'writer' },
 					source: { title: 'The memo' },
 					nodeId: 'gone',
@@ -454,7 +454,7 @@ describe('the content ops', () => {
 				op: 'createReference',
 				reference: {
 					id: 'r1',
-					type: 'reference',
+					type: 'link',
 					provenance: { type: 'writer' },
 					source: { title: 'The memo' },
 					nodeId: null,
@@ -471,7 +471,7 @@ describe('the content ops', () => {
 			{
 				op: 'setReference',
 				referenceId: 'r1',
-				expected: { type: 'reference', text: 'A pulled passage' },
+				expected: { type: 'link', text: 'A pulled passage' },
 				value: {
 					type: 'quote',
 					text: 'A pulled passage, corrected',
@@ -495,8 +495,8 @@ describe('the content ops', () => {
 			{
 				op: 'setReference',
 				referenceId: 'r2',
-				expected: { type: 'reference', text: 'An unplaced passage' },
-				value: { type: 'reference', text: 'An unplaced passage', note: 'Worth a look' },
+				expected: { type: 'link', text: 'An unplaced passage' },
+				value: { type: 'link', text: 'An unplaced passage', note: 'Worth a look' },
 			},
 		])
 		const next = applied(
@@ -505,11 +505,11 @@ describe('the content ops', () => {
 					op: 'setReference',
 					referenceId: 'r2',
 					expected: {
-						type: 'reference',
+						type: 'link',
 						text: 'An unplaced passage',
 						note: 'Worth a look',
 					},
-					value: { type: 'reference', text: 'An unplaced passage' },
+					value: { type: 'link', text: 'An unplaced passage' },
 				},
 			],
 			noted,
@@ -523,13 +523,13 @@ describe('the content ops', () => {
 			{
 				op: 'setReference',
 				referenceId: 'r1',
-				expected: { type: 'reference', text: 'A pulled passage', note: 'Never said' },
-				value: { type: 'reference', text: 'Something else' },
+				expected: { type: 'link', text: 'A pulled passage', note: 'Never said' },
+				value: { type: 'link', text: 'Something else' },
 			},
 		])
 
 		expect(refusal.type).toBe('stale')
-		expect(refusal.found).toEqual({ type: 'reference', text: 'A pulled passage' })
+		expect(refusal.found).toEqual({ type: 'link', text: 'A pulled passage' })
 	})
 
 	it('deletes a Reference and leaves the rest', () => {

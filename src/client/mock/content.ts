@@ -161,7 +161,7 @@ export const plan: Plan = {
 	references: [
 		{
 			id: 'ref-throughput',
-			type: 'reference',
+			type: 'link',
 			provenance: { type: 'offer', offerId: 'offer-throughput' },
 			source: {
 				title: 'Permit throughput in six mid-sized cities',
@@ -174,7 +174,7 @@ export const plan: Plan = {
 		},
 		{
 			id: 'ref-middle',
-			type: 'reference',
+			type: 'link',
 			provenance: { type: 'offer', offerId: 'offer-middle' },
 			source: {
 				title: 'Zoning and the missing middle',
