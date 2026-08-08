@@ -5,12 +5,8 @@ import { useMockPlan } from '../../mock/MockArticle'
 import { useMockChat } from '../../mock/MockChat'
 import { researchTurn } from '../../mock/transcript'
 
-/**
- * 2(d) — A turn that returned a lot, with the Chat Panel at full width. The
- * turn recorded its Offers as rows and handed back their ids; the cards are the
- * Offer ledger's rows, so Accepting one copies it straight into the Plan and
- * the row keeps the ruling either way.
- */
+/** 2(d) — A turn that returned a lot, Chat Panel at full width. The cards are
+ * Offer ledger rows, so Accepting one copies it into the Plan. */
 export function ChatWithReferencesScreen() {
 	const plan = useMockPlan()
 	const chat = useMockChat(researchTurn)

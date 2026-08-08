@@ -7,11 +7,8 @@ import { useMockChat } from '../../mock/MockChat'
 import { midChat } from '../../mock/transcript'
 import { PlanPanel } from '../../plan/PlanPanel'
 
-/**
- * 2(b) — Mid-chat. The Chat has proposed a Section and a new total, and the
- * Proposal waits on the writer. Accepting applies it through the same writer
- * the Plan Panel beside it types into, so the Outline moves as you rule.
- */
+/** 2(b) — Mid-chat, with a live Proposal. Accepting it moves the Outline in the
+ * Plan Panel beside it: both go through the one writer. */
 export function MidChatScreen() {
 	const { edit, refusal } = useArticle().plan
 	const plan = useMockPlan()

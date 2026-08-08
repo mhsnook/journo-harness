@@ -13,24 +13,19 @@ import { ProposalCard } from './ProposalCard'
 import { readProposal, type ProposalCall, type Refusals } from './proposals'
 
 /**
- * The Chat Panel. It takes a transcript and the rulings the writer can make on
- * it, so a story drives it from a fixture and `ArticleChatPanel` drives it from
- * the Article Agent — the same split as `PlanPanel` and `ArticlePlanPanel`.
- *
- * Two things a turn returns get their own card. A Proposal suspends and waits
- * for the writer (§6). Offers do not: `recordOffers` runs inside the Article
- * Agent, and what the turn hands back is a list of ids the Offer ledger holds
- * the rows for (§5).
+ * The Chat Panel takes a transcript & rulings; `ArticleChatPanel` drives it from
+ * the Article Agent — the same split as `PlanPanel` and `ArticlePlanPanel`. A turn
+ * can return Proposals and Offers; each gets its own card. Proposals suspend and
+ * wait for the writer (§6), but Offers just accumulate in the Ledger.
  */
 
 export interface ChatPanelProps {
 	messages: readonly UIMessage[]
-	/** The Plan a Proposal is described against, so a card names a Section the
-	 * way the Outline does. */
+	/** What a Proposal card names its Sections and References out of. */
 	plan: Plan
 	/** A turn is in flight. */
 	busy: boolean
-	/** How many tool calls are suspended. While this is not 0 the turn is parked. */
+	/** Suspended tool calls; above zero the turn is parked — §11. */
 	waiting: number
 	/** Why an Accept did not land, by tool call id. */
 	refusals: Refusals
@@ -111,11 +106,8 @@ export function ChatPanel({
 	)
 }
 
-/**
- * An abandoned tool batch parks indefinitely: Cloudflare's `ai-chat` enforces
- * batch completeness server-side with no orphan timeout (§11). This is the
- * sentence that says so, rather than a composer that quietly does nothing.
- */
+/** Why the composer will not send, and null when it will. Nothing expires an
+ * unruled call, so the writer has to be told to go and rule on it — §11. */
 function parked(waiting: number): string | null {
 	if (waiting === 0) return null
 	if (waiting === 1) {

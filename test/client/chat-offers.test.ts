@@ -4,11 +4,8 @@ import { readRecordedOffers, recordedOfferIds } from '../../src/client/chat/offe
 import { proposePlanChangeTool, recordOffersTool } from '../../src/shared/chat'
 import { toolPart, transcript } from './chat-fixtures'
 
-/**
- * A research turn writes Offer rows this client never asked for, and nothing on
- * the socket announces a row — §3. What the turn hands back is the only signal
- * the Ledger gets that its list moved.
- */
+/** Reading a research turn's result, which is the Ledger's only signal that its
+ * list moved — §3. */
 
 const part = (state: string, extra: Record<string, unknown> = {}) =>
 	toolPart(recordOffersTool, state, { input: { offers: [] }, ...extra })

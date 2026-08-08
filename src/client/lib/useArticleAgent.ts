@@ -7,15 +7,10 @@ import { usePlanChannel } from '../plan/usePlan'
 import type { Article, OfferStore } from './article'
 
 /**
- * One Article Agent, one socket, held above the Panels — docs/architecture.md
- * §8. The socket is multiplexed: it carries the Plan blob, the `@callable` RPC
- * the Offers are read over, and the Chat turn, all on one wire. Two Panels
- * opening their own would mean two Plan writers against a blob that may only
- * have one (§3, rule 1).
- *
- * Mounting this and laying the Panels out is issue #29. What it returns is the
- * `ArticleProvider`'s value plus the socket itself, which is what
- * `useAgentChat` takes.
+ * Opens one Article Agent and hands out the three things that ride its one
+ * multiplexed socket: the Plan channel, an Offer store over `@callable` RPC, and
+ * the client itself for `useAgentChat` — §8. A second socket would mean a second
+ * Plan writer, which §3 rule 1 forbids.
  */
 
 export type ArticleSocket = ReturnType<typeof useAgent<Plan>>
@@ -26,9 +21,8 @@ export type ArticleConnection = {
 }
 
 export function useArticleAgent(articleId: string): ArticleConnection {
-	// One ref, read by both halves: the client is replaced on every reconnect, and
-	// an `OfferStore` or a writer that closed over one generation would keep
-	// sending to a socket that is gone.
+	// `useAgent` hands back a new client on each reconnect, so both halves read
+	// this rather than closing over one generation of it.
 	const socket = useRef<ArticleSocket | null>(null)
 	const channel = usePlanChannel(() => socket.current)
 
@@ -43,8 +37,8 @@ export function useArticleAgent(articleId: string): ArticleConnection {
 		socket.current = agent
 	})
 
-	// `[]`, so the store keeps its identity across reconnects: the Ledger reads
-	// its rows once per store, and a new one on every render would re-read them.
+	// `[]` keeps the store's identity: `useOfferLedger` reads its rows once per
+	// store it is given.
 	const offers = useMemo<OfferStore>(
 		() => ({
 			listOffers: () => call<Offer[]>(socket, 'listOffers'),
@@ -58,8 +52,8 @@ export function useArticleAgent(articleId: string): ArticleConnection {
 	return { article: { offers, plan: channel.connection }, agent }
 }
 
-/** An RPC on whichever socket is current. The first render has none, and a
- * caller reaching one that early is a bug rather than a state to render. */
+/** An RPC on whichever socket is current. Rejects on the first render, before
+ * `useAgent` has built one. */
 function call<T>(
 	socket: { current: ArticleSocket | null },
 	method: string,

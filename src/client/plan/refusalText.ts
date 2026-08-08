@@ -2,23 +2,17 @@ import type { Plan, Refusal, RefusalReason } from '../../shared/plan'
 import { planNames, type PlanNames } from './names'
 
 /**
- * What a refused edit reads as on screen.
- *
- * The applier writes one sentence and it is written for the model — a Declined
- * Proposal sends it back as the reason, so it names the op and the ids and may
- * run long (§6). This is the other reader: a writer, mid-task, who never saw an
- * id and does not know what `setTitle` is. The applier hands over a `reason`
- * code and the records it is about, and the table below is the only place the
- * English lives. Swap the table to swap the language.
- *
- * The table is total over `RefusalReason`, so a new refusal site in the applier
- * stops this file compiling until it says what the new one reads as.
+ * What a refused edit reads as on screen. `refusal.message` is the applier's
+ * sentence for the model and names ops and ids (§6); this is the other reader,
+ * a writer mid-task who has seen neither. The table below is the only English
+ * in the path — swap it to swap the language — and it is total over
+ * `RefusalReason`, so a new refusal site will not compile until it is worded.
  */
 
 type Wording = (refusal: Refusal, name: PlanNames) => string
 
-/** Also what a Proposal card says when the tool call's own payload did not
- * parse, which is the same condition one step earlier. */
+/** Exported because a Proposal card hits the same condition one step earlier,
+ * when the tool call's own payload will not parse. */
 export const unreadableText =
 	'The Chat sent a change that could not be read. Ask it to try again.'
 
@@ -27,9 +21,8 @@ const wording: Record<RefusalReason, Wording> = {
 
 	noPlan: () => 'The Plan has not arrived yet. Give it a moment.',
 
-	// The four below are about a record the Plan does not carry, so there is no
-	// name to give it: naming it would print the fallback and say the same thing
-	// twice. What the writer needs is that it went, not which it was.
+	// The four below concern a record the Plan has lost, so there is no name to
+	// give it — asking for one prints the fallback and says it twice.
 	noSection: () =>
 		'That change is for a Section that is no longer in the Outline. Ask the Chat to look again.',
 
@@ -42,14 +35,12 @@ const wording: Record<RefusalReason, Wording> = {
 	noReference: () =>
 		'That change is for a Reference that is no longer in the list. Ask the Chat to look again.',
 
-	// The bare label, because the sentence goes on to quote the field: the full
-	// name of a Section is its number and its title, and a refused setTitle would
-	// print that title twice.
+	// `label` and not `subject`: this sentence quotes the field, and the fuller
+	// name carries the title, so a refused setTitle would print it twice.
 	stale: (refusal, name) =>
 		`${capitalise(name.label(refusal.subject))} has changed since the Chat proposed this. It now reads ${quote(refusal.found)}, where the change expected ${quote(refusal.expected)}.`,
 
-	// One code for both: the subject already says whether it is a Section or a
-	// Reference, so two would be two rows saying the same thing.
+	// Sections and References share a code: the subject already says which.
 	duplicateId: (refusal, name) =>
 		`That change adds ${name.subject(refusal.subject)}, which the Plan already carries.`,
 
@@ -74,8 +65,8 @@ export function refusalText(plan: Plan, refusal: Refusal): string {
 	return wording[refusal.reason](refusal, planNames(plan))
 }
 
-/** What a field says, as the writer would read it back. An absent one is a
- * phrase rather than `null`, which is a word they never typed. */
+/** A field's value as the writer would read it back — a phrase for an absent
+ * one, since `null` is a word they never typed. */
 function quote(value: unknown): string {
 	if (value === null || value === undefined) return 'nothing'
 	if (Array.isArray(value)) {

@@ -17,28 +17,21 @@ import {
 } from './proposals'
 
 /**
- * One Chat, on the socket the Plan already holds — docs/architecture.md §6 and
- * §8. The Chat proposes and the client applies: Accepting runs the Proposal's
- * ops through the Plan's one writer, which is the same `edit` every Plan change
- * makes, and then answers the tool call.
+ * One Chat on the socket the Plan already holds — §6 and §8. A ruling applies
+ * the ops through `edit` and then answers the tool call.
  *
- * Three API details this leans on, each easy to get wrong:
- *
- * - `addToolOutput`, not the deprecated `addToolResult`, and **never awaited** —
- *   the AI SDK docs warn twice about deadlock.
- * - A Decline answers with `is_error: true`, which is `state: 'output-error'`
- *   plus the reason in `errorText`.
- * - `addToolApprovalResponse` and `needsApproval` are for a server-side
- *   `execute` this product does not have (§6). Both rulings go through
- *   `addToolOutput`.
+ * Three SDK traps sit under this. `addToolResult` is deprecated in favour of
+ * `addToolOutput`, and awaiting either deadlocks. A rejection is
+ * `state: 'output-error'` with the reason in `errorText`. And
+ * `addToolApprovalResponse` and `needsApproval` gate a server-side `execute`
+ * this product does not have, so both rulings go out as tool output.
  */
 
 export type ChatHandle = {
 	messages: UIMessage[]
 	/** A turn is in flight, whether the writer started it or the server did. */
 	busy: boolean
-	/** How many tool calls are suspended. While this is not 0 the turn is parked
-	 * and the composer says so — §11. */
+	/** Suspended tool calls; above zero the turn is parked — §11. */
 	waiting: number
 	/** Why an Accept did not land, by tool call id. */
 	refusals: Refusals
@@ -56,10 +49,8 @@ export function useArticleChat(agent: ArticleSocket): ChatHandle {
 	const ledger = useOfferLedger()
 	const [refusals, setRefusals] = useState<Refusals>({})
 
-	// The turn is about the Plan the writer is looking at, which the body carries
-	// because `body` is request-only where `metadata` re-rides every turn (§6).
-	// Held in a ref because the body is built when the turn is sent, not when
-	// this renders.
+	// A ref, because the body is built when the turn is sent rather than when
+	// this renders. The Plan goes in `body` and not `metadata` — §6.
 	const held = useRef<Plan | null>(connection.plan)
 	useEffect(() => {
 		held.current = connection.plan
@@ -72,13 +63,9 @@ export function useArticleChat(agent: ArticleSocket): ChatHandle {
 
 	const { messages, addToolOutput } = chat
 
-	// A research turn writes rows this client never asked for, and nothing on the
-	// socket announces a row — §3. The ids the transcript names are what says the
-	// set moved.
-	//
-	// The first set it names is skipped: that is the persisted transcript
-	// arriving, and the Ledger's own read on mount already covers those rows. Only
-	// a turn that records something after that is worth a second RPC.
+	// Nothing on the socket announces a new Offer row (§3), so a turn naming ids
+	// the Ledger has not seen is the signal to read again. The first set is the
+	// persisted transcript landing, which the Ledger's own read already covers.
 	const recorded = recordedOfferIds(messages).join(' ')
 	const seen = useRef<string | null>(null)
 	const { reload } = ledger
@@ -91,9 +78,6 @@ export function useArticleChat(agent: ArticleSocket): ChatHandle {
 	}, [recorded, reload])
 
 	const rule = (call: ProposalCall, accepted: boolean) => {
-		// Through the Plan's one writer, like every other Plan edit: it holds the
-		// Plan the writer sees, debounces, and refuses an update over an unsent
-		// write. A second writer around it would undo what is on screen — §3.
 		const ruling = ruleProposal({
 			call,
 			accepted,
@@ -104,7 +88,7 @@ export function useArticleChat(agent: ArticleSocket): ChatHandle {
 		setRefusals((was) => afterRuling(was, call.toolCallId, ruling.refusal))
 		if (ruling.answer === null) return
 
-		// No await. The AI SDK docs warn twice about deadlock.
+		// Awaiting this deadlocks.
 		addToolOutput({
 			toolCallId: call.toolCallId,
 			toolName: proposePlanChangeTool,

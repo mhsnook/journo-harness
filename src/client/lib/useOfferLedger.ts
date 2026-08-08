@@ -6,13 +6,9 @@ import { acceptOffer } from '../plan/edits'
 import { useArticle } from './article'
 
 /**
- * The Offer ledger, live. Rows are read once when the Panel opens, because
- * nothing tells a client a row changed — §3. It holds no Plan: Accepting writes
- * one through `edit` and reads nothing back.
- *
- * A research turn is the one thing that changes the list without the writer
- * touching it, and it writes its rows inside the Article Agent. The Chat calls
- * `reload` when a turn records some, which is the only signal there is.
+ * The Offer ledger, live. Rows come down once per store, since nothing announces
+ * a row changing — §3. A research turn writes rows behind the client's back, so
+ * the Chat calls `reload` when a turn records some.
  */
 
 export type OfferLedgerHandle = {

@@ -18,11 +18,7 @@ import {
 import { makePlan } from '../shared/plan-fixtures'
 import { toolPart, transcript } from './chat-fixtures'
 
-/**
- * Reading Proposals out of a transcript, and ruling on one. No React and no
- * socket: a Proposal is a suspended tool call, which is a plain object, and the
- * ruling is the same pure function the Chat Panel and the showcase both run.
- */
+/** Reading Proposals out of a transcript, and ruling on one. */
 
 const plan: Plan = makePlan({
 	title: 'Why cities stopped building',
@@ -76,10 +72,8 @@ describe('reading a transcript', () => {
 		expect(waitingCount(messages)).toBe(0)
 	})
 
-	/**
-	 * The batch-completeness rule has no orphan timeout, so this count is what
-	 * stands between the writer and a composer that silently does nothing.
-	 */
+	/** No orphan timeout, so this count is all that stands between the writer and
+	 * a composer that silently does nothing — §11. */
 	it('counts every suspended call, not only the Proposals', () => {
 		const messages = transcript(
 			toolPart(proposePlanChangeTool, 'input-available', { input: { ops } }),
@@ -137,11 +131,7 @@ describe('ruling on a Proposal', () => {
 		expect(written!.outline[1].title).toBe('Who pays')
 	})
 
-	/**
-	 * The card says why and stays open. Whole-field comparison is conservative
-	 * and refuses against a field the writer has since touched, so the writer may
-	 * fix the Plan and Accept again.
-	 */
+	/** The card stays open, so the writer can fix the Plan and Accept again. */
 	it('answers nothing when the Plan refuses, and hands back the reason', () => {
 		const stale = makePlan({
 			outline: [{ id: 'sec-cost', title: 'Who bears it', children: [] }],

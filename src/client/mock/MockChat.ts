@@ -15,11 +15,9 @@ import { useOfferLedger } from '../lib/useOfferLedger'
 
 /**
  * A Chat held in memory, so a story runs the real applier and the real Offer
- * ledger without a Worker. It rules through `ruleProposal`, the same function
- * `useArticleChat` rules through, and writes the answer onto the tool part the
- * way the SDK's `addToolOutput` would.
- *
- * No model runs here, so a turn the writer sends gets one flat sentence back.
+ * ledger without a Worker. Rules through `ruleProposal` and stands in for the
+ * SDK's `addToolOutput`. No model, so a turn the writer sends gets a flat
+ * sentence back.
  */
 
 export type MockChat = Omit<ChatPanelProps, 'plan' | 'className' | 'leading'>
@@ -37,9 +35,8 @@ export function useMockChat(start: UIMessage[]): MockChat {
 				parts: message.parts.map((part) => {
 					if (!isToolUIPart(part) || part.toolCallId !== toolCallId) return part
 
-					// `addToolOutput` writes this half in the app. The cast is the price
-					// of standing in for it: a tool part is a union over every state,
-					// and spreading one widens the fields the answered state requires.
+					// A tool part is a union over its states, so spreading one widens
+					// the fields the answered state needs — hence the cast.
 					const answered =
 						'output' in sent
 							? { ...part, state: 'output-available', output: sent.output }

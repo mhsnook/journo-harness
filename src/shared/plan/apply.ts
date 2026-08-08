@@ -22,12 +22,9 @@ import { planSchema, referenceContent } from './schema'
 export type RefusalType = 'malformed' | 'missing' | 'stale' | 'invalid'
 
 /**
- * Exactly what went wrong, as a code rather than a sentence. `RefusalType` sorts
- * refusals into four kinds and this names the one that happened, which is what a
- * caller needs to write its own sentence.
- *
- * Closed on purpose: adding a refusal site adds a member here, and the client's
- * table stops compiling until it says what the new one reads as.
+ * Which check failed, as a code a caller can word for itself where
+ * `RefusalType`'s four kinds are too coarse to build a sentence from. Closed, so
+ * a new refusal site stops `refusalText.ts` compiling until it is worded.
  */
 export type RefusalReason =
 	| 'unreadable'
@@ -61,8 +58,8 @@ const kindOf: Record<RefusalReason, RefusalType> = {
 	wouldNotParse: 'invalid',
 }
 
-/** What a refusal is about. The id is the Plan's, so a caller can name the thing
- * the way the Outline and the References list already name it. */
+/** What a refusal is about, by the Plan's own id, so a caller can name it the
+ * way the Outline and the References list do. */
 export type RefusalSubject =
 	| { of: 'article' }
 	| { of: 'section'; id: string }
@@ -80,16 +77,12 @@ export type Refusal = {
 	op: OpName | null
 	/** What the refusal is about, and null where it is about no one record. */
 	subject: RefusalSubject | null
-	/** The second record a reason names — the Section a merge would go under, the
-	 * Section an anchor was looked for in. Null where the reason names one. */
+	/** The second record a reason names — a merge target, the Section an anchor
+	 * was sought in — and null for the reasons that name one. */
 	other: RefusalSubject | null
-	/**
-	 * One sentence, **written for the model**. A Declined Proposal sends it back
-	 * as the reason (§6), so it names the op and the ids and may run long. What
-	 * the writer reads is built from `reason` and the fields above, in
-	 * `src/client/plan/refusalText.ts` — one English string here, and one table
-	 * there to swap when a second language arrives.
-	 */
+	/** One sentence for the model, which a Declined Proposal sends back (§6), so
+	 * it names the op and the ids and may run long. The writer's sentence is
+	 * built from the fields above, in `src/client/plan/refusalText.ts`. */
 	message: string
 	/** The value the op named against the value the Plan carries. Both are
 	 * present on a stale field and absent otherwise. */
@@ -105,9 +98,8 @@ const referenceSubject = (id: string): RefusalSubject => ({ of: 'reference', id 
 const scopeSubject = (nodeId: string | null): RefusalSubject =>
 	nodeId === null ? articleSubject : sectionSubject(nodeId)
 
-/** What the model's sentence calls a record: the data model's own words, ids
- * included, because the model proposes in them. What the writer reads instead is
- * `src/client/plan/refusalText.ts`. */
+/** What the model's sentence calls a record — the data model's own words, ids
+ * included, because the model proposes in them. */
 function nameFor(subject: RefusalSubject, reason: RefusalReason): string {
 	if (subject.of === 'article') return 'the Article'
 	if (subject.of === 'reference') return `Reference ${subject.id}`
@@ -115,8 +107,8 @@ function nameFor(subject: RefusalSubject, reason: RefusalReason): string {
 	return reason === 'noParent' ? `parent ${subject.id}` : `node ${subject.id}`
 }
 
-/** The neighbour a structural op anchored to, which is the one the Plan could
- * not find. Exactly one of the two is stated — ops.ts. */
+/** The neighbour a structural op anchored to, and null where the anchor named
+ * an end rather than a sibling. */
 const anchorSubject = (op: Anchor): RefusalSubject | null => {
 	const anchor = op.afterId ?? op.beforeId
 

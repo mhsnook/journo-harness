@@ -1,11 +1,7 @@
 import { useArticle } from '../lib/article'
 import { PlanPanel } from './PlanPanel'
 
-/**
- * The Plan Panel, reading the one Article Agent connection the
- * `ArticleProvider` holds. Laying it out beside the other three Panels is issue
- * #29.
- */
+/** Drives `PlanPanel` from the connection the `ArticleProvider` holds. */
 
 export interface ArticlePlanPanelProps {
 	className?: string
@@ -14,8 +10,8 @@ export interface ArticlePlanPanelProps {
 export function ArticlePlanPanel({ className }: ArticlePlanPanelProps) {
 	const { plan, edit, refusal, rejected } = useArticle().plan
 
-	// The socket usually settles in well under a second, so this says what it is
-	// waiting for rather than drawing a skeleton of the Panel.
+	// Says what it waits on rather than drawing a skeleton, since the socket
+	// settles well inside a second.
 	if (plan === null) {
 		return (
 			<div className={className}>

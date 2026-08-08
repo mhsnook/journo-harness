@@ -45,14 +45,10 @@ export interface ChatComposerProps {
 	leading?: ReactNode
 	/** Sends what the writer typed. A screen with none renders a still frame. */
 	onSend?: (text: string) => void
-	/**
-	 * Why the composer will not send, and null when it will. A parked tool batch
-	 * is the case that matters: Cloudflare's batch-completeness rule has no
-	 * orphan timeout, so a Proposal nobody ruled on stalls the turn — say it here
-	 * rather than letting the composer sit dead (docs/architecture.md §11).
-	 */
+	/** Why the composer will not send, and null when it will. A Proposal nobody
+	 * ruled on is the case worth wording — nothing expires it (§11). */
 	blocked?: string | null
-	/** Held while a turn is in flight, which needs no sentence to explain it. */
+	/** Held while a turn is in flight. */
 	disabled?: boolean
 	className?: string
 }

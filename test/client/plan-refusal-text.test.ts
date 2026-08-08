@@ -6,11 +6,8 @@ import { makePlan } from '../shared/plan-fixtures'
 
 /**
  * What a refused edit reads as on screen, against what the same refusal says to
- * the model. Every case runs the real applier rather than a hand-built
- * `Refusal`, so a reason code that stops being produced takes its test with it.
- *
- * The rule these hold: nothing the writer reads names an op, an id, or a node.
- * Those are the model's, and they stay on `refusal.message`.
+ * the model. Cases run the real applier rather than a hand-built `Refusal`, so a
+ * reason code that stops being produced takes its test with it.
  */
 
 const plan: Plan = makePlan({
@@ -154,11 +151,8 @@ describe('what the writer reads', () => {
 	})
 })
 
-/**
- * The other reader. `message` is what a Declined Proposal sends back, so it
- * keeps the op name and the ids the model proposed with — and that is exactly
- * why it is not what the writer sees.
- */
+/** The other reader: a Declined Proposal sends `message` back, so it keeps the
+ * op name and the ids the model proposed with. */
 describe('what the model reads', () => {
 	it('keeps the op name and the id the writer never saw', () => {
 		const refusal = refuse([
@@ -178,8 +172,8 @@ describe('what the model reads', () => {
 		expect(said).not.toContain('sec-cost')
 	})
 
-	/** The word is the Plan's data model, not the writer's — context.md fixes
-	 * Section and Subsection. It may stay in the model's sentence. */
+	/** context.md fixes Section and Subsection for the writer; "node" belongs to
+	 * the data model and may stay in the model's sentence. */
 	it('never says "node" to the writer', () => {
 		const everything = [
 			reads([{ op: 'deleteNode', nodeId: 'sec-gone' }]),

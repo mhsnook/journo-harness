@@ -5,25 +5,16 @@ import { isPlanRefused } from '../../shared/plan'
 import { createPlanWriter, type PlanEdit } from './writer'
 
 /**
- * The Plan's half of one Article Agent: its state blob in, and every edit back
- * out through `setState` — docs/architecture.md §3, rule 1.
- *
- * **It does not open the socket.** The socket is multiplexed and the Chat rides
- * the same one (§8), so `useArticleAgent` opens it once above both Panels and
- * gives this channel a way to reach it. Opening a second one would mean two
- * writers, two debounce timers, and a blob whose whole design is that it has one
- * writer.
+ * The Plan's half of one Article Agent: state blob in, edits back out through
+ * `setState` — §3, rule 1. `useArticleAgent` owns the socket and passes a way to
+ * reach it, so nothing here opens one.
  */
 
 export type PlanConnection = {
 	/** The Plan the writer sees, and null until the first state update arrives. */
 	plan: Plan | null
-	/**
-	 * What the builders in edits.ts return, null included, and it hands back why
-	 * the edit did not land. The Plan Panel reads that off `refusal` below, and a
-	 * caller ruling on a Proposal needs it in the same turn: Declining answers
-	 * the tool call with the reason.
-	 */
+	/** Takes what the builders in edits.ts return, null included, and hands back
+	 * why the edit did not land — a Proposal ruling needs that in the same turn. */
 	edit: (edit: PlanEdit) => Refusal | null
 	/** Why the last edit did not land, cleared by the next one. */
 	refusal: Refusal | null
@@ -42,11 +33,8 @@ export type PlanChannel = {
 	onMessage: (event: MessageEvent) => void
 }
 
-/**
- * `socket` is read rather than held: `useAgent` has none to give on the first
- * render and replaces it on every reconnect, so the owner keeps the ref and this
- * asks it for whichever one is current.
- */
+/** `socket` is a getter, because `useAgent` has none to give on the first render
+ * and swaps it on reconnect. */
 export function usePlanChannel(socket: () => PlanSocket | null): PlanChannel {
 	const [plan, setPlan] = useState<Plan | null>(null)
 	const [refusal, setRefusal] = useState<Refusal | null>(null)

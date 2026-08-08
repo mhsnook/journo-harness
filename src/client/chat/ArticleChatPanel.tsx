@@ -5,11 +5,8 @@ import type { ArticleSocket } from '../lib/useArticleAgent'
 import { ChatPanel } from './ChatPanel'
 import { useArticleChat } from './useArticleChat'
 
-/**
- * The Chat Panel, wired to one Article Agent. It takes the socket rather than
- * opening one: the wire is multiplexed and the Plan already holds it — §8.
- * Laying it out beside the other three Panels is issue #29.
- */
+/** Drives `ChatPanel` from one Article Agent. Takes the socket rather than
+ * opening one — §8. */
 
 export interface ArticleChatPanelProps {
 	agent: ArticleSocket
@@ -29,9 +26,8 @@ export function ArticleChatPanel({
 	const chat = useArticleChat(agent)
 	const { ledger } = chat
 
-	// A Proposal is described against the Plan on screen, so the Panel waits for
-	// the first state update the way the Plan Panel does. It settles in well
-	// under a second, and #29 hoists this gate above every Panel.
+	// A Proposal card names Sections out of the Plan, so there is nothing to draw
+	// until one arrives.
 	if (plan === null) {
 		return (
 			<div className={className}>

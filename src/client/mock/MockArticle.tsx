@@ -8,15 +8,14 @@ import { offers as seeded, plan as seededPlan } from './content'
 
 /**
  * An Article held in memory, so a story runs the real Ledger and the real
- * applier without a Worker. It supplies the same two halves the Article Agent
- * does — the Plan connection and the Offer rows — and the writer behind it is
- * the real one, with a `send` that goes nowhere.
+ * applier without a Worker. Supplies the same two halves the Article Agent does,
+ * behind the real `createPlanWriter` with a `send` that goes nowhere.
  */
 export function MockArticle({ children }: { children: ReactNode }) {
 	const [plan, setPlan] = useState<Plan>(seededPlan)
 	const [refusal, setRefusal] = useState<Refusal | null>(null)
 
-	// The real writer, without a socket: only `send` is debounced.
+	// `send` goes nowhere, so the debounce is the only part that idles.
 	const writer = useMemo(() => {
 		const held = createPlanWriter({
 			send: () => {},
@@ -28,7 +27,7 @@ export function MockArticle({ children }: { children: ReactNode }) {
 		return held
 	}, [])
 
-	// One store per story: the Ledger reads its rows once.
+	// One store per story, since `useOfferLedger` reads rows once per store.
 	const offers = useMemo(() => memoryOfferStore(seeded), [])
 
 	const edit = (next: Parameters<typeof writer.edit>[0]) => {
@@ -46,13 +45,9 @@ export function MockArticle({ children }: { children: ReactNode }) {
 
 /**
  * The Plan a story is looking at. `MockArticle` seeds one before it renders, so
- * this is only ever the seeded Plan — the fallback is what satisfies the type.
- *
- * A Panel in the app must not read a Plan this way: it would draw an empty Plan
- * as a real one while the socket settles, and a Proposal described against it
- * would name every Section as one the Plan does not carry. `ArticlePlanPanel`
- * and `ArticleChatPanel` gate on null instead, which is the one production
- * answer to "the Plan has not arrived".
+ * the empty fallback only satisfies the type. A Panel in the app gates on null
+ * instead: it would otherwise draw the empty Plan as a real one, and a Proposal
+ * card would name each of its Sections as missing.
  */
 export function useMockPlan(): Plan {
 	return useArticle().plan.plan ?? blank

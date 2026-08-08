@@ -3,13 +3,10 @@ import { outlineEntries, sectionLabel } from './outline'
 import { referenceEntries, referenceMark, referenceName } from './references'
 
 /**
- * What the writer calls one record in the Plan, for the places that name a
- * record in a sentence: a Proposal card describing an op, a refusal saying which
- * Section it could not find.
- *
- * A Section is numbered the way the Outline numbers it, out of the one walk, so
- * no two Panels can number a Section differently — §4. Nothing here reads an id
- * out loud: the writer never saw one.
+ * Names one record in the Plan the way the writer would say it, for the places
+ * that put a record in a sentence — a Proposal card, a refusal. Sections come
+ * out of the same walk the Outline numbers by (§4), and nothing here reads an id
+ * aloud: the writer never saw one.
  */
 
 export type PlanNames = {
@@ -21,9 +18,8 @@ export type PlanNames = {
 	reference: (referenceId: string) => string
 	/** Whichever of the three a refusal is about. */
 	subject: (subject: RefusalSubject | null) => string
-	/** The same record named as briefly as it can be — "§2", "quote [3]". For a
-	 * sentence that goes on to quote what the record says, where the fuller name
-	 * would print the same words twice. */
+	/** The briefest form — "§2", "quote [3]" — for a sentence that goes on to
+	 * quote the record and would otherwise print its title twice. */
 	label: (subject: RefusalSubject | null) => string
 }
 
@@ -40,8 +36,8 @@ export function planNames(plan: Plan): PlanNames {
 		}),
 	)
 
-	// A refusal is often about the record that has just gone, so "does not carry"
-	// is the ordinary answer here rather than a fallback for a bug.
+	// Refusals are often about a record that has just gone, so missing is an
+	// ordinary answer here rather than a sign of a bug.
 	const section = (nodeId: string) =>
 		numbered.get(nodeId)?.full ?? 'a Section the Plan does not carry'
 

@@ -5,16 +5,8 @@ import { cx } from '../lib/cx'
 import { refusalText, unreadableText } from '../plan/refusalText'
 import { describeProposal, type ProposalCall } from './proposals'
 
-/**
- * One suspended Proposal, for the writer to Accept or Decline —
- * docs/architecture.md §6. Accepting applies the ops through the Plan's one
- * writer; Declining answers the tool call with the reason.
- *
- * **A refused Proposal says why.** Whole-field `expected` comparison is
- * conservative and will refuse a Proposal against a field the writer has since
- * touched, so a card that just greyed out would be a card the writer cannot
- * account for. The applier writes that sentence; this renders it.
- */
+/** One suspended Proposal to Accept or Decline — §6. Renders its ops as
+ * sentences, and the refusal if an Accept was turned down. */
 
 export interface ProposalCardProps {
 	call: ProposalCall

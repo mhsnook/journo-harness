@@ -4,13 +4,10 @@ import { proposePlanChangeTool, recordOffersTool } from '../../shared/chat'
 import { offers } from './content'
 
 /**
- * Two transcripts for the showcase, in the shape the Agents SDK stores them.
- *
- * The tool parts are the point. A Proposal is a suspended call — `input`
- * present, no output — which is exactly what an `execute`-less tool leaves
- * behind, and the ops in it apply cleanly against the mock Plan so a story can
- * run the real applier. The research turn is the other way round: `recordOffers`
- * resolved server-side and handed back the ids the Offer ledger holds rows for.
+ * Transcripts for the showcase, in the shape the Agents SDK stores them. The
+ * tool parts carry the interesting states: a suspended Proposal has `input` and
+ * no output, where a resolved `recordOffers` has both. The Proposal ops apply
+ * cleanly against the mock Plan, so a story runs the real applier.
  */
 
 /** The Chat mid-conversation, with a Proposal the writer has not ruled on. */
@@ -59,11 +56,8 @@ export const midChat: UIMessage[] = [
 	},
 ]
 
-/**
- * A Proposal the Plan will refuse. Its `expected` names a title the Plan no
- * longer carries, which is what staleness is: the gap between generating a
- * Proposal and applying it, with one writer in one tab.
- */
+/** A Proposal the Plan will refuse: its `expected` names a title the Plan no
+ * longer carries. */
 export const staleProposal: UIMessage[] = [
 	{
 		id: 's-1',
@@ -94,7 +88,7 @@ export const staleProposal: UIMessage[] = [
 	},
 ]
 
-/** A research turn that returned a lot. Every Offer the mock Article holds. */
+/** A research turn that returned a lot — the mock Article's whole Offer list. */
 export const researchTurn: UIMessage[] = [
 	{
 		id: 'r-1',

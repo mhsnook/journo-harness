@@ -1,11 +1,9 @@
 import type { UIMessage } from 'ai'
 
 /**
- * Building a transcript by hand, for the tests that read one.
- *
- * The cast is the point of sharing this: a tool part is a union over its
- * states, and a fixture states one state's fields against the whole union. One
- * cast in one place is one thing to fix when the SDK moves the union.
+ * Building a transcript by hand. Shared for the cast: a tool part is a union
+ * over its states and a fixture writes one state's fields, so this is the one
+ * place to fix when the SDK moves that union.
  */
 
 export function toolPart(

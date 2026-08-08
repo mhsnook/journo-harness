@@ -7,12 +7,11 @@ import { planNames } from '../plan/names'
 import { referenceName } from '../plan/references'
 
 /**
- * Reading Proposals out of a Chat transcript, and writing what a card says.
+ * Reading Proposals out of a Chat transcript, ruling on one, and wording what a
+ * card says. A Proposal is a suspended tool call: input present, no output,
+ * parked until the writer rules — §6.
  *
- * A Proposal is a suspended tool call: `proposePlanChange` carries no `execute`,
- * so the turn stops with the call's input available and no output, waiting for
- * the writer — docs/architecture.md §6. Nothing here touches the socket or
- * React, so a test drives it with a transcript and a Plan.
+ * No socket and no React here, so a test drives it with a transcript and a Plan.
  */
 
 /** One Proposal the writer has not ruled on yet. */
@@ -26,14 +25,8 @@ export type ProposalCall = {
 
 type AnyToolPart = ToolUIPart | DynamicToolUIPart
 
-/**
- * How many tool calls have their input complete and no output sent.
- *
- * This is what parks a turn. Cloudflare's `ai-chat` enforces batch completeness
- * server-side with **no orphan timeout** (§11), so a call the writer neither
- * Accepts nor Declines stalls the conversation with nothing on screen to say
- * so. The composer reads this and says it.
- */
+/** How many tool calls have their input complete and no output sent, which is
+ * what parks a turn — §11. */
 export function waitingCount(messages: readonly UIMessage[]): number {
 	let waiting = 0
 
@@ -46,11 +39,8 @@ export function waitingCount(messages: readonly UIMessage[]): number {
 	return waiting
 }
 
-/**
- * The tool's input schema is strict and a rejected call retries with the
- * validation error (§6), so an unreadable payload here is a payload that
- * survived every retry. The card says so rather than rendering blank.
- */
+/** Reads the ops off a suspended call. A payload that fails here has already
+ * survived the schema's own retries (§6), so the card reports it. */
 export function readProposal(part: AnyToolPart): ProposalCall {
 	const parsed = proposePlanChangeInput.safeParse(part.input)
 	if (!parsed.success) {
@@ -64,9 +54,8 @@ export function readProposal(part: AnyToolPart): ProposalCall {
 	return { toolCallId: part.toolCallId, ops: parsed.data.ops, unreadable: null }
 }
 
-/** What goes back on a Decline, as `is_error: true` with the reason in the
- * content — §6. A Proposal the Plan refused sends the refusal, so the model
- * knows the Plan moved rather than that the writer said no. */
+/** The `is_error: true` content a Decline sends back — §6. A refused Accept
+ * sends the refusal, so the model learns the Plan moved under it. */
 export function declineReason(call: ProposalCall, refusal: Refusal | null): string {
 	if (call.unreadable !== null) {
 		return `This Proposal did not parse, so there was nothing to Accept. ${call.unreadable}`
@@ -78,8 +67,8 @@ export function declineReason(call: ProposalCall, refusal: Refusal | null): stri
 	return 'The writer Declined this Proposal.'
 }
 
-/** What goes back on an Accept. The next turn carries the whole Plan in `body`,
- * so this says the ruling and nothing about the result. */
+/** What an Accept sends back. Just the ruling: the next turn carries the whole
+ * Plan in `body` anyway. */
 export function acceptReason(ops: Proposal): string {
 	const count = ops.length === 1 ? 'change' : `${ops.length} changes`
 
@@ -90,8 +79,7 @@ export function acceptReason(ops: Proposal): string {
  * half — §6. */
 export type ToolAnswer = { output: string } | { errorText: string }
 
-/** Why an Accept did not land, by tool call. A Panel holds one of these because
- * a transcript can carry more than one open Proposal. */
+/** Refusals by tool call, since a transcript can carry several open Proposals. */
 export type Refusals = Record<string, Refusal>
 
 /** Fold a ruling into what the Panel holds: an Accept that landed clears the
@@ -125,15 +113,10 @@ export type RulingOptions = {
 }
 
 /**
- * One ruling: apply the ops if it is an Accept, then say what goes back on the
- * tool call. The app and a story both run this, so a story cannot rule
- * differently from the product.
- *
- * **A refused Accept answers nothing and leaves the card open.** Whole-field
- * `expected` comparison is conservative and refuses against a field the writer
- * has since touched, so the writer may fix the Plan and Accept again. Declining
- * then sends the refusal back, which tells the model the Plan moved rather than
- * that the writer said no.
+ * Applies the ops on an Accept, then says what goes back on the tool call. A
+ * refused Accept answers nothing and hands back the refusal, leaving the card
+ * open for the writer to fix the Plan and try again. The app and the showcase
+ * both run this.
  */
 export function ruleProposal({ call, accepted, edit, refusal }: RulingOptions): Ruling {
 	if (!accepted || call.ops === null) {
@@ -146,17 +129,13 @@ export function ruleProposal({ call, accepted, edit, refusal }: RulingOptions): 
 	return { answer: { output: acceptReason(call.ops) }, refusal: null }
 }
 
-/**
- * The Proposal in the writer's words, one sentence per op, read against the
- * Plan on screen. A Section is named the way every other Panel names it, so the
- * card and the Outline cannot number one differently.
- */
+/** The Proposal in the writer's words, one sentence per op, named out of the
+ * Plan on screen. */
 export function describeProposal(plan: Plan, ops: Proposal): string[] {
 	const { section, reference, scope } = planNames(plan)
 
-	// A structural op states exactly one of the two, so the branch not taken is
-	// the one the op left out — `afterId: null` is first child and
-	// `beforeId: null` is last.
+	// A structural op states exactly one of the two — ops.ts. Null means an end
+	// rather than a neighbour: `afterId` first child, `beforeId` last.
 	const anchored = (parentId: string | null, op: Anchor) => {
 		if (op.beforeId !== undefined) {
 			return op.beforeId === null ? lastIn(parentId) : `before ${section(op.beforeId)}`

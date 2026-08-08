@@ -4,12 +4,9 @@ import type { Offer, Ruling } from '../../shared/offer'
 import type { PlanConnection } from '../plan/usePlan'
 
 /**
- * The seam one Article Agent arrives through, in two stores because the Plan and
- * the Offers are held apart on the server — §3, rules 1 and 2. Both halves are
- * shaped as `usePlanChannel` and `useAgent`'s stub already return them.
- *
- * One Provider per Article, above every Panel, because one Article Agent means
- * one socket: `useArticleAgent` builds this and the Panels read it.
+ * The seam one Article Agent arrives through, in two stores because the server
+ * holds the Plan and the Offers apart — §3, rules 1 and 2. `useArticleAgent`
+ * builds it; the Panels read it.
  */
 
 /** The Article Agent's three writer-facing `@callable` methods. */

@@ -5,13 +5,8 @@ import { useMockPlan } from '../../mock/MockArticle'
 import { useMockChat } from '../../mock/MockChat'
 import { staleProposal } from '../../mock/transcript'
 
-/**
- * 2(j) — A Proposal the Plan refuses. Accept it and the applier compares the
- * op's `expected` whole-field against the title the Plan carries, finds they
- * differ, and refuses the batch. The card says which op failed, what it
- * expected, and what it found, and stays open: the writer can fix the Plan and
- * Accept again, or Decline and send that sentence back to the Chat.
- */
+/** 2(j) — A Proposal the Plan refuses. Accept it: the card says what it expected
+ * against what it found, and stays open. */
 export function StaleProposalScreen() {
 	const plan = useMockPlan()
 	const chat = useMockChat(staleProposal)
