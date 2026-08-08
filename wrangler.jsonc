@@ -38,8 +38,9 @@
   // `pnpm db:migrate` applies to the local D1 and `pnpm db:migrate:remote` to
   // the deployed one. The test suite applies the same files itself.
   //
-  // database_id below is a placeholder. Run `wrangler d1 create journo-harness`
-  // and paste the id it prints; `wrangler deploy` fails until you do.
+  // database_id names the account's own database, made with
+  // `wrangler d1 create journo-harness`. Pointing this Worker at a different one
+  // is a matter of pasting a different id here.
   "d1_databases": [
     {
       "binding": "DB",

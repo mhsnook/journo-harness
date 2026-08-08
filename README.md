@@ -57,13 +57,15 @@ CF_REMOTE_BINDINGS=true pnpm dev
 
 ### Deploying
 
-The article index needs a D1 database of its own. Create it once, paste the id it prints
-into `database_id` in `wrangler.jsonc`, and apply the schema:
+The article index has a D1 database of its own, named in `wrangler.jsonc`. Apply the schema
+to it whenever a file lands in `migrations/`:
 
 ```sh
-pnpm wrangler d1 create journo-harness
 pnpm db:migrate:remote
 ```
+
+A different account needs a database of its own: `pnpm wrangler d1 create journo-harness`
+prints an id to paste into `database_id`.
 
 ```sh
 pnpm deploy     # builds the client, then wrangler deploy
