@@ -1,16 +1,15 @@
 import { createContext, useContext } from 'react'
 
 import type { Offer, Ruling } from '../../shared/offer'
-import type { Plan } from '../../shared/plan'
-import type { PlanEdit } from '../plan/writer'
+import type { PlanConnection } from '../plan/usePlan'
 
 /**
- * The seam one Article Agent arrives through, in two stores because the Plan and
- * the Offers are held apart on the server — §3, rules 1 and 2. Both halves are
- * shaped as `usePlan` and `useAgent`'s stub already return them.
+ * The seam one Article Agent arrives through, in two stores because the server
+ * holds the Plan and the Offers apart — §3, rules 1 and 2. `useArticleAgent`
+ * builds it; the Panels read it.
  */
 
-/** The Article Agent's three writer-facing `@callable` methods. */
+/** The Article Agent's writer-facing `@callable` methods. */
 export type OfferStore = {
 	listOffers(): Promise<Offer[]>
 	setOfferDisposition(id: string, ruling: Ruling): Promise<Offer>
@@ -19,9 +18,7 @@ export type OfferStore = {
 
 export type Article = {
 	offers: OfferStore
-	plan: Plan
-	/** The op vocabulary every other Plan write uses. */
-	edit: (edit: PlanEdit) => void
+	plan: PlanConnection
 }
 
 const ArticleContext = createContext<Article | null>(null)

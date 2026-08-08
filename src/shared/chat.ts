@@ -1,5 +1,6 @@
 import { z } from 'zod'
 
+import { dispositions } from './offer'
 import { chatProposalSchema, planSchema } from './plan'
 
 /**
@@ -29,6 +30,22 @@ export const proposePlanChangeTool = 'proposePlanChange'
  */
 export const proposePlanChangeInput = z.strictObject({ ops: chatProposalSchema })
 export type ProposePlanChangeInput = z.infer<typeof proposePlanChangeInput>
+
+/** The name the research tool is registered and matched under. The client
+ * answers nothing, but reads the result to show what the turn recorded. */
+export const recordOffersTool = 'recordOffers'
+
+/** What `recordOffers` hands back: enough for the model to refer to what it
+ * turned up, and the ids the Chat Panel looks the rows up by. */
+export const recordedOffersOutput = z.array(
+	z.object({
+		id: z.string(),
+		name: z.string().optional(),
+		disposition: z.enum(dispositions),
+		duplicate: z.boolean(),
+	}),
+)
+export type RecordedOffers = z.infer<typeof recordedOffersOutput>
 
 /**
  * What the client sends alongside the messages. The Plan rides here because

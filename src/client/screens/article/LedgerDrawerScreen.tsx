@@ -10,6 +10,7 @@ import { ReferenceCard } from '../../components/ReferenceCard'
 import { useArticle } from '../../lib/article'
 import { useOfferLedger } from '../../lib/useOfferLedger'
 import { ARTICLE_TITLE } from '../../mock/content'
+import { useMockPlan } from '../../mock/MockArticle'
 import { PlanPanel } from '../../plan/PlanPanel'
 
 type Filter = 'all' | Disposition
@@ -29,7 +30,8 @@ const filters: Filter[] = ['all', 'undecided', 'accepted', 'declined']
  * a Reference sits, and which sit nowhere yet, are its own to show.
  */
 export function LedgerDrawerScreen() {
-	const { plan, edit } = useArticle()
+	const { edit } = useArticle().plan
+	const plan = useMockPlan()
 	const { ledger, loading, failure, accept, decline, restore } = useOfferLedger()
 	const [filter, setFilter] = useState<Filter>('all')
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
-import { chatTools, recordOffersTool } from '../../src/server/llm/tools'
-import { proposePlanChangeTool } from '../../src/shared/chat'
+import { chatTools } from '../../src/server/llm/tools'
+import { proposePlanChangeTool, recordOffersTool } from '../../src/shared/chat'
 import { chatOpNames } from '../../src/shared/plan'
 
 /**

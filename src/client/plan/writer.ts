@@ -133,7 +133,10 @@ export function createPlanWriter(options: PlanWriterOptions): PlanWriter {
  * edit until then, so this is a guard rather than a state the writer meets. */
 const notYet: Refusal = {
 	type: 'missing',
+	reason: 'noPlan',
 	index: null,
 	op: null,
+	subject: null,
+	other: null,
 	message: 'The Plan has not arrived from the Article Agent yet.',
 }

@@ -15,6 +15,7 @@ import { LedgerPopoverScreen } from './LedgerPopoverScreen'
 import { MidChatScreen } from './MidChatScreen'
 import { PlanSheetScreen } from './PlanSheetScreen'
 import { ReadyToDraftScreen } from './ReadyToDraftScreen'
+import { StaleProposalScreen } from './StaleProposalScreen'
 
 const meta = {
 	title: 'Screens/2 Plan an article',
@@ -69,11 +70,13 @@ export const B_MidConversation: Story = {
 	name: '2(b) Mid-chat',
 	render: () => (
 		<div className="flex flex-col">
-			<MidChatScreen />
+			<MockArticle>
+				<MidChatScreen />
+			</MockArticle>
 			<Annotation>
-				Ticking a reference in the chat sends it across into References immediately — the
-				wash on the newly added reference is the only thing marking the change. Section 3
-				is being typed by hand at the same time, which is equally allowed.
+				Wired, and the Proposal is live: Accept it and the Section lands in the Outline
+				beside it and the total moves to 2,800. The Chat proposes and the client applies,
+				so the ops run through the same writer the Plan Panel types into.
 			</Annotation>
 		</div>
 	),
@@ -178,6 +181,23 @@ export const I_PlanPanelWired: Story = {
 				Every field here writes through the same ops the Chat proposes in, so the Panel
 				cannot make a change the applier would refuse. Typing debounces: the Plan is one
 				blob re-broadcast on every write, and a keystroke is not a write.
+			</Annotation>
+		</div>
+	),
+}
+
+export const J_StaleProposal: Story = {
+	name: '2(j) A Proposal the Plan refuses',
+	render: () => (
+		<div className="flex flex-col">
+			<MockArticle>
+				<StaleProposalScreen />
+			</MockArticle>
+			<Annotation>
+				Accept it. Whole-field comparison is conservative and will refuse a Proposal
+				against a field the writer has since touched, so the card says which op failed,
+				what it expected, and what it found — never a greyed-out card with no explanation.
+				It stays open: fix the Plan and Accept again, or Decline and the Chat is told why.
 			</Annotation>
 		</div>
 	),

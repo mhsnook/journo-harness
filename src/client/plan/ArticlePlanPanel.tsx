@@ -1,22 +1,17 @@
+import { useArticle } from '../lib/article'
 import { PlanPanel } from './PlanPanel'
-import { usePlan } from './usePlan'
 
-/**
- * The Plan Panel, wired to one Article Agent. Mounting it inside the Article
- * screen is issue #29; everything it needs from the socket is `usePlan`.
- */
+/** Drives `PlanPanel` from the connection the `ArticleProvider` holds. */
 
 export interface ArticlePlanPanelProps {
-	/** The Article Agent's name, which is the Article's id. */
-	articleId: string
 	className?: string
 }
 
-export function ArticlePlanPanel({ articleId, className }: ArticlePlanPanelProps) {
-	const { plan, edit, refusal, rejected } = usePlan(articleId)
+export function ArticlePlanPanel({ className }: ArticlePlanPanelProps) {
+	const { plan, edit, refusal, rejected } = useArticle().plan
 
-	// The socket usually settles in well under a second, so this says what it is
-	// waiting for rather than drawing a skeleton of the Panel.
+	// Says what it waits on rather than drawing a skeleton, since the socket
+	// settles well inside a second.
 	if (plan === null) {
 		return (
 			<div className={className}>

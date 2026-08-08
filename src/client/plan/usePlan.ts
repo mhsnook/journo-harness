@@ -1,4 +1,3 @@
-import { useAgent } from 'agents/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import type { Plan, Refusal } from '../../shared/plan'
@@ -6,57 +5,47 @@ import { isPlanRefused } from '../../shared/plan'
 import { createPlanWriter, type PlanEdit } from './writer'
 
 /**
- * The Plan Panel's connection to one Article Agent: its state blob in, and
- * every edit back out through `setState` — docs/architecture.md §3, rule 1.
- *
- * The socket is multiplexed, so the Chat Panel shares this one and does not
- * open its own — §8.
+ * The Plan's half of one Article Agent: state blob in, edits back out through
+ * `setState` — §3, rule 1. `useArticleAgent` owns the socket and passes a way to
+ * reach it, so nothing here opens one.
  */
 
 export type PlanConnection = {
 	/** The Plan the writer sees, and null until the first state update arrives. */
 	plan: Plan | null
-	/** What the builders in edits.ts return, null included. */
-	edit: (edit: PlanEdit) => void
-	/** Why the last edit did not land, cleared by the next one. */
+	/** Takes what the builders in edits.ts return, null included, and hands back
+	 * why the edit did not land — a Proposal ruling needs that in the same turn. */
+	edit: (edit: PlanEdit) => Refusal | null
+	/** Cleared by the next edit. */
 	refusal: Refusal | null
 	/** What the Article Agent said when a write did not parse. Reaching this is
 	 * a bug in the applier, and it is shown rather than swallowed. */
 	rejected: string | null
 }
 
-export function usePlan(articleId: string): PlanConnection {
+export type PlanSocket = { setState: (plan: Plan) => void }
+
+export type PlanChannel = {
+	connection: PlanConnection
+	/** The two `useAgent` handlers the Plan needs. */
+	onStateUpdate: (state: Plan, source: 'server' | 'client') => void
+	onMessage: (event: MessageEvent) => void
+}
+
+/** `socket` is a getter, because `useAgent` has none to give on the first render
+ * and swaps it on reconnect. */
+export function usePlanChannel(socket: () => PlanSocket | null): PlanChannel {
 	const [plan, setPlan] = useState<Plan | null>(null)
 	const [refusal, setRefusal] = useState<Refusal | null>(null)
 	const [rejected, setRejected] = useState<string | null>(null)
 
-	// The socket is not built yet when the writer is, and it is replaced on every
-	// reconnect, so the writer sends through a ref rather than holding one.
-	const socket = useRef<{ setState: (plan: Plan) => void } | null>(null)
 	const held = useRef<ReturnType<typeof createPlanWriter> | null>(null)
 	held.current ??= createPlanWriter({
-		send: (next) => socket.current?.setState(next),
+		send: (next) => socket()?.setState(next),
 		onPlan: setPlan,
 		onRefusal: setRefusal,
 	})
 	const writer = held.current
-
-	const agent = useAgent<Plan>({
-		agent: 'article-agent',
-		name: articleId,
-		onStateUpdate: (state, source) => {
-			// A client update is the echo of a write the writer already holds.
-			if (source === 'server') writer.receive(state)
-		},
-		onMessage: (event: MessageEvent) => {
-			const frame = parse(event.data)
-			if (isPlanRefused(frame)) setRejected(frame.error)
-		},
-	})
-
-	useEffect(() => {
-		socket.current = agent
-	})
 
 	// Flushing on the way out is what keeps the last keystroke of a burst.
 	useEffect(() => () => writer.dispose(), [writer])
@@ -65,12 +54,23 @@ export function usePlan(articleId: string): PlanConnection {
 		(next: PlanEdit) => {
 			setRefusal(null)
 			setRejected(null)
-			writer.edit(next)
+
+			return writer.edit(next)
 		},
 		[writer],
 	)
 
-	return { plan, edit, refusal, rejected }
+	// A client update is the echo of a write the writer already holds.
+	const onStateUpdate = (state: Plan, source: 'server' | 'client') => {
+		if (source === 'server') writer.receive(state)
+	}
+
+	const onMessage = (event: MessageEvent) => {
+		const frame = parse(event.data)
+		if (isPlanRefused(frame)) setRejected(frame.error)
+	}
+
+	return { connection: { plan, edit, refusal, rejected }, onStateUpdate, onMessage }
 }
 
 /** The socket carries frames this Panel does not read, and a binary one is not
