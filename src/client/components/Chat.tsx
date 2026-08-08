@@ -83,11 +83,7 @@ export function ChatComposer({
 	}
 
 	return (
-		// A Panel that scrolls puts this in its `footer` slot, which is what keeps
-		// it reachable — the composer itself only says it is the end of the Panel.
-		<div
-			className={cx('mt-auto flex flex-col gap-1.5 border-t border-edge pt-2', className)}
-		>
+		<div className={cx('mt-auto flex flex-col gap-1.5 pt-1', className)}>
 			{blocked === null ? null : <Notice>{blocked}</Notice>}
 			<div className="flex items-center gap-2">
 				{leading}

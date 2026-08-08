@@ -71,9 +71,38 @@ export function ChatPanel({
 	const rows = new Map(offers.map((offer) => [offer.id, offer]))
 
 	return (
-		<Panel
-			className={className}
-			footer={
+		<Panel className={className} padded={false}>
+			<div className="flex flex-1 flex-col gap-3.5 p-3.5">
+				{messages.map((message) => (
+					<Turn
+						key={message.id}
+						message={message}
+						onAccept={onAccept}
+						onAcceptOffer={onAcceptOffer}
+						onDecline={onDecline}
+						onDeclineOffer={onDeclineOffer}
+						onRestoreOffer={onRestoreOffer}
+						plan={plan}
+						refusals={refusals}
+						rows={rows}
+					/>
+				))}
+
+				{messages.length === 0 ? (
+					<ChatNote>
+						Say what the piece is about. The Plan fills in beside you as you agree on it.
+					</ChatNote>
+				) : null}
+
+				{busy ? <ChatNote>The guide is answering…</ChatNote> : null}
+				{failure === null ? null : <Notice>{failure}</Notice>}
+			</div>
+
+			{/* Sticky, because the Panel scrolls its own Y and a composer that
+			    scrolled away with the transcript would be the one control on the
+			    Panel you cannot reach. Full-bleed and owning its own padding, which
+			    is how every other Panel edge is built. */}
+			<div className="sticky bottom-0 z-10 border-t border-edge bg-surface px-3.5 py-2.5">
 				<ChatComposer
 					blocked={parked(waiting)}
 					disabled={busy}
@@ -81,31 +110,7 @@ export function ChatPanel({
 					onSend={onSend}
 					placeholder={placeholder}
 				/>
-			}
-		>
-			{messages.map((message) => (
-				<Turn
-					key={message.id}
-					message={message}
-					onAccept={onAccept}
-					onAcceptOffer={onAcceptOffer}
-					onDecline={onDecline}
-					onDeclineOffer={onDeclineOffer}
-					onRestoreOffer={onRestoreOffer}
-					plan={plan}
-					refusals={refusals}
-					rows={rows}
-				/>
-			))}
-
-			{messages.length === 0 ? (
-				<ChatNote>
-					Say what the piece is about. The Plan fills in beside you as you agree on it.
-				</ChatNote>
-			) : null}
-
-			{busy ? <ChatNote>The guide is answering…</ChatNote> : null}
-			{failure === null ? null : <Notice>{failure}</Notice>}
+			</div>
 		</Panel>
 	)
 }
