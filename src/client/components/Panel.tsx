@@ -23,11 +23,6 @@ export interface PanelProps {
  * beside it, which is what lets two Panels of different lengths sit side by
  * side. It needs a height to bite on: the Frame body gives it one, and a Panel
  * inside a body with no height simply grows as it always did.
- *
- * Chrome on an edge — a header that stays put, a composer that stays reachable —
- * goes in an unpadded Panel: `padded={false}`, a `flex-1 p-3.5` body, and a
- * full-bleed bar that owns its own padding and is `sticky` if it must be.
- * `LedgerDrawerScreen` and `ChatPanel` are the two that do it.
  */
 export function Panel({
 	variant = 'surface',

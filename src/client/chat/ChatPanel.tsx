@@ -98,10 +98,6 @@ export function ChatPanel({
 				{failure === null ? null : <Notice>{failure}</Notice>}
 			</div>
 
-			{/* Sticky, because the Panel scrolls its own Y and a composer that
-			    scrolled away with the transcript would be the one control on the
-			    Panel you cannot reach. Full-bleed and owning its own padding, which
-			    is how every other Panel edge is built. */}
 			<div className="sticky bottom-0 z-10 border-t border-edge bg-surface px-3.5 py-2.5">
 				<ChatComposer
 					blocked={parked(waiting)}
@@ -192,9 +188,6 @@ function Turn({
 						case 'output-available':
 							return <ChatNote key={key}>Proposal Accepted.</ChatNote>
 						case 'output-error':
-							// Not `part.errorText`: that is the sentence written for the
-							// model, ids and op name included. The writer read the reason on
-							// the card before they ruled — §6.
 							return <ChatNote key={key}>Proposal Declined.</ChatNote>
 						default:
 							return null

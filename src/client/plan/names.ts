@@ -28,9 +28,7 @@ export type PlanNames = {
 }
 
 export function planNames(plan: Plan): PlanNames {
-	// One walk, giving both forms: the number on its own and the number with the
-	// title after it. Reading either out of a second walk would be a second way
-	// to number a Section.
+	// Both forms out of the one walk — §4.
 	const numbered = new Map(
 		outlineEntries(plan.outline).map((entry) => {
 			const label = sectionLabel(entry)
@@ -55,8 +53,7 @@ export function planNames(plan: Plan): PlanNames {
 			: referenceName(held)
 	}
 
-	// Built on the first `label` of a Reference and not before: `describeProposal`
-	// names every record on a card and never asks for a brief one.
+	// `describeProposal` never asks for a brief name, so it never pays for this.
 	let marked: Map<string, string> | null = null
 	const mark = (referenceId: string) => {
 		marked ??= new Map(

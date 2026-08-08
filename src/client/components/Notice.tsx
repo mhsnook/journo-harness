@@ -7,14 +7,8 @@ export interface NoticeProps {
 	className?: string
 }
 
-/**
- * One sentence saying a thing did not land: a refused edit, a write the Article
- * Agent rejected, a composer that will not send.
- *
- * Accented, which is the app's one way of asking for the writer's attention —
- * `foundations/Accent.mdx`. It is a component rather than a copied class string
- * so the several places that say it cannot drift apart on their padding.
- */
+/** One sentence saying a thing did not land: a refused edit, a write the Article
+ * Agent rejected, a composer that will not send. */
 export function Notice({ children, className }: NoticeProps) {
 	return (
 		<p

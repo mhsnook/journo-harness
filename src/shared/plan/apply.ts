@@ -44,8 +44,7 @@ export type RefusalReason =
 	| 'anchorToItself'
 	| 'wouldNotParse'
 
-/** Which of the four kinds each reason is. Stated once here rather than passed
- * beside the reason at every refusal site, where the two could disagree. */
+/** Which of the four kinds each reason is. */
 const kindOf: Record<RefusalReason, RefusalType> = {
 	unreadable: 'malformed',
 	noSection: 'missing',

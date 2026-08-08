@@ -427,18 +427,6 @@ so a Panel header that should stay put is `sticky` inside its own Panel. The `st
 Vitest project holds every story to that in a real browser, so a class chain that reads as
 though it works has to measure as though it does — see `.storybook/vitest.setup.ts`.
 
-**Chrome on a Panel edge is one shape**, and `Panel` has no slot for it: the Panel is
-unpadded, a `flex-1 p-3.5` body owns the reading area, and a full-bleed bar owns its own
-padding — `sticky` where it has to stay put. `LedgerDrawerScreen`'s header and the Chat
-composer are the two that stay put; `ReadyToDraftScreen`'s footer is the same shape without
-the sticking.
-
-An earlier version of this put the composer in the Panel's own padding and gave `Panel` a
-`footer` slot to hand that padding over. It worked, and it was a fourth way to do a thing the
-app already did three times — and an inset one, where every existing bar is full-bleed. The
-handoff it formalised was a problem it had created: when the body and the bar each own their
-padding, there is nothing to hand over.
-
 **The Plan Panel's edits are ops, and the applier applies them.** A field the writer types
 in builds the same op a Proposal would carry, `src/client/plan/edits.ts` reads its
 `expected` out of the Plan on screen, and `applyProposal` produces the Plan that goes to

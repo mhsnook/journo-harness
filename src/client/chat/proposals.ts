@@ -32,9 +32,7 @@ type AnyToolPart = ToolUIPart | DynamicToolUIPart
  * This is what parks a turn. Cloudflare's `ai-chat` enforces batch completeness
  * server-side with **no orphan timeout** (§11), so a call the writer neither
  * Accepts nor Declines stalls the conversation with nothing on screen to say
- * so. The composer reads this and says it. A count, because which tool parked
- * the turn changes nothing the writer can do about it: the cards are in the
- * transcript either way.
+ * so. The composer reads this and says it.
  */
 export function waitingCount(messages: readonly UIMessage[]): number {
 	let waiting = 0
