@@ -78,3 +78,15 @@ Transitions are the connective prose between two Sections and belong to neither,
 per-Section word counts currently have nowhere to put them. This would attribute those
 words somewhere the writer can see, rather than leaving a Section's count quietly
 incomplete.
+
+## Soft word-count distribution
+
+The Plan stores a total and node targets, and nothing derives one from the other, so a
+writer who has stated a total and one Section's length sees the rest as unallocated. This
+would show them the piece as it would shake out if the remainder were spread evenly across
+the Sections that state nothing, as a suggestion they Accept rather than as a value the
+Plan holds. They then build specificity where they want it and leave the rest soft.
+
+The reason it is not built: the shape only becomes clear once the Plan Panel is something
+to touch. ADR 0002 records why auto-distributing silently is rejected, and that still
+holds — this is the version the writer rules on.

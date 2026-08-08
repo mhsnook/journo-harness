@@ -34,7 +34,9 @@ const guideRules = [
 	'supplying a preference of your own.',
 	'',
 	'One Voice applies at a time and the nearest Scope wins outright, so switching a Voice replaces',
-	'it. Adjectives compose instead, accumulating from the Article down to the Section.',
+	'it. Adjectives compose instead, accumulating from the Article down to the Section. They arrive',
+	'widest first, so the nearest ones weigh most: where a Section and the Article pull against each',
+	"other, the Section's term is the one to write to.",
 ].join('\n')
 
 /**

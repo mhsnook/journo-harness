@@ -124,19 +124,23 @@ plan: {
   Accepted into carry one answer and the Offer ledger and the Plan Panel label them the same
   way. A Quote carries a text; a Link may carry one without being a Quote. Amended in
   [ADR 0002](./adr/0002-the-plan-data-model.md).
-- **Voice cascades; Adjectives compose.** One Voice applies at a time and the nearest Scope
-  wins outright. Adjectives accumulate. Resolution runs House style, then Article, then
-  Section, **at read time**. A Section's ancestors take part in that same order, so a Subsection
-  under a "fast-paced" middle will be fast-paced unless it says otherwise.
+- **Voice cascades; Adjectives compose.** Both resolve down the same path — House, then
+  Article, then Section, **at read time** — and they differ when two Scopes each state one.
+  The nearest Voice wins outright. Adjectives accumulate instead: a "slow" Section inside a
+  "fast" Article carries both, and the resolved list runs widest first, so the nearest lands
+  last and reads as the strongest. Restating a term moves it to the end, which is how the
+  writer says it again for emphasis.
 - **The word-count total is stored rather than derived/summed.** The parts may disagree with
   the whole; the gap is information about under/over allocation.
-- **One spelling per state.** A field that may be absent can say "nothing here" by being
-  absent, but shouldn't _also_ allow an empty string or list — the blob is written whole,
-  compared whole-field by a Proposal's `expected`, and sent whole in every prompt pack, so a
-  second spelling is a second Plan for the same content. Three fields carry their key always
-  and say "nothing here" with a value: a Reference's `nodeId`, which is null until it is
-  placed, the Article's `adjectives`, and a Section's `children`, both of them the empty
-  list. A Section's own `adjectives` is the other way round, and says it by being absent.
+- **One spelling per state.** A field that may be absent says "nothing here" by being
+  absent, and not also by an empty string or an empty list — the blob is written whole,
+  compared whole-field by a Proposal's `expected`, and sent whole in every prompt pack, so
+  two Plans that mean the same thing can differ byte for byte and an `expected` that should
+  match will not. The schema enforces this today: an empty `adjectives` on a Section is
+  refused. Three fields carry their key always and say "nothing here" with a value: a
+  Reference's `nodeId`, which is null until it is placed, the Article's `adjectives`, and a
+  Section's `children`, both of them the empty list. A Section's own `adjectives` is the
+  other way round, and says it by being absent.
 
 **The schema guards client writes.** `validateStateChange` parses the whole Plan on every
 write, and the model's outputs do not go through it — the Chat proposes and the client
