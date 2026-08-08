@@ -9,7 +9,7 @@ import type { PlanConnection } from '../plan/usePlan'
  * builds it; the Panels read it.
  */
 
-/** The Article Agent's three writer-facing `@callable` methods. */
+/** The Article Agent's writer-facing `@callable` methods. */
 export type OfferStore = {
 	listOffers(): Promise<Offer[]>
 	setOfferDisposition(id: string, ruling: Ruling): Promise<Offer>
@@ -18,7 +18,6 @@ export type OfferStore = {
 
 export type Article = {
 	offers: OfferStore
-	/** The Plan, and the one writer every Plan edit goes through. */
 	plan: PlanConnection
 }
 

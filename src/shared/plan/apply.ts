@@ -41,7 +41,6 @@ export type RefusalReason =
 	| 'anchorToItself'
 	| 'wouldNotParse'
 
-/** Which of the four kinds each reason is. */
 const kindOf: Record<RefusalReason, RefusalType> = {
 	unreadable: 'malformed',
 	noSection: 'missing',
@@ -66,16 +65,15 @@ export type RefusalSubject =
 	| { of: 'reference'; id: string }
 
 export type Refusal = {
-	/** Which of the four kinds, derived from `reason`. */
+	/** Derived from `reason`. */
 	type: RefusalType
-	/** Which check failed. */
 	reason: RefusalReason
 	/** Which op refused, counting from 0, and null when the refusal is about the
 	 * Proposal as a whole. */
 	index: number | null
 	/** Which op refused, and null when the malformed payload is what hid it. */
 	op: OpName | null
-	/** What the refusal is about, and null where it is about no one record. */
+	/** Null where the refusal is about no one record. */
 	subject: RefusalSubject | null
 	/** The second record a reason names — a merge target, the Section an anchor
 	 * was sought in — and null for the reasons that name one. */

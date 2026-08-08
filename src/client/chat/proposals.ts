@@ -14,12 +14,10 @@ import { referenceName } from '../plan/references'
  * No socket and no React here, so a test drives it with a transcript and a Plan.
  */
 
-/** One Proposal the writer has not ruled on yet. */
 export type ProposalCall = {
 	toolCallId: string
-	/** The ops, and null when the model's payload did not parse. */
 	ops: Proposal | null
-	/** Why the payload could not be read, and null when it was. */
+	/** Why the ops could not be read. */
 	unreadable: string | null
 }
 
@@ -82,8 +80,8 @@ export type ToolAnswer = { output: string } | { errorText: string }
 /** Refusals by tool call, since a transcript can carry several open Proposals. */
 export type Refusals = Record<string, Refusal>
 
-/** Fold a ruling into what the Panel holds: an Accept that landed clears the
- * refusal the card was showing, and a Decline clears it on the way out. */
+/** Folds a ruling into the refusals a Panel holds. Landing or declining clears
+ * whatever the card was showing. */
 export function afterRuling(
 	held: Refusals,
 	toolCallId: string,
@@ -96,19 +94,17 @@ export function afterRuling(
 }
 
 export type Ruling = {
-	/** What to send back, and null where the Proposal stays open. */
+	/** Null where the Proposal stays open. */
 	answer: ToolAnswer | null
-	/** Why the Accept did not land, and null where it did. */
 	refusal: Refusal | null
 }
 
 export type RulingOptions = {
 	call: ProposalCall
-	/** True Accepts, false Declines. */
 	accepted: boolean
-	/** The Plan's one writer — the same `edit` every other Plan change makes. */
+	/** The Plan's one writer, so a ruling lands like any other edit. */
 	edit: (ops: Proposal) => Refusal | null
-	/** Why an earlier Accept on this call did not land. */
+	/** From an earlier Accept on this same call. */
 	refusal: Refusal | null
 }
 

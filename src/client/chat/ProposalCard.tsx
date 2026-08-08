@@ -11,7 +11,6 @@ import { describeProposal, type ProposalCall } from './proposals'
 export interface ProposalCardProps {
 	call: ProposalCall
 	plan: Plan
-	/** Why the last Accept did not land, and null while it has not been tried. */
 	refusal?: Refusal | null
 	onAccept: () => void
 	onDecline: () => void

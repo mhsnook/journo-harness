@@ -19,7 +19,6 @@ export function toolPart(
 	} as UIMessage['parts'][number]
 }
 
-/** One assistant turn carrying the parts given. */
 export function transcript(...parts: UIMessage['parts']): UIMessage[] {
 	return [{ id: 'm-1', role: 'assistant', parts }]
 }

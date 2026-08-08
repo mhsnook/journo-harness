@@ -23,13 +23,10 @@ export interface ChatPanelProps {
 	messages: readonly UIMessage[]
 	/** What a Proposal card names its Sections and References out of. */
 	plan: Plan
-	/** A turn is in flight. */
 	busy: boolean
 	/** Suspended tool calls; above zero the turn is parked — §11. */
 	waiting: number
-	/** Why an Accept did not land, by tool call id. */
 	refusals: Refusals
-	/** The Offer rows the recorded ids resolve to. */
 	offers: readonly Offer[]
 	onSend: (text: string) => void
 	onAccept: (call: ProposalCall) => void
@@ -37,7 +34,6 @@ export interface ChatPanelProps {
 	onAcceptOffer: (offer: Offer) => void
 	onDeclineOffer: (offer: Offer) => void
 	onRestoreOffer: (offer: Offer) => void
-	/** The connection or the turn failed, in one sentence. */
 	failure?: string | null
 	placeholder?: string
 	/** Left of send — the Offer ledger toggle. */

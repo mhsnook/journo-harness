@@ -15,12 +15,11 @@ export type OfferLedgerHandle = {
 	ledger: OfferLedger
 	/** Until the first `listOffers` answers. */
 	loading: boolean
-	/** In one sentence, for the writer to read. */
 	failure: string | null
 	accept: (offer: Offer) => void
 	decline: (offer: Offer) => void
 	restore: (offer: Offer) => void
-	/** Read the rows again, after a turn recorded some. */
+	/** For after a turn records rows this client did not ask for. */
 	reload: () => void
 }
 

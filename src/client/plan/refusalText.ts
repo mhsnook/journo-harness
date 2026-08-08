@@ -60,7 +60,6 @@ const wording: Record<RefusalReason, Wording> = {
 		'That change would leave a Plan that cannot be saved, so nothing was written.',
 }
 
-/** One sentence, for the writer. */
 export function refusalText(plan: Plan, refusal: Refusal): string {
 	return wording[refusal.reason](refusal, planNames(plan))
 }

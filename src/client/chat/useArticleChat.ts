@@ -29,18 +29,15 @@ import {
 
 export type ChatHandle = {
 	messages: UIMessage[]
-	/** A turn is in flight, whether the writer started it or the server did. */
+	/** True for a server-driven turn as well as the writer's own. */
 	busy: boolean
 	/** Suspended tool calls; above zero the turn is parked — §11. */
 	waiting: number
-	/** Why an Accept did not land, by tool call id. */
 	refusals: Refusals
-	/** The Offers the turns in this transcript recorded. */
 	ledger: OfferLedgerHandle
 	send: (text: string) => void
 	accept: (call: ProposalCall) => void
 	decline: (call: ProposalCall) => void
-	/** The connection or the turn failed, in one sentence. */
 	failure: string | null
 }
 
