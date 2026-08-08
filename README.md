@@ -16,6 +16,7 @@ pnpm dev        # the client and the Worker together, on http://localhost:5173
 pnpm storybook  # the components and screens on their own, on http://localhost:6006
 pnpm test       # builds the client, then runs every project
                 # `pnpm test:shared` and `pnpm test:client` skip the build and workerd
+                # `pnpm test:stories` runs the stories alone, and needs the browser
 pnpm typecheck
 pnpm lint       # oxlint
 pnpm format     # oxfmt, in place. `pnpm format:check` reports instead
@@ -24,6 +25,20 @@ pnpm format     # oxfmt, in place. `pnpm format:check` reports instead
 `pnpm dev` runs the Worker in workerd through the Cloudflare Vite plugin, so the bindings
 behave as they do in production. Storybook loads the same Vite config without the Worker or
 the router, so a story renders components alone.
+
+### Running the stories
+
+The `stories` project mounts every story in a real Chromium through
+`@storybook/addon-vitest`, so effects run and layout is computed. It needs the browser
+installed once:
+
+```sh
+pnpm exec playwright install --with-deps chromium
+```
+
+Each story is then held to the layout invariants in `.storybook/vitest.setup.ts`: no Frame
+mounts collapsed, no Panel spills past the Frame that clips it, a Frame body is the height
+its screen asked for, and each Panel scrolls its own Y.
 
 ### Calling a model locally
 
@@ -69,7 +84,8 @@ Access gate, and requiring the header would make the app unrunnable in developme
 | `src/client/styles/theme.css` | The Tailwind v4 `@theme` tokens                                       |
 | `src/server/`                 | The Hono Worker entry and the `ArticleAgent` Durable Object           |
 | `src/server/llm/`             | The model boundary, the Chat turn's prompt pack, and the tools        |
-| `test/`                       | Tests, in three projects: `shared`, `client`, and `worker`            |
+| `test/`                       | Three of the four Vitest projects: `shared`, `client`, and `worker`   |
+| `.storybook/`                 | Storybook's config, and the layout invariants the stories are held to |
 | `docs/`                       | The architecture document, the ADRs, and [the UI notes](./docs/ui.md) |
 
 The screens are wireframes with nothing wired to them. They are superseded one at a time as

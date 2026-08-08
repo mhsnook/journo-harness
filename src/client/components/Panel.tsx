@@ -36,6 +36,7 @@ export function Panel({
 }: PanelProps) {
 	return (
 		<section
+			data-panel=""
 			className={cx(
 				'flex min-h-0 min-w-0 flex-col overflow-y-auto',
 				variant === 'sunk' ? 'bg-sunk' : 'bg-surface',

@@ -1,17 +1,25 @@
 import { cloudflareTest } from '@cloudflare/vitest-pool-workers'
+import { storybookTest } from '@storybook/addon-vitest/vitest-plugin'
+import tailwindcss from '@tailwindcss/vite'
+import { playwright } from '@vitest/browser-playwright'
 import agents from 'agents/vite'
 import { defineConfig } from 'vitest/config'
 
-// Three projects, split by what the code under test needs. A test in
-// test/shared or test/client runs in node against a pure module; a test in
-// test/worker runs in workerd with the bindings. `pnpm test:shared` and
-// `pnpm test:client` skip the Vite build and workerd startup, which is most of
-// the time a worker test takes.
+// Four projects, split by what the code under test needs. A test in test/shared
+// or test/client runs in node against a pure module; a test in test/worker runs
+// in workerd with the bindings; a story in the stories project runs in a real
+// Chromium. `pnpm test:shared` and `pnpm test:client` skip the Vite build and
+// workerd startup, which is most of the time a worker test takes, and
+// `pnpm test:stories` skips both but needs the browser instead.
 //
 // The client project holds the Plan Panel's arithmetic — its op builders and
-// its debounced writer — plus the story smoke test, which renders every story
-// to a string. `renderToString` needs no DOM, so there is still no environment
-// to configure here.
+// its debounced writer. Those compute rather than render, so there is still no
+// environment to configure there.
+
+// `storybookTest` reads the Storybook config off disk, so it is async and has
+// to be awaited before the config object is built.
+const storybookPlugins = await storybookTest({ configDir: '.storybook' })
+
 export default defineConfig({
 	test: {
 		projects: [
@@ -47,6 +55,34 @@ export default defineConfig({
 				test: {
 					name: 'worker',
 					include: ['test/worker/**/*.test.ts'],
+				},
+			},
+			{
+				// One test per story, mounted in a real browser. Effects run and
+				// layout is computed, so this reaches the defects that live in what a
+				// component renders rather than in what it computes.
+				plugins: [
+					// Vitest reads this file rather than vite.config.ts, so the stories
+					// project has to name Tailwind itself. Without it every utility class
+					// is inert and a height a screen asked for is never applied — which
+					// is exactly the layout the assertions below are here to catch.
+					tailwindcss(),
+					storybookPlugins,
+				],
+				test: {
+					name: 'stories',
+					// Storybook's own preview annotations, plus the layout invariants
+					// every story is held to.
+					setupFiles: ['./.storybook/vitest.setup.ts'],
+					browser: {
+						enabled: true,
+						headless: true,
+						provider: playwright(),
+						instances: [{ browser: 'chromium' }],
+						// Wider and taller than the largest Frame any screen draws, so no
+						// story is measured against a squeezed viewport.
+						viewport: { width: 1280, height: 1024 },
+					},
 				},
 			},
 		],
