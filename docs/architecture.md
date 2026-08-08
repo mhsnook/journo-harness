@@ -119,10 +119,11 @@ plan: {
   one walk, so no two Panels can number a Section differently.
 - **References are flat with an optional `nodeId`**, so an Accepted Reference can sit at a
   Section or nowhere yet.
-- **References are type Link or Quote**, and Reference is the umbrella either type; type is **stored, not derived from the text**, so an Offer and the
-  Reference it was Accepted into carry one answer and the Offer ledger and the Plan Panel
-  label them the same way. A Quote carries a text; a Link may carry one without
-  being a Quote. Amended in [ADR 0002](./adr/0002-the-plan-data-model.md).
+- **References are type Link or Quote**, and Reference is the umbrella over either type. The
+  type is **stored, not derived from the text**, so an Offer and the Reference it was
+  Accepted into carry one answer and the Offer ledger and the Plan Panel label them the same
+  way. A Quote carries a text; a Link may carry one without being a Quote. Amended in
+  [ADR 0002](./adr/0002-the-plan-data-model.md).
 - **Voice cascades; Adjectives compose.** One Voice applies at a time and the nearest Scope
   wins outright. Adjectives accumulate. Resolution runs House style, then Article, then
   Section, **at read time**. A Section's ancestors take part in that same order, so a Subsection
@@ -133,11 +134,12 @@ plan: {
   absent, but shouldn't _also_ allow an empty string or list — the blob is written whole,
   compared whole-field by a Proposal's `expected`, and sent whole in every prompt pack, so a
   second spelling is a second Plan for the same content. Three fields carry their key always
-  and say "nothing here" with a value: a Reference's `nodeId`, which is null until it is placed, the Article's `adjectives`, and a Section's `children`, both of them the empty
+  and say "nothing here" with a value: a Reference's `nodeId`, which is null until it is
+  placed, the Article's `adjectives`, and a Section's `children`, both of them the empty
   list. A Section's own `adjectives` is the other way round, and says it by being absent.
 
 **The schema guards client writes.** `validateStateChange` parses the whole Plan on every
-write, and the model's outputs don't goes through it — the Chat proposes and the client
+write, and the model's outputs do not go through it — the Chat proposes and the client
 applies, so the blob has only client writes. What the model does meet are the **piece**
 schemas, `outlineNodeSchema`, `referenceSchema`, and `sourceSchema`, reused inside a
 Proposal's op payloads. It lives in `src/shared/plan/` with the Scope resolver and the
@@ -157,7 +159,8 @@ relief valve is moving References into SQLite rows, which is the phase 2 move an
 
 ## 5. Offers and the Ledger
 
-The Chat turns up Offers — Links and Quotes — as SQLite rows in the Article Agent. The **Ledger** is a View over Offers in the Chat panel. Each offer carries a disposition:
+The Chat turns up Offers — Links and Quotes — as SQLite rows in the Article Agent. The
+**Ledger** is a View over Offers in the Chat Panel. Each Offer carries a disposition:
 **Undecided**, **Accepted**, or **Declined** (Declining is restorable).
 
 **The Ledger belongs to the Chat Panel and doesn't read the Plan.** Its data model and its

@@ -7,7 +7,8 @@ import { useArticle } from './article'
 
 /**
  * The Offer ledger, live. Rows are read once when the Panel opens, because
- * nothing tells a client a row changed; the Plan half is already reactive — §3.
+ * nothing tells a client a row changed — §3. It holds no Plan: Accepting writes
+ * one through `edit` and reads nothing back.
  */
 
 export type OfferLedgerHandle = {

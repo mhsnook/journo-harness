@@ -49,7 +49,7 @@ describe('Accepting an Offer into the Plan', () => {
 		expect(result.plan.references[0]).toMatchObject({ id: 'r1', nodeId: null })
 	})
 
-	// A double click, or the re-add of an Offer whose write had landed.
+	// A double click, or the retry of an Accept whose ruling did not land.
 	it('is not an edit at all once the Plan holds a copy', () => {
 		const result = applyProposal(plan, acceptOffer(plan, offer, 'r1'))
 		if (!result.ok) throw new Error(result.refusal.message)
