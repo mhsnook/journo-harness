@@ -9,6 +9,7 @@ import type {
 import { referenceContentSchema } from '../../shared/plan'
 import { Button, ButtonGroup } from '../components/Button'
 import { TextField } from '../components/Field'
+import { Notice } from '../components/Notice'
 
 /**
  * What a Reference says, in fields the writer types or pastes into.
@@ -139,11 +140,7 @@ export function ReferenceForm({
 				/>
 			</div>
 
-			{refused === null ? null : (
-				<p className="rounded-md border border-accent-edge bg-accent-soft p-2 text-[0.75rem] text-accent-ink">
-					{refused}
-				</p>
-			)}
+			{refused === null ? null : <Notice>{refused}</Notice>}
 
 			<div className="flex items-center gap-1.5">
 				<Button onClick={save} size="sm">

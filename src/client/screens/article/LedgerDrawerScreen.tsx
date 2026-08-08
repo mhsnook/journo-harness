@@ -7,9 +7,10 @@ import { EmptySlot } from '../../components/Field'
 import { Frame, FrameBody } from '../../components/Frame'
 import { Panel } from '../../components/Panel'
 import { ReferenceCard } from '../../components/ReferenceCard'
-import { useArticle, useArticlePlan } from '../../lib/article'
+import { useArticle } from '../../lib/article'
 import { useOfferLedger } from '../../lib/useOfferLedger'
 import { ARTICLE_TITLE } from '../../mock/content'
+import { useMockPlan } from '../../mock/MockArticle'
 import { PlanPanel } from '../../plan/PlanPanel'
 
 type Filter = 'all' | Disposition
@@ -30,7 +31,7 @@ const filters: Filter[] = ['all', 'undecided', 'accepted', 'declined']
  */
 export function LedgerDrawerScreen() {
 	const { edit } = useArticle().plan
-	const plan = useArticlePlan()
+	const plan = useMockPlan()
 	const { ledger, loading, failure, accept, decline, restore } = useOfferLedger()
 	const [filter, setFilter] = useState<Filter>('all')
 

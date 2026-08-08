@@ -1,7 +1,8 @@
 import { ChatPanel } from '../../chat/ChatPanel'
 import { ArticleBar } from '../../components/ArticleBar'
 import { Frame, FrameBody } from '../../components/Frame'
-import { useArticle, useArticlePlan } from '../../lib/article'
+import { useArticle } from '../../lib/article'
+import { useMockPlan } from '../../mock/MockArticle'
 import { useMockChat } from '../../mock/MockChat'
 import { midChat } from '../../mock/transcript'
 import { PlanPanel } from '../../plan/PlanPanel'
@@ -13,7 +14,7 @@ import { PlanPanel } from '../../plan/PlanPanel'
  */
 export function MidChatScreen() {
 	const { edit, refusal } = useArticle().plan
-	const plan = useArticlePlan()
+	const plan = useMockPlan()
 	const chat = useMockChat(midChat)
 
 	return (

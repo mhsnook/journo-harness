@@ -5,17 +5,12 @@ import { proposePlanChangeTool, recordOffersTool } from '../../shared/chat'
 import type { Offer } from '../../shared/offer'
 import type { Plan } from '../../shared/plan'
 import { ChatComposer, ChatMessage, ChatNote } from '../components/Chat'
+import { Notice } from '../components/Notice'
 import { Panel } from '../components/Panel'
 import { ReferenceCard } from '../components/ReferenceCard'
-import { cx } from '../lib/cx'
 import { readRecordedOffers } from './offers'
 import { ProposalCard } from './ProposalCard'
-import {
-	readProposal,
-	type ProposalCall,
-	type Refusals,
-	type WaitingCall,
-} from './proposals'
+import { readProposal, type ProposalCall, type Refusals } from './proposals'
 
 /**
  * The Chat Panel. It takes a transcript and the rulings the writer can make on
@@ -35,8 +30,8 @@ export interface ChatPanelProps {
 	plan: Plan
 	/** A turn is in flight. */
 	busy: boolean
-	/** Every suspended tool call. While this is not empty the turn is parked. */
-	waiting: readonly WaitingCall[]
+	/** How many tool calls are suspended. While this is not 0 the turn is parked. */
+	waiting: number
 	/** Why an Accept did not land, by tool call id. */
 	refusals: Refusals
 	/** The Offer rows the recorded ids resolve to. */
@@ -76,10 +71,18 @@ export function ChatPanel({
 	const rows = new Map(offers.map((offer) => [offer.id, offer]))
 
 	return (
-		// `pb-0`, with the composer taking that padding instead: the Panel's own
-		// bottom padding is inside the scrollport, so a card would scroll into it
-		// and show under a composer that stopped short of it.
-		<Panel className={cx('pb-0', className)}>
+		<Panel
+			className={className}
+			footer={
+				<ChatComposer
+					blocked={parked(waiting)}
+					disabled={busy}
+					leading={leading}
+					onSend={onSend}
+					placeholder={placeholder}
+				/>
+			}
+		>
 			{messages.map((message) => (
 				<Turn
 					key={message.id}
@@ -102,20 +105,7 @@ export function ChatPanel({
 			) : null}
 
 			{busy ? <ChatNote>The guide is answering…</ChatNote> : null}
-			{failure === null ? null : (
-				<p className="rounded-md border border-accent-edge bg-accent-soft p-2 text-[0.75rem] text-accent-ink">
-					{failure}
-				</p>
-			)}
-
-			<ChatComposer
-				blocked={parked(waiting)}
-				className="pb-3.5"
-				disabled={busy}
-				leading={leading}
-				onSend={onSend}
-				placeholder={placeholder}
-			/>
+			{failure === null ? null : <Notice>{failure}</Notice>}
 		</Panel>
 	)
 }
@@ -125,13 +115,13 @@ export function ChatPanel({
  * batch completeness server-side with no orphan timeout (§11). This is the
  * sentence that says so, rather than a composer that quietly does nothing.
  */
-function parked(waiting: readonly WaitingCall[]): string | null {
-	if (waiting.length === 0) return null
-	if (waiting.length === 1) {
+function parked(waiting: number): string | null {
+	if (waiting === 0) return null
+	if (waiting === 1) {
 		return 'The Chat is waiting on a Proposal. Accept or Decline it to carry on.'
 	}
 
-	return `The Chat is waiting on ${waiting.length} Proposals. Accept or Decline each one to carry on.`
+	return `The Chat is waiting on ${waiting} Proposals. Accept or Decline each one to carry on.`
 }
 
 type TurnProps = {
@@ -197,7 +187,10 @@ function Turn({
 						case 'output-available':
 							return <ChatNote key={key}>Proposal Accepted.</ChatNote>
 						case 'output-error':
-							return <ChatNote key={key}>Proposal Declined. {part.errorText}</ChatNote>
+							// Not `part.errorText`: that is the sentence written for the
+							// model, ids and op name included. The writer read the reason on
+							// the card before they ruled — §6.
+							return <ChatNote key={key}>Proposal Declined.</ChatNote>
 						default:
 							return null
 					}

@@ -1,10 +1,4 @@
-import {
-	type DynamicToolUIPart,
-	getToolName,
-	isToolUIPart,
-	type ToolUIPart,
-	type UIMessage,
-} from 'ai'
+import { type DynamicToolUIPart, isToolUIPart, type ToolUIPart, type UIMessage } from 'ai'
 import { z } from 'zod'
 
 import { proposePlanChangeInput } from '../../shared/chat'
@@ -30,36 +24,28 @@ export type ProposalCall = {
 	unreadable: string | null
 }
 
-/** A tool call the Chat is still waiting on an answer for. */
-export type WaitingCall = { toolCallId: string; toolName: string }
-
 type AnyToolPart = ToolUIPart | DynamicToolUIPart
 
 /**
- * Every tool call whose input is complete and whose output has not been sent.
+ * How many tool calls have their input complete and no output sent.
  *
  * This is what parks a turn. Cloudflare's `ai-chat` enforces batch completeness
  * server-side with **no orphan timeout** (§11), so a call the writer neither
  * Accepts nor Declines stalls the conversation with nothing on screen to say
- * so. The composer reads this and says it.
+ * so. The composer reads this and says it. A count, because which tool parked
+ * the turn changes nothing the writer can do about it: the cards are in the
+ * transcript either way.
  */
-export function waitingCalls(messages: readonly UIMessage[]): WaitingCall[] {
-	return suspended(messages).map((part) => ({
-		toolCallId: part.toolCallId,
-		toolName: getToolName(part),
-	}))
-}
-
-function suspended(messages: readonly UIMessage[]): AnyToolPart[] {
-	const calls: AnyToolPart[] = []
+export function waitingCount(messages: readonly UIMessage[]): number {
+	let waiting = 0
 
 	for (const message of messages) {
 		for (const part of message.parts) {
-			if (isToolUIPart(part) && part.state === 'input-available') calls.push(part)
+			if (isToolUIPart(part) && part.state === 'input-available') waiting += 1
 		}
 	}
 
-	return calls
+	return waiting
 }
 
 /**

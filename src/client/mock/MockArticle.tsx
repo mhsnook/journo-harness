@@ -1,8 +1,8 @@
 import { type ReactNode, useMemo, useState } from 'react'
 
 import { missingOffer, notDeclined, type Offer, type Ruling } from '../../shared/offer'
-import type { Plan, Refusal } from '../../shared/plan'
-import { ArticleProvider, type OfferStore } from '../lib/article'
+import { emptyPlan, type Plan, type Refusal } from '../../shared/plan'
+import { ArticleProvider, type OfferStore, useArticle } from '../lib/article'
 import { createPlanWriter } from '../plan/writer'
 import { offers as seeded, plan as seededPlan } from './content'
 
@@ -43,6 +43,22 @@ export function MockArticle({ children }: { children: ReactNode }) {
 		</ArticleProvider>
 	)
 }
+
+/**
+ * The Plan a story is looking at. `MockArticle` seeds one before it renders, so
+ * this is only ever the seeded Plan — the fallback is what satisfies the type.
+ *
+ * A Panel in the app must not read a Plan this way: it would draw an empty Plan
+ * as a real one while the socket settles, and a Proposal described against it
+ * would name every Section as one the Plan does not carry. `ArticlePlanPanel`
+ * and `ArticleChatPanel` gate on null instead, which is the one production
+ * answer to "the Plan has not arrived".
+ */
+export function useMockPlan(): Plan {
+	return useArticle().plan.plan ?? blank
+}
+
+const blank = emptyPlan()
 
 function memoryOfferStore(seed: readonly Offer[]): OfferStore {
 	const rows = seed.map((offer) => ({ ...offer }))

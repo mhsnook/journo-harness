@@ -427,10 +427,11 @@ so a Panel header that should stay put is `sticky` inside its own Panel. The `st
 Vitest project holds every story to that in a real browser, so a class chain that reads as
 though it works has to measure as though it does — see `.storybook/vitest.setup.ts`.
 
-A sticky footer wants one thing more: the Panel's bottom padding is inside the scrollport,
-so the Panel gives it up — `pb-0` — and the footer takes that padding itself. The Chat
-composer is the one that does. Without it a card scrolls into the padding and shows below
-the composer.
+A control that must stay reachable while the Panel scrolls goes in `Panel`'s `footer` slot,
+which owns what a sticky element needs: the Panel's own bottom padding is inside the
+scrollport, so the slot takes that padding and the body gives it up. The Chat composer is the
+one that uses it. Passing such a control as an ordinary child leaves it to scroll away, and
+splitting the padding across the caller would let one hold half the contract.
 
 **The Plan Panel's edits are ops, and the applier applies them.** A field the writer types
 in builds the same op a Proposal would carry, `src/client/plan/edits.ts` reads its

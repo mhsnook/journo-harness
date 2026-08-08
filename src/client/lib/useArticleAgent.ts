@@ -26,7 +26,11 @@ export type ArticleConnection = {
 }
 
 export function useArticleAgent(articleId: string): ArticleConnection {
-	const channel = usePlanChannel()
+	// One ref, read by both halves: the client is replaced on every reconnect, and
+	// an `OfferStore` or a writer that closed over one generation would keep
+	// sending to a socket that is gone.
+	const socket = useRef<ArticleSocket | null>(null)
+	const channel = usePlanChannel(() => socket.current)
 
 	const agent = useAgent<Plan>({
 		agent: 'article-agent',
@@ -35,24 +39,35 @@ export function useArticleAgent(articleId: string): ArticleConnection {
 		onMessage: channel.onMessage,
 	})
 
-	// Held rather than closed over: the client is replaced on every reconnect,
-	// and an `OfferStore` that changed identity with it would make the Ledger
-	// re-read its rows on every render.
-	const socket = useRef(agent)
 	useEffect(() => {
 		socket.current = agent
-		channel.attach(agent)
 	})
 
+	// `[]`, so the store keeps its identity across reconnects: the Ledger reads
+	// its rows once per store, and a new one on every render would re-read them.
 	const offers = useMemo<OfferStore>(
 		() => ({
-			listOffers: () => socket.current.call<Offer[]>('listOffers'),
+			listOffers: () => call<Offer[]>(socket, 'listOffers'),
 			setOfferDisposition: (id: string, ruling: Ruling) =>
-				socket.current.call<Offer>('setOfferDisposition', [id, ruling]),
-			restoreOffer: (id: string) => socket.current.call<Offer>('restoreOffer', [id]),
+				call<Offer>(socket, 'setOfferDisposition', [id, ruling]),
+			restoreOffer: (id: string) => call<Offer>(socket, 'restoreOffer', [id]),
 		}),
 		[],
 	)
 
 	return { article: { offers, plan: channel.connection }, agent }
+}
+
+/** An RPC on whichever socket is current. The first render has none, and a
+ * caller reaching one that early is a bug rather than a state to render. */
+function call<T>(
+	socket: { current: ArticleSocket | null },
+	method: string,
+	args?: unknown[],
+): Promise<T> {
+	if (socket.current === null) {
+		return Promise.reject(new Error('The Article Agent is not connected yet.'))
+	}
+
+	return socket.current.call<T>(method, args)
 }

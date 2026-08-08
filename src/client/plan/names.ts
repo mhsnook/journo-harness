@@ -28,19 +28,24 @@ export type PlanNames = {
 }
 
 export function planNames(plan: Plan): PlanNames {
+	// One walk, giving both forms: the number on its own and the number with the
+	// title after it. Reading either out of a second walk would be a second way
+	// to number a Section.
 	const numbered = new Map(
-		outlineEntries(plan.outline).map((entry) => [
-			entry.node.id,
-			entry.node.title === ''
-				? sectionLabel(entry)
-				: `${sectionLabel(entry)} ${entry.node.title}`,
-		]),
+		outlineEntries(plan.outline).map((entry) => {
+			const label = sectionLabel(entry)
+
+			return [
+				entry.node.id,
+				{ label, full: entry.node.title === '' ? label : `${label} ${entry.node.title}` },
+			]
+		}),
 	)
 
 	// A refusal is often about the record that has just gone, so "does not carry"
 	// is the ordinary answer here rather than a fallback for a bug.
 	const section = (nodeId: string) =>
-		numbered.get(nodeId) ?? 'a Section the Plan does not carry'
+		numbered.get(nodeId)?.full ?? 'a Section the Plan does not carry'
 
 	const reference = (referenceId: string) => {
 		const held = plan.references.find((entry) => entry.id === referenceId)
@@ -50,9 +55,16 @@ export function planNames(plan: Plan): PlanNames {
 			: referenceName(held)
 	}
 
-	const marked = new Map(
-		referenceEntries(plan).map((entry) => [entry.reference.id, referenceMark(entry)]),
-	)
+	// Built on the first `label` of a Reference and not before: `describeProposal`
+	// names every record on a card and never asks for a brief one.
+	let marked: Map<string, string> | null = null
+	const mark = (referenceId: string) => {
+		marked ??= new Map(
+			referenceEntries(plan).map((entry) => [entry.reference.id, referenceMark(entry)]),
+		)
+
+		return marked.get(referenceId) ?? 'that Reference'
+	}
 
 	return {
 		section,
@@ -67,13 +79,9 @@ export function planNames(plan: Plan): PlanNames {
 		label: (subject) => {
 			if (subject === null) return 'the Plan'
 			if (subject.of === 'article') return 'the Article'
-			if (subject.of === 'reference') return marked.get(subject.id) ?? 'that Reference'
+			if (subject.of === 'reference') return mark(subject.id)
 
-			const entry = outlineEntries(plan.outline).find(
-				(held) => held.node.id === subject.id,
-			)
-
-			return entry === undefined ? 'that Section' : sectionLabel(entry)
+			return numbered.get(subject.id)?.label ?? 'that Section'
 		},
 	}
 }

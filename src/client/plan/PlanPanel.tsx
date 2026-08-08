@@ -5,6 +5,7 @@ import { planAllocation, resolveArticleScope } from '../../shared/plan'
 import { GroupHeading } from '../components/Divider'
 import { EmptySlot, TextField } from '../components/Field'
 import { LengthBar } from '../components/LengthBar'
+import { Notice } from '../components/Notice'
 import { Panel } from '../components/Panel'
 import { AddSection } from './AddSection'
 import type { SectionAnchor } from './edits'
@@ -66,15 +67,9 @@ export function PlanPanel({
 
 	return (
 		<Panel className={className} variant="sunk">
-			{refusal === null ? null : (
-				<p className="rounded-md border border-accent-edge bg-accent-soft p-2 text-[0.75rem] text-accent-ink">
-					{refusalText(plan, refusal)}
-				</p>
-			)}
+			{refusal === null ? null : <Notice>{refusalText(plan, refusal)}</Notice>}
 			{rejected === null ? null : (
-				<p className="rounded-md border border-accent-edge bg-accent-soft p-2 text-[0.75rem] text-accent-ink">
-					The Article Agent refused the write. {rejected}
-				</p>
+				<Notice>The Article Agent refused the write. {rejected}</Notice>
 			)}
 
 			<TextField

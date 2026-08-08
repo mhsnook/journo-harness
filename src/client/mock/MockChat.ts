@@ -8,7 +8,7 @@ import {
 	type Refusals,
 	ruleProposal,
 	type ToolAnswer,
-	waitingCalls,
+	waitingCount,
 } from '../chat/proposals'
 import { useArticle } from '../lib/article'
 import { useOfferLedger } from '../lib/useOfferLedger'
@@ -65,7 +65,7 @@ export function useMockChat(start: UIMessage[]): MockChat {
 	return {
 		messages,
 		busy: false,
-		waiting: waitingCalls(messages),
+		waiting: waitingCount(messages),
 		refusals,
 		offers: ledger.ledger.offers,
 		failure: ledger.failure,

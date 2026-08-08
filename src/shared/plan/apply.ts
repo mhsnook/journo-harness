@@ -37,13 +37,30 @@ export type RefusalReason =
 	| 'noReference'
 	| 'noPlan'
 	| 'stale'
-	| 'duplicateSectionId'
-	| 'duplicateReferenceId'
+	| 'duplicateId'
 	| 'moveUnderOwn'
 	| 'mergeUnderOwn'
 	| 'mergeWithItself'
 	| 'anchorToItself'
 	| 'wouldNotParse'
+
+/** Which of the four kinds each reason is. Stated once here rather than passed
+ * beside the reason at every refusal site, where the two could disagree. */
+const kindOf: Record<RefusalReason, RefusalType> = {
+	unreadable: 'malformed',
+	noSection: 'missing',
+	noParent: 'missing',
+	noAnchor: 'missing',
+	noReference: 'missing',
+	noPlan: 'missing',
+	stale: 'stale',
+	duplicateId: 'invalid',
+	moveUnderOwn: 'invalid',
+	mergeUnderOwn: 'invalid',
+	mergeWithItself: 'invalid',
+	anchorToItself: 'invalid',
+	wouldNotParse: 'invalid',
+}
 
 /** What a refusal is about. The id is the Plan's, so a caller can name the thing
  * the way the Outline and the References list already name it. */
@@ -53,8 +70,9 @@ export type RefusalSubject =
 	| { of: 'reference'; id: string }
 
 export type Refusal = {
+	/** Which of the four kinds, derived from `reason`. */
 	type: RefusalType
-	/** Which of the four went wrong. */
+	/** Which check failed. */
 	reason: RefusalReason
 	/** Which op refused, counting from 0, and null when the refusal is about the
 	 * Proposal as a whole. */
@@ -87,6 +105,16 @@ const referenceSubject = (id: string): RefusalSubject => ({ of: 'reference', id 
 /** A content op reads `nodeId: null` as the Article — §6. */
 const scopeSubject = (nodeId: string | null): RefusalSubject =>
 	nodeId === null ? articleSubject : sectionSubject(nodeId)
+
+/** What the model's sentence calls a record: the data model's own words, ids
+ * included, because the model proposes in them. What the writer reads instead is
+ * `src/client/plan/refusalText.ts`. */
+function nameFor(subject: RefusalSubject, reason: RefusalReason): string {
+	if (subject.of === 'article') return 'the Article'
+	if (subject.of === 'reference') return `Reference ${subject.id}`
+
+	return reason === 'noParent' ? `parent ${subject.id}` : `node ${subject.id}`
+}
 
 /** The neighbour a structural op anchored to, which is the one the Plan could
  * not find. Exactly one of the two is stated — ops.ts. */
@@ -121,47 +149,49 @@ export function applyProposal(plan: Plan, proposal: unknown): ApplyResult {
 
 function applyOp(plan: Plan, op: ProposalOp, index: number): Refusal | null {
 	const refuse = (
-		type: RefusalType,
 		reason: RefusalReason,
 		subject: RefusalSubject | null,
 		message: string,
 		other: RefusalSubject | null = null,
-	): Refusal => ({ type, reason, index, op: op.op, subject, other, message })
+	): Refusal => ({
+		type: kindOf[reason],
+		reason,
+		index,
+		op: op.op,
+		subject,
+		other,
+		message,
+	})
 
 	const stale = (
 		subject: RefusalSubject,
-		where: string,
 		expected: unknown,
 		found: unknown,
 	): Refusal => ({
 		...refuse(
 			'stale',
-			'stale',
 			subject,
-			`${op.op} on ${where} expected ${JSON.stringify(expected)} and the Plan carries ${JSON.stringify(found)}.`,
+			`${op.op} on ${nameFor(subject, 'stale')} expected ${JSON.stringify(expected)} and the Plan carries ${JSON.stringify(found)}.`,
 		),
 		expected,
 		found,
 	})
 
-	const absent = (reason: RefusalReason, subject: RefusalSubject, what: string) =>
+	const absent = (reason: RefusalReason, subject: RefusalSubject) =>
 		refuse(
-			'missing',
 			reason,
 			subject,
-			`${op.op} names ${what}, which the Plan does not carry.`,
+			`${op.op} names ${nameFor(subject, reason)}, which the Plan does not carry.`,
 		)
 
 	switch (op.op) {
 		case 'createNode': {
 			const siblings = childrenOf(plan, op.parentId)
-			if (siblings === null)
-				return absent('noParent', scopeSubject(op.parentId), `parent ${op.parentId}`)
+			if (siblings === null) return absent('noParent', scopeSubject(op.parentId))
 
 			const at = insertionIndex(siblings, op)
 			if (at === null)
 				return refuse(
-					'missing',
 					'noAnchor',
 					anchorSubject(op),
 					anchorMissing(op),
@@ -174,8 +204,7 @@ function applyOp(plan: Plan, op: ProposalOp, index: number): Refusal | null {
 			for (const id of subtreeIds(op.node)) {
 				if (taken.has(id)) {
 					return refuse(
-						'invalid',
-						'duplicateSectionId',
+						'duplicateId',
 						sectionSubject(id),
 						`${op.op} would leave two Sections carrying the id ${id}.`,
 					)
@@ -190,13 +219,11 @@ function applyOp(plan: Plan, op: ProposalOp, index: number): Refusal | null {
 
 		case 'moveNode': {
 			const site = locate(plan.outline, op.nodeId)
-			if (site === null)
-				return absent('noSection', sectionSubject(op.nodeId), `node ${op.nodeId}`)
+			if (site === null) return absent('noSection', sectionSubject(op.nodeId))
 
 			const node = site.siblings[site.index]
 			if (op.parentId !== null && subtreeIds(node).includes(op.parentId)) {
 				return refuse(
-					'invalid',
 					'moveUnderOwn',
 					sectionSubject(op.nodeId),
 					`${op.op} would move ${op.nodeId} under a node it contains.`,
@@ -208,7 +235,6 @@ function applyOp(plan: Plan, op: ProposalOp, index: number): Refusal | null {
 			// not carry a node it does.
 			if (op.afterId === op.nodeId || op.beforeId === op.nodeId) {
 				return refuse(
-					'invalid',
 					'anchorToItself',
 					sectionSubject(op.nodeId),
 					`${op.op} cannot anchor ${op.nodeId} to itself.`,
@@ -221,13 +247,11 @@ function applyOp(plan: Plan, op: ProposalOp, index: number): Refusal | null {
 			site.siblings.splice(site.index, 1)
 
 			const siblings = childrenOf(plan, op.parentId)
-			if (siblings === null)
-				return absent('noParent', scopeSubject(op.parentId), `parent ${op.parentId}`)
+			if (siblings === null) return absent('noParent', scopeSubject(op.parentId))
 
 			const at = insertionIndex(siblings, op)
 			if (at === null)
 				return refuse(
-					'missing',
 					'noAnchor',
 					anchorSubject(op),
 					anchorMissing(op),
@@ -241,7 +265,6 @@ function applyOp(plan: Plan, op: ProposalOp, index: number): Refusal | null {
 		case 'mergeNodes': {
 			if (op.nodeId === op.intoId) {
 				return refuse(
-					'invalid',
 					'mergeWithItself',
 					sectionSubject(op.nodeId),
 					`${op.op} names ${op.nodeId} on both sides.`,
@@ -249,17 +272,14 @@ function applyOp(plan: Plan, op: ProposalOp, index: number): Refusal | null {
 			}
 
 			const site = locate(plan.outline, op.nodeId)
-			if (site === null)
-				return absent('noSection', sectionSubject(op.nodeId), `node ${op.nodeId}`)
+			if (site === null) return absent('noSection', sectionSubject(op.nodeId))
 			const intoSite = locate(plan.outline, op.intoId)
-			if (intoSite === null)
-				return absent('noSection', sectionSubject(op.intoId), `node ${op.intoId}`)
+			if (intoSite === null) return absent('noSection', sectionSubject(op.intoId))
 
 			const node = site.siblings[site.index]
 			const into = intoSite.siblings[intoSite.index]
 			if (subtreeIds(node).includes(op.intoId)) {
 				return refuse(
-					'invalid',
 					'mergeUnderOwn',
 					sectionSubject(op.nodeId),
 					`${op.op} would merge ${op.nodeId} into ${op.intoId}, which it contains.`,
@@ -277,8 +297,7 @@ function applyOp(plan: Plan, op: ProposalOp, index: number): Refusal | null {
 
 		case 'deleteNode': {
 			const site = locate(plan.outline, op.nodeId)
-			if (site === null)
-				return absent('noSection', sectionSubject(op.nodeId), `node ${op.nodeId}`)
+			if (site === null) return absent('noSection', sectionSubject(op.nodeId))
 
 			// The unplacing lands in this op or nowhere: the Plan is written whole,
 			// and a Reference naming a node that is gone does not parse — §4.
@@ -293,16 +312,10 @@ function applyOp(plan: Plan, op: ProposalOp, index: number): Refusal | null {
 
 		case 'setTitle': {
 			const scope = scopeOf(plan, op.nodeId)
-			if (scope === null)
-				return absent('noSection', scopeSubject(op.nodeId), `node ${op.nodeId}`)
+			if (scope === null) return absent('noSection', scopeSubject(op.nodeId))
 
 			if (!matches(op.expected, scope.title))
-				return stale(
-					scopeSubject(op.nodeId),
-					scopeName(op.nodeId),
-					op.expected,
-					scope.title,
-				)
+				return stale(scopeSubject(op.nodeId), op.expected, scope.title)
 
 			scope.title = op.value
 			return null
@@ -310,12 +323,11 @@ function applyOp(plan: Plan, op: ProposalOp, index: number): Refusal | null {
 
 		case 'setIntent': {
 			const node = findNode(plan, op.nodeId)
-			if (node === null)
-				return absent('noSection', sectionSubject(op.nodeId), `node ${op.nodeId}`)
+			if (node === null) return absent('noSection', sectionSubject(op.nodeId))
 
 			const found = node.intent ?? null
 			if (!matches(op.expected, found))
-				return stale(scopeSubject(op.nodeId), scopeName(op.nodeId), op.expected, found)
+				return stale(scopeSubject(op.nodeId), op.expected, found)
 
 			if (op.value === null) delete node.intent
 			else node.intent = op.value
@@ -328,19 +340,18 @@ function applyOp(plan: Plan, op: ProposalOp, index: number): Refusal | null {
 			// `totalTarget`, and its Adjectives are required where a node's are not.
 			if (op.nodeId === null) {
 				if (!matches(op.expected, plan.totalTarget)) {
-					return stale(articleSubject, scopeName(null), op.expected, plan.totalTarget)
+					return stale(articleSubject, op.expected, plan.totalTarget)
 				}
 				plan.totalTarget = op.value
 				return null
 			}
 
 			const node = findNode(plan, op.nodeId)
-			if (node === null)
-				return absent('noSection', sectionSubject(op.nodeId), `node ${op.nodeId}`)
+			if (node === null) return absent('noSection', sectionSubject(op.nodeId))
 
 			const found = node.target ?? null
 			if (!matches(op.expected, found))
-				return stale(scopeSubject(op.nodeId), scopeName(op.nodeId), op.expected, found)
+				return stale(scopeSubject(op.nodeId), op.expected, found)
 
 			if (op.value === null) delete node.target
 			else node.target = op.value
@@ -349,12 +360,11 @@ function applyOp(plan: Plan, op: ProposalOp, index: number): Refusal | null {
 
 		case 'setVoice': {
 			const scope = scopeOf(plan, op.nodeId)
-			if (scope === null)
-				return absent('noSection', scopeSubject(op.nodeId), `node ${op.nodeId}`)
+			if (scope === null) return absent('noSection', scopeSubject(op.nodeId))
 
 			const found = scope.voice ?? null
 			if (!matches(op.expected, found))
-				return stale(scopeSubject(op.nodeId), scopeName(op.nodeId), op.expected, found)
+				return stale(scopeSubject(op.nodeId), op.expected, found)
 
 			if (op.value === null) delete scope.voice
 			else scope.voice = op.value
@@ -364,19 +374,18 @@ function applyOp(plan: Plan, op: ProposalOp, index: number): Refusal | null {
 		case 'setAdjectives': {
 			if (op.nodeId === null) {
 				if (!matches(op.expected, plan.adjectives)) {
-					return stale(articleSubject, scopeName(null), op.expected, plan.adjectives)
+					return stale(articleSubject, op.expected, plan.adjectives)
 				}
 				plan.adjectives = op.value
 				return null
 			}
 
 			const node = findNode(plan, op.nodeId)
-			if (node === null)
-				return absent('noSection', sectionSubject(op.nodeId), `node ${op.nodeId}`)
+			if (node === null) return absent('noSection', sectionSubject(op.nodeId))
 
 			const found = node.adjectives ?? []
 			if (!matches(op.expected, found))
-				return stale(scopeSubject(op.nodeId), scopeName(op.nodeId), op.expected, found)
+				return stale(scopeSubject(op.nodeId), op.expected, found)
 
 			if (op.value.length === 0) delete node.adjectives
 			else node.adjectives = op.value
@@ -386,22 +395,13 @@ function applyOp(plan: Plan, op: ProposalOp, index: number): Refusal | null {
 		case 'placeReference': {
 			const reference = plan.references.find((held) => held.id === op.referenceId)
 			if (reference === undefined)
-				return absent(
-					'noReference',
-					referenceSubject(op.referenceId),
-					`Reference ${op.referenceId}`,
-				)
+				return absent('noReference', referenceSubject(op.referenceId))
 
 			if (!matches(op.expected, reference.nodeId)) {
-				return stale(
-					referenceSubject(op.referenceId),
-					`Reference ${op.referenceId}`,
-					op.expected,
-					reference.nodeId,
-				)
+				return stale(referenceSubject(op.referenceId), op.expected, reference.nodeId)
 			}
 			if (op.value !== null && findNode(plan, op.value) === null)
-				return absent('noSection', sectionSubject(op.value), `node ${op.value}`)
+				return absent('noSection', sectionSubject(op.value))
 
 			reference.nodeId = op.value
 			return null
@@ -412,18 +412,13 @@ function applyOp(plan: Plan, op: ProposalOp, index: number): Refusal | null {
 			// catches a repeated Section id, and cannot say which op carried it.
 			if (plan.references.some((held) => held.id === op.reference.id)) {
 				return refuse(
-					'invalid',
-					'duplicateReferenceId',
+					'duplicateId',
 					referenceSubject(op.reference.id),
 					`${op.op} would leave two References carrying the id ${op.reference.id}.`,
 				)
 			}
 			if (op.reference.nodeId !== null && findNode(plan, op.reference.nodeId) === null)
-				return absent(
-					'noSection',
-					sectionSubject(op.reference.nodeId),
-					`node ${op.reference.nodeId}`,
-				)
+				return absent('noSection', sectionSubject(op.reference.nodeId))
 
 			plan.references.push(op.reference)
 			return null
@@ -431,12 +426,7 @@ function applyOp(plan: Plan, op: ProposalOp, index: number): Refusal | null {
 
 		case 'deleteReference': {
 			const at = plan.references.findIndex((held) => held.id === op.referenceId)
-			if (at === -1)
-				return absent(
-					'noReference',
-					referenceSubject(op.referenceId),
-					`Reference ${op.referenceId}`,
-				)
+			if (at === -1) return absent('noReference', referenceSubject(op.referenceId))
 
 			plan.references.splice(at, 1)
 			return null
@@ -445,20 +435,11 @@ function applyOp(plan: Plan, op: ProposalOp, index: number): Refusal | null {
 		case 'setReference': {
 			const reference = plan.references.find((held) => held.id === op.referenceId)
 			if (reference === undefined)
-				return absent(
-					'noReference',
-					referenceSubject(op.referenceId),
-					`Reference ${op.referenceId}`,
-				)
+				return absent('noReference', referenceSubject(op.referenceId))
 
 			const found = referenceContent(reference)
 			if (!matches(op.expected, found)) {
-				return stale(
-					referenceSubject(op.referenceId),
-					`Reference ${op.referenceId}`,
-					op.expected,
-					found,
-				)
+				return stale(referenceSubject(op.referenceId), op.expected, found)
 			}
 
 			// The content is replaced whole, so a field the op leaves out is a
@@ -561,10 +542,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === 'object' && value !== null
 }
 
-function scopeName(nodeId: string | null): string {
-	return nodeId === null ? 'the Article' : `node ${nodeId}`
-}
-
 function anchorMissing(op: Anchor & { op: OpName; parentId: string | null }): string {
 	const anchor =
 		op.afterId !== undefined ? `after ${op.afterId}` : `before ${op.beforeId}`
@@ -580,7 +557,7 @@ function malformed(error: z.ZodError): Refusal {
 	const index = typeof issue.path[0] === 'number' ? issue.path[0] : null
 
 	return {
-		type: 'malformed',
+		type: kindOf.unreadable,
 		reason: 'unreadable',
 		index,
 		op: null,
@@ -594,7 +571,7 @@ function invalidPlan(error: z.ZodError): Refusal {
 	const issue = error.issues[0]
 
 	return {
-		type: 'invalid',
+		type: kindOf.wouldNotParse,
 		reason: 'wouldNotParse',
 		index: null,
 		op: null,

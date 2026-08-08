@@ -1,7 +1,6 @@
 import { createContext, useContext } from 'react'
 
 import type { Offer, Ruling } from '../../shared/offer'
-import { emptyPlan, type Plan } from '../../shared/plan'
 import type { PlanConnection } from '../plan/usePlan'
 
 /**
@@ -38,17 +37,3 @@ export function useArticle(): Article {
 
 	return article
 }
-
-/**
- * The Plan on screen, and an empty one while the first state update is still in
- * flight. A list reads the empty Plan as an empty list, which is what a new
- * Article holds anyway — the Panel that must say "Opening the Plan…" rather
- * than draw an empty one reads `plan.plan` and gates on null itself.
- */
-export function useArticlePlan(): Plan {
-	return useArticle().plan.plan ?? opening
-}
-
-/** One instance, so a render while the socket settles is not a new Plan every
- * time. Nothing writes to it: the writer works on a copy. */
-const opening = emptyPlan()

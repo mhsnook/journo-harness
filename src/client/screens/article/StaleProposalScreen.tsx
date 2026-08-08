@@ -1,7 +1,7 @@
 import { ChatPanel } from '../../chat/ChatPanel'
 import { ArticleBar } from '../../components/ArticleBar'
 import { Frame, FrameBody } from '../../components/Frame'
-import { useArticlePlan } from '../../lib/article'
+import { useMockPlan } from '../../mock/MockArticle'
 import { useMockChat } from '../../mock/MockChat'
 import { staleProposal } from '../../mock/transcript'
 
@@ -13,7 +13,7 @@ import { staleProposal } from '../../mock/transcript'
  * Accept again, or Decline and send that sentence back to the Chat.
  */
 export function StaleProposalScreen() {
-	const plan = useArticlePlan()
+	const plan = useMockPlan()
 	const chat = useMockChat(staleProposal)
 
 	return (

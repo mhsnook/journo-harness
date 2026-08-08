@@ -1,7 +1,7 @@
 import { ChatPanel } from '../../chat/ChatPanel'
 import { ArticleBar } from '../../components/ArticleBar'
 import { Frame, FrameBody } from '../../components/Frame'
-import { useArticlePlan } from '../../lib/article'
+import { useMockPlan } from '../../mock/MockArticle'
 import { useMockChat } from '../../mock/MockChat'
 import { researchTurn } from '../../mock/transcript'
 
@@ -12,7 +12,7 @@ import { researchTurn } from '../../mock/transcript'
  * the row keeps the ruling either way.
  */
 export function ChatWithReferencesScreen() {
-	const plan = useArticlePlan()
+	const plan = useMockPlan()
 	const chat = useMockChat(researchTurn)
 
 	return (

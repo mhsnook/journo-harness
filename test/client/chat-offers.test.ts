@@ -1,8 +1,8 @@
-import type { UIMessage } from 'ai'
 import { describe, expect, it } from 'vitest'
 
 import { readRecordedOffers, recordedOfferIds } from '../../src/client/chat/offers'
 import { proposePlanChangeTool, recordOffersTool } from '../../src/shared/chat'
+import { toolPart, transcript } from './chat-fixtures'
 
 /**
  * A research turn writes Offer rows this client never asked for, and nothing on
@@ -10,19 +10,8 @@ import { proposePlanChangeTool, recordOffersTool } from '../../src/shared/chat'
  * the Ledger gets that its list moved.
  */
 
-function part(state: string, extra: Record<string, unknown> = {}) {
-	return {
-		type: `tool-${recordOffersTool}`,
-		toolCallId: 'call-1',
-		state,
-		input: { offers: [] },
-		...extra,
-	} as UIMessage['parts'][number]
-}
-
-function transcript(...parts: UIMessage['parts']): UIMessage[] {
-	return [{ id: 'm-1', role: 'assistant', parts }]
-}
+const part = (state: string, extra: Record<string, unknown> = {}) =>
+	toolPart(recordOffersTool, state, { input: { offers: [] }, ...extra })
 
 const recorded = [
 	{ id: 'offer-a', name: 'A study', disposition: 'undecided', duplicate: false },
@@ -43,13 +32,10 @@ describe('a research turn', () => {
 	})
 
 	it('reads nothing off a Proposal', () => {
-		const proposal = {
-			type: `tool-${proposePlanChangeTool}`,
-			toolCallId: 'call-2',
-			state: 'output-available',
+		const proposal = toolPart(proposePlanChangeTool, 'output-available', {
 			input: { ops: [] },
 			output: 'done',
-		} as UIMessage['parts'][number]
+		})
 
 		expect(readRecordedOffers(proposal as never)).toBeNull()
 	})

@@ -1,7 +1,8 @@
 import type { Plan, Refusal } from '../../shared/plan'
 import { Button } from '../components/Button'
+import { Notice } from '../components/Notice'
 import { cx } from '../lib/cx'
-import { refusalText } from '../plan/refusalText'
+import { refusalText, unreadableText } from '../plan/refusalText'
 import { describeProposal, type ProposalCall } from './proposals'
 
 /**
@@ -55,16 +56,14 @@ export function ProposalCard({
 					))}
 				</ul>
 			) : (
-				<p className="text-[0.8125rem] leading-snug text-ink">
-					This Proposal did not parse, so there is nothing to Accept. {call.unreadable}
-				</p>
+				<p className="text-[0.8125rem] leading-snug text-ink">{unreadableText}</p>
 			)}
 
 			{refusal === null ? null : (
-				<p className="rounded-md border border-accent-edge bg-accent-soft p-2 text-[0.75rem] text-accent-ink">
+				<Notice>
 					{refusalText(plan, refusal)} Decline to send that back, or edit the Plan and
 					Accept again.
-				</p>
+				</Notice>
 			)}
 
 			<div className="flex items-center gap-1.5">

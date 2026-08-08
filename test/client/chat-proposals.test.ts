@@ -1,4 +1,3 @@
-import type { UIMessage } from 'ai'
 import { describe, expect, it } from 'vitest'
 
 import {
@@ -7,7 +6,7 @@ import {
 	describeProposal,
 	readProposal,
 	ruleProposal,
-	waitingCalls,
+	waitingCount,
 } from '../../src/client/chat/proposals'
 import { proposePlanChangeTool, recordOffersTool } from '../../src/shared/chat'
 import {
@@ -17,6 +16,7 @@ import {
 	type Refusal,
 } from '../../src/shared/plan'
 import { makePlan } from '../shared/plan-fixtures'
+import { toolPart, transcript } from './chat-fixtures'
 
 /**
  * Reading Proposals out of a transcript, and ruling on one. No React and no
@@ -42,15 +42,6 @@ const plan: Plan = makePlan({
 	],
 })
 
-function toolPart(state: string, extra: Record<string, unknown> = {}) {
-	return {
-		type: `tool-${proposePlanChangeTool}`,
-		toolCallId: 'call-1',
-		state,
-		...extra,
-	} as UIMessage['parts'][number]
-}
-
 const ops: Proposal = [
 	{
 		op: 'setTitle',
@@ -60,27 +51,29 @@ const ops: Proposal = [
 	},
 ]
 
-function transcript(...parts: UIMessage['parts']): UIMessage[] {
-	return [{ id: 'm-1', role: 'assistant', parts }]
-}
-
 describe('reading a transcript', () => {
-	it('finds a call whose input has arrived and whose output has not', () => {
-		const messages = transcript(toolPart('input-available', { input: { ops } }))
+	it('counts a call whose input has arrived and whose output has not', () => {
+		const messages = transcript(
+			toolPart(proposePlanChangeTool, 'input-available', { input: { ops } }),
+		)
 
-		expect(waitingCalls(messages)).toEqual([
-			{ toolCallId: 'call-1', toolName: proposePlanChangeTool },
-		])
+		expect(waitingCount(messages)).toBe(1)
 	})
 
 	it('leaves a Proposal still streaming, and one already ruled on', () => {
 		const messages = transcript(
-			toolPart('input-streaming', { input: {} }),
-			toolPart('output-available', { input: { ops }, output: 'done' }),
-			toolPart('output-error', { input: { ops }, errorText: 'no' }),
+			toolPart(proposePlanChangeTool, 'input-streaming', { input: {} }),
+			toolPart(proposePlanChangeTool, 'output-available', {
+				input: { ops },
+				output: 'done',
+			}),
+			toolPart(proposePlanChangeTool, 'output-error', {
+				input: { ops },
+				errorText: 'no',
+			}),
 		)
 
-		expect(waitingCalls(messages)).toEqual([])
+		expect(waitingCount(messages)).toBe(0)
 	})
 
 	/**
@@ -88,23 +81,21 @@ describe('reading a transcript', () => {
 	 * stands between the writer and a composer that silently does nothing.
 	 */
 	it('counts every suspended call, not only the Proposals', () => {
-		const waiting = waitingCalls(
-			transcript(toolPart('input-available', { input: { ops } }), {
-				type: `tool-${recordOffersTool}`,
+		const messages = transcript(
+			toolPart(proposePlanChangeTool, 'input-available', { input: { ops } }),
+			toolPart(recordOffersTool, 'input-available', {
 				toolCallId: 'call-2',
-				state: 'input-available',
 				input: {},
-			} as UIMessage['parts'][number]),
+			}),
 		)
 
-		expect(waiting.map((call) => call.toolName)).toEqual([
-			proposePlanChangeTool,
-			recordOffersTool,
-		])
+		expect(waitingCount(messages)).toBe(2)
 	})
 
 	it('reads the ops off a suspended call', () => {
-		const call = readProposal(toolPart('input-available', { input: { ops } }) as never)
+		const call = readProposal(
+			toolPart(proposePlanChangeTool, 'input-available', { input: { ops } }) as never,
+		)
 
 		expect(call.toolCallId).toBe('call-1')
 		expect(call.ops).toEqual(ops)
@@ -113,7 +104,9 @@ describe('reading a transcript', () => {
 
 	it('says why a payload could not be read rather than rendering blank', () => {
 		const call = readProposal(
-			toolPart('input-available', { input: { ops: [{ op: 'setTitle' }] } }) as never,
+			toolPart(proposePlanChangeTool, 'input-available', {
+				input: { ops: [{ op: 'setTitle' }] },
+			}) as never,
 		)
 
 		expect(call.ops).toBeNull()

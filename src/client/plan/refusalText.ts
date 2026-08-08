@@ -17,8 +17,13 @@ import { planNames, type PlanNames } from './names'
 
 type Wording = (refusal: Refusal, name: PlanNames) => string
 
+/** Also what a Proposal card says when the tool call's own payload did not
+ * parse, which is the same condition one step earlier. */
+export const unreadableText =
+	'The Chat sent a change that could not be read. Ask it to try again.'
+
 const wording: Record<RefusalReason, Wording> = {
-	unreadable: () => 'The Chat sent a change that could not be read. Ask it to try again.',
+	unreadable: () => unreadableText,
 
 	noPlan: () => 'The Plan has not arrived yet. Give it a moment.',
 
@@ -43,10 +48,9 @@ const wording: Record<RefusalReason, Wording> = {
 	stale: (refusal, name) =>
 		`${capitalise(name.label(refusal.subject))} has changed since the Chat proposed this. It now reads ${quote(refusal.found)}, where the change expected ${quote(refusal.expected)}.`,
 
-	duplicateSectionId: (refusal, name) =>
-		`That change adds ${name.subject(refusal.subject)}, which the Plan already carries.`,
-
-	duplicateReferenceId: (refusal, name) =>
+	// One code for both: the subject already says whether it is a Section or a
+	// Reference, so two would be two rows saying the same thing.
+	duplicateId: (refusal, name) =>
 		`That change adds ${name.subject(refusal.subject)}, which the Plan already carries.`,
 
 	moveUnderOwn: (refusal, name) =>

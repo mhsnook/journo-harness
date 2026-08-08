@@ -1,6 +1,6 @@
 import { useAgentChat } from '@cloudflare/ai-chat/react'
 import type { UIMessage } from 'ai'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { proposePlanChangeTool } from '../../shared/chat'
 import type { Plan } from '../../shared/plan'
@@ -13,8 +13,7 @@ import {
 	type ProposalCall,
 	type Refusals,
 	ruleProposal,
-	type WaitingCall,
-	waitingCalls,
+	waitingCount,
 } from './proposals'
 
 /**
@@ -38,9 +37,9 @@ export type ChatHandle = {
 	messages: UIMessage[]
 	/** A turn is in flight, whether the writer started it or the server did. */
 	busy: boolean
-	/** Every suspended tool call. While this is not empty
-	 * the turn is parked and the composer says so — §11. */
-	waiting: WaitingCall[]
+	/** How many tool calls are suspended. While this is not 0 the turn is parked
+	 * and the composer says so — §11. */
+	waiting: number
 	/** Why an Accept did not land, by tool call id. */
 	refusals: Refusals
 	/** The Offers the turns in this transcript recorded. */
@@ -76,63 +75,57 @@ export function useArticleChat(agent: ArticleSocket): ChatHandle {
 	// A research turn writes rows this client never asked for, and nothing on the
 	// socket announces a row — §3. The ids the transcript names are what says the
 	// set moved.
+	//
+	// The first set it names is skipped: that is the persisted transcript
+	// arriving, and the Ledger's own read on mount already covers those rows. Only
+	// a turn that records something after that is worth a second RPC.
 	const recorded = recordedOfferIds(messages).join(' ')
+	const seen = useRef<string | null>(null)
 	const { reload } = ledger
 	useEffect(() => {
-		if (recorded !== '') reload()
+		if (recorded === '') return
+
+		const first = seen.current === null
+		seen.current = recorded
+		if (!first) reload()
 	}, [recorded, reload])
 
-	const { edit } = connection
-	const rule = useCallback(
-		(call: ProposalCall, accepted: boolean) => {
-			// Through the Plan's one writer, like every other Plan edit: it holds the
-			// Plan the writer sees, debounces, and refuses an update over an unsent
-			// write. A second writer around it would undo what is on screen — §3.
-			const ruling = ruleProposal({
-				call,
-				accepted,
-				edit,
-				refusal: refusals[call.toolCallId] ?? null,
-			})
+	const rule = (call: ProposalCall, accepted: boolean) => {
+		// Through the Plan's one writer, like every other Plan edit: it holds the
+		// Plan the writer sees, debounces, and refuses an update over an unsent
+		// write. A second writer around it would undo what is on screen — §3.
+		const ruling = ruleProposal({
+			call,
+			accepted,
+			edit: connection.edit,
+			refusal: refusals[call.toolCallId] ?? null,
+		})
 
-			setRefusals((was) => afterRuling(was, call.toolCallId, ruling.refusal))
-			if (ruling.answer === null) return
+		setRefusals((was) => afterRuling(was, call.toolCallId, ruling.refusal))
+		if (ruling.answer === null) return
 
-			// No await. The AI SDK docs warn twice about deadlock.
-			addToolOutput({
-				toolCallId: call.toolCallId,
-				toolName: proposePlanChangeTool,
-				...('output' in ruling.answer
-					? { output: ruling.answer.output }
-					: { state: 'output-error' as const, errorText: ruling.answer.errorText }),
-			})
-		},
-		[addToolOutput, edit, refusals],
-	)
-
-	const accept = useCallback((call: ProposalCall) => rule(call, true), [rule])
-	const decline = useCallback((call: ProposalCall) => rule(call, false), [rule])
-
-	const { sendMessage } = chat
-	const send = useCallback(
-		(text: string) => {
-			const said = text.trim()
-			if (said === '') return
-
-			sendMessage({ text: said })
-		},
-		[sendMessage],
-	)
+		// No await. The AI SDK docs warn twice about deadlock.
+		addToolOutput({
+			toolCallId: call.toolCallId,
+			toolName: proposePlanChangeTool,
+			...('output' in ruling.answer
+				? { output: ruling.answer.output }
+				: { state: 'output-error' as const, errorText: ruling.answer.errorText }),
+		})
+	}
 
 	return {
 		messages,
+		send: (text: string) => {
+			const said = text.trim()
+			if (said !== '') chat.sendMessage({ text: said })
+		},
+		accept: (call: ProposalCall) => rule(call, true),
+		decline: (call: ProposalCall) => rule(call, false),
 		busy: chat.isStreaming || chat.isRecovering || chat.status === 'submitted',
-		waiting: waitingCalls(messages),
+		waiting: waitingCount(messages),
 		refusals,
 		ledger,
-		send,
-		accept,
-		decline,
 		failure: chat.error?.message ?? chat.connectionError?.message ?? null,
 	}
 }

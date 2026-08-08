@@ -10,9 +10,9 @@ import { createPlanWriter, type PlanEdit } from './writer'
  *
  * **It does not open the socket.** The socket is multiplexed and the Chat rides
  * the same one (§8), so `useArticleAgent` opens it once above both Panels and
- * hands this channel the two `useAgent` handlers the Plan needs. Opening a
- * second one would mean two writers, two debounce timers, and a blob whose
- * whole design is that it has one writer.
+ * gives this channel a way to reach it. Opening a second one would mean two
+ * writers, two debounce timers, and a blob whose whole design is that it has one
+ * writer.
  */
 
 export type PlanConnection = {
@@ -37,26 +37,24 @@ export type PlanSocket = { setState: (plan: Plan) => void }
 
 export type PlanChannel = {
 	connection: PlanConnection
-	/** Hand it the socket. `useAgent` has none to give on the first render and
-	 * replaces it on every reconnect, so the owner calls this in an effect. */
-	attach: (socket: PlanSocket) => void
-	/** The two `useAgent` handlers the Plan needs. Both are stable, because
-	 * `useAgent` reads its options once. */
+	/** The two `useAgent` handlers the Plan needs. */
 	onStateUpdate: (state: Plan, source: 'server' | 'client') => void
 	onMessage: (event: MessageEvent) => void
 }
 
-export function usePlanChannel(): PlanChannel {
+/**
+ * `socket` is read rather than held: `useAgent` has none to give on the first
+ * render and replaces it on every reconnect, so the owner keeps the ref and this
+ * asks it for whichever one is current.
+ */
+export function usePlanChannel(socket: () => PlanSocket | null): PlanChannel {
 	const [plan, setPlan] = useState<Plan | null>(null)
 	const [refusal, setRefusal] = useState<Refusal | null>(null)
 	const [rejected, setRejected] = useState<string | null>(null)
 
-	// The socket is not built yet when the writer is, and it is replaced on every
-	// reconnect, so the writer sends through a ref rather than holding one.
-	const socket = useRef<PlanSocket | null>(null)
 	const held = useRef<ReturnType<typeof createPlanWriter> | null>(null)
 	held.current ??= createPlanWriter({
-		send: (next) => socket.current?.setState(next),
+		send: (next) => socket()?.setState(next),
 		onPlan: setPlan,
 		onRefusal: setRefusal,
 	})
@@ -75,22 +73,17 @@ export function usePlanChannel(): PlanChannel {
 		[writer],
 	)
 
-	const wiring = useRef<Omit<PlanChannel, 'connection'> | null>(null)
-	wiring.current ??= {
-		attach: (next) => {
-			socket.current = next
-		},
-		onStateUpdate: (state, source) => {
-			// A client update is the echo of a write the writer already holds.
-			if (source === 'server') writer.receive(state)
-		},
-		onMessage: (event: MessageEvent) => {
-			const frame = parse(event.data)
-			if (isPlanRefused(frame)) setRejected(frame.error)
-		},
+	// A client update is the echo of a write the writer already holds.
+	const onStateUpdate = (state: Plan, source: 'server' | 'client') => {
+		if (source === 'server') writer.receive(state)
 	}
 
-	return { connection: { plan, edit, refusal, rejected }, ...wiring.current }
+	const onMessage = (event: MessageEvent) => {
+		const frame = parse(event.data)
+		if (isPlanRefused(frame)) setRejected(frame.error)
+	}
+
+	return { connection: { plan, edit, refusal, rejected }, onStateUpdate, onMessage }
 }
 
 /** The socket carries frames this Panel does not read, and a binary one is not

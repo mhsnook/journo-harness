@@ -2,6 +2,7 @@ import { type KeyboardEvent, type ReactNode, useState } from 'react'
 
 import { cx } from '../lib/cx'
 import { Button } from './Button'
+import { Notice } from './Notice'
 
 export interface ChatMessageProps {
 	from: 'me' | 'guide'
@@ -82,22 +83,12 @@ export function ChatComposer({
 	}
 
 	return (
-		// Sticky, because the Panel scrolls its own Y and a composer that scrolled
-		// away with the transcript would be the one control on the Panel you
-		// cannot reach. `bg-inherit` carries the Panel's own background under it.
-		// The Panel's bottom padding is inside the scrollport, so a Panel that
-		// scrolls hands that padding to the composer — see `ChatPanel`.
+		// A Panel that scrolls puts this in its `footer` slot, which is what keeps
+		// it reachable — the composer itself only says it is the end of the Panel.
 		<div
-			className={cx(
-				'sticky bottom-0 z-10 mt-auto flex flex-col gap-1.5 border-t border-edge bg-inherit pt-2',
-				className,
-			)}
+			className={cx('mt-auto flex flex-col gap-1.5 border-t border-edge pt-2', className)}
 		>
-			{blocked === null ? null : (
-				<p className="rounded-md border border-accent-edge bg-accent-soft px-2 py-1.5 text-[0.75rem] text-accent-ink">
-					{blocked}
-				</p>
-			)}
+			{blocked === null ? null : <Notice>{blocked}</Notice>}
 			<div className="flex items-center gap-2">
 				{leading}
 				<div className="flex h-9 flex-1 items-center rounded-md border border-edge bg-surface px-2.5 text-[0.8125rem]">
