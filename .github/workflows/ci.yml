@@ -46,6 +46,34 @@ jobs:
         id: install
         run: pnpm install --frozen-lockfile
 
+      # Playwright pins one browser build per release, so the version is the
+      # cache key: a Playwright bump misses the cache and downloads the build it
+      # now wants, rather than running against the build it no longer supports.
+      - name: Read the Playwright version
+        id: playwright
+        if: ${{ steps.install.outcome == 'success' }}
+        run: echo "version=$(pnpm exec playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+
+      - name: Restore the browser
+        id: browser-cache
+        if: ${{ steps.install.outcome == 'success' }}
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+
+      # Chromium alone: the stories project runs one instance and nothing here
+      # asks for Firefox or WebKit.
+      - name: Install the browser
+        if: ${{ steps.browser-cache.outcome == 'success' && steps.browser-cache.outputs.cache-hit != 'true' }}
+        run: pnpm exec playwright install --with-deps chromium
+
+      # The apt packages Chromium links against live outside ~/.cache/ms-playwright,
+      # so a cache hit restores the browser without them.
+      - name: Install the browser's system libraries
+        if: ${{ steps.browser-cache.outputs.cache-hit == 'true' }}
+        run: pnpm exec playwright install-deps chromium
+
       # Each check runs even after an earlier one failed, so one run reports
       # everything that is wrong rather than the first thing. They stay skipped
       # when the install fails, because then all four fail for that one reason.
@@ -64,6 +92,7 @@ jobs:
       # `pnpm test` builds the client first, because the Worker serves it through
       # the ASSETS binding and the smoke tests fetch it. The AI binding is the
       # only remote one and no test calls a model, so this needs no API token.
+      # It also runs every story in the Chromium installed above.
       - name: Test
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: pnpm test
