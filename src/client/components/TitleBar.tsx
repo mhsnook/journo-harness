@@ -34,18 +34,7 @@ export function TitleBar({
 				className,
 			)}
 		>
-			{back ? (
-				<button
-					type="button"
-					onClick={onBack}
-					className="-ml-1 flex items-center gap-1.5 rounded px-1 py-0.5 text-[0.8125rem] text-muted transition-colors hover:text-ink"
-				>
-					<span aria-hidden className="text-[0.9em] leading-none">
-						←
-					</span>
-					<span className="max-w-[16rem] truncate">{back}</span>
-				</button>
-			) : null}
+			<BackButton back={back} onBack={onBack} />
 			<h2 className="truncate text-[0.9375rem] leading-tight font-medium text-ink">
 				{title}
 			</h2>
@@ -54,5 +43,30 @@ export function TitleBar({
 			) : null}
 			<div className="ml-auto flex shrink-0 items-center gap-2">{actions}</div>
 		</header>
+	)
+}
+
+export interface BackButtonProps {
+	/** Where it goes back to, named. Nothing renders without one. */
+	back?: string
+	onBack?: () => void
+}
+
+/** The back affordance both bars use, so a writer leaves an Article the same way
+ * they leave the table. */
+export function BackButton({ back, onBack }: BackButtonProps) {
+	if (back === undefined) return null
+
+	return (
+		<button
+			className="-ml-1 flex shrink-0 items-center gap-1.5 rounded px-1 py-0.5 text-[0.8125rem] text-muted transition-colors hover:text-ink"
+			onClick={onBack}
+			type="button"
+		>
+			<span aria-hidden className="text-[0.9em] leading-none">
+				←
+			</span>
+			<span className="max-w-[16rem] truncate">{back}</span>
+		</button>
 	)
 }

@@ -1,55 +1,60 @@
+import { type ArticleEntry, articleTitle, statusLabel } from '../../shared/article'
 import { cx } from '../lib/cx'
-import type { Article } from '../mock/content'
+import { shortDate } from '../lib/when'
 import { Chip } from './Chip'
-import { ProgressBar } from './ProgressBar'
 
 export interface ArticleCardProps {
-	article: Article
-	/** `card` is the desk's active tile; `column` is the board's smaller tile. */
+	article: ArticleEntry
+	/** `card` is the index's tile; `column` is the Board View's smaller one. */
 	variant?: 'card' | 'column'
+	/** Renders the tile as a button. Omit it and the tile is a static one. */
+	onOpen?: (id: string) => void
 	className?: string
 }
 
 /**
- * An in-progress article. The progress bar is deliberately unlabelled — the
- * status word underneath is the honest signal; the bar is just a shape.
+ * One Article, as the index knows it. The index carries a title, a status, and
+ * two timestamps, so that is what a tile shows — nothing here reaches into an
+ * Article Agent to count words or read the Plan.
+ *
+ * The date is the day the Article was started. The index has no honest "last
+ * worked on": a Plan edit goes to the Article Agent and never touches the table
+ * this row comes from.
  */
-export function ArticleCard({ article, variant = 'card', className }: ArticleCardProps) {
+export function ArticleCard({
+	article,
+	variant = 'card',
+	onOpen,
+	className,
+}: ArticleCardProps) {
 	const compact = variant === 'column'
+	const Tag = (onOpen ? 'button' : 'article') as 'button'
 
 	return (
-		<article
+		<Tag
+			{...(onOpen ? { type: 'button' as const, onClick: () => onOpen(article.id) } : {})}
 			className={cx(
-				'flex flex-col gap-2 rounded-lg border border-edge bg-surface p-3 transition-colors hover:border-ink/25',
+				'flex flex-col items-start gap-2 rounded-lg border border-edge bg-surface p-3 text-left transition-colors',
+				onOpen && 'hover:border-ink/25',
 				compact ? 'gap-1.5 p-2.5' : 'w-[10.5rem]',
 				className,
 			)}
 		>
 			<h3
 				className={cx(
-					'leading-snug font-semibold text-ink',
+					'w-full leading-snug font-semibold break-words text-ink',
 					compact ? 'text-[0.8125rem]' : 'text-[0.875rem]',
+					article.title.trim() === '' && 'text-faint',
 				)}
 			>
-				{article.title}
+				{articleTitle(article)}
 			</h3>
-			{!compact ? (
-				<p className="line-clamp-2 text-[0.75rem] leading-relaxed text-muted">
-					{article.blurb}
-				</p>
-			) : null}
-			<ProgressBar value={article.progress} className="mt-0.5" />
-			<p className="text-[0.6875rem] text-faint">{article.statusLabel}</p>
-			{article.voice || article.chips?.length ? (
-				<div className="flex flex-wrap gap-1.5">
-					{article.voice ? <Chip variant="outline">{article.voice}</Chip> : null}
-					{article.chips?.map((chip) => (
-						<Chip key={chip} variant={article.needsAttention ? 'accent' : 'default'}>
-							{chip}
-						</Chip>
-					))}
-				</div>
-			) : null}
-		</article>
+			<div className="flex flex-wrap items-center gap-1.5">
+				<Chip variant="outline">{statusLabel[article.status]}</Chip>
+				<span className="text-[0.6875rem] text-faint">
+					started {shortDate(article.createdAt)}
+				</span>
+			</div>
+		</Tag>
 	)
 }

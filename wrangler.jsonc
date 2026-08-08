@@ -33,6 +33,22 @@
     },
   ],
 
+  // The article index, read and written through the Hono routes in this same
+  // Worker — architecture.md §9. Its schema lives in ./migrations, which
+  // `pnpm db:migrate` applies to the local D1 and `pnpm db:migrate:remote` to
+  // the deployed one. The test suite applies the same files itself.
+  //
+  // database_id below is a placeholder. Run `wrangler d1 create journo-harness`
+  // and paste the id it prints; `wrangler deploy` fails until you do.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "journo-harness",
+      "database_id": "3372f1ea-f9ae-4c52-b918-d1599d5af8f8",
+      "migrations_dir": "./migrations",
+    },
+  ],
+
   // Inference runs on Cloudflare over this binding, and the model is named in
   // llm/model.ts and nowhere else. Workers Paid plan is required.
   //

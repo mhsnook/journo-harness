@@ -5,6 +5,7 @@ import { routeAgentRequest } from 'agents'
 import { Hono } from 'hono'
 
 import { ArticleAgent } from './article-agent'
+import { articleIndex } from './article-index'
 
 // Re-exported so the Durable Object class ships with the Worker bundle.
 export { ArticleAgent }
@@ -12,6 +13,10 @@ export { ArticleAgent }
 const app = new Hono<{ Bindings: Env }>()
 
 app.get('/api/health', (c) => c.json({ ok: true }))
+
+// The article index, over D1 — architecture.md §9. Mounted ahead of the
+// catch-all below, which Hono would otherwise match first.
+app.route('/api/articles', articleIndex)
 
 // routeAgentRequest maps /agents/article-agent/:name onto the ArticleAgent
 // binding — the path segment is the binding name in kebab-case.

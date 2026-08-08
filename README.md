@@ -12,6 +12,7 @@ Node 22 and pnpm 11.
 
 ```sh
 pnpm install
+pnpm db:migrate # the article index's schema, into the local D1. Once per clone
 pnpm dev        # the client and the Worker together, on http://localhost:5173
 pnpm storybook  # the components and screens on their own, on http://localhost:6006
 pnpm test       # builds the client, then runs every project
@@ -25,6 +26,9 @@ pnpm format     # oxfmt, in place. `pnpm format:check` reports instead
 `pnpm dev` runs the Worker in workerd through the Cloudflare Vite plugin, so the bindings
 behave as they do in production. Storybook loads the same Vite config without the Worker or
 the router, so a story renders components alone.
+
+Run `pnpm db:migrate` again whenever a file lands in `migrations/`. It is local only; the
+test suite applies the same files itself, so `pnpm test` needs nothing set up.
 
 ### Running the stories
 
@@ -53,6 +57,14 @@ CF_REMOTE_BINDINGS=true pnpm dev
 
 ### Deploying
 
+The article index needs a D1 database of its own. Create it once, paste the id it prints
+into `database_id` in `wrangler.jsonc`, and apply the schema:
+
+```sh
+pnpm wrangler d1 create journo-harness
+pnpm db:migrate:remote
+```
+
 ```sh
 pnpm deploy     # builds the client, then wrangler deploy
 ```
@@ -79,16 +91,20 @@ Access gate, and requiring the header would make the app unrunnable in developme
 | ----------------------------- | --------------------------------------------------------------------- |
 | `src/client/routes/`          | TanStack Router routes, one file each                                 |
 | `src/client/components/`      | The primitives: `Frame`, `PanelRail`, `Chip`, `ReferenceCard`, …      |
+| `src/client/articles/`        | The Articles Area: the index over HTTP, the list, and the Board View  |
+| `src/client/article/`         | One Article screen: its four Panels, its rail, and its title copy     |
 | `src/client/plan/`            | The Plan Panel: its op builders, its writer, and its fields           |
 | `src/client/screens/`         | The wireframed screens, built against mock data                       |
 | `src/client/styles/theme.css` | The Tailwind v4 `@theme` tokens                                       |
 | `src/server/`                 | The Hono Worker entry and the `ArticleAgent` Durable Object           |
 | `src/server/llm/`             | The model boundary, the Chat turn's prompt pack, and the tools        |
+| `migrations/`                 | The article index's D1 schema, applied by `pnpm db:migrate`           |
 | `test/`                       | Three of the four Vitest projects: `shared`, `client`, and `worker`   |
 | `.storybook/`                 | Storybook's config, and the layout invariants the stories are held to |
 | `docs/`                       | The architecture document, the ADRs, and [the UI notes](./docs/ui.md) |
 
-The screens are wireframes with nothing wired to them. They are superseded one at a time as
-the routes that replace them land, so treat them as reference rather than as a library. The
-Plan Panel is the first one wired: `src/client/plan/` holds it, and the screens now render
-the same Plan through the same components.
+The screens are wireframes, and each is superseded as the route that replaces it lands, so
+treat them as reference rather than as a library. A wired screen renders the live component
+against mock data rather than a copy of it: `1(a) Articles` and `1(b) Board` draw the same
+`ArticleList` and `BoardView` the routes do, and every screen holding a Plan renders it
+through the Plan Panel's own components.

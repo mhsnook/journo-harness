@@ -14,7 +14,7 @@ export function ArchiveScreen() {
 	return (
 		<Frame width={520}>
 			<TitleBar
-				back="Desk"
+				back="Articles"
 				title="Submitted & published"
 				actions={<span className="text-[0.75rem] text-faint">9 published</span>}
 			/>

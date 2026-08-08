@@ -1,12 +1,12 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 
-import { ArticleList } from '../articles/ArticleList'
+import { BoardView } from '../articles/BoardView'
 import { useArticleIndex } from '../articles/useArticles'
 
-/** The Articles Area, as a list. `/board` is the same rows by status. */
-export const Route = createFileRoute('/')({ component: ArticlesRoute })
+/** The Board View: the same unarchived Articles the list shows, by status. */
+export const Route = createFileRoute('/board')({ component: BoardRoute })
 
-function ArticlesRoute() {
+function BoardRoute() {
 	const navigate = useNavigate()
 	const index = useArticleIndex()
 
@@ -15,14 +15,13 @@ function ArticlesRoute() {
 
 	return (
 		<div className="flex h-dvh flex-col bg-surface text-ink">
-			<ArticleList
+			<BoardView
 				articles={index.articles}
 				failure={index.failure}
 				loading={index.loading}
-				onBoard={() => navigate({ to: '/board' })}
+				onBack={() => navigate({ to: '/' })}
 				onNew={() => index.create(open)}
 				onOpen={open}
-				onRestore={(id) => index.edit(id, { archived: false })}
 			/>
 		</div>
 	)

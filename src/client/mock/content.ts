@@ -1,80 +1,84 @@
+import type { ArticleEntry } from '../../shared/article'
 import type { Offer } from '../../shared/offer'
 import type { OutlineNode, Plan } from '../../shared/plan'
 
 /**
  * Sample content for the showcase.
  *
- * None of this is wired to anything — it exists so the components can be read
- * as a real product rather than as grey boxes. The Plan below is the exception
- * and carries the real schema, because the Plan Panel is wired: the showcase
- * and the app render one Plan through one set of components. Everything still
- * typed here is a sketch, and each one is replaced as its ticket lands.
+ * Most of this is wired to nothing — it exists so the components can be read as
+ * a real product rather than as grey boxes. The Plan and the article index are
+ * the exceptions and carry the real schemas, because the Panels and the two
+ * Views that render them are wired: the showcase and the app draw one Plan and
+ * one list through one set of components. Everything typed here in a shape of
+ * its own is a sketch, and each is replaced as its ticket lands.
  */
 
-export interface Article {
-	id: string
-	title: string
-	blurb: string
-	status: 'planning' | 'drafting' | 'self-edit' | 'submitted' | 'published'
-	statusLabel: string
-	progress: number
-	voice?: string
-	chips?: string[]
-	needsAttention?: boolean
-}
-
-export const activeArticles: Article[] = [
+/**
+ * The article index, in the shape the D1 table holds — `src/shared/article`.
+ * The Articles Area and the Board View render these through the same components
+ * the live routes use, so a change to the columns breaks the showcase rather
+ * than letting it drift.
+ *
+ * Timestamps are written out rather than computed off `Date.now()`, so every
+ * story renders the same dates on every run.
+ */
+export const articleIndex: ArticleEntry[] = [
 	{
 		id: 'batteries',
 		title: 'The Long Tail of Batteries',
-		blurb: 'What happens to a cell after the warranty runs out, and who is counting.',
 		status: 'drafting',
-		statusLabel: 'drafting',
-		progress: 0.62,
-		voice: 'wry',
-		chips: ['3 notes'],
+		createdAt: Date.UTC(2026, 4, 12),
+		updatedAt: Date.UTC(2026, 6, 30),
+		archivedAt: null,
 	},
 	{
 		id: 'cities',
 		title: 'Why Cities Stopped Building',
-		blurb: 'Permitting is not a queue. It is a series of small, reasonable refusals.',
 		status: 'planning',
-		statusLabel: 'planning chat',
-		progress: 0.2,
-		chips: ['12 refs'],
+		createdAt: Date.UTC(2026, 6, 2),
+		updatedAt: Date.UTC(2026, 6, 28),
+		archivedAt: null,
 	},
 	{
 		id: 'slow-software',
 		title: 'Notes on Slow Software',
-		blurb: 'In praise of programs that do one thing and then stop.',
 		status: 'self-edit',
-		statusLabel: 'self-edit · round 2',
-		progress: 0.95,
-		chips: ['review ready'],
-		needsAttention: true,
+		createdAt: Date.UTC(2026, 2, 4),
+		updatedAt: Date.UTC(2026, 6, 21),
+		archivedAt: null,
 	},
-]
-
-export const olderDrafts = [
 	{
-		id: 'd1',
+		id: 'grid',
 		title: 'The Quiet Part of the Grid',
-		note: 'stalled at §2',
-		touched: '4 mar',
+		status: 'done',
+		createdAt: Date.UTC(2026, 0, 19),
+		updatedAt: Date.UTC(2026, 5, 6),
+		archivedAt: null,
 	},
 	{
-		id: 'd2',
+		id: 'untitled',
+		title: '',
+		status: 'planning',
+		createdAt: Date.UTC(2026, 6, 31),
+		updatedAt: Date.UTC(2026, 6, 31),
+		archivedAt: null,
+	},
+	{
+		id: 'logistics',
 		title: 'Everyone Is a Logistics Company',
-		note: 'plan only',
-		touched: '19 feb',
+		status: 'drafting',
+		createdAt: Date.UTC(2025, 10, 3),
+		updatedAt: Date.UTC(2026, 1, 19),
+		archivedAt: Date.UTC(2026, 1, 19),
 	},
 	{
-		id: 'd3',
+		id: 'dock',
 		title: 'A Short History of the Loading Dock',
-		note: 'draft 1',
-		touched: '30 jan',
+		status: 'done',
+		createdAt: Date.UTC(2025, 8, 30),
+		updatedAt: Date.UTC(2026, 0, 30),
+		archivedAt: Date.UTC(2026, 0, 30),
 	},
-	{ id: 'd4', title: 'Against the Roadmap', note: 'plan only', touched: '12 jan' },
 ]
 
 export const publishedArticles = [

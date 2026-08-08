@@ -28,7 +28,7 @@ export interface GroupHeadingProps {
 
 /**
  * A run-on heading: label, count, a hairline that eats the remaining width,
- * then an optional link. Used for every list on the desk and in the plan.
+ * then an optional link. Used for every list in the Articles Area and in the Plan.
  */
 export function GroupHeading({ children, count, action, className }: GroupHeadingProps) {
 	return (

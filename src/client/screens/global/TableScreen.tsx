@@ -48,7 +48,7 @@ export function TableScreen() {
 	return (
 		<Frame width={620}>
 			<TitleBar
-				back="Desk"
+				back="Articles"
 				title="All articles"
 				actions={
 					<>

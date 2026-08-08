@@ -7,11 +7,14 @@ data, so the interface can be reviewed and argued with before it is wired up.
 pnpm storybook        # http://localhost:6006
 ```
 
-The stories are numbered to match the wireframe deck — `1(a) Desk`, `2(e) The plan on its
-own`, `4(c) Notes sent to chat` — so a screen can be found from the deck and the other way
-round. Screens are superseded as the routes that replace them land, so none is worth
-preserving out of politeness. The components live in the app rather than in a package of
-their own, which is what lets Tailwind scan them with no configuration.
+The stories are numbered to match the wireframe deck — `1(a) Articles`, `2(e) The plan on
+its own`, `4(c) Notes sent to chat` — so a screen can be found from the deck and the other
+way round. A screen keeps its number when the route that replaces it lands and its name
+changes to `context.md`'s word: the deck's "Desk" is the Articles Area. Screens are
+superseded as those routes arrive, so none is worth preserving out of politeness, and a
+wired one renders the live component against mock data rather than a copy of it. The
+components live in the app rather than in a package of their own, which is what lets
+Tailwind scan them with no configuration.
 
 The design rules live in Storybook, where they render against the components they govern:
 the accent rule is in `src/client/foundations/Accent.mdx`.

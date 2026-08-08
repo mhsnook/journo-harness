@@ -45,7 +45,7 @@ export function SettingsShell({
 	return (
 		<Frame width={width}>
 			<TitleBar
-				back="Desk"
+				back="Articles"
 				title="Writer settings"
 				actions={TABS.map((name) => (
 					<Chip key={name} variant={name === tab ? 'solid' : 'outline'} interactive>
