@@ -9,8 +9,9 @@ import { defineConfig } from 'vitest/config'
 // the time a worker test takes.
 //
 // The client project holds the Plan Panel's arithmetic — its op builders and
-// its debounced writer — which is pure TypeScript. Nothing here renders a
-// component, so there is no DOM environment to configure.
+// its debounced writer — plus the story smoke test, which renders every story
+// to a string. `renderToString` needs no DOM, so there is still no environment
+// to configure here.
 export default defineConfig({
 	test: {
 		projects: [

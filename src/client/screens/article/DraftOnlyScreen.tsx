@@ -13,7 +13,7 @@ export function DraftOnlyScreen() {
 	return (
 		<Frame width={640}>
 			<ArticleBar title={ARTICLE_TITLE} open={['draft']} status="esc" divided={false} />
-			<FrameBody className="min-h-[19rem]">
+			<FrameBody className="h-[19rem]">
 				<DraftSurface paragraphs={draftParagraphs} caret />
 				<div className="flex justify-end px-5 pb-4">
 					<NoteDot count={3} />

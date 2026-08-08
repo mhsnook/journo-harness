@@ -119,29 +119,32 @@ plan: {
   one walk, so no two Panels can number a Section differently.
 - **References are flat with an optional `nodeId`**, so an Accepted Reference can sit at a
   Section or nowhere yet.
-- **Every Reference is a Link or a Quote**, and Reference is the umbrella rather than a
-  type of its own. One structure: a pulled passage, an attribution, or both, with at least
-  one present. The type is **stored, not derived from the text**, so an Offer and the
-  Reference it was Accepted into carry one answer and the Offer ledger and the Plan Panel
-  cannot label an item differently. A Quote carries a text; a Link may carry one without
-  being a Quote. Amended in [ADR 0002](./adr/0002-the-plan-data-model.md).
-- **Voice replaces; Adjectives compose.** One Voice applies at a time and the nearest Scope
-  wins outright. Adjectives accumulate. Resolution runs House, then Article, then
-  Section, **at read time**. A Section's ancestors take part in that same order, so a Subsection
-  under a somber middle is somber unless it says otherwise.
-- **The word-count total is stored and nothing is derived.** The parts may disagree with the
-  whole; the gap is information. Auto-distributing the remainder is rejected.
-- **One spelling per state.** A field that may be absent says "nothing here" by being absent,
-  and never also by an empty string or an empty list — the blob is written whole, compared
-  whole-field by a Proposal's `expected`, and sent whole in every prompt pack, so a second
-  spelling is a second Plan for the same content. Three fields carry their key always and say
-  "nothing here" with a value: a Reference's `nodeId`, which is null until it is placed, the
-  Article's `adjectives`, and a Section's `children`, both of them the empty list. A
-  Section's own `adjectives` is the other way round, and says it by being absent.
+- **References are type Link or Quote**, and Reference is the umbrella over either type. The
+  type is **stored, not derived from the text**, so an Offer and the Reference it was
+  Accepted into carry one answer and the Offer ledger and the Plan Panel label them the same
+  way. A Quote carries a text; a Link may carry one without being a Quote. Amended in
+  [ADR 0002](./adr/0002-the-plan-data-model.md).
+- **Voice cascades; Adjectives compose.** Both resolve down the same path — House, then
+  Article, then Section, **at read time** — and they differ when two Scopes each state one.
+  The nearest Voice wins outright. Adjectives accumulate instead: a "slow" Section inside a
+  "fast" Article carries both, and the resolved list runs widest first, so the nearest lands
+  last and reads as the strongest. Restating a term moves it to the end, which is how the
+  writer says it again for emphasis.
+- **The word-count total is stored rather than derived/summed.** The parts may disagree with
+  the whole; the gap is information about under/over allocation.
+- **One spelling per state.** A field that may be absent says "nothing here" by being
+  absent, and not also by an empty string or an empty list — the blob is written whole,
+  compared whole-field by a Proposal's `expected`, and sent whole in every prompt pack, so
+  two Plans that mean the same thing can differ byte for byte and an `expected` that should
+  match will not. The schema enforces this today: an empty `adjectives` on a Section is
+  refused. Three fields carry their key always and say "nothing here" with a value: a
+  Reference's `nodeId`, which is null until it is placed, the Article's `adjectives`, and a
+  Section's `children`, both of them the empty list. A Section's own `adjectives` is the
+  other way round, and says it by being absent.
 
 **The schema guards client writes.** `validateStateChange` parses the whole Plan on every
-write, and nothing the model emits ever goes through it — the Chat proposes and the client
-applies, so the blob has exactly one writer. What the model does meet are the **piece**
+write, and the model's outputs do not go through it — the Chat proposes and the client
+applies, so the blob has only client writes. What the model does meet are the **piece**
 schemas, `outlineNodeSchema`, `referenceSchema`, and `sourceSchema`, reused inside a
 Proposal's op payloads. It lives in `src/shared/plan/` with the Scope resolver and the
 word-count arithmetic.
@@ -160,15 +163,17 @@ relief valve is moving References into SQLite rows, which is the phase 2 move an
 
 ## 5. Offers and the Ledger
 
-The Chat turns up **Offers** — Links and Quotes — as SQLite rows in the Article Agent.
-Each carries a disposition: **Undecided**, **Accepted**, or **Declined**, and Declining is
-restorable. The **Ledger** is a View over Offers, not a store.
+The Chat turns up Offers — Links and Quotes — as SQLite rows in the Article Agent. The
+**Ledger** is a View over Offers in the Chat Panel. Each Offer carries a disposition:
+**Undecided**, **Accepted**, or **Declined** (Declining is restorable).
+
+**The Ledger belongs to the Chat Panel and doesn't read the Plan.** Its data model and its
+visual representation should both be understood to relate to the Chat Panel itself.
+Its groupings show the three dispositions; when the writer Accepts an offer, it sends the
+Reference over to the Plan Panel; then it belongs to the Plan, where it becomes an editable
+record carrying its Provenance (rule 5) back to the original Offer.
 
 Offers are flat. Two Quotes from one publication are two Offers.
-
-Accepting copies the Offer into the Plan as a new editable record carrying its Provenance —
-rule 5. The cross-store half of the View is `src/shared/ledger.ts`, derived on read and
-holding nothing of its own; reading the Plan half alone is `src/client/plan/references.ts`.
 
 **The research tool carries an `execute`**, where the Proposal tool does not. An Offer is an
 inert row rather than something the writer rules on mid-turn, so suspending the call would
@@ -184,15 +189,26 @@ rather than writing a second one, still carrying the disposition the writer gave
 Asking whether an Offer is already in the Plan runs on the Provenance instead: the writer
 edits their copy, and content stops matching the moment they do.
 
-**Accepting is two writes against two stores, and nothing makes them atomic.**
-`setOfferDisposition` over RPC, then a `createReference` op through the applier like every
-other Plan edit. The row goes first, because what it returns is what the copy is built
-from. If the second write never lands, the Offer is
-Accepted and the Plan holds nothing — a **stranded** Offer, which is not the Ledger's
-"Accepted, no Section yet" group; that group is a Reference carrying `nodeId: null`. The
-Provenance pointer is what finds it: an Accepted Offer whose id appears in no
-`provenance.offerId`. The Ledger shows it and the writer re-adds, which is the second write
-on its own. No reconciliation pass, and nothing atomic to build.
+**Accepting is two writes against two stores, and nothing makes them atomic. The copy goes
+first.** A `createReference` op through the applier like every other Plan edit, then
+`setOfferDisposition` over RPC. `referenceFromOffer` reads what the Offer says and not what
+the writer ruled, so the copy needs nothing the ruling returns and the order is free to be
+this way round.
+
+**It is this way round so the failure does not outlive the click.** The Plan write is local
+and the RPC is the one that can fail, so what a half-done Accept leaves is a copy in the
+Plan and a row still reading Undecided. The writer sees an unticked row, Accepts again, and
+both halves are right: `acceptOffer` follows the Provenance, finds the copy, and builds no
+op, so the retry sends the ruling and nothing else. Nothing to reconcile, nothing to show,
+and no state that persists waiting to be noticed.
+
+The other order buys the opposite. The row would read Accepted with the Plan holding
+nothing — invisible on the Ledger, unfixable from it, and needing a group and a re-add of
+its own to get back out. That was the earlier design, and the group it needed was the
+Ledger reading the Plan.
+
+A Reference sitting at no Section is a different thing entirely, and an ordinary one: the
+Plan Panel lists it and its Section reads "not placed".
 
 **The writer pastes their own References straight into the Plan**, and those carry
 `provenance: { type: 'writer' }` rather than an Offer id. They never enter the Ledger: an
@@ -200,8 +216,9 @@ Offer is something the Chat turned up and handed over to rule on, and there is n
 rule on in a passage the writer typed.
 
 **One Offer becomes one Reference**, and `planSchema` refuses a Plan carrying two copies
-of one. §5 leans on it, `referenceForOffer` answers with the first match on the strength of
-it, and a second copy would quietly stop the Ledger reporting the Offer as stranded.
+of one. `referenceForOffer` answers with the first match on the strength of it, and that
+answer is what makes a retried Accept build no op — so a second copy would turn every retry
+into another copy.
 
 **A Proposal is not an Offer.** The writer rules on both the same way, but a Proposal lives
 in the Chat turn that made it, goes Stale, and leaves no record, where an Offer is a row that
@@ -374,6 +391,10 @@ already reactive through Article Agent state and, at 1b, party-db's TanStack DB 
 
 **The Article screen has four Panels** — Chat, Plan, Draft, Notes — which become tabs on a
 narrow screen. The **Areas** are Articles (with Board and Archive Views), House, and Team.
+
+**Each Panel scrolls its own Y.** Reading down the Plan does not move the Chat beside it.
+The Panel is the scroll container and the Frame body gives it the height to scroll within,
+so a Panel header that should stay put is `sticky` inside its own Panel.
 
 **The Plan Panel's edits are ops, and the applier applies them.** A field the writer types
 in builds the same op a Proposal would carry, `src/client/plan/edits.ts` reads its

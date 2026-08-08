@@ -12,7 +12,7 @@ export function PlanAndDraftScreen() {
 	return (
 		<Frame width={720}>
 			<ArticleBar title={ARTICLE_TITLE} open={['plan', 'draft']} status="draft 1" />
-			<FrameBody row className="min-h-[19rem]">
+			<FrameBody row className="h-[19rem]">
 				<PlanRail
 					outline={plan.outline}
 					written={[300, 700, 520, 0]}

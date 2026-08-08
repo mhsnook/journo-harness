@@ -43,14 +43,15 @@ export function sourceLine(source: Source | undefined): string {
 	return [...attribution(source), source?.url].filter(Boolean).join(' · ')
 }
 
-/** Falls back to the attribution rather than the text, which is the passage. */
+/** The line under `referenceName`, carrying what the heading did not say: the
+ * title under a passage, and the rest of the record under a title. A Link is
+ * headed by its own title, so naming it again would print it twice. */
 export function citation(content: ReferenceContent): string {
-	return content.source?.title ?? sourceLine(content.source)
-}
+	const heading = referenceName(content)
 
-/** Distinct from a stranded Offer, which is in the Plan nowhere at all — §5. */
-export function unplacedReferences(plan: Plan): Reference[] {
-	return plan.references.filter((reference) => reference.nodeId === null)
+	return [content.source?.title, ...attribution(content.source), content.source?.url]
+		.filter((part) => part !== undefined && part !== heading)
+		.join(' · ')
 }
 
 /** Every Reference, numbered. */

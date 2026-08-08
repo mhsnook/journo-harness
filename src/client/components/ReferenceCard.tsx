@@ -9,14 +9,11 @@ export interface ReferenceCardProps {
 	offer: Offer
 	variant?: 'offer' | 'ledger'
 	compact?: boolean
-	/** False is stranded, and the card offers the re-add. */
-	inThePlan?: boolean
 	/** Waits on the House, at 1b. */
 	favourite?: 'author' | 'publication'
 	onAccept?: () => void
 	onDecline?: () => void
 	onRestore?: () => void
-	onAddToPlan?: () => void
 	className?: string
 }
 
@@ -34,16 +31,15 @@ export function ReferenceCard({
 	offer,
 	variant = 'offer',
 	compact = false,
-	inThePlan = true,
 	favourite,
 	onAccept,
 	onDecline,
 	onRestore,
-	onAddToPlan,
 	className,
 }: ReferenceCardProps) {
 	const declined = offer.disposition === 'declined'
 	const accepted = offer.disposition === 'accepted'
+	const ruled = accepted || declined
 	const heading = referenceName(offer)
 	// A Quote with no source is its own heading; do not print it twice.
 	const passage = offer.text !== undefined && offer.text !== heading
@@ -57,7 +53,13 @@ export function ReferenceCard({
 			)}
 		>
 			{variant === 'ledger' && !declined ? (
-				<Check checked={accepted} label={`Accept ${heading}`} onChange={onAccept} />
+				// No handler once Accepted, which disables the tick: restoring undoes a
+				// Decline and nothing undoes an Accept, so there is no state to go back to.
+				<Check
+					checked={accepted}
+					label={`Accept ${heading}`}
+					onChange={accepted ? undefined : onAccept}
+				/>
 			) : null}
 			{variant === 'ledger' && declined ? (
 				<span className="label-meta mt-0.5 shrink-0">declined</span>
@@ -89,15 +91,10 @@ export function ReferenceCard({
 					{variant === 'ledger' && offer.disposition === 'undecided' ? (
 						<span className="text-[0.6875rem] text-faint">undecided</span>
 					) : null}
-					{accepted && !inThePlan ? (
-						<span className="text-[0.6875rem] text-faint">
-							Accepted, and not in the Plan
-						</span>
-					) : null}
 				</div>
 			</div>
 
-			{variant === 'offer' ? (
+			{variant === 'offer' && !ruled ? (
 				<div className="flex shrink-0 flex-col gap-1.5">
 					<Button size="sm" onClick={onAccept}>
 						Accept
@@ -107,14 +104,15 @@ export function ReferenceCard({
 					</Button>
 				</div>
 			) : null}
+			{/* A card in the Chat reports a ruling rather than offering it again.
+			    Declining one already Accepted would leave its copy in the Plan, and
+			    the Ledger is where a ruling is changed. */}
+			{variant === 'offer' && ruled ? (
+				<span className="label-meta mt-0.5 shrink-0">{offer.disposition}</span>
+			) : null}
 			{variant === 'ledger' && declined ? (
 				<Button size="sm" variant="link" className="self-start" onClick={onRestore}>
 					Restore
-				</Button>
-			) : null}
-			{variant === 'ledger' && accepted && !inThePlan ? (
-				<Button size="sm" variant="link" className="self-start" onClick={onAddToPlan}>
-					Add to the Plan
 				</Button>
 			) : null}
 		</article>

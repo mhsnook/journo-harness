@@ -18,7 +18,7 @@ export function NotesToChatScreen() {
 	return (
 		<Frame width={800}>
 			<ArticleBar title={ARTICLE_TITLE} open={['chat', 'plan']} status="after review 2" />
-			<FrameBody row className="min-h-[21rem]">
+			<FrameBody row className="h-[21rem]">
 				<Panel divider="right" className="gap-3">
 					<ChatMessage from="me">
 						<MetaLabel className="mb-1.5">4 accepted notes, pasted in</MetaLabel>

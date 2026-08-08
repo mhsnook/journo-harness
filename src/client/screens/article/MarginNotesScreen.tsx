@@ -13,7 +13,7 @@ export function MarginNotesScreen() {
 	return (
 		<Frame width={720}>
 			<ArticleBar title={ARTICLE_TITLE} open={['draft', 'notes']} status="§3" />
-			<FrameBody className="min-h-[19rem] gap-5 px-5 py-5">
+			<FrameBody className="h-[19rem] gap-5 px-5 py-5">
 				<div className="flex gap-5">
 					<div className="prose-draft min-w-0 flex-1">
 						<p className="text-[0.9375rem]">{draftParagraphs[0]}</p>

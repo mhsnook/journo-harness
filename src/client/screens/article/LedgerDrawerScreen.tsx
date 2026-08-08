@@ -5,41 +5,43 @@ import { ArticleBar } from '../../components/ArticleBar'
 import { Chip } from '../../components/Chip'
 import { EmptySlot } from '../../components/Field'
 import { Frame, FrameBody } from '../../components/Frame'
-import { MetaLabel } from '../../components/MetaLabel'
 import { Panel } from '../../components/Panel'
-import { QuoteRow } from '../../components/QuoteRow'
 import { ReferenceCard } from '../../components/ReferenceCard'
 import { useArticle } from '../../lib/article'
 import { useOfferLedger } from '../../lib/useOfferLedger'
 import { ARTICLE_TITLE } from '../../mock/content'
-import { outlineEntries, sectionLabel } from '../../plan/outline'
-import { referenceName, referencesAt, unplacedReferences } from '../../plan/references'
+import { PlanPanel } from '../../plan/PlanPanel'
 
 type Filter = 'all' | Disposition
 
 const filters: Filter[] = ['all', 'undecided', 'accepted', 'declined']
 
 /**
- * 2(f) — The Offer ledger, as two equal halves: what has been offered, and the
- * Plan it goes into. It is the same list at every stage, which is why there is
- * no separate triage screen.
+ * 2(f) — The Offer ledger, open over the Chat.
+ *
+ * The Ledger is a view on the Chat Panel and covers only that half: it is the
+ * record of what the Chat offered and what the writer ruled, and the `close ×`
+ * is on it because it is the half that opened. Accepting sends the Reference
+ * across.
+ *
+ * The Plan Panel beside it is the ordinary one, rendered here so the screen
+ * reads as the writer meets it. Nothing on this screen reaches into it — where
+ * a Reference sits, and which sit nowhere yet, are its own to show.
  */
 export function LedgerDrawerScreen() {
-	const { plan } = useArticle()
-	const { ledger, loading, failure, accept, decline, restore, addToPlan } =
-		useOfferLedger()
+	const { plan, edit } = useArticle()
+	const { ledger, loading, failure, accept, decline, restore } = useOfferLedger()
 	const [filter, setFilter] = useState<Filter>('all')
 
 	const shown = filter === 'all' ? ledger.offers : ledger.byDisposition[filter]
-	const stranded = new Set(ledger.stranded.map((offer) => offer.id))
-	const unplaced = unplacedReferences(plan)
 
 	return (
 		<Frame width={820}>
 			<ArticleBar title={ARTICLE_TITLE} open={['chat', 'plan']} status="ledger" />
-			<FrameBody row className="min-h-[22rem]">
+			<FrameBody row className="h-[22rem]">
 				<Panel divider="right" padded={false}>
-					<header className="flex items-center gap-2.5 border-b border-edge bg-sunk px-3.5 py-2.5">
+					{/* Sticky: the Panel scrolls under it, and `close ×` has to stay reachable. */}
+					<header className="sticky top-0 z-10 flex items-center gap-2.5 border-b border-edge bg-sunk px-3.5 py-2.5">
 						<h3 className="text-[0.875rem] font-semibold text-ink">Offered</h3>
 						<span className="text-[0.75rem] text-faint">
 							{ledger.counts.all} · {ledger.counts.accepted} Accepted
@@ -72,11 +74,9 @@ export function LedgerDrawerScreen() {
 								offer={offer}
 								variant="ledger"
 								compact
-								inThePlan={!stranded.has(offer.id)}
 								onAccept={() => accept(offer)}
 								onDecline={() => decline(offer)}
 								onRestore={() => restore(offer)}
-								onAddToPlan={() => addToPlan(offer)}
 							/>
 						))}
 						{!loading && shown.length === 0 ? (
@@ -88,64 +88,7 @@ export function LedgerDrawerScreen() {
 					</div>
 				</Panel>
 
-				<Panel variant="sunk" padded={false}>
-					<header className="flex items-center gap-2.5 border-b border-edge px-3.5 py-2.5">
-						<h3 className="text-[0.875rem] font-semibold text-ink">In the Plan</h3>
-						<span className="text-[0.75rem] text-faint">
-							{plan.references.length} References
-						</span>
-					</header>
-					<div className="flex flex-col gap-4 p-3.5">
-						{outlineEntries(plan.outline).map((entry) => {
-							const held = referencesAt(plan, entry.node.id)
-
-							return (
-								<div key={entry.node.id} className="flex flex-col gap-2">
-									<MetaLabel>
-										{sectionLabel(entry)} · {entry.node.title}
-									</MetaLabel>
-									{held.length === 0 ? (
-										<EmptySlot className="ml-2">
-											Place an Accepted Reference here
-										</EmptySlot>
-									) : (
-										<div className="flex flex-col gap-2.5 pl-2">
-											{held.map(({ reference }) => (
-												<QuoteRow
-													key={reference.id}
-													reference={reference}
-													section={sectionLabel(entry)}
-													showUsage
-												/>
-											))}
-										</div>
-									)}
-								</div>
-							)
-						})}
-
-						{unplaced.length > 0 ? (
-							<div className="flex flex-col gap-1.5">
-								<MetaLabel count={unplaced.length}>Accepted, no Section yet</MetaLabel>
-								<p className="text-[0.75rem] text-muted">
-									{unplaced.map(referenceName).join(' · ')}
-								</p>
-							</div>
-						) : null}
-
-						{/* Not the group above, which is placed nowhere yet — §5. */}
-						{ledger.stranded.length > 0 ? (
-							<div className="flex flex-col gap-1.5">
-								<MetaLabel count={ledger.stranded.length}>
-									Accepted, and not in the Plan
-								</MetaLabel>
-								<p className="text-[0.75rem] text-muted">
-									{ledger.stranded.map(referenceName).join(' · ')}
-								</p>
-							</div>
-						) : null}
-					</div>
-				</Panel>
+				<PlanPanel plan={plan} edit={edit} />
 			</FrameBody>
 		</Frame>
 	)

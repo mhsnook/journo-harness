@@ -15,7 +15,7 @@ export function MidChatScreen() {
 	return (
 		<Frame width={800}>
 			<ArticleBar title={ARTICLE_TITLE} open={['chat', 'plan']} status="planning" />
-			<FrameBody row className="min-h-[24rem]">
+			<FrameBody row className="h-[24rem]">
 				<Panel divider="right" className="gap-3">
 					<ChatMessage from="me">
 						The process, then — but I want one developer in it so it isn't all

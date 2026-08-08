@@ -44,7 +44,7 @@ function EditablePlan({ start }: { start: Plan }) {
 
 	return (
 		<Frame width={520}>
-			<FrameBody>
+			<FrameBody className="h-[26rem]">
 				<PlanPanel edit={edit} plan={plan} refusal={refusal} />
 			</FrameBody>
 		</Frame>
@@ -148,9 +148,9 @@ export const G_LedgerPopover: Story = {
 				<LedgerPopoverScreen />
 			</MockArticle>
 			<Annotation>
-				The groups are the lifecycle and their order is fixed, so the Undecided pile
-				visibly shrinks as you work. Used waits on the Draft, which arrives at phase 2, so
-				a placed Reference reads Ready.
+				The groups are the three rulings and their order is fixed, so the Undecided pile
+				visibly shrinks as you work. It reads no Plan: once an Offer is Accepted, where
+				the Reference sits is the Plan Panel's to show.
 			</Annotation>
 		</div>
 	),
