@@ -70,7 +70,6 @@ export function useMockChat(start: UIMessage[]): MockChat {
 		onDecline: (call) => rule(call, false),
 		onAcceptOffer: ledger.accept,
 		onDeclineOffer: ledger.decline,
-		onRestoreOffer: ledger.restore,
 		onSend: (text) =>
 			setMessages((held) => [
 				...held,

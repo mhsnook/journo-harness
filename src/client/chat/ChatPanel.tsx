@@ -33,7 +33,6 @@ export interface ChatPanelProps {
 	onDecline: (call: ProposalCall) => void
 	onAcceptOffer: (offer: Offer) => void
 	onDeclineOffer: (offer: Offer) => void
-	onRestoreOffer: (offer: Offer) => void
 	failure?: string | null
 	placeholder?: string
 	/** Left of send — the Offer ledger toggle. */
@@ -53,7 +52,6 @@ export function ChatPanel({
 	onDecline,
 	onAcceptOffer,
 	onDeclineOffer,
-	onRestoreOffer,
 	failure = null,
 	placeholder,
 	leading,
@@ -72,7 +70,6 @@ export function ChatPanel({
 						onAcceptOffer={onAcceptOffer}
 						onDecline={onDecline}
 						onDeclineOffer={onDeclineOffer}
-						onRestoreOffer={onRestoreOffer}
 						plan={plan}
 						refusals={refusals}
 						rows={rows}
@@ -122,7 +119,6 @@ type TurnProps = {
 	onDecline: (call: ProposalCall) => void
 	onAcceptOffer: (offer: Offer) => void
 	onDeclineOffer: (offer: Offer) => void
-	onRestoreOffer: (offer: Offer) => void
 }
 
 function Turn({
@@ -134,7 +130,6 @@ function Turn({
 	onDecline,
 	onAcceptOffer,
 	onDeclineOffer,
-	onRestoreOffer,
 }: TurnProps) {
 	const from = message.role === 'user' ? 'me' : 'guide'
 
@@ -198,7 +193,6 @@ function Turn({
 									offer={offer}
 									onAccept={() => onAcceptOffer(offer)}
 									onDecline={() => onDeclineOffer(offer)}
-									onRestore={() => onRestoreOffer(offer)}
 								/>
 							))}
 							{found.length < recorded.length ? (

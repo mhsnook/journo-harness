@@ -5,6 +5,7 @@ import { z } from 'zod'
 import {
 	proposePlanChangeInput,
 	proposePlanChangeTool,
+	recordedOffersOutput,
 	recordOffersTool,
 } from '../../shared/chat'
 import { offerBatchSchema } from '../../shared/offer'
@@ -71,6 +72,9 @@ const recordOffers = tool({
 	].join('\n'),
 	// An object at the top level, like the Proposal tool's input.
 	inputSchema: z.strictObject({ offers: offerBatchSchema }),
+	// The Chat Panel parses this output to find the rows a turn recorded, and
+	// fails soft when it cannot — so bind both ends to the one schema.
+	outputSchema: recordedOffersOutput,
 	execute: async ({ offers }) => {
 		// The module is imported once; the instance is per turn.
 		const { agent } = getCurrentAgent<ArticleAgent>()

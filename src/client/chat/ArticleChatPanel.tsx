@@ -48,7 +48,6 @@ export function ArticleChatPanel({
 			onAcceptOffer={ledger.accept}
 			onDecline={chat.decline}
 			onDeclineOffer={ledger.decline}
-			onRestoreOffer={ledger.restore}
 			onSend={chat.send}
 			placeholder={placeholder}
 			plan={plan}

@@ -95,16 +95,19 @@ export function useArticleChat(agent: ArticleSocket): ChatHandle {
 		})
 	}
 
+	const waiting = waitingCount(messages)
+
 	return {
 		messages,
+		// A turn sent over an unanswered call is refused server-side — §11.
 		send: (text: string) => {
 			const said = text.trim()
-			if (said !== '') chat.sendMessage({ text: said })
+			if (said !== '' && waiting === 0) chat.sendMessage({ text: said })
 		},
 		accept: (call: ProposalCall) => rule(call, true),
 		decline: (call: ProposalCall) => rule(call, false),
 		busy: chat.isStreaming || chat.isRecovering || chat.status === 'submitted',
-		waiting: waitingCount(messages),
+		waiting,
 		refusals,
 		ledger,
 		failure: chat.error?.message ?? chat.connectionError?.message ?? null,
