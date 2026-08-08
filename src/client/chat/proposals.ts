@@ -9,7 +9,7 @@ import { z } from 'zod'
 
 import { proposePlanChangeInput } from '../../shared/chat'
 import type { Anchor, Plan, Proposal, ProposalOp, Refusal } from '../../shared/plan'
-import { outlineEntries, sectionLabel } from '../plan/outline'
+import { planNames } from '../plan/names'
 import { referenceName } from '../plan/references'
 
 /**
@@ -168,23 +168,7 @@ export function ruleProposal({ call, accepted, edit, refusal }: RulingOptions): 
  * card and the Outline cannot number one differently.
  */
 export function describeProposal(plan: Plan, ops: Proposal): string[] {
-	const named = new Map(
-		outlineEntries(plan.outline).map((entry) => [
-			entry.node.id,
-			entry.node.title === ''
-				? sectionLabel(entry)
-				: `${sectionLabel(entry)} ${entry.node.title}`,
-		]),
-	)
-	const section = (nodeId: string) =>
-		named.get(nodeId) ?? 'a Section the Plan does not carry'
-	const reference = (referenceId: string) => {
-		const held = plan.references.find((entry) => entry.id === referenceId)
-
-		return held === undefined
-			? 'a Reference the Plan does not carry'
-			: referenceName(held)
-	}
+	const { section, reference, scope } = planNames(plan)
 
 	// A structural op states exactly one of the two, so the branch not taken is
 	// the one the op left out — `afterId: null` is first child and
@@ -203,9 +187,6 @@ export function describeProposal(plan: Plan, ops: Proposal): string[] {
 		parentId === null ? 'last in the Outline' : `last inside ${section(parentId)}`
 	const firstIn = (parentId: string | null) =>
 		parentId === null ? 'first in the Outline' : `first inside ${section(parentId)}`
-
-	const scope = (nodeId: string | null) =>
-		nodeId === null ? 'the Article' : section(nodeId)
 
 	return ops.map((op) => describe(op))
 

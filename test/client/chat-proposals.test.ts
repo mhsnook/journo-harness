@@ -10,7 +10,12 @@ import {
 	waitingCalls,
 } from '../../src/client/chat/proposals'
 import { proposePlanChangeTool, recordOffersTool } from '../../src/shared/chat'
-import { applyProposal, type Plan, type Proposal } from '../../src/shared/plan'
+import {
+	applyProposal,
+	type Plan,
+	type Proposal,
+	type Refusal,
+} from '../../src/shared/plan'
 import { makePlan } from '../shared/plan-fixtures'
 
 /**
@@ -166,10 +171,13 @@ describe('ruling on a Proposal', () => {
 	})
 
 	it('declines with is_error and the refusal the Accept produced', () => {
-		const refusal = {
-			type: 'stale' as const,
+		const refusal: Refusal = {
+			type: 'stale',
+			reason: 'stale',
 			index: 0,
-			op: 'setTitle' as const,
+			op: 'setTitle',
+			subject: { of: 'article' },
+			other: null,
 			message: 'setTitle on the Article expected "a" and the Plan carries "b".',
 		}
 

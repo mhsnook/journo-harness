@@ -1,6 +1,7 @@
 import type { Plan, Refusal } from '../../shared/plan'
 import { Button } from '../components/Button'
 import { cx } from '../lib/cx'
+import { refusalText } from '../plan/refusalText'
 import { describeProposal, type ProposalCall } from './proposals'
 
 /**
@@ -61,7 +62,8 @@ export function ProposalCard({
 
 			{refusal === null ? null : (
 				<p className="rounded-md border border-accent-edge bg-accent-soft p-2 text-[0.75rem] text-accent-ink">
-					{refusal.message} Decline to send that back, or edit the Plan and Accept again.
+					{refusalText(plan, refusal)} Decline to send that back, or edit the Plan and
+					Accept again.
 				</p>
 			)}
 

@@ -11,6 +11,7 @@ import type { SectionAnchor } from './edits'
 import { addSection, setAdjectives, setTarget, setTitle, setVoice } from './edits'
 import { outlineEntries } from './outline'
 import { ReferenceList } from './ReferenceList'
+import { refusalText } from './refusalText'
 import { SectionRow } from './SectionRow'
 import { ToneFields } from './ToneFields'
 import { AllocationNote, TargetField } from './WordCount'
@@ -67,7 +68,7 @@ export function PlanPanel({
 		<Panel className={className} variant="sunk">
 			{refusal === null ? null : (
 				<p className="rounded-md border border-accent-edge bg-accent-soft p-2 text-[0.75rem] text-accent-ink">
-					{refusal.message}
+					{refusalText(plan, refusal)}
 				</p>
 			)}
 			{rejected === null ? null : (

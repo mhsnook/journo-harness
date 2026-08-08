@@ -312,6 +312,20 @@ where they cannot drift away from the union. It also parses the Plan it produces
 Proposal the Article Agent would reject is refused here, where there is a reason to show,
 rather than there, where there is none.
 
+**A refusal has two readers, and the applier writes for one of them.** `refusal.message` is
+the model's: a Declined Proposal sends it back, so it names the op and the ids and may run
+long. The writer's sentence is built at the edge from `refusal.reason` — a closed code
+naming exactly what went wrong — plus the records it is about, in
+`src/client/plan/refusalText.ts`. The Panel that shows it holds the Plan, so it can name a
+Section the way the Outline numbers it, where the applier only has an id.
+
+Two things follow. **One English string lives in `src/shared`**, aimed at a reader with no
+eyes, and it never needs translating — the model is taught in English by `llm/tools.ts`
+already. And the writer's half is a table over a closed union, so a second language is a
+second table rather than a sweep through the applier. `refusalText.ts` is total over
+`RefusalReason`, so a new refusal site stops it compiling until it says what the new one
+reads as.
+
 **The op payloads are strict, and a rejected tool call retries with the validation error.**
 The piece schemas the payloads reuse are `strictObject`, so a model that adds one field fails
 the whole tool call rather than having the field stripped. Stripping would produce a Proposal
