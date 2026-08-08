@@ -15,7 +15,7 @@ export function ReadyToDraftScreen() {
 	return (
 		<Frame width={780}>
 			<ArticleBar title={ARTICLE_TITLE} open={['chat', 'plan']} status="planning" />
-			<FrameBody row className="min-h-[21rem]">
+			<FrameBody row className="h-[21rem]">
 				<Panel divider="right" className="gap-3">
 					<p className="text-center text-[0.6875rem] text-faint">
 						↑ earlier in this chat

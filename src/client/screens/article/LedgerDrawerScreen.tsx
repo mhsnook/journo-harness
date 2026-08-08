@@ -38,9 +38,10 @@ export function LedgerDrawerScreen() {
 	return (
 		<Frame width={820}>
 			<ArticleBar title={ARTICLE_TITLE} open={['chat', 'plan']} status="ledger" />
-			<FrameBody row className="min-h-[22rem]">
+			<FrameBody row className="h-[22rem]">
 				<Panel divider="right" padded={false}>
-					<header className="flex items-center gap-2.5 border-b border-edge bg-sunk px-3.5 py-2.5">
+					{/* Sticky: the Panel scrolls under it, and `close ×` has to stay reachable. */}
+					<header className="sticky top-0 z-10 flex items-center gap-2.5 border-b border-edge bg-sunk px-3.5 py-2.5">
 						<h3 className="text-[0.875rem] font-semibold text-ink">Offered</h3>
 						<span className="text-[0.75rem] text-faint">
 							{ledger.counts.all} · {ledger.counts.accepted} Accepted

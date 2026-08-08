@@ -44,7 +44,7 @@ function EditablePlan({ start }: { start: Plan }) {
 
 	return (
 		<Frame width={520}>
-			<FrameBody>
+			<FrameBody className="h-[26rem]">
 				<PlanPanel edit={edit} plan={plan} refusal={refusal} />
 			</FrameBody>
 		</Frame>

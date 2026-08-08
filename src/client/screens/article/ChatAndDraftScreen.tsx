@@ -15,7 +15,7 @@ export function ChatAndDraftScreen() {
 	return (
 		<Frame width={760}>
 			<ArticleBar title={ARTICLE_TITLE} open={['chat', 'draft']} status="§3" />
-			<FrameBody row className="min-h-[19rem]">
+			<FrameBody row className="h-[19rem]">
 				<Panel variant="sunk" divider="right" width="40%" className="gap-3">
 					<ChatMessage from="me">
 						Is there a number for what a stalled mid-rise costs per week?

@@ -49,7 +49,9 @@ export interface FrameBodyProps {
 export function FrameBody({ children, row = false, className, style }: FrameBodyProps) {
 	return (
 		<div
-			className={cx('flex min-h-0 flex-1', row ? 'flex-row' : 'flex-col', className)}
+			// `flex-auto` rather than `flex-1`: a basis of 0 would override the height
+			// a screen sets here, and that height is what the Panels scroll within.
+			className={cx('flex min-h-0 flex-auto', row ? 'flex-row' : 'flex-col', className)}
 			style={style}
 		>
 			{children}

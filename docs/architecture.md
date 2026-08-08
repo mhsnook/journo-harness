@@ -388,6 +388,10 @@ already reactive through Article Agent state and, at 1b, party-db's TanStack DB 
 **The Article screen has four Panels** — Chat, Plan, Draft, Notes — which become tabs on a
 narrow screen. The **Areas** are Articles (with Board and Archive Views), House, and Team.
 
+**Each Panel scrolls its own Y.** Reading down the Plan does not move the Chat beside it.
+The Panel is the scroll container and the Frame body gives it the height to scroll within,
+so a Panel header that should stay put is `sticky` inside its own Panel.
+
 **The Plan Panel's edits are ops, and the applier applies them.** A field the writer types
 in builds the same op a Proposal would carry, `src/client/plan/edits.ts` reads its
 `expected` out of the Plan on screen, and `applyProposal` produces the Plan that goes to

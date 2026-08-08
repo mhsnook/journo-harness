@@ -15,7 +15,7 @@ export function BlankPlanScreen() {
 	return (
 		<Frame width={760}>
 			<ArticleBar title={ARTICLE_TITLE} open={['chat', 'plan']} status="new" />
-			<FrameBody row className="min-h-[20rem]">
+			<FrameBody row className="h-[20rem]">
 				<Panel divider="right" className="gap-3">
 					<ChatMessage from="me">
 						I want to write about why permitting got so slow, using this city as the case.

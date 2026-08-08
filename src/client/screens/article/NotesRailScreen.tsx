@@ -16,7 +16,7 @@ export function NotesRailScreen() {
 	return (
 		<Frame width={720}>
 			<ArticleBar title={ARTICLE_TITLE} open={['draft', 'notes']} status="§3 of 4" />
-			<FrameBody row className="min-h-[19rem]">
+			<FrameBody row className="h-[19rem]">
 				<DraftSurface paragraphs={draftParagraphs} measure="narrow" caret />
 
 				<aside className="flex w-[13rem] shrink-0 flex-col gap-3 border-l border-edge bg-sunk p-3.5">

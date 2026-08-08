@@ -53,7 +53,7 @@ export function SettingsShell({
 					</Chip>
 				))}
 			/>
-			<FrameBody row className="min-h-[19rem]">
+			<FrameBody row className="h-[19rem]">
 				<nav
 					className="flex shrink-0 flex-col gap-1 border-r border-edge bg-sunk p-3"
 					style={{ width: listWidth }}

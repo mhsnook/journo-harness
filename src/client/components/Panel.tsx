@@ -18,6 +18,11 @@ export interface PanelProps {
 /**
  * One vertical Panel in the horizontal rail. Panels never stack — they slide in
  * and out beside each other, always in chat → plan → draft → notes order.
+ *
+ * **Each Panel scrolls its own Y.** Reading down the Plan does not move the Chat
+ * beside it, which is what lets two Panels of different lengths sit side by
+ * side. It needs a height to bite on: the Frame body gives it one, and a Panel
+ * inside a body with no height simply grows as it always did.
  */
 export function Panel({
 	variant = 'surface',
@@ -32,7 +37,7 @@ export function Panel({
 	return (
 		<section
 			className={cx(
-				'flex min-w-0 flex-col',
+				'flex min-h-0 min-w-0 flex-col overflow-y-auto',
 				variant === 'sunk' ? 'bg-sunk' : 'bg-surface',
 				divider === 'left' && 'border-l border-edge',
 				divider === 'right' && 'border-r border-edge',

@@ -16,7 +16,7 @@ export function ReviewRailScreen() {
 	return (
 		<Frame width={660}>
 			<ArticleBar title={ARTICLE_TITLE} open={['draft', 'notes']} status="round 2" />
-			<FrameBody row className="min-h-[18rem]">
+			<FrameBody row className="h-[18rem]">
 				<DraftSurface paragraphs={draftParagraphs.slice(0, 3)} measure="narrow" dimmed />
 
 				<aside className="flex w-[14rem] shrink-0 flex-col gap-3.5 border-l border-edge bg-sunk p-3.5">
