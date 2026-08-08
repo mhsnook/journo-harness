@@ -22,6 +22,24 @@ export function archivedArticles(articles: readonly ArticleEntry[]): ArticleEntr
 	return articles.filter(isArchived)
 }
 
+/** How many Articles the list highlights as tiles above itself. */
+export const recentCount = 3
+
+/**
+ * The Articles the list puts on top as tiles. The index answers newest change
+ * first, so these are the ones the writer touched last.
+ *
+ * **They supplement the list rather than replacing rows in it.** Every Article
+ * below is still listed, so a writer scanning the list never has to remember
+ * that the top few were lifted out of it.
+ */
+export function recentArticles(
+	articles: readonly ArticleEntry[],
+	count = recentCount,
+): ArticleEntry[] {
+	return unarchivedArticles(articles).slice(0, count)
+}
+
 /**
  * The Board View's columns: the unarchived Articles by status, in the order
  * `ARTICLE_STATUSES` lists them.

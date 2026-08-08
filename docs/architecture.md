@@ -435,6 +435,19 @@ sets a status on the Article screen, which is where they are when they decide th
 moved on. The Archive View is not built, and Archived Articles are a group at the foot of
 the list until it is.
 
+**The list's tiles supplement it rather than replacing rows in it.** The three most recently
+changed Articles sit on top as tiles, and every one of them is still listed underneath, so
+scanning the list never means remembering which rows were lifted out of it.
+
+**Opening an Article creates the row first and asks its name second.** The button fires the
+create, a dialog asks what the piece is called while that request is in flight, and the
+typed title travels into the Article screen on the navigation rather than being written from
+the list — writing it there would put the copy in front of the thing it copies. `useSeedTitle`
+puts it in the Plan on arrival and `useTitleCopy` sends the copy on behind it, which is the
+same order every later rename takes. Backing out discards the row, and discards nothing else:
+an Article nobody has opened has no Plan and no Chat, because its Article Agent is not built
+until the Article screen connects to it.
+
 **Each Panel scrolls its own Y.** Reading down the Plan does not move the Chat beside it.
 The Panel is the scroll container and the Frame body gives it the height to scroll within,
 so a Panel header that should stay put is `sticky` inside its own Panel. The `stories`

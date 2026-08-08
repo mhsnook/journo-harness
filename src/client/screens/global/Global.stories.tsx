@@ -25,10 +25,13 @@ export const A_Articles: Story = {
 			<ArticlesScreen />
 			<Annotation>
 				The root screen, and the live one — this is the same `ArticleList` the `/` route
-				renders, against mock rows in the shape the D1 table holds. The Board View and the
-				table both back-button here, so this is the only page that needs a "board view"
-				button. Archived Articles are a group at the foot rather than a View of their own:
-				they sit on the same table.
+				renders, against mock rows in the shape the D1 table holds. The tiles on top are
+				the three the writer touched last, and each is still listed underneath: a tile is
+				a shortcut rather than a row lifted out of the list, so scanning the list never
+				means remembering what is missing from it. The Board View and the table both
+				back-button here, so this is the only page that needs a "board view" button.
+				Archived Articles are a group at the foot rather than a View of their own: they
+				sit on the same table.
 			</Annotation>
 		</div>
 	),

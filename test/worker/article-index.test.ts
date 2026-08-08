@@ -41,6 +41,10 @@ async function edit(id: string, body: unknown): Promise<Response> {
 	})
 }
 
+async function discard(id: string): Promise<Response> {
+	return SELF.fetch(`${base}/${id}`, { method: 'DELETE' })
+}
+
 async function list(): Promise<ArticleEntry[]> {
 	const response = await SELF.fetch(base)
 	expect(response.status).toBe(200)
@@ -146,6 +150,20 @@ describe('editing a row', () => {
 	})
 })
 
+describe('discarding a row', () => {
+	// What the new-Article dialog does when the writer backs out before naming.
+	it('takes it off the list', async () => {
+		const article = await createdArticle()
+
+		expect((await discard(article.id)).status).toBe(204)
+		await expect(list()).resolves.toEqual([])
+	})
+
+	it('answers 404 for an id no Article carries', async () => {
+		expect((await discard('nobody')).status).toBe(404)
+	})
+})
+
 describe('the index against the Article Agent', () => {
 	// The Done-when: the index is a list, not a store — architecture.md §9.
 	it('leaves the Article Agent alone when its row is removed', async () => {
@@ -160,7 +178,7 @@ describe('the index against the Article Agent', () => {
 			references: [],
 		})
 
-		await env.DB.prepare('DELETE FROM article WHERE id = ?').bind(article.id).run()
+		expect((await discard(article.id)).status).toBe(204)
 
 		await expect(list()).resolves.toEqual([])
 		await expect(agent.state).resolves.toMatchObject({ totalTarget: 2400 })

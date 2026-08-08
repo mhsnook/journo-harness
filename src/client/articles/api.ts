@@ -35,6 +35,12 @@ export async function editArticle(id: string, edit: ArticleEdit): Promise<Articl
 	return articleReplySchema.parse(answer).article
 }
 
+/** Throws a row away, for the new-Article dialog the writer backed out of. Not
+ * Archiving, which is what putting a real Article away is. */
+export async function discardArticle(id: string): Promise<void> {
+	await send(`${base}/${encodeURIComponent(id)}`, 'DELETE')
+}
+
 async function send(url: string, method = 'GET', body?: unknown): Promise<unknown> {
 	const response = await fetch(url, {
 		method,
@@ -44,6 +50,9 @@ async function send(url: string, method = 'GET', body?: unknown): Promise<unknow
 	})
 
 	if (!response.ok) throw new Error(await reasonFor(response))
+
+	// A discard answers 204, and `json()` throws on an empty body.
+	if (response.status === 204) return null
 
 	return response.json()
 }

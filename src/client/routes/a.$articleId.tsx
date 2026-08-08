@@ -3,9 +3,10 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { type ArticleStatus, untitledArticle } from '../../shared/article'
 import { ArticlePanels } from '../article/ArticlePanels'
 import { StatusPicker } from '../article/StatusPicker'
+import { useSeedTitle, useTitleCopy } from '../article/title'
 import { usePanels } from '../article/usePanels'
-import { useTitleCopy } from '../article/useTitleCopy'
 import { useArticleIndex } from '../articles/useArticles'
+import { useNewTitle } from '../articles/useNewArticle'
 import { ArticleBar } from '../components/ArticleBar'
 import { Button } from '../components/Button'
 import { Notice } from '../components/Notice'
@@ -44,11 +45,15 @@ function ArticleWindow({
 	articleId: string
 }) {
 	const navigate = useNavigate()
-	const { plan } = useArticle().plan
+	const connection = useArticle().plan
+	const { plan } = connection
 	const panels = usePanels()
 	const index = useArticleIndex()
 	const entry = index.articles.find((one) => one.id === articleId)
 
+	// The name the new-Article dialog took goes to the Plan, and the copy below
+	// follows it out to the index — §9.
+	useSeedTitle(connection, useNewTitle())
 	const copyFailure = useTitleCopy(articleId, plan?.title ?? null)
 	const failure = copyFailure ?? index.failure
 

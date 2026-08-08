@@ -4,6 +4,41 @@ import { useEffect, useRef, useState } from 'react'
 import { editArticle } from '../articles/api'
 import { articlesKey } from '../articles/useArticles'
 import { failureText } from '../lib/failure'
+import { setTitle } from '../plan/edits'
+import type { PlanConnection } from '../plan/usePlan'
+
+/**
+ * An Article's title, across the two places it lives.
+ *
+ * `useSeedTitle` puts the name the new-Article dialog collected into the Plan,
+ * and `useTitleCopy` sends every later change of it on to the index. The Plan is
+ * always the one written first.
+ */
+
+/**
+ * The name the writer typed before the Article existed, written into the Plan
+ * once, as soon as the Plan arrives.
+ *
+ * It goes here rather than straight to the index because the Plan is what names
+ * an Article and the index only copies it — `useTitleCopy` below picks the
+ * change up and sends the copy on behind it, which is the same order every
+ * rename takes.
+ *
+ * Nothing is overwritten: a Plan that already carries a title is one the writer
+ * has named, and a back-navigation replaying the same state finds it that way.
+ */
+export function useSeedTitle(connection: PlanConnection, seed: string | undefined): void {
+	const { plan, edit } = connection
+	const done = useRef(false)
+
+	useEffect(() => {
+		if (done.current || plan === null) return
+		if (seed === undefined || seed.trim() === '') return
+
+		done.current = true
+		if (plan.title === '') edit(setTitle(plan, null, seed))
+	}, [plan, seed, edit])
+}
 
 /**
  * The index's copy of the title, written after the Plan's own write.

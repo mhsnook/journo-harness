@@ -4,6 +4,7 @@ import { nextOpenPanels } from '../../src/client/article/usePanels'
 import {
 	archivedArticles,
 	boardColumns,
+	recentArticles,
 	unarchivedArticles,
 } from '../../src/client/articles/grouping'
 import { shortDate } from '../../src/client/lib/when'
@@ -39,6 +40,42 @@ describe('splitting the index', () => {
 
 	it('gathers the Archived ones', () => {
 		expect(archivedArticles(articles).map((one) => one.id)).toEqual(['b'])
+	})
+})
+
+describe('the tiles on top of the list', () => {
+	// The index answers newest change first, so the first few are the ones the
+	// writer touched last.
+	const articles = [
+		entry('a', 'planning'),
+		entry('b', 'drafting'),
+		entry('c', 'done'),
+		entry('d', 'planning'),
+	]
+
+	it('highlights the few the writer touched last', () => {
+		expect(recentArticles(articles, 3).map((one) => one.id)).toEqual(['a', 'b', 'c'])
+	})
+
+	// The point of the whole arrangement: a tile is a shortcut, not a row moved
+	// out of the list, so scanning the list never means remembering what was
+	// lifted out of it.
+	it('leaves every one of them in the list underneath', () => {
+		const listed = unarchivedArticles(articles).map((one) => one.id)
+
+		for (const article of recentArticles(articles, 3)) {
+			expect(listed).toContain(article.id)
+		}
+		expect(listed).toHaveLength(4)
+	})
+
+	it('never highlights an Archived Article', () => {
+		expect(recentArticles([entry('z', 'drafting', 200), ...articles], 2)).toHaveLength(2)
+		expect(recentArticles([entry('z', 'drafting', 200), ...articles], 2)[0].id).toBe('a')
+	})
+
+	it('takes what there is where there are fewer', () => {
+		expect(recentArticles([entry('a', 'planning')], 3)).toHaveLength(1)
 	})
 })
 

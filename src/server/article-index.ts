@@ -121,6 +121,26 @@ export const articleIndex = new Hono<{ Bindings: Env }>()
 		return c.json({ article: toEntry(row) })
 	})
 
+	/**
+	 * Throw a row away. This is not Archiving, and it is not for an Article the
+	 * writer has worked in: it is how the new-Article dialog cleans up the row it
+	 * opened when the writer changes their mind before naming it. Nothing is
+	 * destroyed, because there is nothing there — the Article Agent is not woken
+	 * until the Article screen connects to it, and removing a row never reaches
+	 * one either way.
+	 */
+	.delete('/:id', async (c) => {
+		const removed = await c.env.DB.prepare('DELETE FROM article WHERE id = ?')
+			.bind(c.req.param('id'))
+			.run()
+
+		if (removed.meta.changes === 0) {
+			return c.json({ error: 'No Article carries that id.' }, 404)
+		}
+
+		return c.body(null, 204)
+	})
+
 /** The parsed body, or an empty object where there is none. A POST with no body
  * is the ordinary way to open an Article, and `req.json()` throws on one. */
 async function body(request: Request): Promise<unknown> {
