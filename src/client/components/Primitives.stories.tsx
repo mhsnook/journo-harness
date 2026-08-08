@@ -5,6 +5,7 @@ import { offers, plan, sectionState } from '../mock/content'
 import { Button } from './Button'
 import { Check } from './Check'
 import { Chip } from './Chip'
+import { Divider } from './Divider'
 import { ExampleBlock, PolarityHeading } from './ExampleBlock'
 import { EmptySlot, Field } from './Field'
 import { GuidanceNote, NoteDot } from './GuidanceNote'
@@ -120,6 +121,12 @@ export const Research: Story = {
 			<ReferenceCard offer={offers[2]} variant="ledger" />
 			<ReferenceCard offer={offers[4]} variant="ledger" compact />
 			<ReferenceCard offer={offers[6]} variant="ledger" compact />
+			<Divider />
+			<p className="max-w-[28rem] text-[0.75rem] leading-relaxed text-muted">
+				<strong>The QuoteRow component (2 examples below) is unused.</strong> It was added
+				to show a read-only summary of the Plan Panel, which we stopped using, but may go
+				back to in Phase 2.
+			</p>
 			<QuoteRow reference={plan.references[2]} section="§2" showUsage />
 			<QuoteRow reference={plan.references[3]} showUsage />
 		</div>
