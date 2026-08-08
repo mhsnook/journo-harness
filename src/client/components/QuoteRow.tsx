@@ -14,6 +14,13 @@ export interface QuoteRowProps {
 	className?: string
 }
 
+/**
+ * One placed Reference, with what it is doing in the Draft.
+ *
+ * **Unused** — the Primitives story is the only caller. It was added for a
+ * read-only summary of the Plan Panel, which we stopped using and may go back
+ * to at phase 2, where `used` against `ready` becomes a real distinction.
+ */
 export function QuoteRow({
 	reference,
 	section,
