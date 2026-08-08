@@ -39,6 +39,7 @@ export function ReferenceCard({
 }: ReferenceCardProps) {
 	const declined = offer.disposition === 'declined'
 	const accepted = offer.disposition === 'accepted'
+	const ruled = accepted || declined
 	const heading = referenceName(offer)
 	// A Quote with no source is its own heading; do not print it twice.
 	const passage = offer.text !== undefined && offer.text !== heading
@@ -93,7 +94,7 @@ export function ReferenceCard({
 				</div>
 			</div>
 
-			{variant === 'offer' ? (
+			{variant === 'offer' && !ruled ? (
 				<div className="flex shrink-0 flex-col gap-1.5">
 					<Button size="sm" onClick={onAccept}>
 						Accept
@@ -102,6 +103,12 @@ export function ReferenceCard({
 						Decline
 					</Button>
 				</div>
+			) : null}
+			{/* A card in the Chat reports a ruling rather than offering it again.
+			    Declining one already Accepted would leave its copy in the Plan, and
+			    the Ledger is where a ruling is changed. */}
+			{variant === 'offer' && ruled ? (
+				<span className="label-meta mt-0.5 shrink-0">{offer.disposition}</span>
 			) : null}
 			{variant === 'ledger' && declined ? (
 				<Button size="sm" variant="link" className="self-start" onClick={onRestore}>
