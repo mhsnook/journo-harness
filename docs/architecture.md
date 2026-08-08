@@ -394,7 +394,9 @@ narrow screen. The **Areas** are Articles (with Board and Archive Views), House,
 
 **Each Panel scrolls its own Y.** Reading down the Plan does not move the Chat beside it.
 The Panel is the scroll container and the Frame body gives it the height to scroll within,
-so a Panel header that should stay put is `sticky` inside its own Panel.
+so a Panel header that should stay put is `sticky` inside its own Panel. The `stories`
+Vitest project holds every story to that in a real browser, so a class chain that reads as
+though it works has to measure as though it does — see `.storybook/vitest.setup.ts`.
 
 **The Plan Panel's edits are ops, and the applier applies them.** A field the writer types
 in builds the same op a Proposal would carry, `src/client/plan/edits.ts` reads its

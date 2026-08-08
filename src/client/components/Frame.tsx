@@ -26,6 +26,9 @@ export function Frame({
 }: FrameProps) {
 	return (
 		<div
+			// The browser test finds every Frame by this attribute rather than by a
+			// class, so renaming a Tailwind class cannot quietly empty the test.
+			data-frame=""
 			className={cx(
 				'flex flex-col overflow-hidden rounded-frame border border-edge bg-surface text-ink shadow-frame',
 				className,
@@ -49,6 +52,7 @@ export interface FrameBodyProps {
 export function FrameBody({ children, row = false, className, style }: FrameBodyProps) {
 	return (
 		<div
+			data-frame-body=""
 			// `flex-auto` rather than `flex-1`: a basis of 0 would override the height
 			// a screen sets here, and that height is what the Panels scroll within.
 			className={cx('flex min-h-0 flex-auto', row ? 'flex-row' : 'flex-col', className)}
