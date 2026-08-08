@@ -119,29 +119,26 @@ plan: {
   one walk, so no two Panels can number a Section differently.
 - **References are flat with an optional `nodeId`**, so an Accepted Reference can sit at a
   Section or nowhere yet.
-- **Every Reference is a Link or a Quote**, and Reference is the umbrella rather than a
-  type of its own. One structure: a pulled passage, an attribution, or both, with at least
-  one present. The type is **stored, not derived from the text**, so an Offer and the
+- **References are type Link or Quote**, and Reference is the umbrella either type; type is **stored, not derived from the text**, so an Offer and the
   Reference it was Accepted into carry one answer and the Offer ledger and the Plan Panel
-  cannot label an item differently. A Quote carries a text; a Link may carry one without
+  label them the same way. A Quote carries a text; a Link may carry one without
   being a Quote. Amended in [ADR 0002](./adr/0002-the-plan-data-model.md).
-- **Voice replaces; Adjectives compose.** One Voice applies at a time and the nearest Scope
-  wins outright. Adjectives accumulate. Resolution runs House, then Article, then
+- **Voice cascades; Adjectives compose.** One Voice applies at a time and the nearest Scope
+  wins outright. Adjectives accumulate. Resolution runs House style, then Article, then
   Section, **at read time**. A Section's ancestors take part in that same order, so a Subsection
-  under a somber middle is somber unless it says otherwise.
-- **The word-count total is stored and nothing is derived.** The parts may disagree with the
-  whole; the gap is information. Auto-distributing the remainder is rejected.
-- **One spelling per state.** A field that may be absent says "nothing here" by being absent,
-  and never also by an empty string or an empty list — the blob is written whole, compared
-  whole-field by a Proposal's `expected`, and sent whole in every prompt pack, so a second
-  spelling is a second Plan for the same content. Three fields carry their key always and say
-  "nothing here" with a value: a Reference's `nodeId`, which is null until it is placed, the
-  Article's `adjectives`, and a Section's `children`, both of them the empty list. A
-  Section's own `adjectives` is the other way round, and says it by being absent.
+  under a "fast-paced" middle will be fast-paced unless it says otherwise.
+- **The word-count total is stored rather than derived/summed.** The parts may disagree with
+  the whole; the gap is information about under/over allocation.
+- **One spelling per state.** A field that may be absent can say "nothing here" by being
+  absent, but shouldn't _also_ allow an empty string or list — the blob is written whole,
+  compared whole-field by a Proposal's `expected`, and sent whole in every prompt pack, so a
+  second spelling is a second Plan for the same content. Three fields carry their key always
+  and say "nothing here" with a value: a Reference's `nodeId`, which is null until it is placed, the Article's `adjectives`, and a Section's `children`, both of them the empty
+  list. A Section's own `adjectives` is the other way round, and says it by being absent.
 
 **The schema guards client writes.** `validateStateChange` parses the whole Plan on every
-write, and nothing the model emits ever goes through it — the Chat proposes and the client
-applies, so the blob has exactly one writer. What the model does meet are the **piece**
+write, and the model's outputs don't goes through it — the Chat proposes and the client
+applies, so the blob has only client writes. What the model does meet are the **piece**
 schemas, `outlineNodeSchema`, `referenceSchema`, and `sourceSchema`, reused inside a
 Proposal's op payloads. It lives in `src/shared/plan/` with the Scope resolver and the
 word-count arithmetic.
@@ -160,22 +157,16 @@ relief valve is moving References into SQLite rows, which is the phase 2 move an
 
 ## 5. Offers and the Ledger
 
-The Chat turns up **Offers** — Links and Quotes — as SQLite rows in the Article Agent.
-Each carries a disposition: **Undecided**, **Accepted**, or **Declined**, and Declining is
-restorable. The **Ledger** is a View over Offers, not a store.
+The Chat turns up Offers — Links and Quotes — as SQLite rows in the Article Agent. The **Ledger** is a View over Offers in the Chat panel. Each offer carries a disposition:
+**Undecided**, **Accepted**, or **Declined** (Declining is restorable).
 
-**The Ledger belongs to the Chat Panel and reads nothing outside it.** It opens over the
-Chat, it closes, and the Plan Panel beside it does not move — which is why the `close ×`
-sits on the Ledger rather than on the screen. Its groups are the three dispositions, and
-Accepting sends the Reference across. Once it has gone across it is the Plan's: where it
-sits, and whether it sits anywhere yet, are the Plan Panel's to show and it shows both
-already. A Ledger group about placement is the Ledger restating the Panel next to it.
+**The Ledger belongs to the Chat Panel and doesn't read the Plan.** Its data model and its
+visual representation should both be understood to relate to the Chat Panel itself.
+Its groupings show the three dispositions; when the writer Accepts an offer, it sends the
+Reference over to the Plan Panel; then it belongs to the Plan, where it becomes an editable
+record carrying its Provenance (rule 5) back to the original Offer.
 
 Offers are flat. Two Quotes from one publication are two Offers.
-
-Accepting copies the Offer into the Plan as a new editable record carrying its Provenance —
-rule 5. The cross-store half of the View is `src/shared/ledger.ts`, derived on read and
-holding nothing of its own; reading the Plan half alone is `src/client/plan/references.ts`.
 
 **The research tool carries an `execute`**, where the Proposal tool does not. An Offer is an
 inert row rather than something the writer rules on mid-turn, so suspending the call would
@@ -393,11 +384,6 @@ already reactive through Article Agent state and, at 1b, party-db's TanStack DB 
 
 **The Article screen has four Panels** — Chat, Plan, Draft, Notes — which become tabs on a
 narrow screen. The **Areas** are Articles (with Board and Archive Views), House, and Team.
-
-**A View over a Panel covers that Panel and no other.** The Offer ledger is the one at 1a:
-it opens over the Chat, and the Plan Panel beside it carries on unchanged. A screen that
-shows the two together renders the ordinary Plan Panel rather than its own reading of the
-Plan — §5.
 
 **The Plan Panel's edits are ops, and the applier applies them.** A field the writer types
 in builds the same op a Proposal would carry, `src/client/plan/edits.ts` reads its
