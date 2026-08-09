@@ -72,9 +72,13 @@ describe('reading a transcript', () => {
 		expect(waitingCount(messages)).toBe(0)
 	})
 
-	/** No orphan timeout, so this count is all that stands between the writer and
-	 * a composer that silently does nothing — §11. */
-	it('counts every suspended call, not only the Proposals', () => {
+	/**
+	 * The research tool carries an `execute` and resolves inside the turn (§5),
+	 * so its call sits at `input-available` for as long as the lookup takes.
+	 * Counting it shut the composer for the length of every research turn, and
+	 * told the writer to go and rule on a Proposal that was not there.
+	 */
+	it('leaves out a research call, which nobody has to rule on', () => {
 		const messages = transcript(
 			toolPart(proposePlanChangeTool, 'input-available', { input: { ops } }),
 			toolPart(recordOffersTool, 'input-available', {
@@ -83,7 +87,15 @@ describe('reading a transcript', () => {
 			}),
 		)
 
-		expect(waitingCount(messages)).toBe(2)
+		expect(waitingCount(messages)).toBe(1)
+	})
+
+	it('counts nothing while only research is running', () => {
+		const messages = transcript(
+			toolPart(recordOffersTool, 'input-available', { input: {} }),
+		)
+
+		expect(waitingCount(messages)).toBe(0)
 	})
 
 	it('reads the ops off a suspended call', () => {

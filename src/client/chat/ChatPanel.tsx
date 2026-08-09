@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import { proposePlanChangeTool, recordOffersTool } from '../../shared/chat'
 import type { Offer } from '../../shared/offer'
 import type { Plan } from '../../shared/plan'
-import { ChatComposer, ChatMessage, ChatNote } from '../components/Chat'
+import { ChatComposer, ChatMessage, ChatNote, ChatWorking } from '../components/Chat'
 import { Notice } from '../components/Notice'
 import { Panel } from '../components/Panel'
 import { ReferenceCard } from '../components/ReferenceCard'
@@ -23,8 +23,12 @@ export interface ChatPanelProps {
 	messages: readonly UIMessage[]
 	/** What a Proposal card names its Sections and References out of. */
 	plan: Plan
+	/** A turn is in flight and the guide is the one working. False while a
+	 * Proposal is parked: the turn is open, but it is the writer's move. */
 	busy: boolean
-	/** Suspended tool calls; above zero the turn is parked — §11. */
+	/** Cancels the turn. */
+	onStop?: () => void
+	/** Proposals nobody has ruled on; above zero the turn is parked — §11. */
 	waiting: number
 	refusals: Refusals
 	offers: readonly Offer[]
@@ -44,6 +48,7 @@ export function ChatPanel({
 	messages,
 	plan,
 	busy,
+	onStop,
 	waiting,
 	refusals,
 	offers,
@@ -82,16 +87,17 @@ export function ChatPanel({
 					</ChatNote>
 				) : null}
 
-				{busy ? <ChatNote>The guide is answering…</ChatNote> : null}
+				{busy ? <ChatWorking>The guide is answering…</ChatWorking> : null}
 				{failure === null ? null : <Notice>{failure}</Notice>}
 			</div>
 
 			<div className="sticky bottom-0 z-10 border-t border-edge bg-surface px-3.5 py-2.5">
 				<ChatComposer
 					blocked={parked(waiting)}
-					disabled={busy}
+					busy={busy}
 					leading={leading}
 					onSend={onSend}
+					onStop={onStop}
 					placeholder={placeholder}
 				/>
 			</div>

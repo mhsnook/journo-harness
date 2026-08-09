@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 
 import type { Plan, ProposalInput, Refusal } from '../../shared/plan'
 import { planAllocation, resolveArticleScope } from '../../shared/plan'
@@ -46,6 +46,11 @@ export function PlanPanel({
 	const [openId, setOpenId] = useState<string | null>(null)
 	const [made, setMade] = useState<string | null>(null)
 	const [shown, setShown] = useState<string | null>(null)
+
+	// Held, because the shown row's effect lists it: a new function each render
+	// would restart that row's scroll and its timer on every keystroke elsewhere
+	// in the Panel.
+	const clearShown = useCallback(() => setShown(null), [])
 
 	const entries = outlineEntries(plan.outline)
 	const allocation = planAllocation(plan)
@@ -137,7 +142,7 @@ export function PlanPanel({
 				className="flex flex-col items-stretch gap-1.5"
 				edit={edit}
 				entries={entries}
-				onShown={() => setShown(null)}
+				onShown={clearShown}
 				plan={plan}
 				shown={shown}
 			/>

@@ -1,7 +1,13 @@
-import { type DynamicToolUIPart, isToolUIPart, type ToolUIPart, type UIMessage } from 'ai'
+import {
+	type DynamicToolUIPart,
+	getToolName,
+	isToolUIPart,
+	type ToolUIPart,
+	type UIMessage,
+} from 'ai'
 import { z } from 'zod'
 
-import { proposePlanChangeInput } from '../../shared/chat'
+import { proposePlanChangeInput, proposePlanChangeTool } from '../../shared/chat'
 import type { Anchor, Plan, Proposal, ProposalOp, Refusal } from '../../shared/plan'
 import { planNames } from '../plan/names'
 import { referenceName } from '../plan/references'
@@ -23,14 +29,25 @@ export type ProposalCall = {
 
 type AnyToolPart = ToolUIPart | DynamicToolUIPart
 
-/** How many tool calls have their input complete and no output sent, which is
- * what parks a turn — §11. */
+/**
+ * How many Proposals have their input complete and no output sent, which is what
+ * parks a turn — §11.
+ *
+ * **Only the Proposal tool counts.** It is the one with no `execute`, so it
+ * suspends for the writer and nothing expires it. The research tool carries an
+ * `execute` and resolves inside the turn (§5), so its call sits at
+ * `input-available` for as long as the lookup takes — counting that told the
+ * writer to go and rule on a Proposal that was not there, and shut the composer
+ * for the length of every research turn.
+ */
 export function waitingCount(messages: readonly UIMessage[]): number {
 	let waiting = 0
 
 	for (const message of messages) {
 		for (const part of message.parts) {
-			if (isToolUIPart(part) && part.state === 'input-available') waiting += 1
+			if (!isToolUIPart(part)) continue
+			if (getToolName(part) !== proposePlanChangeTool) continue
+			if (part.state === 'input-available') waiting += 1
 		}
 	}
 

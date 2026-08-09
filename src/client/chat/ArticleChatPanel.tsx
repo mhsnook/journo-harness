@@ -49,6 +49,7 @@ export function ArticleChatPanel({
 			onDecline={chat.decline}
 			onDeclineOffer={ledger.decline}
 			onSend={chat.send}
+			onStop={chat.stop}
 			placeholder={placeholder}
 			plan={plan}
 			refusals={chat.refusals}

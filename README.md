@@ -27,8 +27,10 @@ pnpm format     # oxfmt, in place. `pnpm format:check` reports instead
 behave as they do in production. Storybook loads the same Vite config without the Worker or
 the router, so a story renders components alone.
 
-Run `pnpm db:migrate` again whenever a file lands in `migrations/`. It is local only; the
-test suite applies the same files itself, so `pnpm test` needs nothing set up.
+Run `pnpm db:migrate` again whenever a file lands in `migrations/`, and again if
+`database_id` in `wrangler.jsonc` changes — the local database is stored under that id, so a
+new one starts empty and every index route answers 500 until it is migrated. It is local
+only; the test suite applies the same files itself, so `pnpm test` needs nothing set up.
 
 ### Running the stories
 
