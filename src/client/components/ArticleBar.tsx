@@ -2,13 +2,15 @@ import type { ReactNode } from 'react'
 
 import { cx } from '../lib/cx'
 import { PanelRail, type PanelId } from './PanelRail'
-import { BackButton } from './TitleBar'
+import { Skeleton } from './Skeleton'
 
 export interface ArticleBarProps {
-	/** Where it goes back to, named. Nothing renders without one. */
-	back?: string
-	onBack?: () => void
-	title: string
+	/** The back affordance, named — a `BackLink` where it goes somewhere. */
+	back?: ReactNode
+	/** `null` while it is still being read, which draws a bar rather than an
+	 * empty string. `displayTitle('')` is the untitled placeholder, so an absent
+	 * title and a cleared one must not share a value here. */
+	title: string | null
 	/** Right-hand status: "draft 1", "round 2", "§3 of 4", or the controls that
 	 * set one. */
 	status?: ReactNode
@@ -29,7 +31,6 @@ export interface ArticleBarProps {
  */
 export function ArticleBar({
 	back,
-	onBack,
 	title,
 	status,
 	open,
@@ -48,8 +49,14 @@ export function ArticleBar({
 				className,
 			)}
 		>
-			<BackButton back={back} onBack={onBack} />
-			<span className="min-w-0 flex-1 truncate text-[0.8125rem] text-faint">{title}</span>
+			{back}
+			<span className="min-w-0 flex-1 truncate text-[0.8125rem] text-faint">
+				{title === null ? (
+					<Skeleton className="w-40" label="Opening the Article" />
+				) : (
+					title
+				)}
+			</span>
 			{stacked ? null : rail}
 			<span className="flex min-w-0 flex-1 items-center justify-end gap-2 text-right text-[0.75rem] whitespace-nowrap text-faint">
 				{status}

@@ -40,6 +40,22 @@ const sizeClass: Record<ButtonSize, string> = {
 	md: 'h-8 gap-2 rounded-full px-3.5 text-[0.8125rem]',
 }
 
+/** The look on its own, for a `Link` that has to sit in a row of Buttons. A
+ * control that navigates is an anchor, and only the styling is shared. */
+export function buttonClass({
+	variant = 'default',
+	size = 'md',
+	pressed,
+	className,
+}: Pick<ButtonProps, 'variant' | 'size' | 'pressed' | 'className'> = {}): string {
+	return cx(
+		'inline-flex shrink-0 items-center justify-center font-medium whitespace-nowrap transition-[background-color,border-color,color,filter] disabled:pointer-events-none disabled:opacity-40',
+		variant === 'link' ? 'h-auto text-[0.8125rem]' : sizeClass[size],
+		pressed ? pressedClass : variantClass[variant],
+		className,
+	)
+}
+
 export function Button({
 	variant = 'default',
 	size = 'md',
@@ -53,12 +69,7 @@ export function Button({
 		<button
 			type={type}
 			aria-pressed={pressed}
-			className={cx(
-				'inline-flex shrink-0 items-center justify-center font-medium whitespace-nowrap transition-[background-color,border-color,color,filter] disabled:pointer-events-none disabled:opacity-40',
-				variant === 'link' ? 'h-auto text-[0.8125rem]' : sizeClass[size],
-				pressed ? pressedClass : variantClass[variant],
-				className,
-			)}
+			className={buttonClass({ variant, size, pressed, className })}
 			{...rest}
 		>
 			{children}

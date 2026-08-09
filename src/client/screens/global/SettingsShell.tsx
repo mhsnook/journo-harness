@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import { Button } from '../../components/Button'
 import { Chip } from '../../components/Chip'
 import { Frame, FrameBody } from '../../components/Frame'
-import { TitleBar } from '../../components/TitleBar'
+import { BackLink, TitleBar } from '../../components/TitleBar'
 import { cx } from '../../lib/cx'
 
 export type SettingsTab = 'voices' | 'adjectives' | 'sources'
@@ -45,7 +45,7 @@ export function SettingsShell({
 	return (
 		<Frame width={width}>
 			<TitleBar
-				back="Articles"
+				back={<BackLink to="/">Articles</BackLink>}
 				title="Writer settings"
 				actions={TABS.map((name) => (
 					<Chip key={name} variant={name === tab ? 'solid' : 'outline'} interactive>

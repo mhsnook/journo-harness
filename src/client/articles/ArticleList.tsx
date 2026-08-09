@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import type { ArticleEntry } from '../../shared/article'
 import { articleTitle, isUntitled, statusLabel } from '../../shared/article'
 import { ArticleCard } from '../components/ArticleCard'
-import { Button } from '../components/Button'
+import { Button, buttonClass } from '../components/Button'
 import { Chip } from '../components/Chip'
 import { GroupHeading } from '../components/Divider'
 import { EmptySlot } from '../components/Field'
@@ -27,7 +27,6 @@ export interface ArticleListProps {
 	/** Why a write did not land. The read's own failure replaces the screen. */
 	failure?: string | null
 	onNew?: () => void
-	onBoard?: () => void
 	onRestore?: (id: string) => void
 }
 
@@ -35,7 +34,6 @@ export function ArticleList({
 	articles,
 	failure = null,
 	onNew,
-	onBoard,
 	onRestore,
 }: ArticleListProps) {
 	const working = unarchivedArticles(articles)
@@ -48,9 +46,9 @@ export function ArticleList({
 				title="Articles"
 				actions={
 					<>
-						<Button onClick={onBoard} size="sm" variant="quiet">
+						<Link className={buttonClass({ size: 'sm', variant: 'quiet' })} to="/board">
 							board view
-						</Button>
+						</Link>
 						<Button onClick={onNew} size="sm" variant="accent">
 							+ new article
 						</Button>

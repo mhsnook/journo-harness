@@ -4,7 +4,7 @@ import { Button } from '../components/Button'
 import { FrameBody } from '../components/Frame'
 import { MetaLabel } from '../components/MetaLabel'
 import { Notice } from '../components/Notice'
-import { TitleBar } from '../components/TitleBar'
+import { BackLink, TitleBar } from '../components/TitleBar'
 import { boardColumns } from './grouping'
 
 /**
@@ -20,10 +20,9 @@ export interface BoardViewProps {
 	/** Why a write did not land. The read's own failure replaces the screen. */
 	failure?: string | null
 	onNew?: () => void
-	onBack?: () => void
 }
 
-export function BoardView({ articles, failure = null, onNew, onBack }: BoardViewProps) {
+export function BoardView({ articles, failure = null, onNew }: BoardViewProps) {
 	const columns = boardColumns(articles)
 
 	return (
@@ -34,8 +33,7 @@ export function BoardView({ articles, failure = null, onNew, onBack }: BoardView
 						+ new article
 					</Button>
 				}
-				back="Articles"
-				onBack={onBack}
+				back={<BackLink to="/">Articles</BackLink>}
 				subtitle="by status"
 				title="Board"
 			/>

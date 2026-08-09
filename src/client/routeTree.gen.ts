@@ -9,19 +9,24 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as BoardRouteImport } from './routes/board'
+import { Route as AreaRouteImport } from './routes/_area'
+import { Route as AreaIndexRouteImport } from './routes/_area.index'
+import { Route as AreaBoardRouteImport } from './routes/_area.board'
 import { Route as AArticleIdRouteImport } from './routes/a.$articleId'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AreaRoute = AreaRouteImport.update({
+  id: '/_area',
   getParentRoute: () => rootRouteImport,
 } as any)
-const BoardRoute = BoardRouteImport.update({
+const AreaIndexRoute = AreaIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AreaRoute,
+} as any)
+const AreaBoardRoute = AreaBoardRouteImport.update({
   id: '/board',
   path: '/board',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AreaRoute,
 } as any)
 const AArticleIdRoute = AArticleIdRouteImport.update({
   id: '/a/$articleId',
@@ -30,50 +35,57 @@ const AArticleIdRoute = AArticleIdRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/board': typeof BoardRoute
+  '/': typeof AreaIndexRoute
+  '/board': typeof AreaBoardRoute
   '/a/$articleId': typeof AArticleIdRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/board': typeof BoardRoute
+  '/board': typeof AreaBoardRoute
   '/a/$articleId': typeof AArticleIdRoute
+  '/': typeof AreaIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/board': typeof BoardRoute
+  '/_area': typeof AreaRouteWithChildren
+  '/_area/board': typeof AreaBoardRoute
   '/a/$articleId': typeof AArticleIdRoute
+  '/_area/': typeof AreaIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths: '/' | '/board' | '/a/$articleId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/board' | '/a/$articleId'
-  id: '__root__' | '/' | '/board' | '/a/$articleId'
+  to: '/board' | '/a/$articleId' | '/'
+  id: '__root__' | '/_area' | '/_area/board' | '/a/$articleId' | '/_area/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  BoardRoute: typeof BoardRoute
+  AreaRoute: typeof AreaRouteWithChildren
   AArticleIdRoute: typeof AArticleIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
+    '/_area': {
+      id: '/_area'
+      path: ''
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+      preLoaderRoute: typeof AreaRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/board': {
-      id: '/board'
+    '/_area/': {
+      id: '/_area/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof AreaIndexRouteImport
+      parentRoute: typeof AreaRoute
+    }
+    '/_area/board': {
+      id: '/_area/board'
       path: '/board'
       fullPath: '/board'
-      preLoaderRoute: typeof BoardRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AreaBoardRouteImport
+      parentRoute: typeof AreaRoute
     }
     '/a/$articleId': {
       id: '/a/$articleId'
@@ -85,9 +97,20 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AreaRouteChildren {
+  AreaBoardRoute: typeof AreaBoardRoute
+  AreaIndexRoute: typeof AreaIndexRoute
+}
+
+const AreaRouteChildren: AreaRouteChildren = {
+  AreaBoardRoute: AreaBoardRoute,
+  AreaIndexRoute: AreaIndexRoute,
+}
+
+const AreaRouteWithChildren = AreaRoute._addFileChildren(AreaRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  BoardRoute: BoardRoute,
+  AreaRoute: AreaRouteWithChildren,
   AArticleIdRoute: AArticleIdRoute,
 }
 export const routeTree = rootRouteImport

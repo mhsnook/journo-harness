@@ -1,6 +1,6 @@
 import { Chip } from '../../components/Chip'
 import { Frame, FrameBody } from '../../components/Frame'
-import { TitleBar } from '../../components/TitleBar'
+import { BackLink, TitleBar } from '../../components/TitleBar'
 
 interface Row {
 	title: string
@@ -48,7 +48,7 @@ export function TableScreen() {
 	return (
 		<Frame width={620}>
 			<TitleBar
-				back="Articles"
+				back={<BackLink to="/">Articles</BackLink>}
 				title="All articles"
 				actions={
 					<>

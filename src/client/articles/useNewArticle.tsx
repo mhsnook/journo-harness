@@ -1,6 +1,13 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useLocation } from '@tanstack/react-router'
-import { type FormEvent, type ReactNode, useRef, useState } from 'react'
+import {
+	type FormEvent,
+	type ReactNode,
+	createContext,
+	useContext,
+	useRef,
+	useState,
+} from 'react'
 
 import { type ArticleEntry, untitledArticle } from '../../shared/article'
 import { Button } from '../components/Button'
@@ -123,6 +130,27 @@ export function useNewArticle(
 			/>
 		),
 	}
+}
+
+/**
+ * The Area's layout route mounts one dialog above both Views and passes `start`
+ * down here, so a View only needs the control that opens it.
+ *
+ * This lives beside the flow rather than in the route file: `autoCodeSplitting`
+ * splits a route file into two chunks, and a context declared in one of them is
+ * a different object from the one the other chunk reads.
+ */
+const StartArticleContext = createContext<(() => void) | null>(null)
+
+export const StartArticleProvider = StartArticleContext.Provider
+
+export function useStartArticle(): () => void {
+	const start = useContext(StartArticleContext)
+	if (start === null) {
+		throw new Error('An Articles Area route is the only caller.')
+	}
+
+	return start
 }
 
 /** What `useSeedTitle` writes into the Plan. */

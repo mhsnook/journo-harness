@@ -428,11 +428,23 @@ narrow screen. `usePanels` holds which are open, keeps them in the one order the
 and refuses to close the last of them. The **Areas** are Articles (with Board and Archive
 Views), House, and Team.
 
+**A screen never draws a value it has not got.** An empty title, a zero count and four empty
+columns are answers, and a screen that puts one on the page before it has read anything has
+said something untrue. Whatever is still coming says so — `Skeleton` where the shape is
+known, a sentence like "Opening the Plan…" where it is not, and a route's `pendingComponent`
+where the whole screen is waiting. This is why the Article bar takes `title: string | null`:
+`''` is the title the writer cleared, and it cannot also mean "not read yet".
+
+**Navigation is a `Link`.** A control that only goes somewhere is an anchor, so it opens in
+a new tab, copies as a URL, reads as a link, and warms its route on hover — the router runs
+`defaultPreload: 'intent'`. A callback is for a control that does work first, like Archiving
+an Article and then leaving it.
+
 **The Articles Area is the list at `/` and the Board View at `/board`**, over the one index
-read. The Board draws a column per status, keeps its columns' width, and scrolls sideways
-rather than squeezing them. It carries no drag-and-drop and no control on a card: the writer
-sets a status on the Article screen, which is where they are when they decide the piece has
-moved on. The Archive View is not built, and Archived Articles are a group at the foot of
+read, under a pathless layout route that holds both. The Board draws a column per status,
+keeps its columns' width, and scrolls sideways rather than squeezing them. It carries no
+drag-and-drop and no control on a card: the writer sets a status on the Article screen,
+which is where they are when they decide the piece has moved on. The Archive View is not built, and Archived Articles are a group at the foot of
 the list until it is.
 
 **The list's tiles supplement it rather than replacing rows in it.** The three most recently

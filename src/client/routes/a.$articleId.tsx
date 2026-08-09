@@ -5,12 +5,14 @@ import { ArticlePanels } from '../article/ArticlePanels'
 import { StatusPicker } from '../article/StatusPicker'
 import { useSeedTitle, useTitleCopy } from '../article/title'
 import { usePanels } from '../article/usePanels'
-import { useArticleEntry, useEditArticle } from '../articles/useArticles'
+import { articlesQuery, useArticleEntry, useEditArticle } from '../articles/useArticles'
 import { useNewTitle } from '../articles/useNewArticle'
 import { ArticleBar } from '../components/ArticleBar'
 import { Button } from '../components/Button'
 import { Screen } from '../components/Frame'
 import { Notice } from '../components/Notice'
+import { Skeleton } from '../components/Skeleton'
+import { BackLink } from '../components/TitleBar'
 import { ArticleProvider, useArticle } from '../lib/article'
 import {
 	type ArticleSocket,
@@ -22,9 +24,13 @@ import {
  * second writer against a blob designed for one (architecture.md §3 rule 1). */
 export const Route = createFileRoute('/a/$articleId')({
 	component: ArticleRoute,
-	// Returns nothing to await, so this warms the Agent on hover without holding
-	// the navigation up when the writer does click.
-	loader: ({ params }) => wakeArticleAgent(params.articleId),
+	// Nothing is awaited, so hovering starts both and clicking waits for neither.
+	// The index carries this Article's title and status, and on a deep link it is
+	// the only source for either until the socket answers.
+	loader: ({ context, params }) => {
+		wakeArticleAgent(params.articleId)
+		void context.queryClient.ensureQueryData(articlesQuery)
+	},
 })
 
 function ArticleRoute() {
@@ -58,28 +64,29 @@ function ArticleWindow({
 	const copyFailure = useTitleCopy(articleId, plan?.title ?? null)
 	const failure = copyFailure ?? index.failure
 
-	const articles = () => navigate({ to: '/' })
-
 	const archive = () => {
 		index.edit(articleId, { archived: true })
-		articles()
+		void navigate({ to: '/' })
 	}
 
 	const setStatus = (status: ArticleStatus) => index.edit(articleId, { status })
 
-	// The index row stands in until the socket answers with the real one.
-	const title = plan?.title ?? entry?.title ?? ''
+	// The index row stands in until the socket answers with the real one, and
+	// `null` until neither has. `''` cannot say that: it is also the title the
+	// writer cleared, which the bar draws as "Untitled article".
+	const title = plan?.title ?? entry?.title ?? null
 
 	return (
 		<Screen>
 			<ArticleBar
-				back="Articles"
-				onBack={articles}
+				back={<BackLink to="/">Articles</BackLink>}
 				onToggle={panels.toggle}
 				open={panels.open}
 				stacked={panels.narrow}
 				status={
-					entry === undefined ? null : (
+					entry === undefined ? (
+						<Skeleton className="w-24" label="Opening the Article" />
+					) : (
 						<>
 							<StatusPicker onStatus={setStatus} status={entry.status} />
 							<Button onClick={archive} size="sm" variant="quiet">
@@ -88,7 +95,7 @@ function ArticleWindow({
 						</>
 					)
 				}
-				title={displayTitle(title)}
+				title={title === null ? null : displayTitle(title)}
 			/>
 			{failure === null ? null : (
 				<div className="shrink-0 px-3 pt-2">
