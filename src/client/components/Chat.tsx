@@ -1,4 +1,11 @@
-import { type KeyboardEvent, type ReactNode, useEffect, useState } from 'react'
+import {
+	type KeyboardEvent,
+	type ReactNode,
+	useEffect,
+	useLayoutEffect,
+	useRef,
+	useState,
+} from 'react'
 
 import { cx } from '../lib/cx'
 import { Button } from './Button'
@@ -56,9 +63,36 @@ export interface ChatComposerProps {
 }
 
 /**
+ * How far the field grows before it scrolls inside itself, in lines. Eight lines
+ * of this type is about 183px with the box's padding, and the Chat Panel on
+ * `MidChatScreen` is 26rem — so a composer at full height takes about half the
+ * Panel and leaves the writer the rest of the transcript to write against.
+ */
+const maxLines = 8
+
+/**
+ * Sets the field's height to the height of what is in it, up to `maxLines`.
+ *
+ * The `auto` is not decoration: `scrollHeight` reads back the height the field
+ * already has whenever the field is taller than its text, so without the reset
+ * a field that grew to six lines would never shrink to three again.
+ */
+function grow(field: HTMLTextAreaElement) {
+	const lineHeight = Number.parseFloat(getComputedStyle(field).lineHeight)
+	const ceiling = Number.isNaN(lineHeight) ? Infinity : lineHeight * maxLines
+
+	field.style.height = 'auto'
+	field.style.height = `${Math.min(field.scrollHeight, ceiling)}px`
+}
+
+/**
  * **The field is never disabled while a turn runs.** Disabling it blurs it, so a
  * thought typed while the guide answers is lost at the first keystroke. The
  * button beside it changes instead.
+ *
+ * The field is a `textarea` because writers compose paragraphs and paste
+ * passages in. Enter sends and shift-Enter breaks the line, which is the pair
+ * a chat composer is expected to have.
  */
 export function ChatComposer({
 	placeholder = 'Ask, argue, or paste something in…',
@@ -70,9 +104,17 @@ export function ChatComposer({
 	className,
 }: ChatComposerProps) {
 	const [said, setSaid] = useState('')
+	const field = useRef<HTMLTextAreaElement>(null)
 	const stopping = busy && onStop !== undefined
 	const cannotSend =
 		blocked !== null || busy || onSend === undefined || said.trim() === ''
+
+	// Resizing on the value rather than on the change event covers the two cases
+	// a change handler misses: the first paint, and sending, which empties the
+	// field without anyone typing in it.
+	useLayoutEffect(() => {
+		if (field.current !== null) grow(field.current)
+	}, [said])
 
 	const send = () => {
 		if (cannotSend || onSend === undefined) return
@@ -81,7 +123,7 @@ export function ChatComposer({
 		setSaid('')
 	}
 
-	const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+	const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
 		if (event.key !== 'Enter' || event.shiftKey) return
 
 		event.preventDefault()
@@ -89,19 +131,25 @@ export function ChatComposer({
 	}
 
 	return (
-		<div className={cx('mt-auto flex flex-col gap-1.5 pt-1', className)}>
+		<div
+			// The browser story test finds the composer by this attribute rather than
+			// by a class, so renaming a Tailwind class cannot quietly empty the test.
+			data-composer=""
+			className={cx('mt-auto flex flex-col gap-1.5 pt-1', className)}
+		>
 			{blocked === null ? null : <Notice>{blocked}</Notice>}
-			<div className="flex items-center gap-2">
+			<div className="flex items-end gap-2">
 				{leading}
-				<div className="flex h-9 flex-1 items-center rounded-md border border-edge bg-surface px-2.5 text-[0.8125rem]">
-					<input
+				<div className="flex flex-1 items-center rounded-md border border-edge bg-surface px-2.5 py-1.5">
+					<textarea
+						ref={field}
 						aria-label="Message the guide"
-						className="min-w-0 flex-1 bg-transparent text-ink outline-none placeholder:text-faint"
+						className="min-w-0 flex-1 resize-none overflow-y-auto bg-transparent text-[0.8125rem] leading-relaxed text-ink outline-none placeholder:text-faint"
 						disabled={onSend === undefined}
 						onChange={(event) => setSaid(event.target.value)}
 						onKeyDown={onKeyDown}
 						placeholder={placeholder}
-						type="text"
+						rows={1}
 						value={said}
 					/>
 				</div>
