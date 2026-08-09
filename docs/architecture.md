@@ -423,14 +423,6 @@ party-db's lobby and write path at 1b, archived reads, and export.
 **TanStack Query** serves the article index and the archived and export reads. Live data is
 already reactive through Article Agent state and, at 1b, party-db's TanStack DB collections.
 
-**The two Area routes load the index before they draw.** A route's loader primes the query
-and its component reads it with `useSuspenseQuery`, so a View never renders against rows it
-has not got — an empty list and four bare columns are a claim about the writer's work, and
-drawing them while the read is in flight makes that claim falsely. A slow read gets the
-route's `pendingComponent` and a failed one its `errorComponent`, which is why the Views
-themselves carry no loading state. **The Article screen does not wait**: it reads its status
-row without suspending, and shows the Chat and the Plan off the socket meanwhile.
-
 **The Article screen has four Panels** — Chat, Plan, Draft, Notes — which become tabs on a
 narrow screen. `usePanels` holds which are open, keeps them in the one order the rail draws,
 and refuses to close the last of them. The **Areas** are Articles (with Board and Archive

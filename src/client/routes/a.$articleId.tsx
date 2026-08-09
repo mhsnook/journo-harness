@@ -12,14 +12,20 @@ import { Button } from '../components/Button'
 import { Screen } from '../components/Frame'
 import { Notice } from '../components/Notice'
 import { ArticleProvider, useArticle } from '../lib/article'
-import { type ArticleSocket, useArticleAgent } from '../lib/useArticleAgent'
+import {
+	type ArticleSocket,
+	useArticleAgent,
+	wakeArticleAgent,
+} from '../lib/useArticleAgent'
 
-/**
- * One Article. **The connection is opened here, above the Panels**, which read it
- * through `ArticleProvider` — a Panel opening its own would be a second writer
- * against a blob designed for one (architecture.md §8, and §3 rule 1).
- */
-export const Route = createFileRoute('/a/$articleId')({ component: ArticleRoute })
+/** The connection is opened above the Panels: a Panel opening its own would be a
+ * second writer against a blob designed for one (architecture.md §3 rule 1). */
+export const Route = createFileRoute('/a/$articleId')({
+	component: ArticleRoute,
+	// Returns nothing to await, so this warms the Agent on hover without holding
+	// the navigation up when the writer does click.
+	loader: ({ params }) => wakeArticleAgent(params.articleId),
+})
 
 function ArticleRoute() {
 	const { articleId } = Route.useParams()

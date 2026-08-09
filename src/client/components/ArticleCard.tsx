@@ -1,3 +1,5 @@
+import { Link } from '@tanstack/react-router'
+
 import {
 	type ArticleEntry,
 	articleTitle,
@@ -14,7 +16,6 @@ export interface ArticleCardProps {
 	article: ArticleEntry
 	/** `card` is the index's tile; `column` is the Board View's smaller one. */
 	variant?: 'card' | 'column'
-	onOpen: (id: string) => void
 	className?: string
 }
 
@@ -28,23 +29,18 @@ export interface ArticleCardProps {
  * beside it is the signal and the bar is a shape. The Board's own tiles drop
  * both, since the column they sit in already names the status.
  */
-export function ArticleCard({
-	article,
-	variant = 'card',
-	onOpen,
-	className,
-}: ArticleCardProps) {
+export function ArticleCard({ article, variant = 'card', className }: ArticleCardProps) {
 	const compact = variant === 'column'
 
 	return (
-		<button
+		<Link
 			className={cx(
 				'flex flex-col items-stretch rounded-lg border border-edge bg-surface text-left transition-colors hover:border-ink/40 hover:bg-hush',
 				compact ? 'gap-1.5 p-2.5' : 'w-[13.5rem] gap-2.5 p-3.5',
 				className,
 			)}
-			onClick={() => onOpen(article.id)}
-			type="button"
+			params={{ articleId: article.id }}
+			to="/a/$articleId"
 		>
 			<h3
 				className={cx(
@@ -69,6 +65,6 @@ export function ArticleCard({
 					started {shortDate(article.createdAt)}
 				</span>
 			</div>
-		</button>
+		</Link>
 	)
 }

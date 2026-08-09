@@ -7,7 +7,13 @@ import { routeTree } from './routeTree.gen'
 
 import './styles/theme.css'
 
-const router = createRouter({ routeTree, context: { queryClient } })
+// Hovering a Link runs its route's loader: the Area routes read the index into
+// the query cache, and the Article route wakes that Article's Agent.
+const router = createRouter({
+	routeTree,
+	context: { queryClient },
+	defaultPreload: 'intent',
+})
 
 declare module '@tanstack/react-router' {
 	interface Register {

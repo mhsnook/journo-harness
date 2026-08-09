@@ -8,7 +8,7 @@ export function BoardScreen() {
 	// too small for the Board does.
 	return (
 		<Frame width={720}>
-			<BoardView articles={articleIndex} onOpen={() => {}} />
+			<BoardView articles={articleIndex} />
 		</Frame>
 	)
 }

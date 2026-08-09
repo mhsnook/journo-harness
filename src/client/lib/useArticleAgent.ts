@@ -20,6 +20,17 @@ export type ArticleConnection = {
 	agent: ArticleSocket
 }
 
+/**
+ * Builds the Article Agent without connecting to it. A plain GET on the Agent's
+ * route wakes the Durable Object and runs its `onStart`, so the socket the
+ * Article screen opens a moment later finds it already up. The answer is thrown
+ * away, and a failure here only means the screen waits as it would have.
+ */
+export function wakeArticleAgent(articleId: string): void {
+	// Same path routeAgentRequest maps onto the binding — see server/index.ts.
+	void fetch(`/agents/article-agent/${encodeURIComponent(articleId)}`).catch(() => {})
+}
+
 export function useArticleAgent(articleId: string): ArticleConnection {
 	// `useAgent` hands back a new client on each reconnect, so both halves read
 	// this rather than closing over one generation of it.

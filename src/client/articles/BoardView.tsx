@@ -19,18 +19,11 @@ export interface BoardViewProps {
 	articles: readonly ArticleEntry[]
 	/** Why a write did not land. The read's own failure replaces the screen. */
 	failure?: string | null
-	onOpen: (id: string) => void
 	onNew?: () => void
 	onBack?: () => void
 }
 
-export function BoardView({
-	articles,
-	failure = null,
-	onOpen,
-	onNew,
-	onBack,
-}: BoardViewProps) {
+export function BoardView({ articles, failure = null, onNew, onBack }: BoardViewProps) {
 	const columns = boardColumns(articles)
 
 	return (
@@ -69,7 +62,6 @@ export function BoardView({
 									article={article}
 									className="shrink-0"
 									key={article.id}
-									onOpen={onOpen}
 									variant="column"
 								/>
 							))}

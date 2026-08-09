@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 
 import type { ArticleEntry } from '../../shared/article'
@@ -25,7 +26,6 @@ export interface ArticleListProps {
 	articles: readonly ArticleEntry[]
 	/** Why a write did not land. The read's own failure replaces the screen. */
 	failure?: string | null
-	onOpen: (id: string) => void
 	onNew?: () => void
 	onBoard?: () => void
 	onRestore?: (id: string) => void
@@ -34,7 +34,6 @@ export interface ArticleListProps {
 export function ArticleList({
 	articles,
 	failure = null,
-	onOpen,
 	onNew,
 	onBoard,
 	onRestore,
@@ -66,7 +65,7 @@ export function ArticleList({
 						<GroupHeading>Recent</GroupHeading>
 						<div className="flex flex-wrap gap-3">
 							{recent.map((article) => (
-								<ArticleCard article={article} key={article.id} onOpen={onOpen} />
+								<ArticleCard article={article} key={article.id} />
 							))}
 						</div>
 					</div>
@@ -83,12 +82,7 @@ export function ArticleList({
 						// title stays under the heading.
 						<div className="-mx-2.5 flex flex-col">
 							{working.map((article) => (
-								<ArticleRow
-									article={article}
-									key={article.id}
-									onOpen={onOpen}
-									when={article.createdAt}
-								/>
+								<ArticleRow article={article} key={article.id} when={article.createdAt} />
 							))}
 						</div>
 					)}
@@ -112,7 +106,6 @@ export function ArticleList({
 									article={article}
 									dimmed
 									key={article.id}
-									onOpen={onOpen}
 									when={article.archivedAt ?? article.createdAt}
 								/>
 							))}
@@ -138,13 +131,11 @@ function ArticleRow({
 	when,
 	action,
 	dimmed = false,
-	onOpen,
 }: {
 	article: ArticleEntry
 	when: number
 	action?: ReactNode
 	dimmed?: boolean
-	onOpen: (id: string) => void
 }) {
 	return (
 		<div
@@ -155,10 +146,10 @@ function ArticleRow({
 		>
 			{/* The clip goes on the text: an overlay inside an `overflow-hidden` box
 			    is clipped to it, and would cover the title alone. */}
-			<button
+			<Link
 				className="min-w-0 flex-1 text-left after:absolute after:inset-0"
-				onClick={() => onOpen(article.id)}
-				type="button"
+				params={{ articleId: article.id }}
+				to="/a/$articleId"
 			>
 				<span
 					className={cx(
@@ -168,7 +159,7 @@ function ArticleRow({
 				>
 					{articleTitle(article)}
 				</span>
-			</button>
+			</Link>
 			<Chip variant="outline">{statusLabel[article.status]}</Chip>
 			{/* Fixed width, so dates of different lengths leave the chips in line. */}
 			<span className="w-12 shrink-0 text-right text-[0.6875rem] text-faint">

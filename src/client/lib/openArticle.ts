@@ -1,9 +1,9 @@
 import { useNavigate } from '@tanstack/react-router'
 
 /**
- * Where every "open this Article" control goes. `newTitle` is the name the
- * new-Article dialog collected, which `useSeedTitle` writes into the Plan on the
- * far side.
+ * Opens the Article the new-Article dialog just created. Every other way in is a
+ * `Link` on the tile or the row; this one is a navigation because it waits on
+ * the create, and because `newTitle` has to ride along to `useSeedTitle`.
  */
 export function useOpenArticle(): (articleId: string, newTitle?: string) => void {
 	const navigate = useNavigate()

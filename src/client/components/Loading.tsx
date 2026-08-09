@@ -7,7 +7,6 @@ export interface LoadingProps {
 	className?: string
 }
 
-/** What a screen shows while it waits for the thing it is about. */
 export function Loading({ children, className }: LoadingProps) {
 	return (
 		<p

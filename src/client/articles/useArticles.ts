@@ -24,13 +24,7 @@ export const articlesQuery = queryOptions({
 	queryFn: fetchArticles,
 })
 
-/**
- * Splices a row the server just answered with into the cached list, rather than
- * invalidating and reading the whole table back. Every write route returns the
- * row it wrote, so the list already has what a refetch would fetch — and the
- * Article screen holds this query too, so an invalidation there costs a
- * whole-table GET per rename.
- */
+/** Splices a row into the cached list. */
 export function keepArticle(client: QueryClient, article: ArticleEntry): void {
 	client.setQueryData<ArticleEntry[]>(articlesKey, (held) => {
 		const rows = held ?? []
@@ -71,25 +65,17 @@ export function useEditArticle(): ArticleWriter {
 
 export type ArticleIndex = ArticleWriter & { articles: ArticleEntry[] }
 
-/**
- * The Area's read. **It suspends.** A View drawn before the rows arrive is a
- * list of nothing that is not empty — zero counts, "nothing here yet", and four
- * bare columns — so the route holds a loader up instead and the Views only ever
- * see rows they can trust.
- */
 export function useArticleIndex(): ArticleIndex {
 	const { data } = useSuspenseQuery(articlesQuery)
 
 	return { articles: data, ...useEditArticle() }
 }
 
-/**
- * One row out of the list, without waiting for it. The Article screen reads its
- * status through this and shows the Chat and the Plan meanwhile — those come off
- * the socket and have nothing to do with the index.
- */
 export function useArticleEntry(id: string): ArticleEntry | undefined {
-	const { data } = useQuery(articlesQuery)
+	const { data } = useQuery({
+		...articlesQuery,
+		select: (articles) => articles.find((article) => article.id === id),
+	})
 
-	return data?.find((article) => article.id === id)
+	return data
 }

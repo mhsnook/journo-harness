@@ -10,8 +10,6 @@ import { useOpenArticle } from '../lib/openArticle'
 /** The Articles Area, as a list. `/board` is the same rows by status. */
 export const Route = createFileRoute('/')({
 	component: ArticlesRoute,
-	// The rows are here before the View is, so it never draws an empty list that
-	// is not empty.
 	loader: ({ context }) => context.queryClient.ensureQueryData(articlesQuery),
 	pendingComponent: ArticlesPending,
 	errorComponent: ArticlesFailed,
@@ -30,7 +28,6 @@ function ArticlesRoute() {
 				failure={index.failure}
 				onBoard={() => navigate({ to: '/board' })}
 				onNew={starting.start}
-				onOpen={open}
 				onRestore={(id) => index.edit(id, { archived: false })}
 			/>
 			{starting.dialog}
