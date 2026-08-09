@@ -3,20 +3,20 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { BoardView } from '../articles/BoardView'
 import { useArticleIndex } from '../articles/useArticles'
 import { useNewArticle } from '../articles/useNewArticle'
+import { Screen } from '../components/Frame'
+import { useOpenArticle } from '../lib/openArticle'
 
 /** The Board View: the same unarchived Articles the list shows, by status. */
 export const Route = createFileRoute('/board')({ component: BoardRoute })
 
 function BoardRoute() {
 	const navigate = useNavigate()
+	const open = useOpenArticle()
 	const index = useArticleIndex()
-	const starting = useNewArticle()
-
-	const open = (articleId: string) =>
-		navigate({ to: '/a/$articleId', params: { articleId } })
+	const starting = useNewArticle((article, title) => open(article.id, title))
 
 	return (
-		<div className="flex h-dvh flex-col bg-surface text-ink">
+		<Screen>
 			<BoardView
 				articles={index.articles}
 				failure={index.failure}
@@ -26,6 +26,6 @@ function BoardRoute() {
 				onOpen={open}
 			/>
 			{starting.dialog}
-		</div>
+		</Screen>
 	)
 }

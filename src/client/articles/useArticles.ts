@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+	type QueryClient,
+	useMutation,
+	useQuery,
+	useQueryClient,
+} from '@tanstack/react-query'
 
 import type { ArticleEdit, ArticleEntry } from '../../shared/article'
 import { failureText } from '../lib/failure'
@@ -10,6 +15,29 @@ import { editArticle, fetchArticles } from './api'
  */
 
 export const articlesKey = ['articles'] as const
+
+/**
+ * Splices a row the server just answered with into the cached list, rather than
+ * invalidating and reading the whole table back. Every write route returns the
+ * row it wrote, so the list already has what a refetch would fetch — and the
+ * Article screen holds this query too, so an invalidation there costs a
+ * whole-table GET per rename.
+ */
+export function keepArticle(client: QueryClient, article: ArticleEntry): void {
+	client.setQueryData<ArticleEntry[]>(articlesKey, (held) => {
+		const rows = held ?? []
+		const at = rows.findIndex((one) => one.id === article.id)
+
+		return at === -1 ? [article, ...rows] : rows.toSpliced(at, 1, article)
+	})
+}
+
+/** The other half, for a row the writer discarded. */
+export function dropArticle(client: QueryClient, id: string): void {
+	client.setQueryData<ArticleEntry[]>(articlesKey, (held) =>
+		(held ?? []).filter((one) => one.id !== id),
+	)
+}
 
 export type ArticleIndex = {
 	articles: ArticleEntry[]
@@ -26,7 +54,7 @@ export function useArticleIndex(): ArticleIndex {
 	const edited = useMutation({
 		mutationFn: ({ id, edit }: { id: string; edit: ArticleEdit }) =>
 			editArticle(id, edit),
-		onSuccess: () => client.invalidateQueries({ queryKey: articlesKey }),
+		onSuccess: (article) => keepArticle(client, article),
 	})
 
 	return {
@@ -38,4 +66,11 @@ export function useArticleIndex(): ArticleIndex {
 
 		edit: (id, edit) => edited.mutate({ id, edit }),
 	}
+}
+
+/** One row out of the list already loaded, rather than a request of its own. */
+export function useArticleEntry(id: string): ArticleEntry | undefined {
+	const { data } = useQuery({ queryKey: articlesKey, queryFn: fetchArticles })
+
+	return data?.find((article) => article.id === id)
 }

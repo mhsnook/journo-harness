@@ -1,15 +1,15 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { useLocation, useNavigate } from '@tanstack/react-router'
+import { useLocation } from '@tanstack/react-router'
 import { type FormEvent, type ReactNode, useRef, useState } from 'react'
 
-import type { ArticleEntry } from '../../shared/article'
+import { type ArticleEntry, untitledArticle } from '../../shared/article'
 import { Button } from '../components/Button'
 import { Dialog } from '../components/Dialog'
 import { TextField } from '../components/Field'
 import { Notice } from '../components/Notice'
 import { failureText } from '../lib/failure'
 import { createArticle, discardArticle } from './api'
-import { articlesKey } from './useArticles'
+import { dropArticle, keepArticle } from './useArticles'
 
 declare module '@tanstack/react-router' {
 	interface HistoryState {
@@ -23,9 +23,9 @@ declare module '@tanstack/react-router' {
  * Opening an Article: the row is created the moment the writer asks for one, and
  * the dialog asks what to call it while that request is still in flight.
  *
- * The typed title travels on the navigation rather than being written here —
- * writing it from this page would put the index copy in front of the Plan it
- * copies (docs/architecture.md §9).
+ * The typed title goes to the caller rather than to the index — writing it here
+ * would put the index copy in front of the Plan it copies (§9) — and the caller
+ * navigates, so this module stays as router-free as the rest of `articles/`.
  */
 
 export type NewArticleFlow = {
@@ -34,9 +34,11 @@ export type NewArticleFlow = {
 	dialog: ReactNode
 }
 
-export function useNewArticle(): NewArticleFlow {
+/** `opened` is handed the new Article and the name the writer typed for it. */
+export function useNewArticle(
+	opened: (article: ArticleEntry, title: string) => void,
+): NewArticleFlow {
 	const client = useQueryClient()
-	const navigate = useNavigate()
 
 	const [naming, setNaming] = useState(false)
 	const [opening, setOpening] = useState(false)
@@ -45,8 +47,6 @@ export function useNewArticle(): NewArticleFlow {
 	// The request rather than its result: the writer may confirm before it
 	// answers, and awaiting this promise is the whole coordination.
 	const made = useRef<Promise<ArticleEntry> | null>(null)
-
-	const reread = () => client.invalidateQueries({ queryKey: articlesKey })
 
 	/** The `catch` is not the handler — it keeps a failure while the writer is
 	 * still typing from being an unhandled rejection. `confirm` reports it. */
@@ -63,7 +63,6 @@ export function useNewArticle(): NewArticleFlow {
 		if (naming) return
 
 		setFailure(null)
-		setOpening(false)
 		setNaming(true)
 		begin()
 	}
@@ -80,12 +79,8 @@ export function useNewArticle(): NewArticleFlow {
 				made.current = null
 				setNaming(false)
 				setOpening(false)
-				reread()
-				navigate({
-					to: '/a/$articleId',
-					params: { articleId: article.id },
-					state: { newTitle: title.trim() },
-				})
+				keepArticle(client, article)
+				opened(article, title.trim())
 			},
 			(error: unknown) => {
 				// Left open, holding what they typed, so confirming again retries.
@@ -101,13 +96,17 @@ export function useNewArticle(): NewArticleFlow {
 		made.current = null
 		setNaming(false)
 		setOpening(false)
-		setFailure(null)
 
 		// A confirm nulls this first, so the close it causes reaches here and
 		// discards nothing. Otherwise it would throw away the Article the writer
 		// is on their way into.
 		request?.then(
-			(article) => discardArticle(article.id).then(reread, () => {}),
+			(article) => {
+				discardArticle(article.id).then(
+					() => dropArticle(client, article.id),
+					() => {},
+				)
+			},
 			() => {},
 		)
 	}
@@ -185,7 +184,7 @@ function NewArticleDialog({
 				<TextField
 					hiddenLabel="Article title"
 					onChange={setTitle}
-					placeholder="Untitled article"
+					placeholder={untitledArticle}
 					value={title}
 				/>
 			</form>

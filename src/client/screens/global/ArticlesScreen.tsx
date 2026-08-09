@@ -9,7 +9,8 @@ import { articleIndex } from '../../mock/content'
 export function ArticlesScreen() {
 	return (
 		<Frame width={720}>
-			{/* A handler that goes nowhere, so the rows still show their hover. */}
+			{/* A handler that goes nowhere: the screen is a still frame of the
+			    interaction, not the interaction. */}
 			<ArticleList articles={articleIndex} onOpen={() => {}} />
 		</Frame>
 	)

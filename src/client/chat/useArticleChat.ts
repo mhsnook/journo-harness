@@ -1,6 +1,6 @@
 import { useAgentChat } from '@cloudflare/ai-chat/react'
 import type { UIMessage } from 'ai'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { proposePlanChangeTool } from '../../shared/chat'
 import type { Plan } from '../../shared/plan'
@@ -68,8 +68,9 @@ export function useArticleChat(agent: ArticleSocket): ChatHandle {
 	// names that the Ledger has not got is the signal to read again. Comparing
 	// rather than counting turns is also what makes it safe: a row that never
 	// arrives leaves `missing` true, so the dependency holds and the read stops.
+	const recorded = useMemo(() => recordedOfferIds(messages), [messages])
 	const loaded = new Set(ledger.ledger.offers.map((offer) => offer.id))
-	const missing = recordedOfferIds(messages).some((id) => !loaded.has(id))
+	const missing = recorded.some((id) => !loaded.has(id))
 	const { reload } = ledger
 	useEffect(() => {
 		if (missing) reload()
@@ -96,7 +97,7 @@ export function useArticleChat(agent: ArticleSocket): ChatHandle {
 		})
 	}
 
-	const waiting = waitingCount(messages)
+	const waiting = useMemo(() => waitingCount(messages), [messages])
 	const running = chat.isStreaming || chat.isRecovering || chat.status === 'submitted'
 
 	return {

@@ -5,7 +5,7 @@ import type { Offer } from '../../shared/offer'
 import { acceptOffer } from '../plan/edits'
 import { refusalText } from '../plan/refusalText'
 import { useArticle } from './article'
-import { reasonFor } from './failure'
+import { failureText } from './failure'
 
 /**
  * The Offer ledger, live. Rows come down once per store, since nothing announces
@@ -42,7 +42,7 @@ export function useOfferLedger(): OfferLedgerHandle {
 				if (live) setRows(listed)
 			},
 			(error: unknown) => {
-				if (live) setFailure(`The Offers did not load. ${reasonFor(error)}`)
+				if (live) setFailure(failureText('The Offers did not load.', error))
 			},
 		)
 
@@ -60,7 +60,7 @@ export function useOfferLedger(): OfferLedgerHandle {
 
 	function run(what: string, write: () => Promise<Offer>, then: (ruled: Offer) => void) {
 		setFailure(null)
-		write().then(then, (error: unknown) => setFailure(`${what} ${reasonFor(error)}`))
+		write().then(then, (error: unknown) => setFailure(failureText(what, error)))
 	}
 
 	return {

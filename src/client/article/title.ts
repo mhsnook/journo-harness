@@ -1,8 +1,8 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { editArticle } from '../articles/api'
-import { articlesKey } from '../articles/useArticles'
+import { keepArticle } from '../articles/useArticles'
 import { failureText } from '../lib/failure'
 import { setTitle } from '../plan/edits'
 import type { PlanConnection } from '../plan/usePlan'
@@ -49,22 +49,19 @@ export function useTitleCopy(articleId: string, title: string | null): string | 
 		pending: null,
 	})
 
-	function write(next: string) {
-		held.current.pending = null
-		setFailure(null)
+	const write = useCallback(
+		(next: string) => {
+			held.current.pending = null
+			setFailure(null)
 
-		editArticle(articleId, { title: next }).then(
-			() => client.invalidateQueries({ queryKey: articlesKey }),
-			(error: unknown) =>
-				setFailure(failureText("The list's copy of the title didn't save.", error)),
-		)
-	}
-
-	// The flush fires from a cleanup, which closes over the render that set it up.
-	const send = useRef(write)
-	useEffect(() => {
-		send.current = write
-	})
+			editArticle(articleId, { title: next }).then(
+				(article) => keepArticle(client, article),
+				(error: unknown) =>
+					setFailure(failureText("The list's copy of the title didn't save.", error)),
+			)
+		},
+		[articleId, client],
+	)
 
 	useEffect(() => {
 		if (title === null) return
@@ -80,10 +77,10 @@ export function useTitleCopy(articleId: string, title: string | null): string | 
 
 		state.sent = title
 		state.pending = title
-		const timer = setTimeout(() => send.current(title), pause)
+		const timer = setTimeout(() => write(title), pause)
 
 		return () => clearTimeout(timer)
-	}, [title])
+	}, [title, write])
 
 	// Runs after the effect above has cleared its timer, so what is left is a
 	// rename the debounce never sent.
@@ -91,9 +88,9 @@ export function useTitleCopy(articleId: string, title: string | null): string | 
 		const state = held.current
 
 		return () => {
-			if (state.pending !== null) send.current(state.pending)
+			if (state.pending !== null) write(state.pending)
 		}
-	}, [])
+	}, [write])
 
 	return failure
 }

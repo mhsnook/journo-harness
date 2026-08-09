@@ -1,6 +1,7 @@
 import {
 	type ArticleEntry,
 	articleTitle,
+	isUntitled,
 	statusLabel,
 	statusProgress,
 } from '../../shared/article'
@@ -13,8 +14,7 @@ export interface ArticleCardProps {
 	article: ArticleEntry
 	/** `card` is the index's tile; `column` is the Board View's smaller one. */
 	variant?: 'card' | 'column'
-	/** Renders the tile as a button. Omit it and the tile is a static one. */
-	onOpen?: (id: string) => void
+	onOpen: (id: string) => void
 	className?: string
 }
 
@@ -35,24 +35,22 @@ export function ArticleCard({
 	className,
 }: ArticleCardProps) {
 	const compact = variant === 'column'
-	const untitled = article.title.trim() === ''
-	const Tag = (onOpen ? 'button' : 'article') as 'button'
 
 	return (
-		<Tag
-			{...(onOpen ? { type: 'button' as const, onClick: () => onOpen(article.id) } : {})}
+		<button
 			className={cx(
-				'flex flex-col items-stretch rounded-lg border border-edge bg-surface text-left transition-colors',
+				'flex flex-col items-stretch rounded-lg border border-edge bg-surface text-left transition-colors hover:border-ink/40 hover:bg-hush',
 				compact ? 'gap-1.5 p-2.5' : 'w-[13.5rem] gap-2.5 p-3.5',
-				onOpen && 'hover:border-ink/40 hover:bg-hush',
 				className,
 			)}
+			onClick={() => onOpen(article.id)}
+			type="button"
 		>
 			<h3
 				className={cx(
 					'leading-snug break-words',
 					compact ? 'text-[0.8125rem]' : 'line-clamp-3 text-[0.9375rem]',
-					untitled ? 'text-faint' : 'font-semibold text-ink',
+					isUntitled(article.title) ? 'text-faint' : 'font-semibold text-ink',
 				)}
 			>
 				{articleTitle(article)}
@@ -71,6 +69,6 @@ export function ArticleCard({
 					started {shortDate(article.createdAt)}
 				</span>
 			</div>
-		</Tag>
+		</button>
 	)
 }

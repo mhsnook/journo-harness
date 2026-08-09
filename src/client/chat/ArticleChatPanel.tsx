@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react'
 
+import { Panel } from '../components/Panel'
 import { useArticle } from '../lib/article'
 import type { ArticleSocket } from '../lib/useArticleAgent'
-import { ChatPanel } from './ChatPanel'
+import { ChatPanel, type ChatPanelProps } from './ChatPanel'
 import { useArticleChat } from './useArticleChat'
 
 /** Drives `ChatPanel` from one Article Agent. Takes the socket rather than
@@ -13,6 +14,7 @@ export interface ArticleChatPanelProps {
 	placeholder?: string
 	/** Left of send — the Offer ledger toggle. */
 	leading?: ReactNode
+	divider?: ChatPanelProps['divider']
 	className?: string
 }
 
@@ -20,6 +22,7 @@ export function ArticleChatPanel({
 	agent,
 	placeholder,
 	leading,
+	divider,
 	className,
 }: ArticleChatPanelProps) {
 	const { plan } = useArticle().plan
@@ -30,9 +33,9 @@ export function ArticleChatPanel({
 	// until one arrives.
 	if (plan === null) {
 		return (
-			<div className={className}>
-				<p className="p-3.5 text-[0.75rem] text-faint">Opening the Chat…</p>
-			</div>
+			<Panel className={className} divider={divider}>
+				<p className="text-[0.75rem] text-faint">Opening the Chat…</p>
+			</Panel>
 		)
 	}
 
@@ -40,6 +43,7 @@ export function ArticleChatPanel({
 		<ChatPanel
 			busy={chat.busy}
 			className={className}
+			divider={divider}
 			failure={chat.failure ?? ledger.failure}
 			leading={leading}
 			messages={chat.messages}

@@ -3,20 +3,20 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { ArticleList } from '../articles/ArticleList'
 import { useArticleIndex } from '../articles/useArticles'
 import { useNewArticle } from '../articles/useNewArticle'
+import { Screen } from '../components/Frame'
+import { useOpenArticle } from '../lib/openArticle'
 
 /** The Articles Area, as a list. `/board` is the same rows by status. */
 export const Route = createFileRoute('/')({ component: ArticlesRoute })
 
 function ArticlesRoute() {
 	const navigate = useNavigate()
+	const open = useOpenArticle()
 	const index = useArticleIndex()
-	const starting = useNewArticle()
-
-	const open = (articleId: string) =>
-		navigate({ to: '/a/$articleId', params: { articleId } })
+	const starting = useNewArticle((article, title) => open(article.id, title))
 
 	return (
-		<div className="flex h-dvh flex-col bg-surface text-ink">
+		<Screen>
 			<ArticleList
 				articles={index.articles}
 				failure={index.failure}
@@ -27,6 +27,6 @@ function ArticlesRoute() {
 				onRestore={(id) => index.edit(id, { archived: false })}
 			/>
 			{starting.dialog}
-		</div>
+		</Screen>
 	)
 }

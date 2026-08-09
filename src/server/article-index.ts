@@ -78,26 +78,23 @@ export const articleIndex = new Hono<{ Bindings: Env }>()
 		if (!sent.success) return c.json({ error: z.prettifyError(sent.error) }, 400)
 
 		const { title, status, archived } = sent.data
-		const assignments: string[] = ['updated_at = ?']
-		const values: (string | number | null)[] = [Date.now()]
+		const now = Date.now()
 
-		if (title !== undefined) {
-			assignments.push('title = ?')
-			values.push(title)
-		}
-		if (status !== undefined) {
-			assignments.push('status = ?')
-			values.push(status)
-		}
-		if (archived !== undefined) {
-			assignments.push('archived_at = ?')
-			values.push(archived ? Date.now() : null)
-		}
+		// One record rather than two arrays that have to stay index-aligned, and
+		// one clock read, so an Archived row's two stamps agree.
+		const set: Record<string, string | number | null> = { updated_at: now }
+		if (title !== undefined) set.title = title
+		if (status !== undefined) set.status = status
+		if (archived !== undefined) set.archived_at = archived ? now : null
+
+		const assignments = Object.keys(set)
+			.map((column) => `${column} = ?`)
+			.join(', ')
 
 		const row = await c.env.DB.prepare(
-			`UPDATE article SET ${assignments.join(', ')} WHERE id = ? RETURNING ${columns}`,
+			`UPDATE article SET ${assignments} WHERE id = ? RETURNING ${columns}`,
 		)
-			.bind(...values, c.req.param('id'))
+			.bind(...Object.values(set), c.req.param('id'))
 			.first<ArticleRow>()
 
 		if (row === null) return c.json({ error: 'No Article carries that id.' }, 404)

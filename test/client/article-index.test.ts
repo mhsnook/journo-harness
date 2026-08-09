@@ -55,6 +55,18 @@ describe('the tiles on top of the list', () => {
 		expect(recentArticles(articles, 3).map((one) => one.id)).toEqual(['a', 'b', 'c'])
 	})
 
+	// Sorted in the View rather than left to the index route's ORDER BY, so
+	// paginating the read cannot turn these into "the first three rows".
+	it('orders by when the row last changed, not by the order it arrived in', () => {
+		const older = { ...entry('older', 'planning'), updatedAt: 10 }
+		const newer = { ...entry('newer', 'planning'), updatedAt: 20 }
+
+		expect(recentArticles([older, newer], 2).map((one) => one.id)).toEqual([
+			'newer',
+			'older',
+		])
+	})
+
 	it('leaves every one of them in the list underneath', () => {
 		const listed = unarchivedArticles(articles).map((one) => one.id)
 

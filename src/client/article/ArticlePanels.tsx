@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 
 import { ArticleChatPanel } from '../chat/ArticleChatPanel'
-import { Panel, PanelHeader } from '../components/Panel'
+import { Panel, PanelHeader, type PanelProps } from '../components/Panel'
 import type { PanelId } from '../components/PanelRail'
 import type { ArticleSocket } from '../lib/useArticleAgent'
 import { ArticlePlanPanel } from '../plan/ArticlePlanPanel'
@@ -37,20 +37,18 @@ function PanelFor({
 	divided: boolean
 	panel: PanelId
 }) {
-	// A class rather than the Panel's `divider` prop: the two live Panels forward
-	// a className and nothing else, which is all a border needs.
-	const edge = divided ? 'border-l border-edge' : undefined
+	const edge = divided ? 'left' : 'none'
 
 	switch (panel) {
 		case 'chat':
-			return <ArticleChatPanel agent={agent} className={edge} />
+			return <ArticleChatPanel agent={agent} divider={edge} />
 
 		case 'plan':
-			return <ArticlePlanPanel className={edge} />
+			return <ArticlePlanPanel divider={edge} />
 
 		case 'draft':
 			return (
-				<EmptyPanel className={edge} title="Draft">
+				<EmptyPanel divider={edge} title="Draft">
 					The writing surface arrives with phase 2. Plan the piece here and write it
 					elsewhere for now.
 				</EmptyPanel>
@@ -59,7 +57,7 @@ function PanelFor({
 		case 'notes':
 			// Notes is always the narrow one — screen 4(e).
 			return (
-				<EmptyPanel className={edge} grow={0.26} title="Notes">
+				<EmptyPanel divider={edge} grow={0.26} title="Notes">
 					The Guide's notes arrive with phase 2, alongside the Draft they read.
 				</EmptyPanel>
 			)
@@ -69,16 +67,16 @@ function PanelFor({
 function EmptyPanel({
 	title,
 	grow,
+	divider,
 	children,
-	className,
 }: {
 	title: string
 	grow?: number
+	divider?: PanelProps['divider']
 	children: ReactNode
-	className?: string
 }) {
 	return (
-		<Panel className={className} grow={grow} variant="sunk">
+		<Panel divider={divider} grow={grow} variant="sunk">
 			<PanelHeader title={title} />
 			<p className="text-[0.75rem] leading-relaxed text-faint">{children}</p>
 		</Panel>

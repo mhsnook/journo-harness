@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 
 import type { ArticleEntry } from '../../shared/article'
-import { articleTitle, statusLabel } from '../../shared/article'
+import { articleTitle, isUntitled, statusLabel } from '../../shared/article'
 import { ArticleCard } from '../components/ArticleCard'
 import { Button } from '../components/Button'
 import { Chip } from '../components/Chip'
@@ -27,11 +27,10 @@ export interface ArticleListProps {
 	loading?: boolean
 	/** Why the list did not load, or why a write did not land. */
 	failure?: string | null
-	onOpen?: (id: string) => void
+	onOpen: (id: string) => void
 	onNew?: () => void
 	onBoard?: () => void
 	onRestore?: (id: string) => void
-	className?: string
 }
 
 export function ArticleList({
@@ -42,7 +41,6 @@ export function ArticleList({
 	onNew,
 	onBoard,
 	onRestore,
-	className,
 }: ArticleListProps) {
 	const working = unarchivedArticles(articles)
 	const recent = recentArticles(articles)
@@ -51,7 +49,6 @@ export function ArticleList({
 	return (
 		<>
 			<TitleBar
-				className={className}
 				title="Articles"
 				actions={
 					<>
@@ -152,15 +149,12 @@ function ArticleRow({
 	when: number
 	action?: ReactNode
 	dimmed?: boolean
-	onOpen?: (id: string) => void
+	onOpen: (id: string) => void
 }) {
-	const untitled = article.title.trim() === ''
-
 	return (
 		<div
 			className={cx(
-				'relative flex items-center gap-3 rounded-md px-2.5 py-2.5 transition-colors',
-				onOpen && 'hover:bg-hush',
+				'relative flex items-center gap-3 rounded-md px-2.5 py-2.5 transition-colors hover:bg-hush',
 				dimmed && 'opacity-70',
 			)}
 		>
@@ -168,13 +162,13 @@ function ArticleRow({
 			    is clipped to it, and would cover the title alone. */}
 			<button
 				className="min-w-0 flex-1 text-left after:absolute after:inset-0"
-				onClick={() => onOpen?.(article.id)}
+				onClick={() => onOpen(article.id)}
 				type="button"
 			>
 				<span
 					className={cx(
 						'block truncate text-[0.875rem]',
-						untitled ? 'text-faint' : 'text-ink',
+						isUntitled(article.title) ? 'text-faint' : 'text-ink',
 					)}
 				>
 					{articleTitle(article)}

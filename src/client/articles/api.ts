@@ -20,8 +20,10 @@ export async function fetchArticles(): Promise<ArticleEntry[]> {
 	return articleListSchema.parse(answer).articles
 }
 
-export async function createArticle(title?: string): Promise<ArticleEntry> {
-	const answer = await send(base, 'POST', title === undefined ? {} : { title })
+/** Untitled: the name travels into the Article screen and reaches the index as a
+ * copy of the Plan's, so nothing may name a row ahead of the Plan (§9). */
+export async function createArticle(): Promise<ArticleEntry> {
+	const answer = await send(base, 'POST', {})
 
 	return articleReplySchema.parse(answer).article
 }

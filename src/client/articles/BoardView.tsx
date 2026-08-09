@@ -20,10 +20,9 @@ export interface BoardViewProps {
 	/** Until the first read answers. */
 	loading?: boolean
 	failure?: string | null
-	onOpen?: (id: string) => void
+	onOpen: (id: string) => void
 	onNew?: () => void
 	onBack?: () => void
-	className?: string
 }
 
 export function BoardView({
@@ -33,7 +32,6 @@ export function BoardView({
 	onOpen,
 	onNew,
 	onBack,
-	className,
 }: BoardViewProps) {
 	const columns = boardColumns(articles)
 
@@ -46,7 +44,6 @@ export function BoardView({
 					</Button>
 				}
 				back="Articles"
-				className={className}
 				onBack={onBack}
 				subtitle="by status"
 				title="Board"

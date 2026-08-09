@@ -6,7 +6,7 @@ import type { Offer } from '../../shared/offer'
 import type { Plan } from '../../shared/plan'
 import { ChatComposer, ChatMessage, ChatNote, ChatWorking } from '../components/Chat'
 import { Notice } from '../components/Notice'
-import { Panel } from '../components/Panel'
+import { Panel, type PanelProps } from '../components/Panel'
 import { ReferenceCard } from '../components/ReferenceCard'
 import { readRecordedOffers } from './offers'
 import { ProposalCard } from './ProposalCard'
@@ -38,6 +38,8 @@ export interface ChatPanelProps {
 	onAcceptOffer: (offer: Offer) => void
 	onDeclineOffer: (offer: Offer) => void
 	failure?: string | null
+	/** The rule between this Panel and its neighbour. */
+	divider?: PanelProps['divider']
 	placeholder?: string
 	/** Left of send — the Offer ledger toggle. */
 	leading?: ReactNode
@@ -58,6 +60,7 @@ export function ChatPanel({
 	onAcceptOffer,
 	onDeclineOffer,
 	failure = null,
+	divider,
 	placeholder,
 	leading,
 	className,
@@ -65,7 +68,7 @@ export function ChatPanel({
 	const rows = new Map(offers.map((offer) => [offer.id, offer]))
 
 	return (
-		<Panel className={className} padded={false}>
+		<Panel className={className} divider={divider} padded={false}>
 			<div className="flex flex-1 flex-col gap-3.5 p-3.5">
 				{messages.map((message) => (
 					<Turn

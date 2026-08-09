@@ -23,6 +23,16 @@ const variantClass: Record<ChipVariant, string> = {
 	solid: 'border-ink bg-ink text-paper',
 }
 
+/** The pill's own geometry, exported for a control that cannot be a `Chip` —
+ * the status `<select>` in the ArticleBar sits beside real ones. */
+export function chipClass(variant: ChipVariant, interactive = false): string {
+	return cx(
+		'inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-[0.1875rem] text-[0.6875rem] leading-none font-medium whitespace-nowrap',
+		variantClass[variant],
+		interactive && 'transition-colors hover:border-ink/30 hover:text-ink',
+	)
+}
+
 /**
  * A small metadata token: word targets, adjectives, voices, statuses, filters.
  * Chips are read-only labels unless `interactive` is set.
@@ -39,13 +49,7 @@ export function Chip({
 	return (
 		<Tag
 			{...(interactive ? { type: 'button' as const } : {})}
-			className={cx(
-				'inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-[0.1875rem] text-[0.6875rem] leading-none font-medium whitespace-nowrap',
-				variantClass[variant],
-				dimmed && 'opacity-45',
-				interactive && 'transition-colors hover:border-ink/30 hover:text-ink',
-				className,
-			)}
+			className={cx(chipClass(variant, interactive), dimmed && 'opacity-45', className)}
 			{...rest}
 		>
 			{children}

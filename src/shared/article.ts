@@ -55,8 +55,16 @@ export type ArticleEdit = z.infer<typeof articleEditSchema>
 /** The Plan Panel's placeholder reads the same, because it is the same absence. */
 export const untitledArticle = 'Untitled article'
 
+export function isUntitled(title: string): boolean {
+	return title.trim() === ''
+}
+
+export function displayTitle(title: string): string {
+	return isUntitled(title) ? untitledArticle : title
+}
+
 export function articleTitle(article: ArticleEntry): string {
-	return article.title.trim() === '' ? untitledArticle : article.title
+	return displayTitle(article.title)
 }
 
 export function isArchived(article: ArticleEntry): boolean {
