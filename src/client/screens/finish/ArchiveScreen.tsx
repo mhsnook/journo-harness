@@ -3,7 +3,7 @@ import { GroupHeading } from '../../components/Divider'
 import { Field } from '../../components/Field'
 import { Frame, FrameBody } from '../../components/Frame'
 import { MetaLabel } from '../../components/MetaLabel'
-import { TitleBar } from '../../components/TitleBar'
+import { BackLink, TitleBar } from '../../components/TitleBar'
 import { publishedArticles } from '../../mock/content'
 
 /**
@@ -14,7 +14,7 @@ export function ArchiveScreen() {
 	return (
 		<Frame width={520}>
 			<TitleBar
-				back="Desk"
+				back={<BackLink to="/">Articles</BackLink>}
 				title="Submitted & published"
 				actions={<span className="text-[0.75rem] text-faint">9 published</span>}
 			/>

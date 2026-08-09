@@ -1,11 +1,11 @@
-import type { ReactNode } from 'react'
+import { Link } from '@tanstack/react-router'
+import type { ComponentProps, ReactNode } from 'react'
 
 import { cx } from '../lib/cx'
 
 export interface TitleBarProps {
-	/** Renders a back affordance ahead of the title. */
-	back?: string
-	onBack?: () => void
+	/** The back affordance, named — a `BackLink` where it goes somewhere. */
+	back?: ReactNode
 	title: ReactNode
 	/** Quiet text after the title — "· board", "· all articles". */
 	subtitle?: ReactNode
@@ -19,14 +19,7 @@ export interface TitleBarProps {
  * pushed right. The rule underneath is the heavier of the two hairline
  * weights — it separates chrome from content.
  */
-export function TitleBar({
-	back,
-	onBack,
-	title,
-	subtitle,
-	actions,
-	className,
-}: TitleBarProps) {
+export function TitleBar({ back, title, subtitle, actions, className }: TitleBarProps) {
 	return (
 		<header
 			className={cx(
@@ -34,18 +27,7 @@ export function TitleBar({
 				className,
 			)}
 		>
-			{back ? (
-				<button
-					type="button"
-					onClick={onBack}
-					className="-ml-1 flex items-center gap-1.5 rounded px-1 py-0.5 text-[0.8125rem] text-muted transition-colors hover:text-ink"
-				>
-					<span aria-hidden className="text-[0.9em] leading-none">
-						←
-					</span>
-					<span className="max-w-[16rem] truncate">{back}</span>
-				</button>
-			) : null}
+			{back}
 			<h2 className="truncate text-[0.9375rem] leading-tight font-medium text-ink">
 				{title}
 			</h2>
@@ -54,5 +36,53 @@ export function TitleBar({
 			) : null}
 			<div className="ml-auto flex shrink-0 items-center gap-2">{actions}</div>
 		</header>
+	)
+}
+
+const backClass =
+	'-ml-1 flex shrink-0 items-center gap-1.5 rounded px-1 py-0.5 text-[0.8125rem] text-muted transition-colors hover:text-ink'
+
+function BackArrow({ children }: { children: ReactNode }) {
+	return (
+		<>
+			<span aria-hidden className="text-[0.9em] leading-none">
+				←
+			</span>
+			<span className="max-w-[16rem] truncate">{children}</span>
+		</>
+	)
+}
+
+/**
+ * Going back to somewhere the app has a route for. A real anchor, so it opens in
+ * a new tab on a middle-click and warms its route on hover like every other
+ * `Link`.
+ */
+export function BackLink({
+	children,
+	...rest
+}: Omit<ComponentProps<typeof Link>, 'children' | 'className'> & {
+	children: ReactNode
+}) {
+	return (
+		<Link className={backClass} {...rest}>
+			<BackArrow>{children}</BackArrow>
+		</Link>
+	)
+}
+
+/** Going back to somewhere that is not a route — closing a still frame, or a
+ * screen the app does not have a path for yet. */
+export function BackButton({
+	children,
+	onBack,
+}: {
+	children: ReactNode
+	onBack?: () => void
+}) {
+	return (
+		<button className={backClass} onClick={onBack} type="button">
+			<BackArrow>{children}</BackArrow>
+		</button>
 	)
 }

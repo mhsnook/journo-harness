@@ -1,4 +1,4 @@
-import { cloudflareTest } from '@cloudflare/vitest-pool-workers'
+import { cloudflareTest, readD1Migrations } from '@cloudflare/vitest-pool-workers'
 import { storybookTest } from '@storybook/addon-vitest/vitest-plugin'
 import tailwindcss from '@tailwindcss/vite'
 import { playwright } from '@vitest/browser-playwright'
@@ -19,6 +19,10 @@ import { defineConfig } from 'vitest/config'
 // `storybookTest` reads the Storybook config off disk, so it is async and has
 // to be awaited before the config object is built.
 const storybookPlugins = await storybookTest({ configDir: '.storybook' })
+
+// `migrations_dir` in wrangler.jsonc is read by the CLI, not by the test pool,
+// so the files are read here and applied by test/worker/apply-migrations.ts.
+const migrations = await readD1Migrations('./migrations')
 
 export default defineConfig({
 	test: {
@@ -50,11 +54,13 @@ export default defineConfig({
 						// model, so keep everything in the local workerd rather than making
 						// `pnpm test` need an API token.
 						remoteBindings: false,
+						miniflare: { bindings: { TEST_MIGRATIONS: migrations } },
 					}),
 				],
 				test: {
 					name: 'worker',
 					include: ['test/worker/**/*.test.ts'],
+					setupFiles: ['./test/worker/apply-migrations.ts'],
 				},
 			},
 			{

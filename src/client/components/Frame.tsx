@@ -48,6 +48,24 @@ export interface FrameBodyProps {
 	style?: CSSProperties
 }
 
+export interface ScreenProps {
+	children?: ReactNode
+	className?: string
+}
+
+/**
+ * The app filling the window, which is what a route renders. {@link Frame} is
+ * the showcase's fixed-width stand-in for it, so the two are separate on
+ * purpose: a screen inside a story is bounded, and a screen in the app is not.
+ */
+export function Screen({ children, className }: ScreenProps) {
+	return (
+		<div className={cx('flex h-dvh flex-col bg-surface text-ink', className)}>
+			{children}
+		</div>
+	)
+}
+
 /** The area under the title bar. `row` turns it into the horizontal Panel rail. */
 export function FrameBody({ children, row = false, className, style }: FrameBodyProps) {
 	return (

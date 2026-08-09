@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 
 import type { Plan, ProposalInput, Refusal } from '../../shared/plan'
 import { planAllocation, resolveArticleScope } from '../../shared/plan'
@@ -6,7 +6,7 @@ import { GroupHeading } from '../components/Divider'
 import { EmptySlot, TextField } from '../components/Field'
 import { LengthBar } from '../components/LengthBar'
 import { Notice } from '../components/Notice'
-import { Panel } from '../components/Panel'
+import { Panel, type PanelProps } from '../components/Panel'
 import { AddSection } from './AddSection'
 import type { SectionAnchor } from './edits'
 import { addSection, setAdjectives, setTarget, setTitle, setVoice } from './edits'
@@ -26,6 +26,8 @@ import { AllocationNote, TargetField } from './WordCount'
 export interface PlanPanelProps {
 	plan: Plan
 	edit: (ops: ProposalInput | null) => void
+	/** The rule between this Panel and its neighbour. */
+	divider?: PanelProps['divider']
 	/** Why the last edit did not land. */
 	refusal?: Refusal | null
 	/** What the Article Agent said when a write did not parse. */
@@ -36,6 +38,7 @@ export interface PlanPanelProps {
 export function PlanPanel({
 	plan,
 	edit,
+	divider,
 	refusal = null,
 	rejected = null,
 	className,
@@ -46,6 +49,10 @@ export function PlanPanel({
 	const [openId, setOpenId] = useState<string | null>(null)
 	const [made, setMade] = useState<string | null>(null)
 	const [shown, setShown] = useState<string | null>(null)
+
+	// Held: the shown row's effect lists it, and a new function each render would
+	// restart that row's scroll on every keystroke elsewhere in the Panel.
+	const clearShown = useCallback(() => setShown(null), [])
 
 	const entries = outlineEntries(plan.outline)
 	const allocation = planAllocation(plan)
@@ -66,7 +73,7 @@ export function PlanPanel({
 	}
 
 	return (
-		<Panel className={className} variant="sunk">
+		<Panel className={className} divider={divider} variant="sunk">
 			{refusal === null ? null : <Notice>{refusalText(plan, refusal)}</Notice>}
 			{rejected === null ? null : (
 				<Notice>The Article Agent refused the write. {rejected}</Notice>
@@ -137,7 +144,7 @@ export function PlanPanel({
 				className="flex flex-col items-stretch gap-1.5"
 				edit={edit}
 				entries={entries}
-				onShown={() => setShown(null)}
+				onShown={clearShown}
 				plan={plan}
 				shown={shown}
 			/>

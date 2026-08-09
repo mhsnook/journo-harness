@@ -207,6 +207,11 @@ nothing — invisible on the Ledger, unfixable from it, and needing a group and 
 its own to get back out. That was the earlier design, and the group it needed was the
 Ledger reading the Plan.
 
+**A refused copy stops the ruling for the same reason.** `edit` hands back the applier's
+refusal, and `useOfferLedger` reads it: sending the ruling anyway would land the app in
+exactly the state the order above is chosen to avoid. The writer gets the applier's sentence
+instead, built at the edge from `refusal.reason` like every other one (§6).
+
 A Reference sitting at no Section is a different thing entirely, and an ordinary one: the
 Plan Panel lists it and its Section reads "not placed".
 
@@ -419,7 +424,41 @@ party-db's lobby and write path at 1b, archived reads, and export.
 already reactive through Article Agent state and, at 1b, party-db's TanStack DB collections.
 
 **The Article screen has four Panels** — Chat, Plan, Draft, Notes — which become tabs on a
-narrow screen. The **Areas** are Articles (with Board and Archive Views), House, and Team.
+narrow screen. `usePanels` holds which are open, keeps them in the one order the rail draws,
+and refuses to close the last of them. The **Areas** are Articles (with Board and Archive
+Views), House, and Team.
+
+**A screen never draws a value it has not got.** An empty title, a zero count and four empty
+columns are answers, and a screen that puts one on the page before it has read anything has
+said something untrue. Whatever is still coming says so — `Skeleton` where the shape is
+known, a sentence like "Opening the Plan…" where it is not, and a route's `pendingComponent`
+where the whole screen is waiting. This is why the Article bar takes `title: string | null`:
+`''` is the title the writer cleared, and it cannot also mean "not read yet".
+
+**Navigation is a `Link`.** A control that only goes somewhere is an anchor, so it opens in
+a new tab, copies as a URL, reads as a link, and warms its route on hover — the router runs
+`defaultPreload: 'intent'`. A callback is for a control that does work first, like Archiving
+an Article and then leaving it.
+
+**The Articles Area is the list at `/` and the Board View at `/board`**, over the one index
+read, under a pathless layout route that holds both. The Board draws a column per status,
+keeps its columns' width, and scrolls sideways rather than squeezing them. It carries no
+drag-and-drop and no control on a card: the writer sets a status on the Article screen,
+which is where they are when they decide the piece has moved on. The Archive View is not built, and Archived Articles are a group at the foot of
+the list until it is.
+
+**The list's tiles supplement it rather than replacing rows in it.** The three most recently
+changed Articles sit on top as tiles, and every one of them is still listed underneath, so
+scanning the list never means remembering which rows were lifted out of it.
+
+**Opening an Article creates the row first and asks its name second.** The button fires the
+create, a dialog asks what the piece is called while that request is in flight, and the
+typed title travels into the Article screen on the navigation rather than being written from
+the list — writing it there would put the copy in front of the thing it copies. `useSeedTitle`
+puts it in the Plan on arrival and `useTitleCopy` sends the copy on behind it, which is the
+same order every later rename takes. Backing out discards the row, and discards nothing else:
+an Article nobody has opened has no Plan and no Chat, because its Article Agent is not built
+until the Article screen connects to it.
 
 **Each Panel scrolls its own Y.** Reading down the Plan does not move the Chat beside it.
 The Panel is the scroll container and the Frame body gives it the height to scroll within,
@@ -459,10 +498,33 @@ whose whole design is that it has one writer.
 **1a is single-author and its auth is zero code.** One Team, both people read everything, no
 per-user records, so nothing parses a token.
 
-**The article index is a real D1 table, built as the last 1a ticket** — a small table read
-through a Worker endpoint, on the path §2 already has for the Archived reads. It does not
-wait for the House. An Article created on one machine appears on the other, which is what
-makes the index worth having at all. Issue #29.
+**The article index is a real D1 table** — a small table read through Hono routes in the
+same Worker, on the path §2 already has for the Archived reads. It does not wait for the
+House. An Article created on one machine appears on the other, which is what makes the index
+worth having at all. Issue #29 built it.
+
+**It is a list, not a store.** One row carries `{ id, title, status, createdAt, updatedAt,
+archivedAt }` and nothing else, so losing the whole table costs the reader their list and
+costs no Article anything. The Article Agent stays the source of truth for an Article, and
+nothing on the index path reaches into one.
+
+**The title is the one field that lives in two places.** The Plan holds the real one, and the
+index holds a copy written by the same client action that renames the Article —
+`useTitleCopy`, debounced beside the Plan's own writer. **The Plan write goes first**, so a
+Plan that lands with a failed copy leaves a stale row that the next rename corrects; the
+other order would leave the list ahead of the Plan with nothing to walk it back. That is §5's
+argument about Accepting an Offer, applied to the second pair of writes in the app.
+
+**`status` is the writer's word, not an inference.** 1a has no Draft to measure, so the
+Article screen carries the one control that sets it and the Board View reads it. `updatedAt`
+is when the row last changed — a rename, a status, or Archiving — and not when the Article
+was last worked on, because a Plan edit goes to the Article Agent and never touches this
+table.
+
+**An Archived Article stays on the same table** and says so with `archivedAt`, rather than
+moving to one of its own. Both Views filter the one list the index answers with: the list
+shows Archived Articles as a group at its foot, and the Board View leaves them out. Moving
+the Chat to R2 is still §11's, still unbuilt, and independent of this flag.
 
 **Nothing in 1a may require the `Cf-Access-Jwt-Assertion` header.** Localhost has no Access
 gate at all, so in development there is no header and no gate. Read it if present, tolerate
@@ -532,8 +594,11 @@ Settings and known defects. None is a decision to make; all are things to get ri
   completeness server-side with **no orphan timeout**, so a Proposal the writer neither
   Accepts nor Declines stalls the Chat silently. The composer counts the suspended calls and
   says what it is waiting on rather than sitting dead; nothing expires them.
-- **Local development** is unsolved: running the Worker with seeded data so a coding agent
-  executing a build ticket can run what it writes.
+- **Local development is half solved.** `pnpm db:migrate` puts the article index's schema
+  into the local D1 and the worker tests apply the same files themselves, so a build ticket
+  can run what it writes against a real table. What is still missing is seeded data: an
+  Article with a Plan and a transcript already in it, so a screen can be opened rather than
+  built up by hand every time.
 
 ## 12. Out of scope
 

@@ -3,7 +3,9 @@ import { useCallback, useEffect, useState } from 'react'
 import { offerLedger, type OfferLedger } from '../../shared/ledger'
 import type { Offer } from '../../shared/offer'
 import { acceptOffer } from '../plan/edits'
+import { refusalText } from '../plan/refusalText'
 import { useArticle } from './article'
+import { failureText } from './failure'
 
 /**
  * The Offer ledger, live. Rows come down once per store, since nothing announces
@@ -24,8 +26,8 @@ export type OfferLedgerHandle = {
 }
 
 export function useOfferLedger(): OfferLedgerHandle {
-	const { offers: store, plan } = useArticle()
-	const { edit } = plan
+	const { offers: store, plan: connection } = useArticle()
+	const { edit, plan } = connection
 	const [rows, setRows] = useState<Offer[] | null>(null)
 	const [failure, setFailure] = useState<string | null>(null)
 	const [reads, setReads] = useState(0)
@@ -40,7 +42,7 @@ export function useOfferLedger(): OfferLedgerHandle {
 				if (live) setRows(listed)
 			},
 			(error: unknown) => {
-				if (live) setFailure(`The Offers did not load. ${reasonFor(error)}`)
+				if (live) setFailure(failureText('The Offers did not load.', error))
 			},
 		)
 
@@ -58,7 +60,7 @@ export function useOfferLedger(): OfferLedgerHandle {
 
 	function run(what: string, write: () => Promise<Offer>, then: (ruled: Offer) => void) {
 		setFailure(null)
-		write().then(then, (error: unknown) => setFailure(`${what} ${reasonFor(error)}`))
+		write().then(then, (error: unknown) => setFailure(failureText(what, error)))
 	}
 
 	return {
@@ -72,8 +74,22 @@ export function useOfferLedger(): OfferLedgerHandle {
 		// needs nothing the ruling returns. A ruling that then fails leaves the
 		// copy in place and the row Undecided, which the writer clears by
 		// Accepting again: the second `acceptOffer` builds no op.
+		//
+		// **A refused copy stops the ruling.** Sending it anyway would leave the
+		// row reading Accepted with the Plan holding nothing — invisible on the
+		// Ledger and unfixable from it, which is the stranded case §5 is built to
+		// avoid. The applier's refusal is what the writer is told about instead.
 		accept(offer) {
-			edit((held) => acceptOffer(held, offer))
+			setFailure(null)
+
+			const refusal = edit((held) => acceptOffer(held, offer))
+			if (refusal !== null) {
+				const why = plan === null ? refusal.message : refusalText(plan, refusal)
+				setFailure(`This Offer was not Accepted. ${why}`)
+
+				return
+			}
+
 			run(
 				'This Offer was not Accepted.',
 				() => store.setOfferDisposition(offer.id, 'accepted'),
@@ -93,8 +109,4 @@ export function useOfferLedger(): OfferLedgerHandle {
 			run('This Offer was not restored.', () => store.restoreOffer(offer.id), replace)
 		},
 	}
-}
-
-function reasonFor(error: unknown): string {
-	return error instanceof Error ? error.message : String(error)
 }

@@ -3,7 +3,7 @@ import { Chip } from '../../components/Chip'
 import { Frame, FrameBody } from '../../components/Frame'
 import { MetaLabel } from '../../components/MetaLabel'
 import { Panel } from '../../components/Panel'
-import { TitleBar } from '../../components/TitleBar'
+import { BackButton, TitleBar } from '../../components/TitleBar'
 import { ARTICLE_TITLE } from '../../mock/content'
 
 /**
@@ -14,7 +14,8 @@ import { ARTICLE_TITLE } from '../../mock/content'
 export function FinishScreen() {
 	return (
 		<Frame width={560}>
-			<TitleBar back={ARTICLE_TITLE} title="Finish" />
+			{/* The Article screen has no route yet, so this goes nowhere. */}
+			<TitleBar back={<BackButton>{ARTICLE_TITLE}</BackButton>} title="Finish" />
 			<FrameBody>
 				<Panel className="gap-4 p-4">
 					<div className="flex items-center gap-2">

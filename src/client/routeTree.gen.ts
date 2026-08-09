@@ -9,50 +9,109 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as AreaRouteImport } from './routes/_area'
+import { Route as AreaIndexRouteImport } from './routes/_area.index'
+import { Route as AreaBoardRouteImport } from './routes/_area.board'
+import { Route as AArticleIdRouteImport } from './routes/a.$articleId'
 
-const IndexRoute = IndexRouteImport.update({
+const AreaRoute = AreaRouteImport.update({
+  id: '/_area',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AreaIndexRoute = AreaIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AreaRoute,
+} as any)
+const AreaBoardRoute = AreaBoardRouteImport.update({
+  id: '/board',
+  path: '/board',
+  getParentRoute: () => AreaRoute,
+} as any)
+const AArticleIdRoute = AArticleIdRouteImport.update({
+  id: '/a/$articleId',
+  path: '/a/$articleId',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/': typeof AreaIndexRoute
+  '/board': typeof AreaBoardRoute
+  '/a/$articleId': typeof AArticleIdRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
+  '/board': typeof AreaBoardRoute
+  '/a/$articleId': typeof AArticleIdRoute
+  '/': typeof AreaIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
+  '/_area': typeof AreaRouteWithChildren
+  '/_area/board': typeof AreaBoardRoute
+  '/a/$articleId': typeof AArticleIdRoute
+  '/_area/': typeof AreaIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/board' | '/a/$articleId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/board' | '/a/$articleId' | '/'
+  id: '__root__' | '/_area' | '/_area/board' | '/a/$articleId' | '/_area/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
+  AreaRoute: typeof AreaRouteWithChildren
+  AArticleIdRoute: typeof AArticleIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
+    '/_area': {
+      id: '/_area'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AreaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_area/': {
+      id: '/_area/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+      preLoaderRoute: typeof AreaIndexRouteImport
+      parentRoute: typeof AreaRoute
+    }
+    '/_area/board': {
+      id: '/_area/board'
+      path: '/board'
+      fullPath: '/board'
+      preLoaderRoute: typeof AreaBoardRouteImport
+      parentRoute: typeof AreaRoute
+    }
+    '/a/$articleId': {
+      id: '/a/$articleId'
+      path: '/a/$articleId'
+      fullPath: '/a/$articleId'
+      preLoaderRoute: typeof AArticleIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
 }
 
+interface AreaRouteChildren {
+  AreaBoardRoute: typeof AreaBoardRoute
+  AreaIndexRoute: typeof AreaIndexRoute
+}
+
+const AreaRouteChildren: AreaRouteChildren = {
+  AreaBoardRoute: AreaBoardRoute,
+  AreaIndexRoute: AreaIndexRoute,
+}
+
+const AreaRouteWithChildren = AreaRoute._addFileChildren(AreaRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
+  AreaRoute: AreaRouteWithChildren,
+  AArticleIdRoute: AArticleIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

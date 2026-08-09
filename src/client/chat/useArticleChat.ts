@@ -1,6 +1,6 @@
 import { useAgentChat } from '@cloudflare/ai-chat/react'
 import type { UIMessage } from 'ai'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { proposePlanChangeTool } from '../../shared/chat'
 import type { Plan } from '../../shared/plan'
@@ -29,9 +29,13 @@ import {
 
 export type ChatHandle = {
 	messages: UIMessage[]
-	/** True for a server-driven turn as well as the writer's own. */
+	/** A turn is in flight and the guide is the one working. True for a
+	 * server-driven turn as well as the writer's own, and false while a Proposal
+	 * is parked on the writer. */
 	busy: boolean
-	/** Suspended tool calls; above zero the turn is parked — §11. */
+	/** Cancels the turn, on the server as well as here. */
+	stop: () => void
+	/** Proposals nobody has ruled on; above zero the turn is parked — §11. */
 	waiting: number
 	refusals: Refusals
 	ledger: OfferLedgerHandle
@@ -60,19 +64,17 @@ export function useArticleChat(agent: ArticleSocket): ChatHandle {
 
 	const { messages, addToolOutput } = chat
 
-	// Nothing on the socket announces a new Offer row (§3), so a turn naming ids
-	// the Ledger has not seen is the signal to read again. The first set is the
-	// persisted transcript landing, which the Ledger's own read already covers.
-	const recorded = recordedOfferIds(messages).join(' ')
-	const seen = useRef<string | null>(null)
+	// Nothing on the socket announces a new Offer row (§3), so an id the Chat
+	// names that the Ledger has not got is the signal to read again. Comparing
+	// rather than counting turns is also what makes it safe: a row that never
+	// arrives leaves `missing` true, so the dependency holds and the read stops.
+	const recorded = useMemo(() => recordedOfferIds(messages), [messages])
+	const loaded = new Set(ledger.ledger.offers.map((offer) => offer.id))
+	const missing = recorded.some((id) => !loaded.has(id))
 	const { reload } = ledger
 	useEffect(() => {
-		if (recorded === '') return
-
-		const first = seen.current === null
-		seen.current = recorded
-		if (!first) reload()
-	}, [recorded, reload])
+		if (missing) reload()
+	}, [missing, reload])
 
 	const rule = (call: ProposalCall, accepted: boolean) => {
 		const ruling = ruleProposal({
@@ -95,7 +97,8 @@ export function useArticleChat(agent: ArticleSocket): ChatHandle {
 		})
 	}
 
-	const waiting = waitingCount(messages)
+	const waiting = useMemo(() => waitingCount(messages), [messages])
+	const running = chat.isStreaming || chat.isRecovering || chat.status === 'submitted'
 
 	return {
 		messages,
@@ -106,7 +109,13 @@ export function useArticleChat(agent: ArticleSocket): ChatHandle {
 		},
 		accept: (call: ProposalCall) => rule(call, true),
 		decline: (call: ProposalCall) => rule(call, false),
-		busy: chat.isStreaming || chat.isRecovering || chat.status === 'submitted',
+
+		// **A parked Proposal is not the guide answering.** A suspended call holds
+		// the turn open, so the SDK reports it as streaming until the client
+		// answers (§6) — but the writer is the one being waited on there, and the
+		// Proposal card and the composer say so themselves.
+		busy: running && waiting === 0,
+		stop: () => void chat.stop(),
 		waiting,
 		refusals,
 		ledger,

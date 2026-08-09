@@ -1,55 +1,70 @@
+import { Link } from '@tanstack/react-router'
+
+import {
+	type ArticleEntry,
+	articleTitle,
+	isUntitled,
+	statusLabel,
+	statusProgress,
+} from '../../shared/article'
 import { cx } from '../lib/cx'
-import type { Article } from '../mock/content'
+import { shortDate } from '../lib/when'
 import { Chip } from './Chip'
 import { ProgressBar } from './ProgressBar'
 
 export interface ArticleCardProps {
-	article: Article
-	/** `card` is the desk's active tile; `column` is the board's smaller tile. */
+	article: ArticleEntry
+	/** `card` is the index's tile; `column` is the Board View's smaller one. */
 	variant?: 'card' | 'column'
 	className?: string
 }
 
 /**
- * An in-progress article. The progress bar is deliberately unlabelled — the
- * status word underneath is the honest signal; the bar is just a shape.
+ * One Article, as the index knows it. Nothing here reaches into an Article Agent
+ * to count words or read the Plan, so a title, a status, and the day it started
+ * is the whole of what a tile can say — and "started" rather than "last worked
+ * on", which the index has no honest answer for.
+ *
+ * The bar is the status's place along the Board's columns, unlabelled: the word
+ * beside it is the signal and the bar is a shape. The Board's own tiles drop
+ * both, since the column they sit in already names the status.
  */
 export function ArticleCard({ article, variant = 'card', className }: ArticleCardProps) {
 	const compact = variant === 'column'
 
 	return (
-		<article
+		<Link
 			className={cx(
-				'flex flex-col gap-2 rounded-lg border border-edge bg-surface p-3 transition-colors hover:border-ink/25',
-				compact ? 'gap-1.5 p-2.5' : 'w-[10.5rem]',
+				'flex flex-col items-stretch rounded-lg border border-edge bg-surface text-left transition-colors hover:border-ink/40 hover:bg-hush',
+				compact ? 'gap-1.5 p-2.5' : 'w-[13.5rem] gap-2.5 p-3.5',
 				className,
 			)}
+			params={{ articleId: article.id }}
+			to="/a/$articleId"
 		>
 			<h3
 				className={cx(
-					'leading-snug font-semibold text-ink',
-					compact ? 'text-[0.8125rem]' : 'text-[0.875rem]',
+					'leading-snug break-words',
+					compact ? 'text-[0.8125rem]' : 'line-clamp-3 text-[0.9375rem]',
+					isUntitled(article.title) ? 'text-faint' : 'font-semibold text-ink',
 				)}
 			>
-				{article.title}
+				{articleTitle(article)}
 			</h3>
-			{!compact ? (
-				<p className="line-clamp-2 text-[0.75rem] leading-relaxed text-muted">
-					{article.blurb}
-				</p>
-			) : null}
-			<ProgressBar value={article.progress} className="mt-0.5" />
-			<p className="text-[0.6875rem] text-faint">{article.statusLabel}</p>
-			{article.voice || article.chips?.length ? (
-				<div className="flex flex-wrap gap-1.5">
-					{article.voice ? <Chip variant="outline">{article.voice}</Chip> : null}
-					{article.chips?.map((chip) => (
-						<Chip key={chip} variant={article.needsAttention ? 'accent' : 'default'}>
-							{chip}
-						</Chip>
-					))}
-				</div>
-			) : null}
-		</article>
+
+			{compact ? null : (
+				<ProgressBar
+					label={`Status: ${statusLabel[article.status]}`}
+					value={statusProgress(article.status)}
+				/>
+			)}
+
+			<div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+				{compact ? null : <Chip variant="outline">{statusLabel[article.status]}</Chip>}
+				<span className="text-[0.6875rem] text-faint">
+					started {shortDate(article.createdAt)}
+				</span>
+			</div>
+		</Link>
 	)
 }

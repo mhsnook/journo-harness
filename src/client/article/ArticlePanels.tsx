@@ -1,0 +1,84 @@
+import type { ReactNode } from 'react'
+
+import { ArticleChatPanel } from '../chat/ArticleChatPanel'
+import { Panel, PanelHeader, type PanelProps } from '../components/Panel'
+import type { PanelId } from '../components/PanelRail'
+import type { ArticleSocket } from '../lib/useArticleAgent'
+import { ArticlePlanPanel } from '../plan/ArticlePlanPanel'
+
+/**
+ * The four Panels of the Article screen — architecture.md §8. Chat and Plan are
+ * live; Draft and Notes are here and empty until phase 2. This row is what gives
+ * them a height to scroll their own Y within.
+ */
+
+export interface ArticlePanelsProps {
+	agent: ArticleSocket
+	/** Already in chat → plan → draft → notes order; `usePanels` keeps it there. */
+	open: readonly PanelId[]
+}
+
+export function ArticlePanels({ agent, open }: ArticlePanelsProps) {
+	return (
+		<div className="flex min-h-0 flex-auto">
+			{open.map((panel, index) => (
+				<PanelFor agent={agent} divided={index > 0} key={panel} panel={panel} />
+			))}
+		</div>
+	)
+}
+
+function PanelFor({
+	agent,
+	divided,
+	panel,
+}: {
+	agent: ArticleSocket
+	divided: boolean
+	panel: PanelId
+}) {
+	const edge = divided ? 'left' : 'none'
+
+	switch (panel) {
+		case 'chat':
+			return <ArticleChatPanel agent={agent} divider={edge} />
+
+		case 'plan':
+			return <ArticlePlanPanel divider={edge} />
+
+		case 'draft':
+			return (
+				<EmptyPanel divider={edge} title="Draft">
+					The writing surface arrives with phase 2. Plan the piece here and write it
+					elsewhere for now.
+				</EmptyPanel>
+			)
+
+		case 'notes':
+			// Notes is always the narrow one — screen 4(e).
+			return (
+				<EmptyPanel divider={edge} grow={0.26} title="Notes">
+					The Guide's notes arrive with phase 2, alongside the Draft they read.
+				</EmptyPanel>
+			)
+	}
+}
+
+function EmptyPanel({
+	title,
+	grow,
+	divider,
+	children,
+}: {
+	title: string
+	grow?: number
+	divider?: PanelProps['divider']
+	children: ReactNode
+}) {
+	return (
+		<Panel divider={divider} grow={grow} variant="sunk">
+			<PanelHeader title={title} />
+			<p className="text-[0.75rem] leading-relaxed text-faint">{children}</p>
+		</Panel>
+	)
+}

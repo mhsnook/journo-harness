@@ -1,4 +1,4 @@
-import { type KeyboardEvent, type ReactNode, useState } from 'react'
+import { type KeyboardEvent, type ReactNode, useEffect, useState } from 'react'
 
 import { cx } from '../lib/cx'
 import { Button } from './Button'
@@ -48,23 +48,34 @@ export interface ChatComposerProps {
 	/** Why the composer will not send, and null when it will. A Proposal nobody
 	 * ruled on is the case worth wording — nothing expires it (§11). */
 	blocked?: string | null
-	disabled?: boolean
+	/** A turn is in flight. The field stays open; send becomes stop. */
+	busy?: boolean
+	/** Cancels the turn. Send stays a send button without one. */
+	onStop?: () => void
 	className?: string
 }
 
+/**
+ * **The field is never disabled while a turn runs.** Disabling it blurs it, so a
+ * thought typed while the guide answers is lost at the first keystroke. The
+ * button beside it changes instead.
+ */
 export function ChatComposer({
 	placeholder = 'Ask, argue, or paste something in…',
 	leading,
 	onSend,
 	blocked = null,
-	disabled = false,
+	busy = false,
+	onStop,
 	className,
 }: ChatComposerProps) {
 	const [said, setSaid] = useState('')
-	const stopped = blocked !== null || disabled || onSend === undefined
+	const stopping = busy && onStop !== undefined
+	const cannotSend =
+		blocked !== null || busy || onSend === undefined || said.trim() === ''
 
 	const send = () => {
-		if (stopped || onSend === undefined || said.trim() === '') return
+		if (cannotSend || onSend === undefined) return
 
 		onSend(said)
 		setSaid('')
@@ -86,7 +97,7 @@ export function ChatComposer({
 					<input
 						aria-label="Message the guide"
 						className="min-w-0 flex-1 bg-transparent text-ink outline-none placeholder:text-faint"
-						disabled={stopped}
+						disabled={onSend === undefined}
 						onChange={(event) => setSaid(event.target.value)}
 						onKeyDown={onKeyDown}
 						placeholder={placeholder}
@@ -94,11 +105,42 @@ export function ChatComposer({
 						value={said}
 					/>
 				</div>
-				<Button size="sm" disabled={stopped || said.trim() === ''} onClick={send}>
-					send
-				</Button>
+				{stopping ? (
+					<Button onClick={onStop} size="sm">
+						stop
+					</Button>
+				) : (
+					<Button disabled={cannotSend} onClick={send} size="sm">
+						send
+					</Button>
+				)}
 			</div>
 		</div>
+	)
+}
+
+export interface ChatWorkingProps {
+	children: ReactNode
+	className?: string
+}
+
+/** What the guide is doing. A model can take most of a minute, and a line that
+ * never changes reads as a hang, so this counts the seconds it has been up. */
+export function ChatWorking({ children, className }: ChatWorkingProps) {
+	const [seconds, setSeconds] = useState(0)
+
+	useEffect(() => {
+		const tick = setInterval(() => setSeconds((held) => held + 1), 1000)
+
+		return () => clearInterval(tick)
+	}, [])
+
+	return (
+		<p className={cx('flex items-center gap-1.5 text-[0.6875rem] text-faint', className)}>
+			<span aria-hidden className="size-1.5 animate-pulse rounded-full bg-faint" />
+			{children}
+			{seconds > 0 ? <span className="font-mono">{seconds}s</span> : null}
+		</p>
 	)
 }
 

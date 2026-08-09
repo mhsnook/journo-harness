@@ -2,8 +2,8 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 
 import { Annotation } from '../../components/Annotation'
 import { AdjectivesScreen } from './AdjectivesScreen'
+import { ArticlesScreen } from './ArticlesScreen'
 import { BoardScreen } from './BoardScreen'
-import { DeskScreen } from './DeskScreen'
 import { FavouriteSourcesScreen } from './FavouriteSourcesScreen'
 import { TableScreen } from './TableScreen'
 import { VoicesScreen } from './VoicesScreen'
@@ -18,16 +18,20 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const A_Desk: Story = {
-	name: '1(a) Desk',
+export const A_Articles: Story = {
+	name: '1(a) Articles',
 	render: () => (
 		<div className="flex flex-col">
-			<DeskScreen />
+			<ArticlesScreen />
 			<Annotation>
-				The root screen. Board and table both back-button here, so this is the only page
-				that needs a "board view" button — the table is reached from the quiet "see all"
-				links, with the filter already set, because it is a fallback utility rather than
-				an attraction.
+				The root screen, and the live one — this is the same `ArticleList` the `/` route
+				renders, against mock rows in the shape the D1 table holds. The tiles on top are
+				the three the writer touched last, and each is still listed underneath: a tile is
+				a shortcut rather than a row lifted out of the list, so scanning the list never
+				means remembering what is missing from it. The Board View and the table both
+				back-button here, so this is the only page that needs a "board view" button.
+				Archived Articles are a group at the foot rather than a View of their own: they
+				sit on the same table.
 			</Annotation>
 		</div>
 	),
@@ -35,7 +39,17 @@ export const A_Desk: Story = {
 
 export const B_Board: Story = {
 	name: '1(b) Board',
-	render: () => <BoardScreen />,
+	render: () => (
+		<div className="flex flex-col">
+			<BoardScreen />
+			<Annotation>
+				Reading only. No drag-and-drop: the writer sets an Article's status on the Article
+				screen, which is where they are when they decide it has moved on. The columns keep
+				their width and the Board scrolls sideways rather than squeezing four columns into
+				a phone.
+			</Annotation>
+		</div>
+	),
 }
 
 export const C_Table: Story = {

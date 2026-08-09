@@ -1,7 +1,13 @@
-import { type DynamicToolUIPart, isToolUIPart, type ToolUIPart, type UIMessage } from 'ai'
+import {
+	type DynamicToolUIPart,
+	getToolName,
+	isToolUIPart,
+	type ToolUIPart,
+	type UIMessage,
+} from 'ai'
 import { z } from 'zod'
 
-import { proposePlanChangeInput } from '../../shared/chat'
+import { proposePlanChangeInput, proposePlanChangeTool } from '../../shared/chat'
 import type { Anchor, Plan, Proposal, ProposalOp, Refusal } from '../../shared/plan'
 import { planNames } from '../plan/names'
 import { referenceName } from '../plan/references'
@@ -23,14 +29,22 @@ export type ProposalCall = {
 
 type AnyToolPart = ToolUIPart | DynamicToolUIPart
 
-/** How many tool calls have their input complete and no output sent, which is
- * what parks a turn — §11. */
+/**
+ * How many Proposals have their input complete and no output sent, which is what
+ * parks a turn — §11.
+ *
+ * **Only the Proposal tool counts.** It is the one with no `execute`, so it
+ * suspends for the writer and nothing expires it; the research tool resolves
+ * inside the turn (§5) and its call sits at `input-available` meanwhile.
+ */
 export function waitingCount(messages: readonly UIMessage[]): number {
 	let waiting = 0
 
 	for (const message of messages) {
 		for (const part of message.parts) {
-			if (isToolUIPart(part) && part.state === 'input-available') waiting += 1
+			if (!isToolUIPart(part)) continue
+			if (getToolName(part) !== proposePlanChangeTool) continue
+			if (part.state === 'input-available') waiting += 1
 		}
 	}
 
