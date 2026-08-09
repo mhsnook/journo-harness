@@ -33,11 +33,8 @@ export function useArticleAgent(articleId: string): ArticleConnection {
 		onMessage: channel.onMessage,
 	})
 
-	// Assigned in the render that made it, and not in an effect. React runs a
-	// child's effects before its parent's, so an effect here would still be
-	// holding null when the Panels below mount and the Offer ledger makes its
-	// first read — which is every reader of this Article being told the Agent is
-	// not connected, once, with nothing to make them ask again.
+	// In render, not an effect: React runs a child's effects first, so the Panels
+	// below would make their first RPC against a null socket.
 	socket.current = agent
 
 	// `[]` keeps the store's identity: `useOfferLedger` reads its rows once per
@@ -55,9 +52,8 @@ export function useArticleAgent(articleId: string): ArticleConnection {
 	return { article: { offers, plan: channel.connection }, agent }
 }
 
-/** An RPC on whichever socket is current. The client queues a call made before
- * the socket opens and sends it on connect, so only a caller that beat
- * `useArticleAgent`'s own render is refused here. */
+/** An RPC on whichever socket is current. The client queues one made before the
+ * socket opens, so only a caller ahead of the render above is refused. */
 function call<T>(
 	socket: { current: ArticleSocket | null },
 	method: string,

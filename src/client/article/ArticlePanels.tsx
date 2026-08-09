@@ -7,12 +7,9 @@ import type { ArticleSocket } from '../lib/useArticleAgent'
 import { ArticlePlanPanel } from '../plan/ArticlePlanPanel'
 
 /**
- * The four Panels of the Article screen, in the one order they ever take —
- * architecture.md §8. Chat and Plan are live; Draft and Notes are here and empty
- * until phase 2 builds them.
- *
- * Every Panel scrolls its own Y, and this row is what gives them a height to
- * scroll within, so reading down the Plan leaves the Chat beside it where it was.
+ * The four Panels of the Article screen — architecture.md §8. Chat and Plan are
+ * live; Draft and Notes are here and empty until phase 2. This row is what gives
+ * them a height to scroll their own Y within.
  */
 
 export interface ArticlePanelsProps {
@@ -25,7 +22,6 @@ export function ArticlePanels({ agent, open }: ArticlePanelsProps) {
 	return (
 		<div className="flex min-h-0 flex-auto">
 			{open.map((panel, index) => (
-				// A rule between neighbours, and none down the left of the first.
 				<PanelFor agent={agent} divided={index > 0} key={panel} panel={panel} />
 			))}
 		</div>
@@ -41,8 +37,8 @@ function PanelFor({
 	divided: boolean
 	panel: PanelId
 }) {
-	// A class rather than the Panel's own `divider` prop: the two live Panels
-	// forward a className and nothing else, which is all a border needs.
+	// A class rather than the Panel's `divider` prop: the two live Panels forward
+	// a className and nothing else, which is all a border needs.
 	const edge = divided ? 'border-l border-edge' : undefined
 
 	switch (panel) {
@@ -61,7 +57,7 @@ function PanelFor({
 			)
 
 		case 'notes':
-			// Notes is always the narrow one — the Panel recap screen, 4(e).
+			// Notes is always the narrow one — screen 4(e).
 			return (
 				<EmptyPanel className={edge} grow={0.26} title="Notes">
 					The Guide's notes arrive with phase 2, alongside the Draft they read.

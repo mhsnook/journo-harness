@@ -20,10 +20,8 @@ import { defineConfig } from 'vitest/config'
 // to be awaited before the config object is built.
 const storybookPlugins = await storybookTest({ configDir: '.storybook' })
 
-// The worker project gets a D1 of its own, and nothing creates its schema:
-// `migrations_dir` in wrangler.jsonc is read by the CLI, not by the test pool.
-// So the files are read here, handed to the pool as a binding, and applied by
-// test/worker/apply-migrations.ts inside workerd.
+// `migrations_dir` in wrangler.jsonc is read by the CLI, not by the test pool,
+// so the files are read here and applied by test/worker/apply-migrations.ts.
 const migrations = await readD1Migrations('./migrations')
 
 export default defineConfig({

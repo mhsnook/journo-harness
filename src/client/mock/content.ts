@@ -13,15 +13,8 @@ import type { OutlineNode, Plan } from '../../shared/plan'
  * its own is a sketch, and each is replaced as its ticket lands.
  */
 
-/**
- * The article index, in the shape the D1 table holds — `src/shared/article`.
- * The Articles Area and the Board View render these through the same components
- * the live routes use, so a change to the columns breaks the showcase rather
- * than letting it drift.
- *
- * Timestamps are written out rather than computed off `Date.now()`, so every
- * story renders the same dates on every run.
- */
+/** Timestamps are written out rather than computed off `Date.now()`, so every
+ * story renders the same dates on every run. */
 export const articleIndex: ArticleEntry[] = [
 	{
 		id: 'batteries',

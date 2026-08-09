@@ -72,12 +72,8 @@ describe('reading a transcript', () => {
 		expect(waitingCount(messages)).toBe(0)
 	})
 
-	/**
-	 * The research tool carries an `execute` and resolves inside the turn (§5),
-	 * so its call sits at `input-available` for as long as the lookup takes.
-	 * Counting it shut the composer for the length of every research turn, and
-	 * told the writer to go and rule on a Proposal that was not there.
-	 */
+	/** The research tool resolves inside the turn (§5), so its call sits at
+	 * `input-available` for as long as the lookup takes. */
 	it('leaves out a research call, which nobody has to rule on', () => {
 		const messages = transcript(
 			toolPart(proposePlanChangeTool, 'input-available', { input: { ops } }),

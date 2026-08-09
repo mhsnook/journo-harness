@@ -5,16 +5,14 @@ import { failureText } from '../lib/failure'
 import { editArticle, fetchArticles } from './api'
 
 /**
- * The article index through TanStack Query — §8. One query key holds the whole
- * table, because one Team's index is small enough to send whole and both Views
- * read the same rows.
+ * The article index through TanStack Query — §8. One key holds the whole table:
+ * one Team's index is small enough to send whole, and both Views read it.
  */
 
 export const articlesKey = ['articles'] as const
 
 export type ArticleIndex = {
 	articles: ArticleEntry[]
-	/** Until the first read answers. */
 	loading: boolean
 	/** The first thing that went wrong, as one sentence. */
 	failure: string | null

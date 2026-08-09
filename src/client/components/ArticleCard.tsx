@@ -1,7 +1,13 @@
-import { type ArticleEntry, articleTitle, statusLabel } from '../../shared/article'
+import {
+	type ArticleEntry,
+	articleTitle,
+	statusLabel,
+	statusProgress,
+} from '../../shared/article'
 import { cx } from '../lib/cx'
 import { shortDate } from '../lib/when'
 import { Chip } from './Chip'
+import { ProgressBar } from './ProgressBar'
 
 export interface ArticleCardProps {
 	article: ArticleEntry
@@ -13,13 +19,14 @@ export interface ArticleCardProps {
 }
 
 /**
- * One Article, as the index knows it. The index carries a title, a status, and
- * two timestamps, so that is what a tile shows — nothing here reaches into an
- * Article Agent to count words or read the Plan.
+ * One Article, as the index knows it. Nothing here reaches into an Article Agent
+ * to count words or read the Plan, so a title, a status, and the day it started
+ * is the whole of what a tile can say — and "started" rather than "last worked
+ * on", which the index has no honest answer for.
  *
- * The date is the day the Article was started. The index has no honest "last
- * worked on": a Plan edit goes to the Article Agent and never touches the table
- * this row comes from.
+ * The bar is the status's place along the Board's columns, unlabelled: the word
+ * beside it is the signal and the bar is a shape. The Board's own tiles drop
+ * both, since the column they sit in already names the status.
  */
 export function ArticleCard({
 	article,
@@ -28,29 +35,38 @@ export function ArticleCard({
 	className,
 }: ArticleCardProps) {
 	const compact = variant === 'column'
+	const untitled = article.title.trim() === ''
 	const Tag = (onOpen ? 'button' : 'article') as 'button'
 
 	return (
 		<Tag
 			{...(onOpen ? { type: 'button' as const, onClick: () => onOpen(article.id) } : {})}
 			className={cx(
-				'flex flex-col items-start gap-2 rounded-lg border border-edge bg-surface p-3 text-left transition-colors',
-				onOpen && 'hover:border-ink/25',
-				compact ? 'gap-1.5 p-2.5' : 'w-[10.5rem]',
+				'flex flex-col items-stretch rounded-lg border border-edge bg-surface text-left transition-colors',
+				compact ? 'gap-1.5 p-2.5' : 'w-[13.5rem] gap-2.5 p-3.5',
+				onOpen && 'hover:border-ink/40 hover:bg-hush',
 				className,
 			)}
 		>
 			<h3
 				className={cx(
-					'w-full leading-snug font-semibold break-words text-ink',
-					compact ? 'text-[0.8125rem]' : 'text-[0.875rem]',
-					article.title.trim() === '' && 'text-faint',
+					'leading-snug break-words',
+					compact ? 'text-[0.8125rem]' : 'line-clamp-3 text-[0.9375rem]',
+					untitled ? 'text-faint' : 'font-semibold text-ink',
 				)}
 			>
 				{articleTitle(article)}
 			</h3>
-			<div className="flex flex-wrap items-center gap-1.5">
-				<Chip variant="outline">{statusLabel[article.status]}</Chip>
+
+			{compact ? null : (
+				<ProgressBar
+					label={`Status: ${statusLabel[article.status]}`}
+					value={statusProgress(article.status)}
+				/>
+			)}
+
+			<div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+				{compact ? null : <Chip variant="outline">{statusLabel[article.status]}</Chip>}
 				<span className="text-[0.6875rem] text-faint">
 					started {shortDate(article.createdAt)}
 				</span>

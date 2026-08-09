@@ -3,17 +3,14 @@ import { Frame } from '../../components/Frame'
 import { articleIndex } from '../../mock/content'
 
 /**
- * 1(a) — The Articles Area. The root screen: what you are working on now, and
- * the Archived pieces underneath. The Board View and the table both back-button
- * here.
- *
- * The component below is the live one — `/` renders the same `ArticleList` with
- * rows out of D1 — so this screen is the wireframe and the product at once.
+ * 1(a) — The Articles Area, the root screen. `ArticleList` is the live component:
+ * `/` renders the same one against rows out of D1.
  */
 export function ArticlesScreen() {
 	return (
-		<Frame width={660}>
-			<ArticleList articles={articleIndex} />
+		<Frame width={720}>
+			{/* A handler that goes nowhere, so the rows still show their hover. */}
+			<ArticleList articles={articleIndex} onOpen={() => {}} />
 		</Frame>
 	)
 }

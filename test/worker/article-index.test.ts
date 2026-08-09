@@ -11,8 +11,7 @@ import {
 
 const base = 'https://harness.test/api/articles'
 
-// The pool's isolated storage does not roll a D1 write back between tests, so
-// each one starts from an empty table rather than from what its neighbours left.
+// Isolated storage does not roll a D1 write back between tests.
 beforeEach(async () => {
 	await env.DB.prepare('DELETE FROM article').run()
 })
@@ -151,7 +150,6 @@ describe('editing a row', () => {
 })
 
 describe('discarding a row', () => {
-	// What the new-Article dialog does when the writer backs out before naming.
 	it('takes it off the list', async () => {
 		const article = await createdArticle()
 
@@ -165,7 +163,7 @@ describe('discarding a row', () => {
 })
 
 describe('the index against the Article Agent', () => {
-	// The Done-when: the index is a list, not a store — architecture.md §9.
+	// The index is a list, not a store — architecture.md §9.
 	it('leaves the Article Agent alone when its row is removed', async () => {
 		const article = await createdArticle({ title: 'Held elsewhere' })
 

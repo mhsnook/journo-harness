@@ -34,11 +34,8 @@ type AnyToolPart = ToolUIPart | DynamicToolUIPart
  * parks a turn — §11.
  *
  * **Only the Proposal tool counts.** It is the one with no `execute`, so it
- * suspends for the writer and nothing expires it. The research tool carries an
- * `execute` and resolves inside the turn (§5), so its call sits at
- * `input-available` for as long as the lookup takes — counting that told the
- * writer to go and rule on a Proposal that was not there, and shut the composer
- * for the length of every research turn.
+ * suspends for the writer and nothing expires it; the research tool resolves
+ * inside the turn (§5) and its call sits at `input-available` meanwhile.
  */
 export function waitingCount(messages: readonly UIMessage[]): number {
 	let waiting = 0

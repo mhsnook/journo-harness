@@ -65,13 +65,9 @@ export function useArticleChat(agent: ArticleSocket): ChatHandle {
 	const { messages, addToolOutput } = chat
 
 	// Nothing on the socket announces a new Offer row (§3), so an id the Chat
-	// names that the Ledger has not got is the signal to read again.
-	//
-	// It compares against the rows the Ledger holds rather than counting turns:
-	// the first research turn of a session used to look like the persisted
-	// transcript landing, so it was skipped and the rows never arrived. Comparing
-	// is also what makes this safe — a row that never turns up leaves `missing`
-	// true, the dependency does not change, and the read does not repeat.
+	// names that the Ledger has not got is the signal to read again. Comparing
+	// rather than counting turns is also what makes it safe: a row that never
+	// arrives leaves `missing` true, so the dependency holds and the read stops.
 	const loaded = new Set(ledger.ledger.offers.map((offer) => offer.id))
 	const missing = recordedOfferIds(messages).some((id) => !loaded.has(id))
 	const { reload } = ledger
@@ -113,12 +109,10 @@ export function useArticleChat(agent: ArticleSocket): ChatHandle {
 		accept: (call: ProposalCall) => rule(call, true),
 		decline: (call: ProposalCall) => rule(call, false),
 
-		// **A parked Proposal is not the guide answering.** A suspended tool call
-		// holds the turn open, so the SDK reports it as streaming until the client
-		// answers (§6) — and the writer, who is the one being waited on, was told
-		// the guide was still working and had the composer shut on them. The
-		// Proposal card and the composer's own sentence are what say what is
-		// happening in that window.
+		// **A parked Proposal is not the guide answering.** A suspended call holds
+		// the turn open, so the SDK reports it as streaming until the client
+		// answers (§6) — but the writer is the one being waited on there, and the
+		// Proposal card and the composer say so themselves.
 		busy: running && waiting === 0,
 		stop: () => void chat.stop(),
 		waiting,

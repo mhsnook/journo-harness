@@ -44,8 +44,6 @@ describe('splitting the index', () => {
 })
 
 describe('the tiles on top of the list', () => {
-	// The index answers newest change first, so the first few are the ones the
-	// writer touched last.
 	const articles = [
 		entry('a', 'planning'),
 		entry('b', 'drafting'),
@@ -57,9 +55,6 @@ describe('the tiles on top of the list', () => {
 		expect(recentArticles(articles, 3).map((one) => one.id)).toEqual(['a', 'b', 'c'])
 	})
 
-	// The point of the whole arrangement: a tile is a shortcut, not a row moved
-	// out of the list, so scanning the list never means remembering what was
-	// lifted out of it.
 	it('leaves every one of them in the list underneath', () => {
 		const listed = unarchivedArticles(articles).map((one) => one.id)
 

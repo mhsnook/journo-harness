@@ -47,9 +47,8 @@ export function PlanPanel({
 	const [made, setMade] = useState<string | null>(null)
 	const [shown, setShown] = useState<string | null>(null)
 
-	// Held, because the shown row's effect lists it: a new function each render
-	// would restart that row's scroll and its timer on every keystroke elsewhere
-	// in the Panel.
+	// Held: the shown row's effect lists it, and a new function each render would
+	// restart that row's scroll on every keystroke elsewhere in the Panel.
 	const clearShown = useCallback(() => setShown(null), [])
 
 	const entries = outlineEntries(plan.outline)

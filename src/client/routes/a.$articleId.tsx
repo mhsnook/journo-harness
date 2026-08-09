@@ -14,13 +14,9 @@ import { ArticleProvider, useArticle } from '../lib/article'
 import { type ArticleSocket, useArticleAgent } from '../lib/useArticleAgent'
 
 /**
- * One Article — architecture.md §8, issue #29.
- *
- * **The connection is opened here, above the Panels.** `useArticleAgent` makes
- * the single `useAgent` call and the Panels read it through `ArticleProvider`. A
- * Panel opening its own would be a second socket, a second `createPlanWriter`,
- * and a second debounce timer against a blob whose whole design is that it has
- * one writer (§3, rule 1).
+ * One Article. **The connection is opened here, above the Panels**, which read it
+ * through `ArticleProvider` — a Panel opening its own would be a second writer
+ * against a blob designed for one (architecture.md §8, and §3 rule 1).
  */
 export const Route = createFileRoute('/a/$articleId')({ component: ArticleRoute })
 
@@ -28,8 +24,6 @@ function ArticleRoute() {
 	const { articleId } = Route.useParams()
 	const { article, agent } = useArticleAgent(articleId)
 
-	// The window sits inside the provider so the bar and the Panels read one
-	// connection rather than being handed pieces of it.
 	return (
 		<ArticleProvider value={article}>
 			<ArticleWindow agent={agent} articleId={articleId} />
@@ -51,8 +45,6 @@ function ArticleWindow({
 	const index = useArticleIndex()
 	const entry = index.articles.find((one) => one.id === articleId)
 
-	// The name the new-Article dialog took goes to the Plan, and the copy below
-	// follows it out to the index — §9.
 	useSeedTitle(connection, useNewTitle())
 	const copyFailure = useTitleCopy(articleId, plan?.title ?? null)
 	const failure = copyFailure ?? index.failure
@@ -66,8 +58,7 @@ function ArticleWindow({
 
 	const setStatus = (status: ArticleStatus) => index.edit(articleId, { status })
 
-	// The Plan holds the real title, and the index row stands in until the socket
-	// answers. Both are empty on a brand new Article.
+	// The index row stands in until the socket answers with the real one.
 	const title = plan?.title ?? entry?.title ?? ''
 
 	return (

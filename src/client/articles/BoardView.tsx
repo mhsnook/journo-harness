@@ -8,14 +8,11 @@ import { TitleBar } from '../components/TitleBar'
 import { boardColumns } from './grouping'
 
 /**
- * The Board View: the same unarchived Articles the list shows, in a column each
- * by status.
+ * The Board View: the same unarchived Articles the list shows, by status.
  *
- * **Reading only.** There is no drag-and-drop here, and a card carries no
- * control — the writer sets an Article's status on the Article screen, which is
- * where they are when they decide it has moved on. The columns keep their width
- * and the Board scrolls sideways rather than squeezing four columns into a
- * phone.
+ * **Reading only** — no drag-and-drop, and no control on a card. The writer sets
+ * a status on the Article screen, which is where they are when they decide the
+ * piece has moved on.
  */
 
 export interface BoardViewProps {
@@ -64,22 +61,27 @@ export function BoardView({
 					<p className="text-[0.75rem] text-faint">Opening your Articles…</p>
 				) : (
 					columns.map((column) => (
+						// A sunk fill, so four columns read as four rather than as one field
+						// of cards. The tiles stay white and lift off it.
 						<div
-							className="flex w-[13rem] shrink-0 flex-col gap-2 overflow-y-auto"
+							className="flex w-[12rem] shrink-0 flex-col gap-2 rounded-lg border border-rule bg-sunk p-2"
 							key={column.status}
 						>
-							<MetaLabel className="shrink-0" count={column.articles.length}>
+							<MetaLabel className="shrink-0 px-0.5" count={column.articles.length}>
 								{column.label}
 							</MetaLabel>
-							{column.articles.map((article) => (
-								<ArticleCard
-									article={article}
-									className="shrink-0"
-									key={article.id}
-									onOpen={onOpen}
-									variant="column"
-								/>
-							))}
+							{/* Each column scrolls its own Y. */}
+							<div className="flex min-h-0 flex-col gap-2 overflow-y-auto">
+								{column.articles.map((article) => (
+									<ArticleCard
+										article={article}
+										className="shrink-0"
+										key={article.id}
+										onOpen={onOpen}
+										variant="column"
+									/>
+								))}
+							</div>
 						</div>
 					))
 				)}

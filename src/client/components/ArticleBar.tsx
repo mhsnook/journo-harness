@@ -14,9 +14,8 @@ export interface ArticleBarProps {
 	status?: ReactNode
 	open: readonly PanelId[]
 	onToggle?: (Panel: PanelId) => void
-	/** Put the rail on a row of its own, which is what it wants on a narrow
-	 * screen: there it is a set of tabs rather than a set of toggles, and beside
-	 * the title and the status it has nowhere near the width for four pills. */
+	/** Put the rail on a row of its own — beside the title and the status there
+	 * is nowhere near the width for four pills. */
 	stacked?: boolean
 	/** Draw the rule underneath. Off when the Panel below carries its own edge. */
 	divided?: boolean

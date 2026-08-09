@@ -56,10 +56,9 @@ export interface ChatComposerProps {
 }
 
 /**
- * **The field is never disabled while a turn runs.** Disabling it takes the
- * caret out of it, and the writer gets it back by clicking — so a thought typed
- * while the guide is answering was lost at the first keystroke. What changes
- * instead is the button beside it, which becomes the way to stop the turn.
+ * **The field is never disabled while a turn runs.** Disabling it blurs it, so a
+ * thought typed while the guide answers is lost at the first keystroke. The
+ * button beside it changes instead.
  */
 export function ChatComposer({
 	placeholder = 'Ask, argue, or paste something in…',
@@ -98,7 +97,6 @@ export function ChatComposer({
 					<input
 						aria-label="Message the guide"
 						className="min-w-0 flex-1 bg-transparent text-ink outline-none placeholder:text-faint"
-						// The still frames the wireframe screens draw have no sender.
 						disabled={onSend === undefined}
 						onChange={(event) => setSaid(event.target.value)}
 						onKeyDown={onKeyDown}
@@ -126,13 +124,8 @@ export interface ChatWorkingProps {
 	className?: string
 }
 
-/**
- * What the guide is doing, with the seconds counting up beside it.
- *
- * A model can take most of a minute, and a line that never changes reads as a
- * hang — so this one is mounted for the length of the turn and says how long it
- * has been going.
- */
+/** What the guide is doing. A model can take most of a minute, and a line that
+ * never changes reads as a hang, so this counts the seconds it has been up. */
 export function ChatWorking({ children, className }: ChatWorkingProps) {
 	const [seconds, setSeconds] = useState(0)
 

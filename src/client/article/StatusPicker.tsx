@@ -7,12 +7,7 @@ export interface StatusPickerProps {
 	className?: string
 }
 
-/**
- * Where the writer says how far along a piece is. Nothing infers it — 1a has no
- * Draft to measure — and this is the only control that sets it, which is why the
- * Board View has none: the writer is here when they decide the piece has moved
- * on, not over there looking at columns.
- */
+/** The only control that sets a status, which is why the Board View has none. */
 export function StatusPicker({ status, onStatus, className }: StatusPickerProps) {
 	return (
 		<select

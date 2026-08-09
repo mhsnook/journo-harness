@@ -52,8 +52,7 @@ export interface BackButtonProps {
 	onBack?: () => void
 }
 
-/** The back affordance both bars use, so a writer leaves an Article the same way
- * they leave the table. */
+/** The back affordance both bars use. */
 export function BackButton({ back, onBack }: BackButtonProps) {
 	if (back === undefined) return null
 

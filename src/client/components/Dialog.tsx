@@ -16,10 +16,8 @@ export interface DialogProps {
 }
 
 /**
- * A small panel over the whole window, on the browser's own `<dialog>`. Native
- * rather than a `position: fixed` div, because `showModal` is what gives the
- * focus trap, the inert page behind it, and Escape — three things a hand-rolled
- * overlay has to reimplement and usually gets wrong.
+ * A small panel over the whole window. Native `<dialog>` rather than a fixed
+ * div, because `showModal` gives the focus trap, the inert page, and Escape.
  */
 export function Dialog({
 	open,
@@ -46,12 +44,11 @@ export function Dialog({
 				'm-auto w-[min(24rem,calc(100vw-2rem))] rounded-frame border border-edge bg-surface p-0 text-ink shadow-frame backdrop:bg-ink/25',
 				className,
 			)}
-			// Escape fires `cancel`; a `close` from anywhere else fires this too, so
-			// the caller's state cannot drift from what is on screen.
+			// Every close routes here, Escape included, so the caller's state cannot
+			// drift from what is on screen.
 			onClose={onClose}
 			onClick={(event) => {
-				// A click that lands on the dialog element itself landed on the
-				// backdrop: everything inside sits in the form below.
+				// The dialog element itself is the backdrop; its content is inside.
 				if (event.target === held.current) onClose()
 			}}
 			ref={held}

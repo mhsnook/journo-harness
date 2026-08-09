@@ -33,14 +33,9 @@
     },
   ],
 
-  // The article index, read and written through the Hono routes in this same
-  // Worker — architecture.md §9. Its schema lives in ./migrations, which
-  // `pnpm db:migrate` applies to the local D1 and `pnpm db:migrate:remote` to
-  // the deployed one. The test suite applies the same files itself.
-  //
-  // database_id names the account's own database, made with
-  // `wrangler d1 create journo-harness`. Pointing this Worker at a different one
-  // is a matter of pasting a different id here.
+  // The article index — architecture.md §9. Its schema lives in ./migrations;
+  // `pnpm db:migrate` applies it locally and `db:migrate:remote` to the deploy.
+  // A different account needs its own `wrangler d1 create journo-harness`.
   "d1_databases": [
     {
       "binding": "DB",

@@ -1,13 +1,9 @@
 import { applyD1Migrations, env } from 'cloudflare:test'
 
 /**
- * The article index's schema, applied inside workerd before any worker test
- * runs. `migrations_dir` in wrangler.jsonc is read by the CLI rather than by the
- * test pool, so vitest.config.ts reads the files and hands them over as
- * TEST_MIGRATIONS.
- *
- * Storage is isolated per test file, so this runs once per file rather than
- * once per suite.
+ * The article index's schema, applied inside workerd once per test file.
+ * `migrations_dir` in wrangler.jsonc is read by the CLI rather than by the test
+ * pool, so vitest.config.ts reads the files and passes them as TEST_MIGRATIONS.
  */
 if (env.TEST_MIGRATIONS === undefined) {
 	throw new Error(

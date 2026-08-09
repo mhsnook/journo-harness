@@ -4,27 +4,21 @@ import type { ArticleEntry } from '../../shared/article'
 import { articleTitle, statusLabel } from '../../shared/article'
 import { ArticleCard } from '../components/ArticleCard'
 import { Button } from '../components/Button'
+import { Chip } from '../components/Chip'
 import { GroupHeading } from '../components/Divider'
 import { EmptySlot } from '../components/Field'
 import { FrameBody } from '../components/Frame'
-import { ListRow } from '../components/ListRow'
 import { Notice } from '../components/Notice'
 import { TitleBar } from '../components/TitleBar'
+import { cx } from '../lib/cx'
 import { shortDate } from '../lib/when'
 import { archivedArticles, recentArticles, unarchivedArticles } from './grouping'
 
 /**
- * The Articles Area, as a list. The Board View is the same rows laid out by
- * status, and both read the one list the index answers with.
+ * The Articles Area, as a list. The Board View lays the same rows out by status.
  *
- * **The tiles on top supplement the list rather than replacing rows in it.**
- * They are the three the writer touched last, lifted up where a glance finds
- * them, and each is still listed underneath — so scanning the list never means
- * remembering which Articles were taken out of it.
- *
- * Archived Articles are a group at the foot rather than a View of their own:
- * they sit on the same table, and a writer looking for one has come to this page
- * to find it.
+ * The tiles on top supplement the list rather than replacing rows in it, and
+ * Archived Articles are a group at its foot rather than a View of their own.
  */
 
 export interface ArticleListProps {
@@ -84,10 +78,8 @@ export function ArticleList({
 					</div>
 				)}
 
-				<div className="flex flex-col gap-1">
-					<GroupHeading className="mb-1.5" count={working.length}>
-						In progress
-					</GroupHeading>
+				<div className="flex flex-col gap-1.5">
+					<GroupHeading count={working.length}>In progress</GroupHeading>
 					{loading ? (
 						<p className="text-[0.75rem] text-faint">Opening your Articles…</p>
 					) : working.length === 0 ? (
@@ -95,40 +87,44 @@ export function ArticleList({
 							Nothing here yet — start an Article and it appears in this list
 						</EmptySlot>
 					) : (
-						working.map((article) => (
-							<ArticleRow
-								article={article}
-								key={article.id}
-								onOpen={onOpen}
-								when={article.createdAt}
-							/>
-						))
+						// Pulled out, so a row's fill runs the width of the page while its
+						// title stays under the heading.
+						<div className="-mx-2.5 flex flex-col">
+							{working.map((article) => (
+								<ArticleRow
+									article={article}
+									key={article.id}
+									onOpen={onOpen}
+									when={article.createdAt}
+								/>
+							))}
+						</div>
 					)}
 				</div>
 
 				{archived.length === 0 ? null : (
-					<div className="flex flex-col gap-1">
-						<GroupHeading className="mb-1.5" count={archived.length}>
-							Archived
-						</GroupHeading>
-						{archived.map((article) => (
-							<ArticleRow
-								action={
-									<Button
-										onClick={() => onRestore?.(article.id)}
-										size="sm"
-										variant="quiet"
-									>
-										restore
-									</Button>
-								}
-								article={article}
-								dimmed
-								key={article.id}
-								onOpen={onOpen}
-								when={article.archivedAt ?? article.createdAt}
-							/>
-						))}
+					<div className="flex flex-col gap-1.5">
+						<GroupHeading count={archived.length}>Archived</GroupHeading>
+						<div className="-mx-2.5 flex flex-col">
+							{archived.map((article) => (
+								<ArticleRow
+									action={
+										<Button
+											onClick={() => onRestore?.(article.id)}
+											size="sm"
+											variant="quiet"
+										>
+											restore
+										</Button>
+									}
+									article={article}
+									dimmed
+									key={article.id}
+									onOpen={onOpen}
+									when={article.archivedAt ?? article.createdAt}
+								/>
+							))}
+						</div>
 					</div>
 				)}
 			</FrameBody>
@@ -136,8 +132,15 @@ export function ArticleList({
 	)
 }
 
-/** One line of either list: the title opens the Article, the status sits beside
- * it, and the date is the one the group is about. */
+/**
+ * One line of either list. **No rule between rows**: a hairline separates the
+ * sections of a page here, and one between every Article turns a list of pieces
+ * into a table of records. The hover fill is what separates two rows, and what
+ * says the whole row opens.
+ *
+ * The title's overlay carries that hit area across the row, so `action` needs
+ * `relative` to stay above it.
+ */
 function ArticleRow({
 	article,
 	when,
@@ -151,25 +154,38 @@ function ArticleRow({
 	dimmed?: boolean
 	onOpen?: (id: string) => void
 }) {
+	const untitled = article.title.trim() === ''
+
 	return (
-		<ListRow
-			dimmed={dimmed}
-			note={statusLabel[article.status]}
-			title={
-				<button
-					className="truncate text-left hover:underline"
-					onClick={() => onOpen?.(article.id)}
-					type="button"
+		<div
+			className={cx(
+				'relative flex items-center gap-3 rounded-md px-2.5 py-2.5 transition-colors',
+				onOpen && 'hover:bg-hush',
+				dimmed && 'opacity-70',
+			)}
+		>
+			{/* The clip goes on the text: an overlay inside an `overflow-hidden` box
+			    is clipped to it, and would cover the title alone. */}
+			<button
+				className="min-w-0 flex-1 text-left after:absolute after:inset-0"
+				onClick={() => onOpen?.(article.id)}
+				type="button"
+			>
+				<span
+					className={cx(
+						'block truncate text-[0.875rem]',
+						untitled ? 'text-faint' : 'text-ink',
+					)}
 				>
 					{articleTitle(article)}
-				</button>
-			}
-			trailing={
-				<>
-					<span className="text-[0.6875rem] text-faint">{shortDate(when)}</span>
-					{action}
-				</>
-			}
-		/>
+				</span>
+			</button>
+			<Chip variant="outline">{statusLabel[article.status]}</Chip>
+			{/* Fixed width, so dates of different lengths leave the chips in line. */}
+			<span className="w-12 shrink-0 text-right text-[0.6875rem] text-faint">
+				{shortDate(when)}
+			</span>
+			{action ? <span className="relative shrink-0">{action}</span> : null}
+		</div>
 	)
 }
