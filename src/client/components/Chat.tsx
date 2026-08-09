@@ -91,8 +91,10 @@ function grow(field: HTMLTextAreaElement) {
  * button beside it changes instead.
  *
  * The field is a `textarea` because writers compose paragraphs and paste
- * passages in. Enter sends and shift-Enter breaks the line, which is the pair
- * a chat composer is expected to have.
+ * passages in. **Enter breaks the line and control-Enter sends**, which is the
+ * way round a composer wants when a paragraph is the ordinary message: the
+ * newline is the keystroke you make constantly, and sending is the deliberate
+ * one you make once.
  */
 export function ChatComposer({
 	placeholder = 'Ask, argue, or paste something in…',
@@ -123,8 +125,10 @@ export function ChatComposer({
 		setSaid('')
 	}
 
+	// `metaKey` is the same chord on a Mac, where control-Enter is not what a
+	// hand reaches for.
 	const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
-		if (event.key !== 'Enter' || event.shiftKey) return
+		if (event.key !== 'Enter' || !(event.ctrlKey || event.metaKey)) return
 
 		event.preventDefault()
 		send()

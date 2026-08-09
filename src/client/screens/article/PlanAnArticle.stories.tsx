@@ -98,7 +98,7 @@ export const B2_ComposerGrows: Story = {
 				The composer grows with what the writer types or pastes, up to eight lines. Past
 				that it scrolls inside itself, so the transcript above it never falls below about
 				half the Panel — this screen is the one the ceiling was picked against. Enter
-				sends; shift-Enter breaks the line.
+				breaks the line; control-Enter sends.
 			</Annotation>
 		</div>
 	),
@@ -111,10 +111,10 @@ export const B2_ComposerGrows: Story = {
 
 		const empty = field.clientHeight
 
-		// Shift-Enter breaks the line. Enter is the send key, and this screen is
+		// Enter breaks the line. Control-Enter is the send key, and this screen is
 		// parked on a Proposal, so `Primitives/Overview` covers what it sends.
 		await userEvent.click(field)
-		await userEvent.keyboard('one{Shift>}{Enter}{/Shift}two')
+		await userEvent.keyboard('one{Enter}two')
 		await expect(field.value).toBe('one\ntwo')
 		await userEvent.clear(field)
 
