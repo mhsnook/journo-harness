@@ -1,13 +1,21 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 
 import { ArticleList } from '../articles/ArticleList'
-import { useArticleIndex } from '../articles/useArticles'
+import { ArticlesFailed, ArticlesPending } from '../articles/ArticlesFallback'
+import { articlesQuery, useArticleIndex } from '../articles/useArticles'
 import { useNewArticle } from '../articles/useNewArticle'
 import { Screen } from '../components/Frame'
 import { useOpenArticle } from '../lib/openArticle'
 
 /** The Articles Area, as a list. `/board` is the same rows by status. */
-export const Route = createFileRoute('/')({ component: ArticlesRoute })
+export const Route = createFileRoute('/')({
+	component: ArticlesRoute,
+	// The rows are here before the View is, so it never draws an empty list that
+	// is not empty.
+	loader: ({ context }) => context.queryClient.ensureQueryData(articlesQuery),
+	pendingComponent: ArticlesPending,
+	errorComponent: ArticlesFailed,
+})
 
 function ArticlesRoute() {
 	const navigate = useNavigate()
@@ -20,7 +28,6 @@ function ArticlesRoute() {
 			<ArticleList
 				articles={index.articles}
 				failure={index.failure}
-				loading={index.loading}
 				onBoard={() => navigate({ to: '/board' })}
 				onNew={starting.start}
 				onOpen={open}

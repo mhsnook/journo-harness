@@ -1,8 +1,10 @@
 import {
 	type QueryClient,
+	queryOptions,
 	useMutation,
 	useQuery,
 	useQueryClient,
+	useSuspenseQuery,
 } from '@tanstack/react-query'
 
 import type { ArticleEdit, ArticleEntry } from '../../shared/article'
@@ -15,6 +17,12 @@ import { editArticle, fetchArticles } from './api'
  */
 
 export const articlesKey = ['articles'] as const
+
+/** Named once, so a route's loader primes exactly what its component reads. */
+export const articlesQuery = queryOptions({
+	queryKey: articlesKey,
+	queryFn: fetchArticles,
+})
 
 /**
  * Splices a row the server just answered with into the cached list, rather than
@@ -39,17 +47,15 @@ export function dropArticle(client: QueryClient, id: string): void {
 	)
 }
 
-export type ArticleIndex = {
-	articles: ArticleEntry[]
-	loading: boolean
-	/** The first thing that went wrong, as one sentence. */
-	failure: string | null
+export type ArticleWriter = {
 	edit: (id: string, edit: ArticleEdit) => void
+	/** Why the last write did not land. */
+	failure: string | null
 }
 
-export function useArticleIndex(): ArticleIndex {
+/** Changing a row, for any screen that has one to change. */
+export function useEditArticle(): ArticleWriter {
 	const client = useQueryClient()
-	const listed = useQuery({ queryKey: articlesKey, queryFn: fetchArticles })
 
 	const edited = useMutation({
 		mutationFn: ({ id, edit }: { id: string; edit: ArticleEdit }) =>
@@ -58,19 +64,32 @@ export function useArticleIndex(): ArticleIndex {
 	})
 
 	return {
-		articles: listed.data ?? [],
-		loading: listed.isPending,
-		failure:
-			failureText("Your Articles didn't load.", listed.error) ??
-			failureText("That change didn't save.", edited.error),
-
 		edit: (id, edit) => edited.mutate({ id, edit }),
+		failure: failureText("That change didn't save.", edited.error),
 	}
 }
 
-/** One row out of the list already loaded, rather than a request of its own. */
+export type ArticleIndex = ArticleWriter & { articles: ArticleEntry[] }
+
+/**
+ * The Area's read. **It suspends.** A View drawn before the rows arrive is a
+ * list of nothing that is not empty — zero counts, "nothing here yet", and four
+ * bare columns — so the route holds a loader up instead and the Views only ever
+ * see rows they can trust.
+ */
+export function useArticleIndex(): ArticleIndex {
+	const { data } = useSuspenseQuery(articlesQuery)
+
+	return { articles: data, ...useEditArticle() }
+}
+
+/**
+ * One row out of the list, without waiting for it. The Article screen reads its
+ * status through this and shows the Chat and the Plan meanwhile — those come off
+ * the socket and have nothing to do with the index.
+ */
 export function useArticleEntry(id: string): ArticleEntry | undefined {
-	const { data } = useQuery({ queryKey: articlesKey, queryFn: fetchArticles })
+	const { data } = useQuery(articlesQuery)
 
 	return data?.find((article) => article.id === id)
 }

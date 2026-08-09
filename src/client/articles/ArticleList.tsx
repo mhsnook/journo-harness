@@ -23,9 +23,7 @@ import { archivedArticles, recentArticles, unarchivedArticles } from './grouping
 
 export interface ArticleListProps {
 	articles: readonly ArticleEntry[]
-	/** Until the first read answers. */
-	loading?: boolean
-	/** Why the list did not load, or why a write did not land. */
+	/** Why a write did not land. The read's own failure replaces the screen. */
 	failure?: string | null
 	onOpen: (id: string) => void
 	onNew?: () => void
@@ -35,7 +33,6 @@ export interface ArticleListProps {
 
 export function ArticleList({
 	articles,
-	loading = false,
 	failure = null,
 	onOpen,
 	onNew,
@@ -77,9 +74,7 @@ export function ArticleList({
 
 				<div className="flex flex-col gap-1.5">
 					<GroupHeading count={working.length}>In progress</GroupHeading>
-					{loading ? (
-						<p className="text-[0.75rem] text-faint">Opening your Articles…</p>
-					) : working.length === 0 ? (
+					{working.length === 0 ? (
 						<EmptySlot className="min-h-[3.5rem]">
 							Nothing here yet — start an Article and it appears in this list
 						</EmptySlot>

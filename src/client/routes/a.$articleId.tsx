@@ -5,7 +5,7 @@ import { ArticlePanels } from '../article/ArticlePanels'
 import { StatusPicker } from '../article/StatusPicker'
 import { useSeedTitle, useTitleCopy } from '../article/title'
 import { usePanels } from '../article/usePanels'
-import { useArticleEntry, useArticleIndex } from '../articles/useArticles'
+import { useArticleEntry, useEditArticle } from '../articles/useArticles'
 import { useNewTitle } from '../articles/useNewArticle'
 import { ArticleBar } from '../components/ArticleBar'
 import { Button } from '../components/Button'
@@ -45,7 +45,7 @@ function ArticleWindow({
 	const connection = useArticle().plan
 	const { plan } = connection
 	const panels = usePanels()
-	const index = useArticleIndex()
+	const index = useEditArticle()
 	const entry = useArticleEntry(articleId)
 
 	useSeedTitle(connection, useNewTitle())
