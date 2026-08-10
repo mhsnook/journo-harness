@@ -63,26 +63,17 @@ export interface ChatComposerProps {
 }
 
 /**
- * How far the field grows before it scrolls inside itself, in lines. Eight lines
- * of this type is about 183px with the box's padding, and the Chat Panel on
- * `MidChatScreen` is 26rem — so a composer at full height takes about half the
- * Panel and leaves the writer the rest of the transcript to write against.
- */
-const maxLines = 8
-
-/**
- * Sets the field's height to the height of what is in it, up to `maxLines`.
+ * Sets the field's height to the height of what is in it. The ceiling is
+ * `max-h-[8lh]` on the field itself, so the browser clamps this and the field
+ * scrolls from there — no line height to measure here.
  *
  * The `auto` is not decoration: `scrollHeight` reads back the height the field
  * already has whenever the field is taller than its text, so without the reset
  * a field that grew to six lines would never shrink to three again.
  */
 function grow(field: HTMLTextAreaElement) {
-	const lineHeight = Number.parseFloat(getComputedStyle(field).lineHeight)
-	const ceiling = Number.isNaN(lineHeight) ? Infinity : lineHeight * maxLines
-
 	field.style.height = 'auto'
-	field.style.height = `${Math.min(field.scrollHeight, ceiling)}px`
+	field.style.height = `${field.scrollHeight}px`
 }
 
 /**
@@ -145,10 +136,16 @@ export function ChatComposer({
 			<div className="flex items-end gap-2">
 				{leading}
 				<div className="flex flex-1 items-center rounded-md border border-edge bg-surface px-2.5 py-1.5">
+					{/* `max-h-[8lh]` is the ceiling: eight lines of this type, which is
+					    where the composer stops growing and starts scrolling. Eight was
+					    picked against `MidChatScreen`, whose Chat Panel is 26rem — a
+					    full-height field takes under half of it and leaves the writer
+					    the transcript to write against. A shorter Panel gives the same
+					    eight lines a larger share. */}
 					<textarea
 						ref={field}
 						aria-label="Message the guide"
-						className="min-w-0 flex-1 resize-none overflow-y-auto bg-transparent text-[0.8125rem] leading-relaxed text-ink outline-none placeholder:text-faint"
+						className="max-h-[8lh] min-w-0 flex-1 resize-none overflow-y-auto bg-transparent text-[0.8125rem] leading-relaxed text-ink outline-none placeholder:text-faint"
 						disabled={onSend === undefined}
 						onChange={(event) => setSaid(event.target.value)}
 						onKeyDown={onKeyDown}

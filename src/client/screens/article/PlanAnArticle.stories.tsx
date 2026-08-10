@@ -111,21 +111,15 @@ export const B2_ComposerGrows: Story = {
 
 		const empty = field.clientHeight
 
-		// Enter breaks the line. Control-Enter is the send key, and this screen is
-		// parked on a Proposal, so `Primitives/Overview` covers what it sends.
+		// Grows with what is in it. The keys are `Primitives/Overview`'s to check:
+		// this screen is parked on a Proposal, so it cannot send.
 		await userEvent.click(field)
-		await userEvent.keyboard('one{Enter}two')
-		await expect(field.value).toBe('one\ntwo')
-		await userEvent.clear(field)
-
-		// Grows with what is in it.
 		await userEvent.paste(paragraph)
 		await expect(field.clientHeight).toBeGreaterThan(empty)
 
-		// And stops. Two more paragraphs are past any sane ceiling, so a third
+		// And stops. Two more paragraphs are past any sane ceiling, so a fourth
 		// changing nothing is the ceiling holding rather than the text fitting.
-		await userEvent.paste(paragraph)
-		await userEvent.paste(paragraph)
+		await userEvent.paste(paragraph.repeat(2))
 		const ceiling = field.clientHeight
 		await userEvent.paste(paragraph)
 		await expect(field.clientHeight).toBe(ceiling)
