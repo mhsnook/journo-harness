@@ -27,9 +27,9 @@ export interface ReferenceListProps {
 	entries: OutlineEntry[]
 	edit: (ops: ProposalInput | null) => void
 	/** Id of a Reference to scroll into view, taking the accent for a moment. */
-	shown?: string | null
+	accented?: string | null
 	/** Said once it has been scrolled to, so the same id can be sent again. */
-	onShown?: () => void
+	onAccented?: () => void
 	className?: string
 }
 
@@ -37,8 +37,8 @@ export function ReferenceList({
 	plan,
 	entries,
 	edit,
-	shown = null,
-	onShown,
+	accented = null,
+	onAccented,
 	className,
 }: ReferenceListProps) {
 	// One Reference is open at a time, and `adding` is the blank form.
@@ -74,8 +74,8 @@ export function ReferenceList({
 						key={reference.id}
 						entry={{ reference, number }}
 						entries={entries}
-						shown={reference.id === shown}
-						onShown={onShown}
+						accented={reference.id === accented}
+						onAccented={onAccented}
 						onOpen={() => setOpenId(reference.id)}
 						onPlace={(nodeId) => edit(placeReference(plan, reference.id, nodeId))}
 					/>
@@ -104,8 +104,8 @@ interface ReferenceRowProps {
 	entries: OutlineEntry[]
 	onOpen: () => void
 	onPlace: (nodeId: string | null) => void
-	shown: boolean
-	onShown?: () => void
+	accented: boolean
+	onAccented?: () => void
 }
 
 function ReferenceRow({
@@ -113,22 +113,22 @@ function ReferenceRow({
 	entries,
 	onOpen,
 	onPlace,
-	shown,
-	onShown,
+	accented,
+	onAccented,
 }: ReferenceRowProps) {
 	const { reference } = entry
 	const row = useRef<HTMLDivElement>(null)
 
 	useEffect(() => {
-		if (!shown) return
+		if (!accented) return
 
 		row.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })
 		// The accent is a pointer, not a state the row is in, so it lets go by
 		// itself rather than waiting to be dismissed.
-		const held = setTimeout(() => onShown?.(), 1600)
+		const held = setTimeout(() => onAccented?.(), 1600)
 
 		return () => clearTimeout(held)
-	}, [shown, onShown])
+	}, [accented, onAccented])
 
 	const source = reference.source
 	const url = source?.url
@@ -145,7 +145,7 @@ function ReferenceRow({
 			ref={row}
 			className={cx(
 				'flex flex-col gap-1.5 rounded-md border p-2 transition-colors',
-				shown ? 'border-accent-edge bg-accent-soft' : 'border-edge bg-surface',
+				accented ? 'border-accent-edge bg-accent-soft' : 'border-edge bg-surface',
 			)}
 		>
 			<div className="flex items-baseline gap-2">
