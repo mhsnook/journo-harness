@@ -1,9 +1,12 @@
-import type { ReactNode } from 'react'
+import { ListTodo } from 'lucide-react'
+import { useState } from 'react'
 
+import { Button } from '../components/Button'
 import { Panel } from '../components/Panel'
 import { useArticle } from '../lib/article'
 import type { ArticleSocket } from '../lib/useArticleAgent'
 import { ChatPanel, type ChatPanelProps } from './ChatPanel'
+import { OfferLedgerPanel } from './OfferLedgerPanel'
 import { useArticleChat } from './useArticleChat'
 
 /** Drives `ChatPanel` from one Article Agent. Takes the socket rather than
@@ -12,8 +15,6 @@ import { useArticleChat } from './useArticleChat'
 export interface ArticleChatPanelProps {
 	agent: ArticleSocket
 	placeholder?: string
-	/** Left of send — the Offer ledger toggle. */
-	leading?: ReactNode
 	divider?: ChatPanelProps['divider']
 	className?: string
 }
@@ -21,13 +22,13 @@ export interface ArticleChatPanelProps {
 export function ArticleChatPanel({
 	agent,
 	placeholder,
-	leading,
 	divider,
 	className,
 }: ArticleChatPanelProps) {
 	const { plan } = useArticle().plan
 	const chat = useArticleChat(agent)
 	const { ledger } = chat
+	const [showLedger, setShowLedger] = useState(false)
 
 	// A Proposal card names Sections out of the Plan, so there is nothing to draw
 	// until one arrives.
@@ -39,13 +40,31 @@ export function ArticleChatPanel({
 		)
 	}
 
+	// The Ledger takes the Chat's half rather than sitting beside it, and the
+	// Chat's own state is held here, so opening it costs the transcript nothing.
+	if (showLedger) {
+		return (
+			<OfferLedgerPanel
+				className={className}
+				divider={divider}
+				ledger={ledger}
+				onClose={() => setShowLedger(false)}
+			/>
+		)
+	}
+
 	return (
 		<ChatPanel
 			busy={chat.busy}
 			className={className}
 			divider={divider}
 			failure={chat.failure ?? ledger.failure}
-			leading={leading}
+			leading={
+				<LedgerToggle
+					onOpen={() => setShowLedger(true)}
+					undecided={ledger.ledger.counts.undecided}
+				/>
+			}
 			messages={chat.messages}
 			offers={ledger.ledger.offers}
 			onAccept={chat.accept}
@@ -59,5 +78,26 @@ export function ArticleChatPanel({
 			refusals={chat.refusals}
 			waiting={chat.waiting}
 		/>
+	)
+}
+
+/** What opens the Offer ledger, sat left of the composer. It carries the
+ * Undecided count, because that is the pile the writer is being asked to work
+ * through and a bare icon says nothing about whether anything is waiting. */
+function LedgerToggle({ onOpen, undecided }: { onOpen: () => void; undecided: number }) {
+	return (
+		<Button
+			aria-label={
+				undecided === 0
+					? 'Offer ledger'
+					: `Offer ledger, ${undecided} Offers still Undecided`
+			}
+			onClick={onOpen}
+			size="sm"
+			variant="quiet"
+		>
+			<ListTodo aria-hidden className="size-3.5" />
+			{undecided === 0 ? null : undecided}
+		</Button>
 	)
 }

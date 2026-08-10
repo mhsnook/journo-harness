@@ -10,6 +10,7 @@ describe('word-count arithmetic', () => {
 		expect(planAllocation(plan)).toEqual({
 			total: null,
 			allocated: 400,
+			targeted: 1,
 			untargeted: 0,
 			gap: null,
 			status: 'unstated',
@@ -22,6 +23,7 @@ describe('word-count arithmetic', () => {
 		expect(planAllocation(plan)).toEqual({
 			total: 2000,
 			allocated: 0,
+			targeted: 0,
 			untargeted: 0,
 			gap: 2000,
 			status: 'unallocated',
@@ -47,6 +49,7 @@ describe('word-count arithmetic', () => {
 		expect(planAllocation(plan)).toEqual({
 			total: 2000,
 			allocated: 600,
+			targeted: 1,
 			untargeted: 1,
 			gap: 1400,
 			status: 'unallocated',
@@ -84,7 +87,33 @@ describe('word-count arithmetic', () => {
 			outline: [makeNode({ id: 'n1', target: 400 }), makeNode({ id: 'n2', target: 600 })],
 		})
 
-		expect(planAllocation(plan)).toMatchObject({ gap: 0, status: 'balanced' })
+		expect(planAllocation(plan)).toMatchObject({
+			gap: 0,
+			status: 'balanced',
+			targeted: 2,
+			untargeted: 0,
+		})
+	})
+
+	// The note above the Outline says "fully allocated across 2/3 Sections", so
+	// the two counts have to stay separate: balanced says the words add up, and
+	// says nothing about every Section carrying a target of its own.
+	it('counts the nodes that carried a target apart from those that did not', () => {
+		const plan = makePlan({
+			totalTarget: 1000,
+			outline: [
+				makeNode({ id: 'n1', target: 400 }),
+				makeNode({ id: 'n2', target: 600 }),
+				makeNode({ id: 'n3' }),
+			],
+		})
+
+		expect(planAllocation(plan)).toMatchObject({
+			gap: 0,
+			status: 'balanced',
+			targeted: 2,
+			untargeted: 1,
+		})
 	})
 
 	it("counts a parent's target once, not again through its children", () => {
@@ -162,6 +191,7 @@ describe('word-count arithmetic', () => {
 		expect(nodeAllocation(node)).toEqual({
 			total: 800,
 			allocated: 500,
+			targeted: 1,
 			untargeted: 1,
 			gap: 300,
 			status: 'unallocated',

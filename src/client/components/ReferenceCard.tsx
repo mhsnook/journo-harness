@@ -4,6 +4,7 @@ import { attribution, referenceName } from '../plan/references'
 import { Button } from './Button'
 import { Check } from './Check'
 import { Chip } from './Chip'
+import { SourceLink } from './SourceLink'
 
 export interface ReferenceCardProps {
 	offer: Offer
@@ -43,6 +44,12 @@ export function ReferenceCard({
 	const heading = referenceName(offer)
 	// A Quote with no source is its own heading; do not print it twice.
 	const passage = offer.text !== undefined && offer.text !== heading
+	const url = offer.source?.url
+	const cited = attribution(offer.source)
+	// The heading is the passage on a Quote, and underlining a whole passage
+	// reads as emphasis rather than as a link, so that one takes its url on the
+	// line below instead.
+	const headingLinks = url !== undefined && offer.text === undefined
 
 	return (
 		<article
@@ -67,16 +74,22 @@ export function ReferenceCard({
 
 			<div className="flex min-w-0 flex-1 flex-col gap-1">
 				<h4 className="text-[0.8125rem] leading-snug font-semibold text-ink">
-					{heading}
+					{headingLinks ? <SourceLink url={url}>{heading}</SourceLink> : heading}
 				</h4>
 				<p className="flex flex-wrap items-center gap-x-1.5 text-[0.6875rem] text-faint">
 					{favourite ? <FavouriteMark type={favourite} /> : null}
-					{attribution(offer.source).map((part, index) => (
+					{cited.map((part, index) => (
 						<span key={part}>
 							{index > 0 || favourite ? <span aria-hidden>· </span> : null}
 							{part}
 						</span>
 					))}
+					{url === undefined || headingLinks ? null : (
+						<span className="min-w-0">
+							{favourite || cited.length > 0 ? <span aria-hidden>· </span> : null}
+							<SourceLink className="break-all" url={url} />
+						</span>
+					)}
 				</p>
 				{passage ? (
 					<blockquote className="border-l-2 border-rule pl-2 text-[0.75rem] leading-relaxed text-ink">

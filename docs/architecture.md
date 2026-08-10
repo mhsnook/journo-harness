@@ -168,7 +168,10 @@ The Chat turns up Offers — Links and Quotes — as SQLite rows in the Article 
 **Undecided**, **Accepted**, or **Declined** (Declining is restorable).
 
 **The Ledger belongs to the Chat Panel and doesn't read the Plan.** Its data model and its
-visual representation should both be understood to relate to the Chat Panel itself.
+visual representation should both be understood to relate to the Chat Panel itself. It
+opens from the control left of the composer, which carries the Undecided count, and it takes
+the Chat's half of the screen rather than sitting beside it as a fifth Panel — `close ×` is
+on the Ledger because the Chat is the half that opened it.
 Its groupings show the three dispositions; when the writer Accepts an offer, it sends the
 Reference over to the Plan Panel; then it belongs to the Plan, where it becomes an editable
 record carrying its Provenance (rule 5) back to the original Offer.
@@ -428,6 +431,12 @@ narrow screen. `usePanels` holds which are open, keeps them in the one order the
 and refuses to close the last of them. The **Areas** are Articles (with Board and Archive
 Views), House, and Team.
 
+**A closed Panel is hidden, not unmounted.** All four render inside React's `Activity`, and
+closing one switches it to `hidden`: its state stays and its effects stop. Rendering the open
+ones alone threw the Chat's transcript away each time the writer closed the Panel, so
+reopening it read everything back — a full reload, from a control that reads as show and
+hide.
+
 **A screen never draws a value it has not got.** An empty title, a zero count and four empty
 columns are answers, and a screen that puts one on the page before it has read anything has
 said something untrue. Whatever is still coming says so — `Skeleton` where the shape is
@@ -438,7 +447,9 @@ where the whole screen is waiting. This is why the Article bar takes `title: str
 **Navigation is a `Link`.** A control that only goes somewhere is an anchor, so it opens in
 a new tab, copies as a URL, reads as a link, and warms its route on hover — the router runs
 `defaultPreload: 'intent'`. A callback is for a control that does work first, like Archiving
-an Article and then leaving it.
+an Article and then leaving it. A Reference's url is an anchor for the same reason, and
+opens in a new tab: the Chat and the Plan sit on a socket, and following a link in place
+would drop it.
 
 **The Articles Area is the list at `/` and the Board View at `/board`**, over the one index
 read, under a pathless layout route that holds both. The Board draws a column per status,

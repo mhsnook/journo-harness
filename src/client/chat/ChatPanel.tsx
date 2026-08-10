@@ -1,5 +1,5 @@
 import { getToolName, isTextUIPart, isToolUIPart, type UIMessage } from 'ai'
-import type { ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, type ReactNode } from 'react'
 
 import { proposePlanChangeTool, recordOffersTool } from '../../shared/chat'
 import type { Offer } from '../../shared/offer'
@@ -66,9 +66,16 @@ export function ChatPanel({
 	className,
 }: ChatPanelProps) {
 	const rows = new Map(offers.map((offer) => [offer.id, offer]))
+	const transcript = useFootOfTranscript()
 
 	return (
-		<Panel className={className} divider={divider} padded={false}>
+		<Panel
+			className={className}
+			divider={divider}
+			onScroll={transcript.onScroll}
+			padded={false}
+			ref={transcript.ref}
+		>
 			<div className="flex flex-1 flex-col gap-3.5 p-3.5">
 				{messages.map((message) => (
 					<Turn
@@ -106,6 +113,61 @@ export function ChatPanel({
 			</div>
 		</Panel>
 	)
+}
+
+/** How far off the foot still counts as being at it, in px. A rounded scroll
+ * position lands a pixel or two short of the bottom on its own. */
+const AT_THE_FOOT = 24
+
+/**
+ * The Chat opens on the last thing said, and stays there as a turn streams in.
+ *
+ * The writer scrolling up is what lets go of the foot: they are reading
+ * something further back, and yanking them to the bottom mid-turn would take it
+ * away. Scrolling back down takes hold again.
+ *
+ * **The observer is what holds it, and the render is only the first pin.** The
+ * composer grows inside its own state, so pasting four paragraphs takes the
+ * bottom of the Panel without this component rendering at all — and the turn
+ * the writer came back for ends up behind the field.
+ */
+function useFootOfTranscript() {
+	const panel = useRef<HTMLElement>(null)
+	const held = useRef(true)
+
+	const foot = () => {
+		if (panel.current !== null && held.current) {
+			panel.current.scrollTop = panel.current.scrollHeight
+		}
+	}
+
+	// Every render: a streaming turn grows the last message without adding one,
+	// so a message count would miss it.
+	useLayoutEffect(foot)
+
+	useEffect(() => {
+		const shown = panel.current
+		if (shown === null) return
+
+		// The Panel's own box never changes, so the children are what is watched:
+		// the transcript above and the composer below.
+		const watch = new ResizeObserver(foot)
+		for (const child of shown.children) watch.observe(child)
+
+		return () => watch.disconnect()
+		// `foot` reads refs alone, so it has nothing to go stale against.
+	}, [])
+
+	return {
+		ref: panel,
+		onScroll: () => {
+			const shown = panel.current
+			if (shown === null) return
+
+			held.current =
+				shown.scrollHeight - shown.scrollTop - shown.clientHeight <= AT_THE_FOOT
+		},
+	}
 }
 
 /** Why the composer will not send, and null when it will. Nothing expires an

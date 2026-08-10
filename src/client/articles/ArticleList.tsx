@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router'
+import { Columns3 } from 'lucide-react'
 import type { ReactNode } from 'react'
 
 import type { ArticleEntry } from '../../shared/article'
@@ -47,6 +48,7 @@ export function ArticleList({
 				actions={
 					<>
 						<Link className={buttonClass({ size: 'sm', variant: 'quiet' })} to="/board">
+							<Columns3 aria-hidden className="size-3.5" />
 							board view
 						</Link>
 						<Button onClick={onNew} size="sm" variant="accent">

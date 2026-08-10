@@ -1,8 +1,8 @@
-import type { ReactNode } from 'react'
+import { Activity, type ReactNode } from 'react'
 
 import { ArticleChatPanel } from '../chat/ArticleChatPanel'
 import { Panel, PanelHeader, type PanelProps } from '../components/Panel'
-import type { PanelId } from '../components/PanelRail'
+import { PANELS, type PanelId } from '../components/PanelRail'
 import type { ArticleSocket } from '../lib/useArticleAgent'
 import { ArticlePlanPanel } from '../plan/ArticlePlanPanel'
 
@@ -18,11 +18,22 @@ export interface ArticlePanelsProps {
 	open: readonly PanelId[]
 }
 
+/**
+ * **Every Panel stays mounted, and a closed one is hidden rather than dropped.**
+ * Rendering `open` alone unmounted the Chat each time the writer closed it, so
+ * reopening it threw away the transcript the hook held and read everything back
+ * — a full reload of the Panel, for a control that reads as show and hide.
+ * `Activity` keeps the state and stops the effects instead.
+ */
 export function ArticlePanels({ agent, open }: ArticlePanelsProps) {
 	return (
 		<div className="flex min-h-0 flex-auto">
-			{open.map((panel, index) => (
-				<PanelFor agent={agent} divided={index > 0} key={panel} panel={panel} />
+			{PANELS.map((panel) => (
+				<Activity key={panel} mode={open.includes(panel) ? 'visible' : 'hidden'}>
+					{/* `open` is in rail order, so anything but the first open Panel has
+					    an open neighbour to its left to be divided from. */}
+					<PanelFor agent={agent} divided={open.indexOf(panel) > 0} panel={panel} />
+				</Activity>
 			))}
 		</div>
 	)

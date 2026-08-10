@@ -4,13 +4,14 @@ import type { Plan, ProposalInput } from '../../shared/plan'
 import { Button } from '../components/Button'
 import { Chip } from '../components/Chip'
 import { EmptySlot } from '../components/Field'
+import { SourceLink } from '../components/SourceLink'
 import { cx } from '../lib/cx'
 import { addReference, deleteReference, placeReference, setReference } from './edits'
 import type { OutlineEntry } from './outline'
 import { sectionLabel } from './outline'
 import { ReferenceForm } from './ReferenceForm'
 import type { ReferenceEntry } from './references'
-import { referenceEntries, referenceMark, referenceName, sourceLine } from './references'
+import { attribution, referenceEntries, referenceMark, referenceName } from './references'
 
 /**
  * The Plan's References: what the Chat turned up and the writer Accepted, and
@@ -134,7 +135,12 @@ function ReferenceRow({
 		return () => clearTimeout(held)
 	}, [shown, onShown])
 
-	const attribution = sourceLine(reference.source)
+	const source = reference.source
+	const url = source?.url
+	const cited = attribution(source).join(' · ')
+	// The title above is the link where there is one, so printing the url here
+	// as well would state the same link twice.
+	const showsUrl = url !== undefined && source?.title === undefined
 
 	return (
 		<div
@@ -148,9 +154,13 @@ function ReferenceRow({
 				<Chip className="font-mono" variant="outline">
 					{referenceMark(entry)}
 				</Chip>
-				{reference.source?.title ? (
+				{source?.title ? (
 					<p className="min-w-0 flex-1 text-[0.75rem] leading-snug font-medium text-ink">
-						{reference.source.title}
+						{url === undefined ? (
+							source.title
+						) : (
+							<SourceLink url={url}>{source.title}</SourceLink>
+						)}
 					</p>
 				) : (
 					<span className="flex-1" />
@@ -166,8 +176,16 @@ function ReferenceRow({
 				</blockquote>
 			) : null}
 
-			{attribution === '' ? null : (
-				<p className="text-[0.6875rem] text-faint">{attribution}</p>
+			{cited === '' && !showsUrl ? null : (
+				<p className="text-[0.6875rem] break-all text-faint">
+					{cited}
+					{showsUrl ? (
+						<>
+							{cited === '' ? null : <span aria-hidden> · </span>}
+							<SourceLink url={url} />
+						</>
+					) : null}
+				</p>
 			)}
 			{reference.note ? (
 				<p className="text-[0.75rem] text-muted">{reference.note}</p>

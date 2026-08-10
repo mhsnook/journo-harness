@@ -106,7 +106,10 @@ export const B2_ComposerGrows: Story = {
 		const field = canvas.getByLabelText('Message the guide') as HTMLTextAreaElement
 		const panel = canvasElement.querySelector('[data-panel]')!
 		const composer = canvasElement.querySelector('[data-composer]')!
-		const opening = canvas.getByText(/one developer in it/)
+		// The foot of the transcript, which is where the Chat sits: the opening
+		// line has scrolled off the top by now, and the Proposal is the thing the
+		// writer is being asked about.
+		const latest = canvas.getByText(/The appeal that nobody files/)
 
 		const empty = field.clientHeight
 
@@ -130,9 +133,9 @@ export const B2_ComposerGrows: Story = {
 		const composerBox = composer.getBoundingClientRect()
 		await expect(field.clientHeight).toBeLessThanOrEqual(panelBox.height / 2)
 
-		const openingBox = opening.getBoundingClientRect()
-		await expect(openingBox.top).toBeGreaterThanOrEqual(panelBox.top)
-		await expect(openingBox.bottom).toBeLessThanOrEqual(composerBox.top)
+		const latestBox = latest.getBoundingClientRect()
+		await expect(latestBox.top).toBeGreaterThanOrEqual(panelBox.top)
+		await expect(latestBox.bottom).toBeLessThanOrEqual(composerBox.top)
 	},
 }
 
