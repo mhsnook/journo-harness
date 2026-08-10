@@ -1,8 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
+import { expect, userEvent, within } from 'storybook/test'
 
 import { offers, plan, sectionState } from '../mock/content'
 import { Button } from './Button'
+import { ChatComposer } from './Chat'
 import { Check } from './Check'
 import { Chip } from './Chip'
 import { Divider } from './Divider'
@@ -85,6 +87,53 @@ export const PanelToggle: Story = {
 				</p>
 			</div>
 		)
+	},
+}
+
+export const Composer: Story = {
+	render: function ComposerStory() {
+		const [sent, setSent] = useState<string[]>([])
+
+		return (
+			<div className="flex w-[26rem] flex-col gap-4">
+				<Row label="Chat composer — Enter breaks the line, control-Enter sends">
+					<ChatComposer
+						onSend={(text) => setSent((held) => [...held, text])}
+						className="w-full"
+					/>
+				</Row>
+				<ul aria-label="Sent" className="flex flex-col gap-1">
+					{sent.map((text, index) => (
+						<li
+							key={index}
+							className="rounded-md bg-hush px-3 py-2 text-[0.8125rem] leading-relaxed whitespace-pre-wrap text-ink"
+						>
+							{text}
+						</li>
+					))}
+				</ul>
+			</div>
+		)
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement)
+		const field = canvas.getByLabelText('Message the guide') as HTMLTextAreaElement
+
+		const sent = within(canvas.getByLabelText('Sent'))
+
+		await userEvent.click(field)
+		await userEvent.keyboard('one{Enter}two')
+		await expect(field.value).toBe('one\ntwo')
+		await expect(sent.queryAllByRole('listitem')).toHaveLength(0)
+
+		await userEvent.keyboard('{Control>}{Enter}{/Control}')
+		await expect(field.value).toBe('')
+		await expect(sent.getAllByRole('listitem')[0]).toHaveTextContent('one two')
+
+		// `{Meta>}` is command, which sends on a Mac.
+		await userEvent.keyboard('again{Meta>}{Enter}{/Meta}')
+		await expect(field.value).toBe('')
+		await expect(sent.getAllByRole('listitem')).toHaveLength(2)
 	},
 }
 

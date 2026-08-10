@@ -1,4 +1,11 @@
-import { type KeyboardEvent, type ReactNode, useEffect, useState } from 'react'
+import {
+	type KeyboardEvent,
+	type ReactNode,
+	useEffect,
+	useLayoutEffect,
+	useRef,
+	useState,
+} from 'react'
 
 import { cx } from '../lib/cx'
 import { Button } from './Button'
@@ -55,11 +62,16 @@ export interface ChatComposerProps {
 	className?: string
 }
 
-/**
- * **The field is never disabled while a turn runs.** Disabling it blurs it, so a
- * thought typed while the guide answers is lost at the first keystroke. The
- * button beside it changes instead.
- */
+/** Height of the content, clamped by the field's own `max-h`. The `auto` is
+ * load-bearing: `scrollHeight` reads back the height the field already has, so
+ * without the reset the field could grow but never shrink. */
+function grow(field: HTMLTextAreaElement) {
+	field.style.height = 'auto'
+	field.style.height = `${field.scrollHeight}px`
+}
+
+/** A chat message input that grows as you type; Enter adds a new line and
+ * control-Enter sends. */
 export function ChatComposer({
 	placeholder = 'Ask, argue, or paste something in…',
 	leading,
@@ -70,9 +82,15 @@ export function ChatComposer({
 	className,
 }: ChatComposerProps) {
 	const [said, setSaid] = useState('')
+	const field = useRef<HTMLTextAreaElement>(null)
 	const stopping = busy && onStop !== undefined
 	const cannotSend =
 		blocked !== null || busy || onSend === undefined || said.trim() === ''
+
+	// An `onChange` would miss the first paint & the clear after sending
+	useLayoutEffect(() => {
+		if (field.current !== null) grow(field.current)
+	}, [said])
 
 	const send = () => {
 		if (cannotSend || onSend === undefined) return
@@ -81,27 +99,31 @@ export function ChatComposer({
 		setSaid('')
 	}
 
-	const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-		if (event.key !== 'Enter' || event.shiftKey) return
+	const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+		if (event.key !== 'Enter' || !(event.ctrlKey || event.metaKey)) return
 
 		event.preventDefault()
 		send()
 	}
 
 	return (
-		<div className={cx('mt-auto flex flex-col gap-1.5 pt-1', className)}>
+		<div data-composer="" className={cx('mt-auto flex flex-col gap-1.5 pt-1', className)}>
 			{blocked === null ? null : <Notice>{blocked}</Notice>}
-			<div className="flex items-center gap-2">
+			<div className="flex items-end gap-2">
 				{leading}
-				<div className="flex h-9 flex-1 items-center rounded-md border border-edge bg-surface px-2.5 text-[0.8125rem]">
-					<input
+				<div className="flex flex-1 items-center rounded-md border border-edge bg-surface px-2.5 py-1.5">
+					{/* Eight lines, picked against `MidChatScreen`'s 26rem Chat Panel,
+					    where a full-height field takes under half. A shorter Panel gives
+					    the same eight lines a larger share. */}
+					<textarea
+						ref={field}
 						aria-label="Message the guide"
-						className="min-w-0 flex-1 bg-transparent text-ink outline-none placeholder:text-faint"
+						className="max-h-[8lh] min-w-0 flex-1 resize-none overflow-y-auto bg-transparent text-[0.8125rem] leading-relaxed text-ink outline-none placeholder:text-faint"
 						disabled={onSend === undefined}
 						onChange={(event) => setSaid(event.target.value)}
 						onKeyDown={onKeyDown}
 						placeholder={placeholder}
-						type="text"
+						rows={1}
 						value={said}
 					/>
 				</div>

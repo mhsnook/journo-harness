@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
+import { expect, userEvent, within } from 'storybook/test'
 
 import type { Plan, ProposalInput, Refusal } from '../../../shared/plan'
 import { applyProposal, emptyPlan } from '../../../shared/plan'
@@ -80,6 +81,59 @@ export const B_MidConversation: Story = {
 			</Annotation>
 		</div>
 	),
+}
+
+const paragraph =
+	'The appeal is the part nobody files, and that is the whole mechanism: the objector pays nothing, the clock resets, and the scheme sits another eleven weeks. I want that in its own section rather than folded into the cost one.'
+
+export const B2_ComposerGrows: Story = {
+	name: '2(b·i) A paragraph in the composer',
+	render: () => (
+		<div className="flex flex-col">
+			<MockArticle>
+				<MidChatScreen />
+			</MockArticle>
+			<Annotation>
+				The composer grows with what the writer types or pastes, up to eight lines. Past
+				that it scrolls inside itself, so the transcript above it never falls below about
+				half the Panel — this screen is the one the ceiling was picked against. Enter
+				breaks the line; control-Enter sends.
+			</Annotation>
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement)
+		const field = canvas.getByLabelText('Message the guide') as HTMLTextAreaElement
+		const panel = canvasElement.querySelector('[data-panel]')!
+		const composer = canvasElement.querySelector('[data-composer]')!
+		const opening = canvas.getByText(/one developer in it/)
+
+		const empty = field.clientHeight
+
+		// This screen is parked on a Proposal and cannot send, so the keys are
+		// `Primitives/Overview`'s to check.
+		await userEvent.click(field)
+		await userEvent.paste(paragraph)
+		await expect(field.clientHeight).toBeGreaterThan(empty)
+
+		// Two more paragraphs are past any ceiling, so a fourth changing nothing is
+		// the ceiling holding rather than the text happening to fit.
+		await userEvent.paste(paragraph.repeat(2))
+		const ceiling = field.clientHeight
+		await userEvent.paste(paragraph)
+		await expect(field.clientHeight).toBe(ceiling)
+		await expect(field.scrollHeight).toBeGreaterThan(ceiling)
+
+		// Measured on the field, not the whole composer: the parked Proposal's
+		// Notice sits above it, and that is a state the writer is asked to leave.
+		const panelBox = panel.getBoundingClientRect()
+		const composerBox = composer.getBoundingClientRect()
+		await expect(field.clientHeight).toBeLessThanOrEqual(panelBox.height / 2)
+
+		const openingBox = opening.getBoundingClientRect()
+		await expect(openingBox.top).toBeGreaterThanOrEqual(panelBox.top)
+		await expect(openingBox.bottom).toBeLessThanOrEqual(composerBox.top)
+	},
 }
 
 export const C_ReadyToDraft: Story = {
