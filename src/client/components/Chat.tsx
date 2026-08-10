@@ -70,14 +70,8 @@ function grow(field: HTMLTextAreaElement) {
 	field.style.height = `${field.scrollHeight}px`
 }
 
-/**
- * **The field is never disabled while a turn runs.** Disabling it blurs it, so a
- * thought typed while the guide answers is lost at the first keystroke. The
- * button beside it changes instead.
- *
- * **Enter breaks the line and control-Enter sends** — the reverse of the chat
- * convention, because the ordinary message here is a paragraph.
- */
+/** A chat message input that grows as you type; Enter adds a new line and
+ * control-Enter sends. */
 export function ChatComposer({
 	placeholder = 'Ask, argue, or paste something in…',
 	leading,
@@ -93,8 +87,7 @@ export function ChatComposer({
 	const cannotSend =
 		blocked !== null || busy || onSend === undefined || said.trim() === ''
 
-	// On the value, not the change event: a change handler misses the first paint
-	// and the reset after sending.
+	// An `onChange` would miss the first paint & the clear after sending
 	useLayoutEffect(() => {
 		if (field.current !== null) grow(field.current)
 	}, [said])
