@@ -1,0 +1,174 @@
+# Delta-reporting PR checks.
+#
+# Shape: one job per TREE, not one per check. `head` and `base` each install
+# once and build once, then run every check that tree can answer. They run in
+# parallel with each other. `report` fans in, diffs the two, posts a single
+# comment, and owns the pass/fail decision.
+#
+# Total cost: 2 installs, 2 builds — whatever the number of checks.
+#
+# CONFIGURE markers show every line that depends on the repository's toolchain.
+# Delete steps for checks you did not choose.
+
+name: PR checks
+
+on:
+  pull_request:
+    branches: [main] # CONFIGURE: your base branches
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "22" # CONFIGURE
+
+jobs:
+  # ── The PR's tree ─────────────────────────────────────────────────────
+  # Install once, build once, then run everything off that one tree:
+  # the static checks, the bundle measurement, the content scan, the tests.
+  head:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4 # CONFIGURE: your package manager
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm" # CONFIGURE
+
+      - name: Install
+        run: pnpm install --frozen-lockfile # CONFIGURE
+
+      # Checks 1–3. Read-only checks run concurrently inside the script; the
+      # formatter runs last because it rewrites files.
+      - name: Static checks
+        run: bash .github/ci/collect-static.sh /tmp/out/static
+
+      # CONFIGURE: a bundler that reads env vars at build time may silently
+      # tree-shake dependencies away when they are missing. Dummy-but-truthy
+      # values keep the build honest.
+      - name: Build
+        run: |
+          echo "VITE_EXAMPLE_URL=http://127.0.0.1:1234" >> $GITHUB_ENV
+          pnpm build                                      # CONFIGURE
+
+      # Check 4, head half. Measures only — the diff happens in `report`.
+      - name: Measure bundle
+        run: node .github/ci/measure-bundle.cjs dist /tmp/out/bundle.json
+
+      # Check 6, over the SAME dist/ the measurement just read. No second build.
+      - name: Scan build output
+        run: bash .github/ci/scan-build.sh dist
+
+      # Check 5. continue-on-error so a failure still reaches the comment.
+      - name: Tests
+        continue-on-error: true
+        run: pnpm test --reporter=json --outputFile=/tmp/test-results.json # CONFIGURE
+
+      - name: Render test fragment
+        if: ${{ !cancelled() }}
+        run: |
+          node -e "require('./.github/ci/render-tests.cjs')({
+            results: '/tmp/test-results.json', out: '/tmp/out/fragments'
+          })"
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: tree-head
+          path: /tmp/out/
+          retention-days: 1
+
+  # ── The base branch's tree ────────────────────────────────────────────
+  # Same install and build, but only the checks that need a comparison point.
+  # No tests and no content scan here — those are head-only questions.
+  base:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.base_ref }}
+
+      - uses: pnpm/action-setup@v4 # CONFIGURE
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm" # CONFIGURE
+
+      - name: Install
+        run: pnpm install --frozen-lockfile # CONFIGURE
+
+      # The script lives on the head branch, so fetch it rather than using the
+      # base branch's copy. Both trees must be measured by the SAME script, or
+      # a change to the script itself shows up as a change in the codebase.
+      - name: Fetch check scripts from head
+        run: |
+          git fetch --no-tags --depth=1 origin "${{ github.event.pull_request.head.sha }}"
+          git checkout "${{ github.event.pull_request.head.sha }}" -- .github/ci/
+
+      - name: Static checks
+        run: bash .github/ci/collect-static.sh /tmp/out/static
+
+      - name: Build
+        run: |
+          echo "VITE_EXAMPLE_URL=http://127.0.0.1:1234" >> $GITHUB_ENV
+          pnpm build                                      # CONFIGURE
+
+      - name: Measure bundle
+        run: node .github/ci/measure-bundle.cjs dist /tmp/out/bundle.json
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: tree-base
+          path: /tmp/out/
+          retention-days: 1
+
+  # ── Fan-in: diff, one comment, one verdict ────────────────────────────
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [head, base]
+    if: ${{ always() && github.event_name == 'pull_request' }}
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with: { name: tree-head, path: /tmp/head }
+        continue-on-error: true
+      - uses: actions/download-artifact@v4
+        with: { name: tree-base, path: /tmp/base }
+        continue-on-error: true
+
+      # The diff happens here, once, over artifacts. Neither tree is present.
+      - name: Render fragments
+        run: |
+          mkdir -p /tmp/fragments
+          cp -r /tmp/head/fragments/. /tmp/fragments/ 2>/dev/null || true
+          node -e "require('./.github/ci/render-static.cjs')({
+            head: '/tmp/head/static', base: '/tmp/base/static', out: '/tmp/fragments'
+          })"
+          node -e "require('./.github/ci/render-bundle.cjs')({
+            head: '/tmp/head/bundle.json', base: '/tmp/base/bundle.json', out: '/tmp/fragments'
+          })"
+
+      - name: Post comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { assemble, upsertComment } = require('./.github/ci/comment.cjs')
+            const marker = '### PR checks'
+            const body = assemble('/tmp/fragments', {
+              marker,
+              header: `_Compared against \`${context.payload.pull_request.base.ref}\`._`,
+            })
+            core.info(JSON.stringify(await upsertComment(github, context, marker, body)))
+
+      - name: Gate
+        run: node .github/ci/gate.cjs /tmp/fragments

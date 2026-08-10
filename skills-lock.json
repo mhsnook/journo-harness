@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "ci-delta-reports": {
+      "source": "mhsnook/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ci-delta-reports/SKILL.md",
+      "computedHash": "a8e87f0a82e1368bf82fbe4017cf9691f6248c9a0f52da2e42e5bf57ae030d8a"
+    },
+    "spec-debt": {
+      "source": "mhsnook/skills",
+      "sourceType": "github",
+      "skillPath": "skills/spec-debt/SKILL.md",
+      "computedHash": "7340f2f4da254f5c1c049abb9beb7dd20641b768ae8990bb340b324581e958ee"
+    }
+  }
+}
