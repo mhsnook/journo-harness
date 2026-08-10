@@ -1,7 +1,10 @@
 import type { StorybookConfig } from '@storybook/react-vite'
 
 const config: StorybookConfig = {
-	stories: ['../src/client/**/*.mdx', '../src/client/**/*.stories.@(ts|tsx)'],
+	// The showcase lives here rather than in src/: screens and mocks are
+	// documentation of the app, not part of it, and nothing under src/ imports
+	// them.
+	stories: ['./**/*.mdx', './**/*.stories.@(ts|tsx)'],
 	addons: ['@storybook/addon-docs', '@storybook/addon-a11y', '@storybook/addon-vitest'],
 	framework: {
 		name: '@storybook/react-vite',
