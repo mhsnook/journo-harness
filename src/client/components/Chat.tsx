@@ -62,15 +62,9 @@ export interface ChatComposerProps {
 	className?: string
 }
 
-/**
- * Sets the field's height to the height of what is in it. The ceiling is
- * `max-h-[8lh]` on the field itself, so the browser clamps this and the field
- * scrolls from there — no line height to measure here.
- *
- * The `auto` is not decoration: `scrollHeight` reads back the height the field
- * already has whenever the field is taller than its text, so without the reset
- * a field that grew to six lines would never shrink to three again.
- */
+/** Height of the content, clamped by the field's own `max-h`. The `auto` is
+ * load-bearing: `scrollHeight` reads back the height the field already has, so
+ * without the reset the field could grow but never shrink. */
 function grow(field: HTMLTextAreaElement) {
 	field.style.height = 'auto'
 	field.style.height = `${field.scrollHeight}px`
@@ -81,11 +75,8 @@ function grow(field: HTMLTextAreaElement) {
  * thought typed while the guide answers is lost at the first keystroke. The
  * button beside it changes instead.
  *
- * The field is a `textarea` because writers compose paragraphs and paste
- * passages in. **Enter breaks the line and control-Enter sends**, which is the
- * way round a composer wants when a paragraph is the ordinary message: the
- * newline is the keystroke you make constantly, and sending is the deliberate
- * one you make once.
+ * **Enter breaks the line and control-Enter sends** — the reverse of the chat
+ * convention, because the ordinary message here is a paragraph.
  */
 export function ChatComposer({
 	placeholder = 'Ask, argue, or paste something in…',
@@ -102,9 +93,8 @@ export function ChatComposer({
 	const cannotSend =
 		blocked !== null || busy || onSend === undefined || said.trim() === ''
 
-	// Resizing on the value rather than on the change event covers the two cases
-	// a change handler misses: the first paint, and sending, which empties the
-	// field without anyone typing in it.
+	// On the value, not the change event: a change handler misses the first paint
+	// and the reset after sending.
 	useLayoutEffect(() => {
 		if (field.current !== null) grow(field.current)
 	}, [said])
@@ -116,8 +106,6 @@ export function ChatComposer({
 		setSaid('')
 	}
 
-	// `metaKey` is the same chord on a Mac, where control-Enter is not what a
-	// hand reaches for.
 	const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
 		if (event.key !== 'Enter' || !(event.ctrlKey || event.metaKey)) return
 
@@ -126,22 +114,14 @@ export function ChatComposer({
 	}
 
 	return (
-		<div
-			// The browser story test finds the composer by this attribute rather than
-			// by a class, so renaming a Tailwind class cannot quietly empty the test.
-			data-composer=""
-			className={cx('mt-auto flex flex-col gap-1.5 pt-1', className)}
-		>
+		<div data-composer="" className={cx('mt-auto flex flex-col gap-1.5 pt-1', className)}>
 			{blocked === null ? null : <Notice>{blocked}</Notice>}
 			<div className="flex items-end gap-2">
 				{leading}
 				<div className="flex flex-1 items-center rounded-md border border-edge bg-surface px-2.5 py-1.5">
-					{/* `max-h-[8lh]` is the ceiling: eight lines of this type, which is
-					    where the composer stops growing and starts scrolling. Eight was
-					    picked against `MidChatScreen`, whose Chat Panel is 26rem — a
-					    full-height field takes under half of it and leaves the writer
-					    the transcript to write against. A shorter Panel gives the same
-					    eight lines a larger share. */}
+					{/* Eight lines, picked against `MidChatScreen`'s 26rem Chat Panel,
+					    where a full-height field takes under half. A shorter Panel gives
+					    the same eight lines a larger share. */}
 					<textarea
 						ref={field}
 						aria-label="Message the guide"

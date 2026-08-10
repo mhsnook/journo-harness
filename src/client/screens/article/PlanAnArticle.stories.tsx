@@ -83,7 +83,6 @@ export const B_MidConversation: Story = {
 	),
 }
 
-/** One paragraph of a draft message, which is the ordinary thing to paste in. */
 const paragraph =
 	'The appeal is the part nobody files, and that is the whole mechanism: the objector pays nothing, the clock resets, and the scheme sits another eleven weeks. I want that in its own section rather than folded into the cost one.'
 
@@ -111,31 +110,26 @@ export const B2_ComposerGrows: Story = {
 
 		const empty = field.clientHeight
 
-		// Grows with what is in it. The keys are `Primitives/Overview`'s to check:
-		// this screen is parked on a Proposal, so it cannot send.
+		// This screen is parked on a Proposal and cannot send, so the keys are
+		// `Primitives/Overview`'s to check.
 		await userEvent.click(field)
 		await userEvent.paste(paragraph)
 		await expect(field.clientHeight).toBeGreaterThan(empty)
 
-		// And stops. Two more paragraphs are past any sane ceiling, so a fourth
-		// changing nothing is the ceiling holding rather than the text fitting.
+		// Two more paragraphs are past any ceiling, so a fourth changing nothing is
+		// the ceiling holding rather than the text happening to fit.
 		await userEvent.paste(paragraph.repeat(2))
 		const ceiling = field.clientHeight
 		await userEvent.paste(paragraph)
 		await expect(field.clientHeight).toBe(ceiling)
-
-		// Past the ceiling the field scrolls rather than the composer growing.
 		await expect(field.scrollHeight).toBeGreaterThan(ceiling)
 
-		// Which is what leaves the writer a transcript to write against. The field
-		// at full height takes at most half the Panel — this screen is parked on a
-		// Proposal, so its Notice sits above the field on top of that, and that is
-		// a state the writer is being asked to leave rather than a resting size.
+		// Measured on the field, not the whole composer: the parked Proposal's
+		// Notice sits above it, and that is a state the writer is asked to leave.
 		const panelBox = panel.getBoundingClientRect()
 		const composerBox = composer.getBoundingClientRect()
 		await expect(field.clientHeight).toBeLessThanOrEqual(panelBox.height / 2)
 
-		// The first turn is still on screen, above the composer and inside the Panel.
 		const openingBox = opening.getBoundingClientRect()
 		await expect(openingBox.top).toBeGreaterThanOrEqual(panelBox.top)
 		await expect(openingBox.bottom).toBeLessThanOrEqual(composerBox.top)

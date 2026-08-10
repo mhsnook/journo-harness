@@ -121,19 +121,16 @@ export const Composer: Story = {
 
 		const sent = within(canvas.getByLabelText('Sent'))
 
-		// Enter breaks the line and sends nothing.
 		await userEvent.click(field)
 		await userEvent.keyboard('one{Enter}two')
 		await expect(field.value).toBe('one\ntwo')
 		await expect(sent.queryAllByRole('listitem')).toHaveLength(0)
 
-		// Control-Enter sends what is in the field, newline and all, and empties it
-		// back to one line.
 		await userEvent.keyboard('{Control>}{Enter}{/Control}')
 		await expect(field.value).toBe('')
 		await expect(sent.getAllByRole('listitem')[0]).toHaveTextContent('one two')
 
-		// Command-Enter is the same chord on a Mac.
+		// `{Meta>}` is command, which sends on a Mac.
 		await userEvent.keyboard('again{Meta>}{Enter}{/Meta}')
 		await expect(field.value).toBe('')
 		await expect(sent.getAllByRole('listitem')).toHaveLength(2)
