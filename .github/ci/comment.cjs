@@ -1,0 +1,78 @@
+'use strict'
+
+// Assembles one PR comment from the markdown fragments each check job wrote,
+// then upserts it. Keeping this separate from delta.cjs means the diff engine
+// stays testable without a GitHub token.
+
+const fs = require('fs')
+const path = require('path')
+
+// GitHub rejects an issue comment body over 65536 characters.
+const MAX_BODY = 65000
+
+/**
+ * Read every `<order>-<name>.md` fragment in a directory and join them.
+ *
+ * The head job uploads its fragments as an artifact and the report job renders
+ * the rest; both land in one directory. The numeric filename prefix fixes the
+ * section order, so jobs finishing out of order still render consistently.
+ */
+function assemble(dir, { marker, header = '' }) {
+	const fragments = fs.existsSync(dir)
+		? fs
+				.readdirSync(dir, { recursive: true })
+				.filter((f) => typeof f === 'string' && f.endsWith('.md'))
+				.sort()
+				.map((f) => fs.readFileSync(path.join(dir, f), 'utf8').trim())
+				.filter(Boolean)
+		: []
+
+	if (!fragments.length) {
+		return [marker, '', '_No check produced a report. Check the job logs._'].join('\n')
+	}
+
+	const parts = [marker]
+	if (header) parts.push('', header)
+	parts.push('', fragments.join('\n\n---\n\n'))
+	const body = parts.join('\n')
+	return body.length > MAX_BODY
+		? body.slice(0, MAX_BODY) + '\n\n_… report truncated._'
+		: body
+}
+
+/**
+ * Create the comment, or edit the one this workflow wrote last time.
+ *
+ * Matching on a marker prefix is what keeps a busy PR to a single comment that
+ * updates in place, instead of one comment per push.
+ */
+async function upsertComment(github, context, marker, body) {
+	const issue_number = context.issue.number
+	if (!issue_number) return { skipped: 'not a pull request' }
+
+	const { owner, repo } = context.repo
+	const comments = await github.paginate(github.rest.issues.listComments, {
+		owner,
+		repo,
+		issue_number,
+		per_page: 100,
+	})
+
+	const existing = comments.find(
+		(c) => c.body.startsWith(marker) && c.user?.type === 'Bot',
+	)
+
+	if (existing) {
+		await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body })
+		return { updated: existing.id }
+	}
+	const { data } = await github.rest.issues.createComment({
+		owner,
+		repo,
+		issue_number,
+		body,
+	})
+	return { created: data.id }
+}
+
+module.exports = { MAX_BODY, assemble, upsertComment }

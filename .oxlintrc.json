@@ -10,10 +10,24 @@
     "browser": true,
     "es2024": true
   },
-  "ignorePatterns": ["src/client/routeTree.gen.ts", "worker-configuration.d.ts"],
+  // Skills under .claude and .agents are vendored packages pinned by
+  // skills-lock.json. Linting them reports on code this repo does not own, and
+  // the findings would come back on the next skill update anyway.
+  "ignorePatterns": [
+    "src/client/routeTree.gen.ts",
+    "worker-configuration.d.ts",
+    ".claude/**",
+    ".agents/**"
+  ],
   "overrides": [
     {
-      "files": ["src/server/**", "test/**", "*.config.ts", ".storybook/**"],
+      "files": [
+        "src/server/**",
+        "test/**",
+        "*.config.ts",
+        ".storybook/**",
+        ".github/ci/**"
+      ],
       "env": { "browser": false, "node": true }
     },
     {
