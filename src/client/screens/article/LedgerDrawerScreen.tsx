@@ -8,14 +8,9 @@ import { useMockPlan } from '../../mock/MockArticle'
 import { PlanPanel } from '../../plan/PlanPanel'
 
 /**
- * 2(f) — The Offer ledger, open over the Chat. The Panel is the one the app
- * runs, so this screen is the writer's own view of it: filtering and ruling
- * both work here.
- *
- * `close ×` does nothing, because the Chat it would go back to is not on this
- * screen. The Plan Panel beside it is the ordinary one, rendered so the screen
- * reads as the writer meets it. Nothing here reaches into it — where a
- * Reference sits, and which sit nowhere yet, are its own to show.
+ * Storybook fixture 2(f): `OfferLedgerPanel` open beside a Plan Panel, in a
+ * fixed-width Frame. Filtering and ruling work; `close ×` is inert, since
+ * there is no Chat here to go back to.
  */
 export function LedgerDrawerScreen() {
 	const { edit } = useArticle().plan

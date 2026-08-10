@@ -50,8 +50,8 @@ export function PlanPanel({
 	const [made, setMade] = useState<string | null>(null)
 	const [shown, setShown] = useState<string | null>(null)
 
-	// Held: the shown row's effect lists it, and a new function each render would
-	// restart that row's scroll on every keystroke elsewhere in the Panel.
+	// Held: the shown row's effect lists it, and a new function each render
+	// would restart that row's scroll on every keystroke elsewhere in the Panel.
 	const clearShown = useCallback(() => setShown(null), [])
 
 	const entries = outlineEntries(plan.outline)
@@ -144,9 +144,9 @@ export function PlanPanel({
 				className="flex flex-col items-stretch gap-1.5"
 				edit={edit}
 				entries={entries}
+				shown={shown}
 				onShown={clearShown}
 				plan={plan}
-				shown={shown}
 			/>
 		</Panel>
 	)

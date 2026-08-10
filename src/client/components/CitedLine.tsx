@@ -3,18 +3,15 @@ import type { ReactNode } from 'react'
 import { cx } from '../lib/cx'
 
 export interface CitedLineProps {
-	/** What the record carries, widest first, with whatever the heading above
-	 * already said left out. An empty list draws nothing. */
+	/** Author, publication, year, url — whichever the caller has to show. */
 	parts: ReactNode[]
 	className?: string
 }
 
 /**
- * The small line under a Reference's heading: author, publication, year, url.
- *
- * The separator lives here and nowhere else. Which parts go in is the caller's,
- * because a Chat card and a Plan row are headed by different things and so have
- * different things left to say.
+ * Citation formats are the writer's and vary by Article, so this renders the
+ * parts as given, in a wrapper, separated in a way that copy-pastes well.
+ * Draws nothing when there are no parts.
  */
 export function CitedLine({ parts, className }: CitedLineProps) {
 	if (parts.length === 0) return null
@@ -27,8 +24,7 @@ export function CitedLine({ parts, className }: CitedLineProps) {
 			)}
 		>
 			{parts.map((part, index) => (
-				// Positional: these are the fields of one record in a fixed order, and
-				// nothing reorders them within a render.
+				// Positional and fixed within a render, so the index is a stable key.
 				<span className="min-w-0" key={index}>
 					{index > 0 ? <span aria-hidden>· </span> : null}
 					{part}

@@ -9,20 +9,17 @@ import { ReferenceCard } from '../components/ReferenceCard'
 import type { OfferLedgerHandle } from '../lib/useOfferLedger'
 
 /**
- * The Offer ledger, open over the Chat — screen 2(f).
+ * A drawer that opens over the Chat Panel, listing this Article's Offers and
+ * letting the writer Accept or Decline each one.
  *
- * It is a view on the Chat Panel and covers only that half: it is the record of
- * what the Chat offered and what the writer ruled, and `close ×` is on it
- * because it is the half that opened. Accepting sends the Reference across to
- * the Plan.
- *
- * It reads no Plan. Once the writer Accepts, where the Reference goes and which
- * Section it lands at are the Plan Panel's to show.
+ * It takes an `OfferLedgerHandle` from its parent: it neither reads nor tracks
+ * the Offers itself, it renders the handle's rows and calls the handle's
+ * rulings.
  */
 
 type Filter = 'all' | Disposition
 
-// The order `offerLedger` keys its counts in, and the only list of them.
+// The order `offerLedger` keys its counts in.
 const filters: Filter[] = ['all', ...dispositions]
 
 export interface OfferLedgerPanelProps {

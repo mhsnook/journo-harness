@@ -3,15 +3,13 @@ import type { ReactNode } from 'react'
 import { cx } from '../lib/cx'
 
 export interface SourceLinkProps {
-	/** The url the Reference carries. */
 	url: string
-	/** What to print instead of the url — the source title, usually. */
+	/** The source title, usually. Falls back to printing the url. */
 	children?: ReactNode
 	className?: string
 }
 
-/** A Reference's url, as something the writer can click. It opens in a new tab
- * — §8. */
+/** Renders a Reference's url as a link, opening in a new tab. */
 export function SourceLink({ url, children, className }: SourceLinkProps) {
 	return (
 		<a

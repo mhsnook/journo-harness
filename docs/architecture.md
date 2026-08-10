@@ -431,21 +431,8 @@ already reactive through Article Agent state and, at 1b, party-db's TanStack DB 
 
 **The Article screen has four Panels** — Chat, Plan, Draft, Notes — which become tabs on a
 narrow screen. `usePanels` holds which are open, keeps them in the one order the rail draws,
-and refuses to close the last of them. The **Areas** are Articles (with Board and Archive
-Views), House, and Team.
-
-**A closed Panel is hidden, not unmounted.** All four render inside React's `Activity`, and
-closing one switches it to `hidden`: its state stays and its effects stop. Rendering the open
-ones alone threw the Chat's transcript away each time the writer closed the Panel, so
-reopening it read everything back — a full reload, from a control that reads as show and
-hide. The same applies to a View that takes a Panel's half, like the Offer ledger over the
-Chat (§5).
-
-**Hiding is cheap, not free.** What it saves is the React state and the socket, which is what
-the writer sees. Effects stopping means the reads those effects drive run again on reopen —
-`useOfferLedger` re-lists the Offers — and hiding the Chat still costs one `get-messages`
-GET, because the SDK drops its cached promise when the effect unmounts. Worth knowing before
-hanging an expensive read off a Panel's mount.
+and refuses to close the last of them. All four stay mounted and a closed one is hidden. The
+**Areas** are Articles (with Board and Archive Views), House, and Team.
 
 **A screen never draws a value it has not got.** An empty title, a zero count and four empty
 columns are answers, and a screen that puts one on the page before it has read anything has
@@ -457,9 +444,7 @@ where the whole screen is waiting. This is why the Article bar takes `title: str
 **Navigation is a `Link`.** A control that only goes somewhere is an anchor, so it opens in
 a new tab, copies as a URL, reads as a link, and warms its route on hover — the router runs
 `defaultPreload: 'intent'`. A callback is for a control that does work first, like Archiving
-an Article and then leaving it. A Reference's url is an anchor for the same reason, and
-opens in a new tab: the Chat and the Plan sit on a socket, and following a link in place
-would drop it.
+an Article and then leaving it.
 
 **The Articles Area is the list at `/` and the Board View at `/board`**, over the one index
 read, under a pathless layout route that holds both. The Board draws a column per status,

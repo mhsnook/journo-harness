@@ -6,7 +6,6 @@ export interface PanelProps {
 	/** The scrolling element itself, for a Panel that drives its own scroll
 	 * position. */
 	ref?: Ref<HTMLElement>
-	/** Said as the writer scrolls this Panel. */
 	onScroll?: UIEventHandler<HTMLElement>
 	/** `surface` is the writing surface; `sunk` is everything that supports it. */
 	variant?: 'surface' | 'sunk'

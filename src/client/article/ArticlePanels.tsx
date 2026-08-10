@@ -18,14 +18,12 @@ export interface ArticlePanelsProps {
 	open: readonly PanelId[]
 }
 
-/** Every Panel stays mounted, and a closed one is hidden rather than dropped —
- * §8. */
 export function ArticlePanels({ agent, open }: ArticlePanelsProps) {
 	return (
 		<div className="flex min-h-0 flex-auto">
 			{PANELS.map((panel) => {
-				// A closed Panel is not in `open` at all, so `-1` is what says to hide
-				// it, and anything past the first has a neighbour to be divided from.
+				// `open` is in rail order, so anything past the first has a Panel on
+				// its left to draw a rule against.
 				const at = open.indexOf(panel)
 
 				return (

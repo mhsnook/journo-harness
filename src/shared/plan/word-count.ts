@@ -19,12 +19,10 @@ export type Allocation = {
 	total: number | null
 	/** The sum of the targets below it. */
 	allocated: number
-	/** How many nodes sit at this level: the Sections under the Article, or the
-	 * Subsections under one Section. Not the whole subtree — this is the number
-	 * the writer is looking at. */
+	/** How many nodes sit at this level, and not below it: the Sections under
+	 * the Article, or the Subsections under one Section. */
 	parts: number
-	/** How many of those parts carry a share of `allocated`, whether the target
-	 * sits on the part itself or on something below it. */
+	/** How many of those parts put something into `allocated`. */
 	placed: number
 	/** How many nodes below it carry no target and no children to carry one. */
 	untargeted: number
@@ -62,8 +60,7 @@ function allocate(total: number | null, nodes: readonly OutlineNode[]): Allocati
 }
 
 /** Whether a node put anything into the sum: its own target, or one anywhere
- * below it. A Section that states no target of its own but whose Subsections
- * do has still placed its share. */
+ * below it. */
 function carriesShare(node: OutlineNode): boolean {
 	return node.target !== undefined || node.children.some(carriesShare)
 }

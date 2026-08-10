@@ -48,9 +48,8 @@ export function ReferenceCard({
 	// A Quote with no source is its own heading; do not print it twice.
 	const passage = offer.text !== undefined && offer.text !== heading
 	const url = offer.source?.url
-	// The heading is the passage on a Quote, and underlining a whole passage
-	// reads as emphasis rather than as a link, so that one takes its url on the
-	// line below instead.
+	// Whether the link goes on the heading or on the line below. A Quote is
+	// headed by its passage, and an underlined passage reads as emphasis.
 	const headingLinks = url !== undefined && offer.text === undefined
 	const cited: ReactNode[] = [
 		...(favourite ? [<FavouriteMark key="favourite" type={favourite} />] : []),

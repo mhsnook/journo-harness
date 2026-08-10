@@ -115,61 +115,50 @@ export function ChatPanel({
 	)
 }
 
-/** How far off the foot still counts as being at it, in px. A rounded scroll
- * position lands a pixel or two short of the bottom on its own. */
+/** Scroll positions round, so the bottom is rarely exactly the bottom. */
 const AT_THE_FOOT = 24
 
 /**
- * The Chat opens on the last thing said, and stays there as a turn streams in.
+ * Keeps the Chat pinned to the bottom as messages stream in. Releases when the
+ * writer scrolls up more than 24px, and re-takes when they scroll back down.
  *
- * The writer scrolling up is what lets go of the foot: they are reading
- * something further back, and yanking them to the bottom mid-turn would take it
- * away. Scrolling back down takes hold again.
- *
- * **The observer is what holds it, and the render is only the first pin.**
- * Anything that can push the last turn out of view resizes a box the observer
- * watches — a streamed chunk grows the transcript, and pasting four paragraphs
- * grows the composer inside its own state, without this component rendering at
- * all. Re-pinning on every render would read `scrollHeight` once per streamed
- * chunk, which forces a layout pass, and catch nothing the observer misses.
+ * Returns the ref for the scrolling element and the `onScroll` that tracks it.
  */
 function useFootOfTranscript() {
 	const panel = useRef<HTMLElement>(null)
-	const held = useRef(true)
+	const pinned = useRef(true)
 
 	const foot = () => {
-		if (panel.current !== null && held.current) {
+		if (panel.current !== null && pinned.current) {
 			panel.current.scrollTop = panel.current.scrollHeight
 		}
 	}
 
-	// The first pin, before paint. The observer below is attached in a passive
-	// effect, which can land after the transcript has been shown from the top.
+	// Before first paint, since the observer below is attached after it.
 	useLayoutEffect(foot, [])
 
 	useEffect(() => {
-		const shown = panel.current
-		if (shown === null) return
+		const scroller = panel.current
+		if (scroller === null) return
 
-		// The Panel for its own height, which a shorter window changes without
-		// reflowing anything inside it, and the children for theirs: the
-		// transcript above and the composer below.
+		// The children grow as the transcript and the composer do; the scroller
+		// itself changes height when the window does.
 		const watch = new ResizeObserver(foot)
-		watch.observe(shown)
-		for (const child of shown.children) watch.observe(child)
+		watch.observe(scroller)
+		for (const child of scroller.children) watch.observe(child)
 
 		return () => watch.disconnect()
-		// `foot` reads refs alone, so it has nothing to go stale against.
+		// `foot` reads refs alone, so it cannot go stale.
 	}, [])
 
 	return {
 		ref: panel,
 		onScroll: () => {
-			const shown = panel.current
-			if (shown === null) return
+			const scroller = panel.current
+			if (scroller === null) return
 
-			held.current =
-				shown.scrollHeight - shown.scrollTop - shown.clientHeight <= AT_THE_FOOT
+			pinned.current =
+				scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight <= AT_THE_FOOT
 		},
 	}
 }

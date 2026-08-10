@@ -40,11 +40,8 @@ export function ArticleChatPanel({
 		)
 	}
 
-	// The Ledger takes the Chat's half rather than sitting beside it, and the
-	// Chat is hidden rather than dropped for the same reason the Panel rail hides
-	// a closed Panel — architecture.md §8. A half-typed message is the state at
-	// stake here, and checking the Ledger before sending is why the writer opens
-	// it.
+	// Hidden rather than swapped out, so a half-typed message survives a look at
+	// the Ledger.
 	return (
 		<>
 			<Activity mode={showLedger ? 'hidden' : 'visible'}>
@@ -85,9 +82,7 @@ export function ArticleChatPanel({
 	)
 }
 
-/** What opens the Offer ledger, sat left of the composer. It carries the
- * Undecided count, because that is the pile the writer is being asked to work
- * through and a bare icon says nothing about whether anything is waiting. */
+/** Opens the Offer ledger. Sits left of the composer. */
 function LedgerToggle({ onOpen, undecided }: { onOpen: () => void; undecided: number }) {
 	return (
 		<Button
