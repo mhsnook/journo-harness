@@ -10,8 +10,8 @@
     "browser": true,
     "es2024": true
   },
-  // Skills are installed from mhsnook/skills and carry a hash in
-  // skills-lock.json, so they are read here and never edited here.
+  // Skills are installed from mhsnook/skills, so they are read here and never
+  // edited here.
   "ignorePatterns": [
     ".claude/**",
     ".agents/**",
