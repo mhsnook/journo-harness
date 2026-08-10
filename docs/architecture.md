@@ -169,9 +169,9 @@ The Chat turns up Offers — Links and Quotes — as SQLite rows in the Article 
 
 **The Ledger belongs to the Chat Panel and doesn't read the Plan.** Its data model and its
 visual representation should both be understood to relate to the Chat Panel itself. It
-opens from the control left of the composer, which carries the Undecided count, and it takes
-the Chat's half of the screen rather than sitting beside it as a fifth Panel — `close ×` is
-on the Ledger because the Chat is the half that opened it.
+opens from the control left of the composer as a drawer over the Chat Panel, taking whatever
+width that Panel has rather than being a fifth Panel of its own — `close ×` is on the Ledger
+because the Chat is what it covers.
 It shows one flat list with a chip per disposition to filter it, and `all` first, so the
 Undecided pile can be read on its own without losing the record. When the writer Accepts an
 Offer, it sends the Reference over to the Plan Panel; then it belongs to the Plan, where it
