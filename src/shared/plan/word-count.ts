@@ -19,8 +19,13 @@ export type Allocation = {
 	total: number | null
 	/** The sum of the targets below it. */
 	allocated: number
-	/** How many nodes below it supplied a target to that sum. */
-	targeted: number
+	/** How many nodes sit at this level: the Sections under the Article, or the
+	 * Subsections under one Section. Not the whole subtree — this is the number
+	 * the writer is looking at. */
+	parts: number
+	/** How many of those parts carry a share of `allocated`, whether the target
+	 * sits on the part itself or on something below it. */
+	placed: number
 	/** How many nodes below it carry no target and no children to carry one. */
 	untargeted: number
 	/** `total - allocated`, and null when no total is stated. Positive is words
@@ -42,28 +47,25 @@ export function nodeAllocation(node: OutlineNode): Allocation {
 }
 
 function allocate(total: number | null, nodes: readonly OutlineNode[]): Allocation {
-	const { allocated, targeted, untargeted } = sumTargets(nodes)
+	const { allocated, untargeted } = sumTargets(nodes)
+	const gap = total === null ? null : total - allocated
 
-	if (total === null) {
-		return {
-			total: null,
-			allocated,
-			targeted,
-			untargeted,
-			gap: null,
-			status: 'unstated',
-		}
-	}
-
-	const gap = total - allocated
 	return {
 		total,
 		allocated,
-		targeted,
+		parts: nodes.length,
+		placed: nodes.filter(carriesShare).length,
 		untargeted,
 		gap,
-		status: statusFor(gap, untargeted, nodes),
+		status: gap === null ? 'unstated' : statusFor(gap, untargeted, nodes),
 	}
+}
+
+/** Whether a node put anything into the sum: its own target, or one anywhere
+ * below it. A Section that states no target of its own but whose Subsections
+ * do has still placed its share. */
+function carriesShare(node: OutlineNode): boolean {
+	return node.target !== undefined || node.children.some(carriesShare)
 }
 
 function statusFor(
@@ -84,23 +86,17 @@ function statusFor(
  * carrying one — counting a parent and its children both would double the same
  * words. `untargeted` counts the leaves the walk reaches without meeting a
  * target, which is what separates "not allocated yet" from "deliberately under".
- *
- * `targeted` counts the nodes the walk stopped at. The two together are the
- * nodes the writer can state a target on, which is what "6 of 8" counts.
  */
 function sumTargets(nodes: readonly OutlineNode[]): {
 	allocated: number
-	targeted: number
 	untargeted: number
 } {
 	let allocated = 0
-	let targeted = 0
 	let untargeted = 0
 
 	for (const node of nodes) {
 		if (node.target !== undefined) {
 			allocated += node.target
-			targeted += 1
 			continue
 		}
 		if (node.children.length === 0) {
@@ -110,9 +106,8 @@ function sumTargets(nodes: readonly OutlineNode[]): {
 
 		const below = sumTargets(node.children)
 		allocated += below.allocated
-		targeted += below.targeted
 		untargeted += below.untargeted
 	}
 
-	return { allocated, targeted, untargeted }
+	return { allocated, untargeted }
 }

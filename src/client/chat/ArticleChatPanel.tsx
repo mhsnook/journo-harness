@@ -1,5 +1,5 @@
 import { ListTodo } from 'lucide-react'
-import { useState } from 'react'
+import { Activity, useState } from 'react'
 
 import { Button } from '../components/Button'
 import { Panel } from '../components/Panel'
@@ -41,43 +41,47 @@ export function ArticleChatPanel({
 	}
 
 	// The Ledger takes the Chat's half rather than sitting beside it, and the
-	// Chat's own state is held here, so opening it costs the transcript nothing.
-	if (showLedger) {
-		return (
-			<OfferLedgerPanel
-				className={className}
-				divider={divider}
-				ledger={ledger}
-				onClose={() => setShowLedger(false)}
-			/>
-		)
-	}
-
+	// Chat is hidden rather than dropped for the same reason the Panel rail hides
+	// a closed Panel — architecture.md §8. A half-typed message is the state at
+	// stake here, and checking the Ledger before sending is why the writer opens
+	// it.
 	return (
-		<ChatPanel
-			busy={chat.busy}
-			className={className}
-			divider={divider}
-			failure={chat.failure ?? ledger.failure}
-			leading={
-				<LedgerToggle
-					onOpen={() => setShowLedger(true)}
-					undecided={ledger.ledger.counts.undecided}
+		<>
+			<Activity mode={showLedger ? 'hidden' : 'visible'}>
+				<ChatPanel
+					busy={chat.busy}
+					className={className}
+					divider={divider}
+					failure={chat.failure ?? ledger.failure}
+					leading={
+						<LedgerToggle
+							onOpen={() => setShowLedger(true)}
+							undecided={ledger.ledger.counts.undecided}
+						/>
+					}
+					messages={chat.messages}
+					offers={ledger.ledger.offers}
+					onAccept={chat.accept}
+					onAcceptOffer={ledger.accept}
+					onDecline={chat.decline}
+					onDeclineOffer={ledger.decline}
+					onSend={chat.send}
+					onStop={chat.stop}
+					placeholder={placeholder}
+					plan={plan}
+					refusals={chat.refusals}
+					waiting={chat.waiting}
 				/>
-			}
-			messages={chat.messages}
-			offers={ledger.ledger.offers}
-			onAccept={chat.accept}
-			onAcceptOffer={ledger.accept}
-			onDecline={chat.decline}
-			onDeclineOffer={ledger.decline}
-			onSend={chat.send}
-			onStop={chat.stop}
-			placeholder={placeholder}
-			plan={plan}
-			refusals={chat.refusals}
-			waiting={chat.waiting}
-		/>
+			</Activity>
+			<Activity mode={showLedger ? 'visible' : 'hidden'}>
+				<OfferLedgerPanel
+					className={className}
+					divider={divider}
+					ledger={ledger}
+					onClose={() => setShowLedger(false)}
+				/>
+			</Activity>
+		</>
 	)
 }
 

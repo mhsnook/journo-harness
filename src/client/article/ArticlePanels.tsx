@@ -18,23 +18,22 @@ export interface ArticlePanelsProps {
 	open: readonly PanelId[]
 }
 
-/**
- * **Every Panel stays mounted, and a closed one is hidden rather than dropped.**
- * Rendering `open` alone unmounted the Chat each time the writer closed it, so
- * reopening it threw away the transcript the hook held and read everything back
- * — a full reload of the Panel, for a control that reads as show and hide.
- * `Activity` keeps the state and stops the effects instead.
- */
+/** Every Panel stays mounted, and a closed one is hidden rather than dropped —
+ * §8. */
 export function ArticlePanels({ agent, open }: ArticlePanelsProps) {
 	return (
 		<div className="flex min-h-0 flex-auto">
-			{PANELS.map((panel) => (
-				<Activity key={panel} mode={open.includes(panel) ? 'visible' : 'hidden'}>
-					{/* `open` is in rail order, so anything but the first open Panel has
-					    an open neighbour to its left to be divided from. */}
-					<PanelFor agent={agent} divided={open.indexOf(panel) > 0} panel={panel} />
-				</Activity>
-			))}
+			{PANELS.map((panel) => {
+				// A closed Panel is not in `open` at all, so `-1` is what says to hide
+				// it, and anything past the first has a neighbour to be divided from.
+				const at = open.indexOf(panel)
+
+				return (
+					<Activity key={panel} mode={at === -1 ? 'hidden' : 'visible'}>
+						<PanelFor agent={agent} divided={at > 0} panel={panel} />
+					</Activity>
+				)
+			})}
 		</div>
 	)
 }

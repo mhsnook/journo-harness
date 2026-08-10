@@ -1,9 +1,12 @@
+import type { ReactNode } from 'react'
+
 import type { Offer } from '../../shared/offer'
 import { cx } from '../lib/cx'
 import { attribution, referenceName } from '../plan/references'
 import { Button } from './Button'
 import { Check } from './Check'
 import { Chip } from './Chip'
+import { CitedLine } from './CitedLine'
 import { SourceLink } from './SourceLink'
 
 export interface ReferenceCardProps {
@@ -45,11 +48,17 @@ export function ReferenceCard({
 	// A Quote with no source is its own heading; do not print it twice.
 	const passage = offer.text !== undefined && offer.text !== heading
 	const url = offer.source?.url
-	const cited = attribution(offer.source)
 	// The heading is the passage on a Quote, and underlining a whole passage
 	// reads as emphasis rather than as a link, so that one takes its url on the
 	// line below instead.
 	const headingLinks = url !== undefined && offer.text === undefined
+	const cited: ReactNode[] = [
+		...(favourite ? [<FavouriteMark key="favourite" type={favourite} />] : []),
+		...attribution(offer.source),
+		...(url !== undefined && !headingLinks
+			? [<SourceLink className="break-all" key="url" url={url} />]
+			: []),
+	]
 
 	return (
 		<article
@@ -76,21 +85,7 @@ export function ReferenceCard({
 				<h4 className="text-[0.8125rem] leading-snug font-semibold text-ink">
 					{headingLinks ? <SourceLink url={url}>{heading}</SourceLink> : heading}
 				</h4>
-				<p className="flex flex-wrap items-center gap-x-1.5 text-[0.6875rem] text-faint">
-					{favourite ? <FavouriteMark type={favourite} /> : null}
-					{cited.map((part, index) => (
-						<span key={part}>
-							{index > 0 || favourite ? <span aria-hidden>· </span> : null}
-							{part}
-						</span>
-					))}
-					{url === undefined || headingLinks ? null : (
-						<span className="min-w-0">
-							{favourite || cited.length > 0 ? <span aria-hidden>· </span> : null}
-							<SourceLink className="break-all" url={url} />
-						</span>
-					)}
-				</p>
+				<CitedLine parts={cited} />
 				{passage ? (
 					<blockquote className="border-l-2 border-rule pl-2 text-[0.75rem] leading-relaxed text-ink">
 						“{offer.text}”

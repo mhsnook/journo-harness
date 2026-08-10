@@ -172,9 +172,12 @@ visual representation should both be understood to relate to the Chat Panel itse
 opens from the control left of the composer, which carries the Undecided count, and it takes
 the Chat's half of the screen rather than sitting beside it as a fifth Panel — `close ×` is
 on the Ledger because the Chat is the half that opened it.
-Its groupings show the three dispositions; when the writer Accepts an offer, it sends the
-Reference over to the Plan Panel; then it belongs to the Plan, where it becomes an editable
-record carrying its Provenance (rule 5) back to the original Offer.
+It shows one flat list with a chip per disposition to filter it, and `all` first, so the
+Undecided pile can be read on its own without losing the record. When the writer Accepts an
+Offer, it sends the Reference over to the Plan Panel; then it belongs to the Plan, where it
+becomes an editable record carrying its Provenance (rule 5) back to the original Offer.
+Screen 2(g) draws the same rows grouped rather than filtered, in a popover; that one is not
+built.
 
 Offers are flat. Two Quotes from one publication are two Offers.
 
@@ -435,7 +438,14 @@ Views), House, and Team.
 closing one switches it to `hidden`: its state stays and its effects stop. Rendering the open
 ones alone threw the Chat's transcript away each time the writer closed the Panel, so
 reopening it read everything back — a full reload, from a control that reads as show and
-hide.
+hide. The same applies to a View that takes a Panel's half, like the Offer ledger over the
+Chat (§5).
+
+**Hiding is cheap, not free.** What it saves is the React state and the socket, which is what
+the writer sees. Effects stopping means the reads those effects drive run again on reopen —
+`useOfferLedger` re-lists the Offers — and hiding the Chat still costs one `get-messages`
+GET, because the SDK drops its cached promise when the effect unmounts. Worth knowing before
+hanging an expensive read off a Panel's mount.
 
 **A screen never draws a value it has not got.** An empty title, a zero count and four empty
 columns are answers, and a screen that puts one on the page before it has read anything has

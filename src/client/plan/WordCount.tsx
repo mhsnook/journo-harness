@@ -67,15 +67,15 @@ export function AllocationNote({
 	parts = 'Sections',
 	className,
 }: AllocationNoteProps) {
-	const { gap, status, targeted, untargeted } = allocation
+	const { gap, status, placed } = allocation
 	if (status === 'unstated') return null
 
 	const words = (count: number) => `${count.toLocaleString()} words`
 
 	const said = {
-		// Named rather than counted: "the Sections meet the total" left the writer
+		// Counted rather than named: "the Sections meet the total" left the writer
 		// to go and check which of them carry a target at all.
-		balanced: `fully allocated across ${targeted}/${targeted + untargeted} ${parts}`,
+		balanced: `fully allocated across ${placed}/${allocation.parts} ${parts}`,
 		unallocated: `${words(gap ?? 0)} unallocated`,
 		under: `the ${parts} fall ${words(gap ?? 0)} short`,
 		over: `${words(-(gap ?? 0))} over the total`,

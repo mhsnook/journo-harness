@@ -10,12 +10,8 @@ export interface SourceLinkProps {
 	className?: string
 }
 
-/**
- * A Reference's url, as something the writer can click.
- *
- * It opens in a new tab: the Chat and the Plan are a session with a socket
- * under them, and following a link in place would drop it.
- */
+/** A Reference's url, as something the writer can click. It opens in a new tab
+ * — §8. */
 export function SourceLink({ url, children, className }: SourceLinkProps) {
 	return (
 		<a

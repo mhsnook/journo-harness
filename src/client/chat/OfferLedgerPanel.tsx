@@ -1,10 +1,10 @@
 import { useState } from 'react'
 
-import type { Disposition } from '../../shared/offer'
+import { dispositions, type Disposition } from '../../shared/offer'
 import { Chip } from '../components/Chip'
 import { EmptySlot } from '../components/Field'
 import { Notice } from '../components/Notice'
-import { Panel, type PanelProps } from '../components/Panel'
+import { Panel, PanelHeader, type PanelProps } from '../components/Panel'
 import { ReferenceCard } from '../components/ReferenceCard'
 import type { OfferLedgerHandle } from '../lib/useOfferLedger'
 
@@ -22,7 +22,8 @@ import type { OfferLedgerHandle } from '../lib/useOfferLedger'
 
 type Filter = 'all' | Disposition
 
-const filters: Filter[] = ['all', 'undecided', 'accepted', 'declined']
+// The order `offerLedger` keys its counts in, and the only list of them.
+const filters: Filter[] = ['all', ...dispositions]
 
 export interface OfferLedgerPanelProps {
 	ledger: OfferLedgerHandle
@@ -45,19 +46,20 @@ export function OfferLedgerPanel({
 	return (
 		<Panel className={className} divider={divider} padded={false}>
 			{/* Sticky: the Panel scrolls under it, and `close ×` has to stay reachable. */}
-			<header className="sticky top-0 z-10 flex items-center gap-2.5 border-b border-edge bg-sunk px-3.5 py-2.5">
-				<h3 className="text-[0.875rem] font-semibold text-ink">Offer ledger</h3>
-				<span className="text-[0.75rem] text-faint">
-					{rows.counts.all} · {rows.counts.accepted} Accepted
-				</span>
-				<button
-					type="button"
-					className="ml-auto text-[0.75rem] text-faint hover:text-ink"
-					onClick={onClose}
-				>
-					close ×
-				</button>
-			</header>
+			<PanelHeader
+				actions={
+					<button
+						type="button"
+						className="text-[0.75rem] text-faint hover:text-ink"
+						onClick={onClose}
+					>
+						close ×
+					</button>
+				}
+				className="sticky top-0 z-10 border-b border-edge bg-sunk px-3.5 py-2.5"
+				meta={`${rows.counts.all} · ${rows.counts.accepted} Accepted`}
+				title="Offer ledger"
+			/>
 			<div className="flex flex-col gap-2.5 p-3.5">
 				<div className="flex flex-wrap gap-1.5">
 					{filters.map((name) => (

@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 
 import type { Plan, ProposalInput } from '../../shared/plan'
 import { Button } from '../components/Button'
 import { Chip } from '../components/Chip'
+import { CitedLine } from '../components/CitedLine'
 import { EmptySlot } from '../components/Field'
 import { SourceLink } from '../components/SourceLink'
 import { cx } from '../lib/cx'
@@ -137,10 +138,14 @@ function ReferenceRow({
 
 	const source = reference.source
 	const url = source?.url
-	const cited = attribution(source).join(' · ')
-	// The title above is the link where there is one, so printing the url here
-	// as well would state the same link twice.
-	const showsUrl = url !== undefined && source?.title === undefined
+	const cited: ReactNode[] = [
+		...attribution(source),
+		// The title above is the link where there is one, so printing the url here
+		// as well would state the same link twice.
+		...(url !== undefined && source?.title === undefined
+			? [<SourceLink key="url" url={url} />]
+			: []),
+	]
 
 	return (
 		<div
@@ -176,17 +181,7 @@ function ReferenceRow({
 				</blockquote>
 			) : null}
 
-			{cited === '' && !showsUrl ? null : (
-				<p className="text-[0.6875rem] break-all text-faint">
-					{cited}
-					{showsUrl ? (
-						<>
-							{cited === '' ? null : <span aria-hidden> · </span>}
-							<SourceLink url={url} />
-						</>
-					) : null}
-				</p>
-			)}
+			<CitedLine className="break-all" parts={cited} />
 			{reference.note ? (
 				<p className="text-[0.75rem] text-muted">{reference.note}</p>
 			) : null}

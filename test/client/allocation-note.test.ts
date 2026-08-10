@@ -35,6 +35,27 @@ describe('what the allocation note says', () => {
 		expect(note(1000, [400, 600, undefined])).toBe('fully allocated across 2/3 Sections')
 	})
 
+	// The denominator is the Sections on screen, so a Section that states its
+	// share through its Subsections counts once, not once per Subsection.
+	it('counts a Section that placed its share below itself', () => {
+		const outline = [
+			makeNode({ id: 'n1', target: 400 }),
+			makeNode({
+				id: 'n2',
+				children: [
+					makeNode({ id: 'n2a', target: 300 }),
+					makeNode({ id: 'n2b', target: 300 }),
+				],
+			}),
+		]
+		const allocation = planAllocation(makePlan({ totalTarget: 1000, outline }))
+		const said = renderToStaticMarkup(
+			createElement(AllocationNote, { allocation }),
+		).replace(/<[^>]*>/g, '')
+
+		expect(said).toBe('fully allocated across 2/2 Sections')
+	})
+
 	it('names the words left over while any Section carries no target', () => {
 		expect(note(1000, [400, undefined])).toBe('600 words unallocated')
 	})

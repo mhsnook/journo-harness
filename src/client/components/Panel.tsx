@@ -3,8 +3,8 @@ import type { CSSProperties, ReactNode, Ref, UIEventHandler } from 'react'
 import { cx } from '../lib/cx'
 
 export interface PanelProps {
-	/** The scrolling element itself — the Chat holds it to keep the transcript
-	 * at its foot. */
+	/** The scrolling element itself, for a Panel that drives its own scroll
+	 * position. */
 	ref?: Ref<HTMLElement>
 	/** Said as the writer scrolls this Panel. */
 	onScroll?: UIEventHandler<HTMLElement>

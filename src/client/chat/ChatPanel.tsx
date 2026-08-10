@@ -126,10 +126,12 @@ const AT_THE_FOOT = 24
  * something further back, and yanking them to the bottom mid-turn would take it
  * away. Scrolling back down takes hold again.
  *
- * **The observer is what holds it, and the render is only the first pin.** The
- * composer grows inside its own state, so pasting four paragraphs takes the
- * bottom of the Panel without this component rendering at all — and the turn
- * the writer came back for ends up behind the field.
+ * **The observer is what holds it, and the render is only the first pin.**
+ * Anything that can push the last turn out of view resizes a box the observer
+ * watches — a streamed chunk grows the transcript, and pasting four paragraphs
+ * grows the composer inside its own state, without this component rendering at
+ * all. Re-pinning on every render would read `scrollHeight` once per streamed
+ * chunk, which forces a layout pass, and catch nothing the observer misses.
  */
 function useFootOfTranscript() {
 	const panel = useRef<HTMLElement>(null)
@@ -141,17 +143,19 @@ function useFootOfTranscript() {
 		}
 	}
 
-	// Every render: a streaming turn grows the last message without adding one,
-	// so a message count would miss it.
-	useLayoutEffect(foot)
+	// The first pin, before paint. The observer below is attached in a passive
+	// effect, which can land after the transcript has been shown from the top.
+	useLayoutEffect(foot, [])
 
 	useEffect(() => {
 		const shown = panel.current
 		if (shown === null) return
 
-		// The Panel's own box never changes, so the children are what is watched:
-		// the transcript above and the composer below.
+		// The Panel for its own height, which a shorter window changes without
+		// reflowing anything inside it, and the children for theirs: the
+		// transcript above and the composer below.
 		const watch = new ResizeObserver(foot)
+		watch.observe(shown)
 		for (const child of shown.children) watch.observe(child)
 
 		return () => watch.disconnect()
