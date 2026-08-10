@@ -10,7 +10,14 @@
     "browser": true,
     "es2024": true
   },
-  "ignorePatterns": ["src/client/routeTree.gen.ts", "worker-configuration.d.ts"],
+  // Skills are installed from mhsnook/skills, so they are read here and never
+  // edited here.
+  "ignorePatterns": [
+    ".claude/**",
+    ".agents/**",
+    "src/client/routeTree.gen.ts",
+    "worker-configuration.d.ts"
+  ],
   "overrides": [
     {
       "files": ["src/server/**", "test/**", "*.config.ts", ".storybook/**"],

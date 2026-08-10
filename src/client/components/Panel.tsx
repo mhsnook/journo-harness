@@ -1,8 +1,12 @@
-import type { CSSProperties, ReactNode } from 'react'
+import type { CSSProperties, ReactNode, Ref, UIEventHandler } from 'react'
 
 import { cx } from '../lib/cx'
 
 export interface PanelProps {
+	/** The scrolling element itself, for a Panel that drives its own scroll
+	 * position. */
+	ref?: Ref<HTMLElement>
+	onScroll?: UIEventHandler<HTMLElement>
 	/** `surface` is the writing surface; `sunk` is everything that supports it. */
 	variant?: 'surface' | 'sunk'
 	/** Fixed width in px, or a flex ratio when omitted. */
@@ -25,6 +29,8 @@ export interface PanelProps {
  * inside a body with no height simply grows as it always did.
  */
 export function Panel({
+	ref,
+	onScroll,
 	variant = 'surface',
 	width,
 	grow = 1,
@@ -36,6 +42,8 @@ export function Panel({
 }: PanelProps) {
 	return (
 		<section
+			ref={ref}
+			onScroll={onScroll}
 			data-panel=""
 			className={cx(
 				'flex min-h-0 min-w-0 flex-col overflow-y-auto',

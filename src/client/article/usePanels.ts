@@ -8,6 +8,7 @@ import { PANELS, type PanelId } from '../components/PanelRail'
 const narrowQuery = '(max-width: 56rem)'
 
 export type PanelState = {
+	/** Which Panels are visible. All four stay mounted. */
 	open: PanelId[]
 	/** The rail is a set of tabs rather than a set of toggles. */
 	narrow: boolean

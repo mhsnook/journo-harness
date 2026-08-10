@@ -1,5 +1,5 @@
 import { getToolName, isTextUIPart, isToolUIPart, type UIMessage } from 'ai'
-import type { ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, type ReactNode } from 'react'
 
 import { proposePlanChangeTool, recordOffersTool } from '../../shared/chat'
 import type { Offer } from '../../shared/offer'
@@ -66,9 +66,16 @@ export function ChatPanel({
 	className,
 }: ChatPanelProps) {
 	const rows = new Map(offers.map((offer) => [offer.id, offer]))
+	const transcript = useFootOfTranscript()
 
 	return (
-		<Panel className={className} divider={divider} padded={false}>
+		<Panel
+			className={className}
+			divider={divider}
+			onScroll={transcript.onScroll}
+			padded={false}
+			ref={transcript.ref}
+		>
 			<div className="flex flex-1 flex-col gap-3.5 p-3.5">
 				{messages.map((message) => (
 					<Turn
@@ -106,6 +113,54 @@ export function ChatPanel({
 			</div>
 		</Panel>
 	)
+}
+
+/** Scroll positions round, so the bottom is rarely exactly the bottom. */
+const AT_THE_FOOT = 24
+
+/**
+ * Keeps the Chat pinned to the bottom as messages stream in. Releases when the
+ * writer scrolls up more than 24px, and re-takes when they scroll back down.
+ *
+ * Returns the ref for the scrolling element and the `onScroll` that tracks it.
+ */
+function useFootOfTranscript() {
+	const panel = useRef<HTMLElement>(null)
+	const pinned = useRef(true)
+
+	const foot = () => {
+		if (panel.current !== null && pinned.current) {
+			panel.current.scrollTop = panel.current.scrollHeight
+		}
+	}
+
+	// Before first paint, since the observer below is attached after it.
+	useLayoutEffect(foot, [])
+
+	useEffect(() => {
+		const scroller = panel.current
+		if (scroller === null) return
+
+		// The children grow as the transcript and the composer do; the scroller
+		// itself changes height when the window does.
+		const watch = new ResizeObserver(foot)
+		watch.observe(scroller)
+		for (const child of scroller.children) watch.observe(child)
+
+		return () => watch.disconnect()
+		// `foot` reads refs alone, so it cannot go stale.
+	}, [])
+
+	return {
+		ref: panel,
+		onScroll: () => {
+			const scroller = panel.current
+			if (scroller === null) return
+
+			pinned.current =
+				scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight <= AT_THE_FOOT
+		},
+	}
 }
 
 /** Why the composer will not send, and null when it will. Nothing expires an

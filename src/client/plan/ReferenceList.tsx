@@ -1,39 +1,35 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 
 import type { Plan, ProposalInput } from '../../shared/plan'
 import { Button } from '../components/Button'
 import { Chip } from '../components/Chip'
+import { CitedLine } from '../components/CitedLine'
 import { EmptySlot } from '../components/Field'
+import { SourceLink } from '../components/SourceLink'
 import { cx } from '../lib/cx'
 import { addReference, deleteReference, placeReference, setReference } from './edits'
 import type { OutlineEntry } from './outline'
 import { sectionLabel } from './outline'
 import { ReferenceForm } from './ReferenceForm'
 import type { ReferenceEntry } from './references'
-import { referenceEntries, referenceMark, referenceName, sourceLine } from './references'
+import { attribution, referenceEntries, referenceMark, referenceName } from './references'
 
 /**
- * The Plan's References: what the Chat turned up and the writer Accepted, and
- * what the writer pasted in themselves. Each is placed at a Section or nowhere
- * yet — References are flat and carry an optional `nodeId`, so placing one is a
- * field on the Reference rather than a move in the Outline — architecture §4.
+ * The Plan's References: items Accepted from the Chat or added by hand by the
+ * writer. Follows architecture §4.
  *
- * The type is read off the record and never derived from whether a text is
- * present: a Reference may carry a passage without being a Quote, and the two
- * Panels have to label one entry the same way.
+ * The type is read off the record, never derived from whether a text is
+ * present: a Reference may carry a passage without being a Quote.
  */
 
 export interface ReferenceListProps {
 	plan: Plan
 	entries: OutlineEntry[]
 	edit: (ops: ProposalInput | null) => void
-	/** A Reference a Section row has sent the writer down to. It scrolls into
-	 * view and takes the accent for a moment, which is the whole of the answer
-	 * to "which one did I mean?" */
-	shown?: string | null
-	/** Said once the Reference has been shown, so the next click on the same one
-	 * shows it again. */
-	onShown?: () => void
+	/** Id of a Reference to scroll into view, taking the accent for a moment. */
+	accented?: string | null
+	/** Said once it has been scrolled to, so the same id can be sent again. */
+	onAccented?: () => void
 	className?: string
 }
 
@@ -41,8 +37,8 @@ export function ReferenceList({
 	plan,
 	entries,
 	edit,
-	shown = null,
-	onShown,
+	accented = null,
+	onAccented,
 	className,
 }: ReferenceListProps) {
 	// One Reference is open at a time, and `adding` is the blank form.
@@ -78,10 +74,10 @@ export function ReferenceList({
 						key={reference.id}
 						entry={{ reference, number }}
 						entries={entries}
+						accented={reference.id === accented}
+						onAccented={onAccented}
 						onOpen={() => setOpenId(reference.id)}
 						onPlace={(nodeId) => edit(placeReference(plan, reference.id, nodeId))}
-						onShown={onShown}
-						shown={reference.id === shown}
 					/>
 				),
 			)}
@@ -108,8 +104,8 @@ interface ReferenceRowProps {
 	entries: OutlineEntry[]
 	onOpen: () => void
 	onPlace: (nodeId: string | null) => void
-	shown: boolean
-	onShown?: () => void
+	accented: boolean
+	onAccented?: () => void
 }
 
 function ReferenceRow({
@@ -117,40 +113,52 @@ function ReferenceRow({
 	entries,
 	onOpen,
 	onPlace,
-	shown,
-	onShown,
+	accented,
+	onAccented,
 }: ReferenceRowProps) {
 	const { reference } = entry
 	const row = useRef<HTMLDivElement>(null)
 
 	useEffect(() => {
-		if (!shown) return
+		if (!accented) return
 
 		row.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })
-		// The wash is a pointer, not a state the row is in, so it lets go by
-		// itself rather than waiting for the writer to dismiss it.
-		const held = setTimeout(() => onShown?.(), 1600)
+		// The accent is a pointer, not a state the row is in, so it lets go by
+		// itself rather than waiting to be dismissed.
+		const held = setTimeout(() => onAccented?.(), 1600)
 
 		return () => clearTimeout(held)
-	}, [shown, onShown])
+	}, [accented, onAccented])
 
-	const attribution = sourceLine(reference.source)
+	const source = reference.source
+	const url = source?.url
+	const cited: ReactNode[] = [
+		...attribution(source),
+		// If we print the title above as a link, we don't need to print it again.
+		...(url !== undefined && source?.title === undefined
+			? [<SourceLink key="url" url={url} />]
+			: []),
+	]
 
 	return (
 		<div
 			ref={row}
 			className={cx(
 				'flex flex-col gap-1.5 rounded-md border p-2 transition-colors',
-				shown ? 'border-accent-edge bg-accent-soft' : 'border-edge bg-surface',
+				accented ? 'border-accent-edge bg-accent-soft' : 'border-edge bg-surface',
 			)}
 		>
 			<div className="flex items-baseline gap-2">
 				<Chip className="font-mono" variant="outline">
 					{referenceMark(entry)}
 				</Chip>
-				{reference.source?.title ? (
+				{source?.title ? (
 					<p className="min-w-0 flex-1 text-[0.75rem] leading-snug font-medium text-ink">
-						{reference.source.title}
+						{url === undefined ? (
+							source.title
+						) : (
+							<SourceLink url={url}>{source.title}</SourceLink>
+						)}
 					</p>
 				) : (
 					<span className="flex-1" />
@@ -166,9 +174,7 @@ function ReferenceRow({
 				</blockquote>
 			) : null}
 
-			{attribution === '' ? null : (
-				<p className="text-[0.6875rem] text-faint">{attribution}</p>
-			)}
+			<CitedLine className="break-all" parts={cited} />
 			{reference.note ? (
 				<p className="text-[0.75rem] text-muted">{reference.note}</p>
 			) : null}

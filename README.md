@@ -98,13 +98,13 @@ Access gate, and requiring the header would make the app unrunnable in developme
 | `src/client/articles/`        | The Articles Area: the index over HTTP, the list, and the Board View  |
 | `src/client/article/`         | One Article screen: its four Panels, its rail, and its title copy     |
 | `src/client/plan/`            | The Plan Panel: its op builders, its writer, and its fields           |
-| `src/client/screens/`         | The wireframed screens, built against mock data                       |
 | `src/client/styles/theme.css` | The Tailwind v4 `@theme` tokens                                       |
 | `src/server/`                 | The Hono Worker entry and the `ArticleAgent` Durable Object           |
 | `src/server/llm/`             | The model boundary, the Chat turn's prompt pack, and the tools        |
 | `migrations/`                 | The article index's D1 schema, applied by `pnpm db:migrate`           |
 | `test/`                       | Three of the four Vitest projects: `shared`, `client`, and `worker`   |
-| `.storybook/`                 | Storybook's config, and the layout invariants the stories are held to |
+| `.storybook/`                 | Storybook's config, the layout invariants, the stories, and the mocks |
+| `.storybook/screens/`         | The wireframed screens, built against mock data                       |
 | `docs/`                       | The architecture document, the ADRs, and [the UI notes](./docs/ui.md) |
 
 The screens are wireframes, and each is superseded as the route that replaces it lands, so

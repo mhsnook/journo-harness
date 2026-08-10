@@ -44,15 +44,15 @@ export function PlanPanel({
 	className,
 }: PlanPanelProps) {
 	// One Section is open at a time. `made` is the one the writer has just
-	// added, which takes the caret as it opens, and `shown` is the Reference a
+	// added, which takes the caret as it opens, and `accented` is the Reference a
 	// Section row has just sent them down to.
 	const [openId, setOpenId] = useState<string | null>(null)
 	const [made, setMade] = useState<string | null>(null)
-	const [shown, setShown] = useState<string | null>(null)
+	const [accented, setAccented] = useState<string | null>(null)
 
-	// Held: the shown row's effect lists it, and a new function each render would
-	// restart that row's scroll on every keystroke elsewhere in the Panel.
-	const clearShown = useCallback(() => setShown(null), [])
+	// Held: the accented row's effect lists it, and a new function each render
+	// would restart that row's scroll on every keystroke elsewhere in the Panel.
+	const clearAccent = useCallback(() => setAccented(null), [])
 
 	const entries = outlineEntries(plan.outline)
 	const allocation = planAllocation(plan)
@@ -122,7 +122,7 @@ export function PlanPanel({
 								edit={edit}
 								entry={entry}
 								onOpen={setOpenId}
-								onShowReference={setShown}
+								onShowReference={setAccented}
 								open={entry.node.id === openId}
 								plan={plan}
 								takeCaret={entry.node.id === made}
@@ -144,9 +144,9 @@ export function PlanPanel({
 				className="flex flex-col items-stretch gap-1.5"
 				edit={edit}
 				entries={entries}
-				onShown={clearShown}
+				accented={accented}
+				onAccented={clearAccent}
 				plan={plan}
-				shown={shown}
 			/>
 		</Panel>
 	)

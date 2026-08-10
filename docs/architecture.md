@@ -168,10 +168,16 @@ The Chat turns up Offers — Links and Quotes — as SQLite rows in the Article 
 **Undecided**, **Accepted**, or **Declined** (Declining is restorable).
 
 **The Ledger belongs to the Chat Panel and doesn't read the Plan.** Its data model and its
-visual representation should both be understood to relate to the Chat Panel itself.
-Its groupings show the three dispositions; when the writer Accepts an offer, it sends the
-Reference over to the Plan Panel; then it belongs to the Plan, where it becomes an editable
-record carrying its Provenance (rule 5) back to the original Offer.
+visual representation should both be understood to relate to the Chat Panel itself. It
+opens from the control left of the composer as a drawer over the Chat Panel, taking whatever
+width that Panel has rather than being a fifth Panel of its own — `close ×` is on the Ledger
+because the Chat is what it covers.
+It shows one flat list with a chip per disposition to filter it, and `all` first, so the
+Undecided pile can be read on its own without losing the record. When the writer Accepts an
+Offer, it sends the Reference over to the Plan Panel; then it belongs to the Plan, where it
+becomes an editable record carrying its Provenance (rule 5) back to the original Offer.
+Screen 2(g) draws the same rows grouped rather than filtered, in a popover; that one is not
+built.
 
 Offers are flat. Two Quotes from one publication are two Offers.
 
@@ -425,8 +431,8 @@ already reactive through Article Agent state and, at 1b, party-db's TanStack DB 
 
 **The Article screen has four Panels** — Chat, Plan, Draft, Notes — which become tabs on a
 narrow screen. `usePanels` holds which are open, keeps them in the one order the rail draws,
-and refuses to close the last of them. The **Areas** are Articles (with Board and Archive
-Views), House, and Team.
+and refuses to close the last of them. All four stay mounted and a closed one is hidden. The
+**Areas** are Articles (with Board and Archive Views), House, and Team.
 
 **A screen never draws a value it has not got.** An empty title, a zero count and four empty
 columns are answers, and a screen that puts one on the page before it has read anything has

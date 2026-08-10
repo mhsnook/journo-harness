@@ -19,6 +19,11 @@ export type Allocation = {
 	total: number | null
 	/** The sum of the targets below it. */
 	allocated: number
+	/** How many nodes sit at this level, and not below it: the Sections under
+	 * the Article, or the Subsections under one Section. */
+	parts: number
+	/** How many of those parts put something into `allocated`. */
+	placed: number
 	/** How many nodes below it carry no target and no children to carry one. */
 	untargeted: number
 	/** `total - allocated`, and null when no total is stated. Positive is words
@@ -41,13 +46,23 @@ export function nodeAllocation(node: OutlineNode): Allocation {
 
 function allocate(total: number | null, nodes: readonly OutlineNode[]): Allocation {
 	const { allocated, untargeted } = sumTargets(nodes)
+	const gap = total === null ? null : total - allocated
 
-	if (total === null) {
-		return { total: null, allocated, untargeted, gap: null, status: 'unstated' }
+	return {
+		total,
+		allocated,
+		parts: nodes.length,
+		placed: nodes.filter(carriesShare).length,
+		untargeted,
+		gap,
+		status: gap === null ? 'unstated' : statusFor(gap, untargeted, nodes),
 	}
+}
 
-	const gap = total - allocated
-	return { total, allocated, untargeted, gap, status: statusFor(gap, untargeted, nodes) }
+/** Whether a node put anything into the sum: its own target, or one anywhere
+ * below it. */
+function carriesShare(node: OutlineNode): boolean {
+	return node.target !== undefined || node.children.some(carriesShare)
 }
 
 function statusFor(

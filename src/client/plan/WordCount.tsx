@@ -64,18 +64,18 @@ export interface AllocationNoteProps {
 /** What the targets below add up to against the target above them. */
 export function AllocationNote({
 	allocation,
-	parts = 'the Sections',
+	parts = 'Sections',
 	className,
 }: AllocationNoteProps) {
-	const { gap, status } = allocation
+	const { gap, status, placed } = allocation
 	if (status === 'unstated') return null
 
 	const words = (count: number) => `${count.toLocaleString()} words`
 
 	const said = {
-		balanced: `${parts} meet the total`,
+		balanced: `fully allocated across ${placed}/${allocation.parts} ${parts}`,
 		unallocated: `${words(gap ?? 0)} unallocated`,
-		under: `${parts} fall ${words(gap ?? 0)} short`,
+		under: `the ${parts} fall ${words(gap ?? 0)} short`,
 		over: `${words(-(gap ?? 0))} over the total`,
 	}[status]
 

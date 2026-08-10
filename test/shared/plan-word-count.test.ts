@@ -10,6 +10,8 @@ describe('word-count arithmetic', () => {
 		expect(planAllocation(plan)).toEqual({
 			total: null,
 			allocated: 400,
+			parts: 1,
+			placed: 1,
 			untargeted: 0,
 			gap: null,
 			status: 'unstated',
@@ -22,6 +24,8 @@ describe('word-count arithmetic', () => {
 		expect(planAllocation(plan)).toEqual({
 			total: 2000,
 			allocated: 0,
+			parts: 0,
+			placed: 0,
 			untargeted: 0,
 			gap: 2000,
 			status: 'unallocated',
@@ -47,6 +51,8 @@ describe('word-count arithmetic', () => {
 		expect(planAllocation(plan)).toEqual({
 			total: 2000,
 			allocated: 600,
+			parts: 2,
+			placed: 1,
 			untargeted: 1,
 			gap: 1400,
 			status: 'unallocated',
@@ -84,7 +90,57 @@ describe('word-count arithmetic', () => {
 			outline: [makeNode({ id: 'n1', target: 400 }), makeNode({ id: 'n2', target: 600 })],
 		})
 
-		expect(planAllocation(plan)).toMatchObject({ gap: 0, status: 'balanced' })
+		expect(planAllocation(plan)).toMatchObject({
+			gap: 0,
+			status: 'balanced',
+			parts: 2,
+			placed: 2,
+		})
+	})
+
+	// The note above the Outline says "fully allocated across 2/3 Sections", so
+	// `placed` and `parts` have to stay separate: balanced says the words add up,
+	// and says nothing about every Section carrying a target of its own.
+	it('counts the nodes that placed a share apart from those that did not', () => {
+		const plan = makePlan({
+			totalTarget: 1000,
+			outline: [
+				makeNode({ id: 'n1', target: 400 }),
+				makeNode({ id: 'n2', target: 600 }),
+				makeNode({ id: 'n3' }),
+			],
+		})
+
+		expect(planAllocation(plan)).toMatchObject({
+			gap: 0,
+			status: 'balanced',
+			parts: 3,
+			placed: 2,
+		})
+	})
+
+	// `parts` counts what the writer is looking at. Walking into the Subsections
+	// for it would report three Sections over an Outline that draws two.
+	it('counts the Sections, not the whole subtree under them', () => {
+		const plan = makePlan({
+			totalTarget: 1000,
+			outline: [
+				makeNode({ id: 'n1', target: 400 }),
+				makeNode({
+					id: 'n2',
+					children: [
+						makeNode({ id: 'n2a', target: 300 }),
+						makeNode({ id: 'n2b', target: 300 }),
+					],
+				}),
+			],
+		})
+
+		expect(planAllocation(plan)).toMatchObject({
+			status: 'balanced',
+			parts: 2,
+			placed: 2,
+		})
 	})
 
 	it("counts a parent's target once, not again through its children", () => {
@@ -162,6 +218,8 @@ describe('word-count arithmetic', () => {
 		expect(nodeAllocation(node)).toEqual({
 			total: 800,
 			allocated: 500,
+			parts: 2,
+			placed: 1,
 			untargeted: 1,
 			gap: 300,
 			status: 'unallocated',

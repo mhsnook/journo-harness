@@ -1,8 +1,8 @@
-import type { ReactNode } from 'react'
+import { Activity, type ReactNode } from 'react'
 
 import { ArticleChatPanel } from '../chat/ArticleChatPanel'
 import { Panel, PanelHeader, type PanelProps } from '../components/Panel'
-import type { PanelId } from '../components/PanelRail'
+import { PANELS, type PanelId } from '../components/PanelRail'
 import type { ArticleSocket } from '../lib/useArticleAgent'
 import { ArticlePlanPanel } from '../plan/ArticlePlanPanel'
 
@@ -21,9 +21,17 @@ export interface ArticlePanelsProps {
 export function ArticlePanels({ agent, open }: ArticlePanelsProps) {
 	return (
 		<div className="flex min-h-0 flex-auto">
-			{open.map((panel, index) => (
-				<PanelFor agent={agent} divided={index > 0} key={panel} panel={panel} />
-			))}
+			{PANELS.map((panel) => {
+				// `open` is in rail order, so anything past the first has a Panel on
+				// its left to draw a rule against.
+				const at = open.indexOf(panel)
+
+				return (
+					<Activity key={panel} mode={at === -1 ? 'hidden' : 'visible'}>
+						<PanelFor agent={agent} divided={at > 0} panel={panel} />
+					</Activity>
+				)
+			})}
 		</div>
 	)
 }

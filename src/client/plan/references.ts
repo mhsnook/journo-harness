@@ -37,12 +37,6 @@ export function attribution(source: Source | undefined): string[] {
 		.map(String)
 }
 
-/** The same parts on one line, url last. A Plan Panel row has the width for a
- * url where a Chat card's meta line does not. */
-export function sourceLine(source: Source | undefined): string {
-	return [...attribution(source), source?.url].filter(Boolean).join(' · ')
-}
-
 /** The line under `referenceName`, carrying what the heading did not say: the
  * title under a passage, and the rest of the record under a title. A Link is
  * headed by its own title, so naming it again would print it twice. */

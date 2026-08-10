@@ -59,6 +59,55 @@ describe('the rulings a Chat card offers', () => {
 	})
 })
 
+describe('the url a card carries', () => {
+	function linked(content: Partial<Offer>) {
+		const offer: Offer = {
+			id: 'o1',
+			type: 'link',
+			source: { url: 'https://example.com/permits' },
+			disposition: 'undecided',
+			createdAt: 0,
+			decidedAt: null,
+			...content,
+		}
+
+		return renderToStaticMarkup(createElement(ReferenceCard, { offer }))
+	}
+
+	it('opens in a new tab, so following one does not drop the socket', () => {
+		const html = linked({})
+
+		expect(html).toContain('href="https://example.com/permits"')
+		expect(html).toContain('target="_blank"')
+		expect(html).toContain('rel="noreferrer"')
+	})
+
+	it('links the title, where the source carries one', () => {
+		const html = linked({
+			source: { title: 'Permit throughput', url: 'https://example.com/permits' },
+		})
+
+		expect(html).toContain('>Permit throughput</a>')
+	})
+
+	// The heading of a Quote is the passage, and underlining a whole passage
+	// reads as emphasis rather than as a link.
+	it('leaves a passage unlinked, and prints the url under it', () => {
+		const html = linked({
+			type: 'quote',
+			text: 'Forty separate times.',
+			source: { url: 'https://example.com/permits' },
+		})
+
+		expect(html).toContain('>https://example.com/permits</a>')
+		expect(html).not.toContain('>“Forty separate times.”</a>')
+	})
+
+	it('draws no anchor where the Reference carries no url', () => {
+		expect(linked({ source: { title: 'Permit throughput' } })).not.toContain('<a ')
+	})
+})
+
 describe('the tick a Ledger card carries', () => {
 	// Nothing undoes an Accept — `restoreOffer` undoes a Decline — so the tick
 	// does not offer a state to go back to.

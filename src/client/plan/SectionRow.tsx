@@ -188,7 +188,7 @@ export function SectionRow({
 					<AllocationNote
 						allocation={allocation}
 						className="text-[0.6875rem] text-faint"
-						parts="the Subsections"
+						parts="Subsections"
 					/>
 				) : null}
 

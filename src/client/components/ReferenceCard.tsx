@@ -1,9 +1,13 @@
+import type { ReactNode } from 'react'
+
 import type { Offer } from '../../shared/offer'
 import { cx } from '../lib/cx'
 import { attribution, referenceName } from '../plan/references'
 import { Button } from './Button'
 import { Check } from './Check'
 import { Chip } from './Chip'
+import { CitedLine } from './CitedLine'
+import { SourceLink } from './SourceLink'
 
 export interface ReferenceCardProps {
 	offer: Offer
@@ -43,6 +47,17 @@ export function ReferenceCard({
 	const heading = referenceName(offer)
 	// A Quote with no source is its own heading; do not print it twice.
 	const passage = offer.text !== undefined && offer.text !== heading
+	const url = offer.source?.url
+	// Whether the link goes on the heading or on the line below. A Quote is
+	// headed by its passage, and an underlined passage reads as emphasis.
+	const headingLinks = url !== undefined && offer.text === undefined
+	const cited: ReactNode[] = [
+		...(favourite ? [<FavouriteMark key="favourite" type={favourite} />] : []),
+		...attribution(offer.source),
+		...(url !== undefined && !headingLinks
+			? [<SourceLink className="break-all" key="url" url={url} />]
+			: []),
+	]
 
 	return (
 		<article
@@ -67,17 +82,9 @@ export function ReferenceCard({
 
 			<div className="flex min-w-0 flex-1 flex-col gap-1">
 				<h4 className="text-[0.8125rem] leading-snug font-semibold text-ink">
-					{heading}
+					{headingLinks ? <SourceLink url={url}>{heading}</SourceLink> : heading}
 				</h4>
-				<p className="flex flex-wrap items-center gap-x-1.5 text-[0.6875rem] text-faint">
-					{favourite ? <FavouriteMark type={favourite} /> : null}
-					{attribution(offer.source).map((part, index) => (
-						<span key={part}>
-							{index > 0 || favourite ? <span aria-hidden>· </span> : null}
-							{part}
-						</span>
-					))}
-				</p>
+				<CitedLine parts={cited} />
 				{passage ? (
 					<blockquote className="border-l-2 border-rule pl-2 text-[0.75rem] leading-relaxed text-ink">
 						“{offer.text}”
