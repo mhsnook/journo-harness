@@ -13,6 +13,7 @@ import { ReferenceCard } from '../components/ReferenceCard'
 import { readRecordedOffers } from './offers'
 import { ProposalCard } from './ProposalCard'
 import { readProposal, type ProposalCall, type Refusals } from './proposals'
+import { RuledProposal } from './RuledProposal'
 
 /**
  * The Chat Panel takes a transcript & rulings; `ArticleChatPanel` drives it from
@@ -293,9 +294,23 @@ function Turn({
 							)
 						}
 						case 'output-available':
-							return <ChatNote key={key}>Proposal Accepted.</ChatNote>
+							return (
+								<RuledProposal
+									key={key}
+									call={readProposal(part)}
+									plan={plan}
+									ruling="accepted"
+								/>
+							)
 						case 'output-error':
-							return <ChatNote key={key}>Proposal Declined.</ChatNote>
+							return (
+								<RuledProposal
+									key={key}
+									call={readProposal(part)}
+									plan={plan}
+									ruling="declined"
+								/>
+							)
 						default:
 							return null
 					}

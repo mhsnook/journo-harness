@@ -2,7 +2,8 @@ import type { Plan, Refusal } from '../../shared/plan'
 import { Button } from '../components/Button'
 import { Notice } from '../components/Notice'
 import { cx } from '../lib/cx'
-import { refusalText, unreadableText } from '../plan/refusalText'
+import { refusalText } from '../plan/refusalText'
+import { changeCount, ProposalChanges } from './ProposalChanges'
 import { describeProposal, type ProposalCall } from './proposals'
 
 /** One suspended Proposal to Accept or Decline — §6. Renders its ops as
@@ -34,21 +35,9 @@ export function ProposalCard({
 				className,
 			)}
 		>
-			<h4 className="label-meta text-muted">
-				Proposal · {changes.length === 1 ? '1 change' : `${changes.length} changes`}
-			</h4>
+			<h4 className="label-meta text-muted">Proposal · {changeCount(changes)}</h4>
 
-			{call.unreadable === null ? (
-				<ul className="flex list-none flex-col gap-1">
-					{changes.map((change) => (
-						<li key={change} className="text-[0.8125rem] leading-snug text-ink">
-							{change}
-						</li>
-					))}
-				</ul>
-			) : (
-				<p className="text-[0.8125rem] leading-snug text-ink">{unreadableText}</p>
-			)}
+			<ProposalChanges changes={changes} unreadable={call.unreadable} />
 
 			{refusal === null ? null : (
 				<Notice>
