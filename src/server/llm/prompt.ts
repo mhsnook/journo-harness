@@ -76,8 +76,8 @@ function planMessage(plan: Plan): ModelMessage {
 }
 
 /**
- * The conversation with the Plan in it — after every turn but the last, so the
- * writer's own words are the last thing the model reads.
+ * The conversation with the Plan in it — in front of the writer's last message,
+ * so the writer's own words are the last thing the model reads.
  *
  * Two orderings are defensible and neither has met a real model yet. Appending
  * the Plan after everything is one message cheaper to cache, and it makes a
@@ -93,8 +93,26 @@ export function chatPackMessages(
 	conversation: ModelMessage[],
 	plan: Plan,
 ): ModelMessage[] {
-	const last = conversation.length - 1
-	if (last < 0) return [planMessage(plan)]
+	const at = planSlot(conversation)
 
-	return [...conversation.slice(0, last), planMessage(plan), conversation[last]]
+	return [...conversation.slice(0, at), planMessage(plan), ...conversation.slice(at)]
+}
+
+/**
+ * Where the Plan goes: in front of the last message where that message is the
+ * writer's, and after the whole conversation otherwise.
+ *
+ * **A tool result may not be separated from the call it answers.** A tool
+ * message answers the assistant message before it, and the AI SDK throws
+ * `MissingToolResultsError` at a user message that arrives with a call still
+ * unanswered — so the turn that resumes after the writer rules on a Proposal
+ * ends in a tool result, and the Plan has to follow it rather than split the
+ * pair. That turn wants the Plan last in any case: the ruling has just changed
+ * it, and what the model reads is then the Plan the Accept produced.
+ */
+function planSlot(conversation: ModelMessage[]): number {
+	const last = conversation.length - 1
+	if (last < 0) return 0
+
+	return conversation[last].role === 'user' ? last : conversation.length
 }
