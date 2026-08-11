@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import type { ButtonHTMLAttributes, ReactNode, Ref } from 'react'
 
 import { cx } from '../lib/cx'
 
@@ -9,6 +9,9 @@ export interface ButtonProps extends Omit<
 	ButtonHTMLAttributes<HTMLButtonElement>,
 	'children'
 > {
+	/** The button itself, for a control that has to take the caret back after
+	 * whatever it opened has gone. `Panel` takes one the same way. */
+	ref?: Ref<HTMLButtonElement>
 	/**
 	 * `accent` is the yellow one. A screen should have at most one — it marks
 	 * the single thing the app wants you to do next.

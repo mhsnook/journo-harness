@@ -1,46 +1,54 @@
-import type { OutlineNode, Plan } from '../../shared/plan'
+import type { OutlineNode, Plan, Reference } from '../../shared/plan'
+import { referenceEntries, referenceName } from './references'
 
 /**
- * The geometry behind the Map View — where each Section sits when the Outline
- * opens left to right, and the curve that joins it to its parent.
+ * The geometry behind the Map View — where each box sits when the Plan opens
+ * left to right, and the curve that joins it to its parent.
  *
  * Arithmetic only, so `test/client/plan-map.test.ts` drives it with a Plan and
  * reads the numbers back. `PlanMap.tsx` draws what this returns and computes
- * none of it, so nothing on screen can disagree with what the test measures.
+ * none of it, so what a test measures and what the writer sees cannot drift
+ * apart.
  *
- * The tree it walks is the one `outline.ts` walks, and it numbers rows the same
- * way — "2" for a Section, "2.1" for a Subsection. The Article title is the
- * root, which is the node the writer sees on the left.
+ * **Two shapes, and `branches` picks one.** `references` is the Plan v1 has:
+ * the Article title, one layer of Sections, and the References placed at each.
+ * `sections` branches the Sections nested inside a Section off it instead,
+ * however deep the Plan goes — which the schema allows and the interface does
+ * not offer, so it is an idea rather than a screen. `context.md` §Subsection
+ * says why.
  */
+
+/** What one box stands for. The three are drawn alike and read differently. */
+export type MapSubject =
+	| { kind: 'article' }
+	| { kind: 'section'; node: OutlineNode }
+	| { kind: 'reference'; reference: Reference; number: number }
 
 /** One box on the map. */
 export interface MapNode {
-	/** The map's own identity. The root is `root` and a Section is `n:` and its
-	 * id, so a Section whose id is literally "root" cannot collide with it. */
+	/** The map's own identity. `root`, `n:` and a Section's id, or `r:` and a
+	 * Reference's id — so ids that collide across the two lists cannot. */
 	key: string
 	/** The key of the box this one hangs off, and null at the root. */
 	parentKey: string | null
-	/** The Plan's id for this Section, and null at the root. */
-	nodeId: string | null
-	/** Null at the root, which is the Article title rather than a Section. */
-	node: OutlineNode | null
+	subject: MapSubject
 	/** What the box reads. Empty where the writer has typed no title yet. */
 	title: string
-	/** "2" for a Section, "2.1" for a Subsection, and empty at the root. */
+	/** "2" for a Section, "2.1" for a nested one, "[3]" for a Reference, and
+	 * empty at the root. */
 	ordinal: string
-	/** 0 is the Article title, 1 is a Section, 2 is a Subsection. */
+	/** 0 is the Article title, 1 is a Section, and 2 is whatever hangs off one. */
 	depth: number
 	x: number
 	y: number
 	width: number
 	height: number
-	/** How many children the node holds, drawn or not. */
+	/** How many children the box holds, drawn or not. */
 	childCount: number
-	/** The References placed here, by their position in the Plan's list — the
-	 * numbers `references.ts` marks them with. Empty at the root, which holds
-	 * none: a Reference is placed at a Section or at nothing. */
+	/** The References placed at this Section, by their number in the Plan's
+	 * list. Empty under `branches: 'references'`, where each is its own box. */
 	referenceNumbers: number[]
-	/** True where the node holds children this map is not drawing. */
+	/** True where the box holds children this map is not drawing. */
 	collapsed: boolean
 	/** Every key from the parent up to the root, nearest first. Hovering a box
 	 * lights this path, so the component walks nothing to find it. */
@@ -63,6 +71,9 @@ export interface PlanMap {
 	height: number
 }
 
+/** What branches off a Section. */
+export type MapBranches = 'references' | 'sections'
+
 export interface MapOptions {
 	nodeWidth?: number
 	/** The gap between one column and the next. */
@@ -70,14 +81,20 @@ export interface MapOptions {
 	/** The gap between two boxes in the same column. */
 	rowGap?: number
 	/**
-	 * How tall one box is. A function rather than a number, because what a
-	 * Section carries decides how many lines it needs — which is the case a
-	 * fixed-size tree layout cannot express.
+	 * How tall one box is. A function rather than a number, because what a box
+	 * carries decides how many lines it needs — which is the case a fixed-size
+	 * tree layout cannot express.
 	 */
-	heightOf?: (node: OutlineNode | null, depth: number, referenceCount: number) => number
+	heightOf?: (box: Measured) => number
 	/** Sections whose children the map is leaving undrawn. */
 	collapsed?: ReadonlySet<string>
+	/** What branches off a Section. `references` by default, which is the Plan
+	 * the interface offers. */
+	branches?: MapBranches
 }
+
+/** What the height of a box is decided from. */
+export type Measured = Pick<MapNode, 'subject' | 'depth' | 'referenceNumbers'>
 
 /**
  * Room for the ordinal and a two-line title, plus a line for each of the two
@@ -85,14 +102,16 @@ export interface MapOptions {
  * placed at it. A title runs to two lines often enough at this width that the
  * shorter box is not worth the clipping.
  */
-function defaultHeight(
-	node: OutlineNode | null,
-	_depth: number,
-	referenceCount: number,
-): number {
-	if (node === null) return 48
+function defaultHeight({ subject, referenceNumbers }: Measured): number {
+	if (subject.kind === 'article') return 48
+	// A Reference reads as its mark and its name, and carries nothing below.
+	if (subject.kind === 'reference') return 44
 
-	return 48 + (node.intent === undefined ? 0 : 18) + (referenceCount === 0 ? 0 : 16)
+	return (
+		48 +
+		(subject.node.intent === undefined ? 0 : 18) +
+		(referenceNumbers.length === 0 ? 0 : 16)
+	)
 }
 
 /** The curve between two boxes: out of the parent's right edge, into the
@@ -106,6 +125,13 @@ export function linkPath(parent: MapNode, child: MapNode): string {
 	const mx = (sx + tx) / 2
 
 	return `M${sx},${sy}C${mx},${sy} ${mx},${ty} ${tx},${ty}`
+}
+
+/** The Plan's id for what a box stands for, and null at the root. */
+export function subjectId(subject: MapSubject): string | null {
+	if (subject.kind === 'article') return null
+
+	return subject.kind === 'section' ? subject.node.id : subject.reference.id
 }
 
 /**
@@ -123,17 +149,19 @@ export function planMap(plan: Plan, options: MapOptions = {}): PlanMap {
 		rowGap = 10,
 		heightOf = defaultHeight,
 		collapsed = new Set<string>(),
+		branches = 'references',
 	} = options
 
 	const nodes: MapNode[] = []
 
-	// Numbered once, off the one list, so the box and `references.ts` cannot
-	// mark the same Reference two different ways.
-	const placed = new Map<string, number[]>()
-	plan.references.forEach((reference, index) => {
-		if (reference.nodeId === null) return
-		placed.set(reference.nodeId, [...(placed.get(reference.nodeId) ?? []), index + 1])
-	})
+	// Numbered once, off the one list, so a box and `references.ts` cannot mark
+	// the same Reference two different ways.
+	const placed = new Map<string, { reference: Reference; number: number }[]>()
+	for (const entry of referenceEntries(plan)) {
+		const nodeId = entry.reference.nodeId
+		if (nodeId === null) continue
+		placed.set(nodeId, [...(placed.get(nodeId) ?? []), entry])
+	}
 
 	// Where the next leaf goes, counting down the page in reading order.
 	let cursor = 0
@@ -141,32 +169,58 @@ export function planMap(plan: Plan, options: MapOptions = {}): PlanMap {
 	// subtree cannot ride up into the box above it.
 	const floors: number[] = []
 
+	/** What branches off this box, as the subjects those boxes stand for. */
+	const childrenOf = (subject: MapSubject): MapSubject[] => {
+		if (subject.kind === 'reference') return []
+		if (subject.kind === 'article') {
+			return plan.outline.map((node) => ({ kind: 'section', node }) as const)
+		}
+
+		if (branches === 'sections') {
+			return subject.node.children.map((node) => ({ kind: 'section', node }) as const)
+		}
+
+		return (placed.get(subject.node.id) ?? []).map(
+			(entry) => ({ kind: 'reference', ...entry }) as const,
+		)
+	}
+
 	const place = (
-		node: OutlineNode | null,
+		subject: MapSubject,
 		depth: number,
 		ordinal: string,
 		parentKey: string | null,
 		ancestors: string[],
 	): MapNode => {
-		const key = node === null ? 'root' : `n:${node.id}`
-		const referenceNumbers = node === null ? [] : (placed.get(node.id) ?? [])
-		const height = heightOf(node, depth, referenceNumbers.length)
-		const children = node === null ? plan.outline : node.children
-		const isCollapsed = node !== null && collapsed.has(node.id)
+		const id = subjectId(subject)
+		const key =
+			subject.kind === 'article'
+				? 'root'
+				: `${subject.kind === 'section' ? 'n' : 'r'}:${id}`
+
+		// A Section reads its own placed References only where they are not boxes
+		// of their own — otherwise the map would say it twice.
+		const referenceNumbers =
+			subject.kind === 'section' && branches === 'sections'
+				? (placed.get(subject.node.id) ?? []).map((entry) => entry.number)
+				: []
+
+		const held = childrenOf(subject)
+		const isCollapsed = id !== null && collapsed.has(id)
+		const height = heightOf({ subject, depth, referenceNumbers })
 
 		const entry: MapNode = {
 			key,
 			parentKey,
-			nodeId: node === null ? null : node.id,
-			node,
-			title: node === null ? plan.title : node.title,
+			subject,
+			title: titleOf(subject, plan),
 			ordinal,
 			depth,
 			x: depth * (nodeWidth + columnGap),
 			y: 0,
 			width: nodeWidth,
 			height,
-			childCount: children.length,
+			childCount: held.length,
 			referenceNumbers,
 			collapsed: isCollapsed,
 			ancestors,
@@ -177,15 +231,12 @@ export function planMap(plan: Plan, options: MapOptions = {}): PlanMap {
 		const start = nodes.length
 		nodes.push(entry)
 
-		const drawn = isCollapsed ? [] : children
+		const drawn = isCollapsed ? [] : held
 		const laid = drawn.map((child, index) =>
-			place(
-				child,
-				depth + 1,
-				ordinal === '' ? `${index + 1}` : `${ordinal}.${index + 1}`,
+			place(child, depth + 1, childOrdinal(child, ordinal, index), key, [
 				key,
-				[key, ...ancestors],
-			),
+				...ancestors,
+			]),
 		)
 
 		const floor = floors[depth] ?? 0
@@ -211,7 +262,7 @@ export function planMap(plan: Plan, options: MapOptions = {}): PlanMap {
 		return entry
 	}
 
-	place(null, 0, '', null, [])
+	place({ kind: 'article' }, 0, '', null, [])
 
 	const byKey = new Map(nodes.map((entry) => [entry.key, entry]))
 	const links: MapLink[] = []
@@ -228,4 +279,21 @@ export function planMap(plan: Plan, options: MapOptions = {}): PlanMap {
 	const height = Math.max(...nodes.map((entry) => entry.y + entry.height))
 
 	return { nodes, links, width, height }
+}
+
+/** A Reference keeps the number it has in the Plan's list, the way a footnote
+ * does. A Section is numbered by where it sits. */
+function childOrdinal(subject: MapSubject, parentOrdinal: string, index: number): string {
+	if (subject.kind === 'reference') return `[${subject.number}]`
+
+	return parentOrdinal === '' ? `${index + 1}` : `${parentOrdinal}.${index + 1}`
+}
+
+/** A Reference is named the way every other surface names it, so the map and
+ * the References list cannot call one item two things. */
+function titleOf(subject: MapSubject, plan: Plan): string {
+	if (subject.kind === 'article') return plan.title
+	if (subject.kind === 'section') return subject.node.title
+
+	return referenceName(subject.reference)
 }

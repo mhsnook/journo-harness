@@ -11,10 +11,13 @@ import { AddSection } from './AddSection'
 import type { SectionAnchor } from './edits'
 import { addSection, setAdjectives, setTarget, setTitle, setVoice } from './edits'
 import { outlineEntries } from './outline'
+import { PlanMap } from './PlanMap'
 import { ReferenceList } from './ReferenceList'
 import { refusalText } from './refusalText'
 import { SectionRow } from './SectionRow'
 import { ToneFields } from './ToneFields'
+import type { OutlineView } from './ViewRail'
+import { ViewRail } from './ViewRail'
 import { AllocationNote, TargetField } from './WordCount'
 
 /**
@@ -49,6 +52,9 @@ export function PlanPanel({
 	const [openId, setOpenId] = useState<string | null>(null)
 	const [made, setMade] = useState<string | null>(null)
 	const [accented, setAccented] = useState<string | null>(null)
+	// Which View of the Outline is up. It belongs to the Panel rather than to
+	// the Plan: it is a way of looking, and the Article carries no memory of it.
+	const [view, setView] = useState<OutlineView>('list')
 
 	// Held: the accented row's effect lists it, and a new function each render
 	// would restart that row's scroll on every keystroke elsewhere in the Panel.
@@ -106,13 +112,23 @@ export function PlanPanel({
 				voice={plan.voice ?? null}
 			/>
 
-			<GroupHeading count={plan.outline.length}>Outline</GroupHeading>
+			<GroupHeading
+				actions={<ViewRail onView={setView} view={view} />}
+				count={plan.outline.length}
+			>
+				Outline
+			</GroupHeading>
 
-			{entries.length === 0 ? (
+			{entries.length === 0 && view === 'list' ? (
 				<EmptySlot className="min-h-[3.5rem]">
 					Sections appear as you agree on them in the Chat — and you can write your own
 					straight in here
 				</EmptySlot>
+			) : view === 'map' ? (
+				// The map carries its own `+` on the Article title, and draws the
+				// References itself, so the Panel's own two controls stand down while
+				// it is up rather than offering a second way to the same op.
+				<PlanMap edit={edit} plan={plan} />
 			) : (
 				<div className="flex items-start gap-3.5">
 					<div className="flex min-w-0 flex-1 flex-col gap-1.5">
@@ -135,9 +151,11 @@ export function PlanPanel({
 				</div>
 			)}
 
-			<div className="flex">
-				<AddSection onAdd={add} outline={plan.outline} />
-			</div>
+			{view === 'map' ? null : (
+				<div className="flex">
+					<AddSection onAdd={add} outline={plan.outline} />
+				</div>
+			)}
 
 			<GroupHeading count={plan.references.length}>References</GroupHeading>
 			<ReferenceList

@@ -1,24 +1,35 @@
 import { describe, expect, it } from 'vitest'
 
 import type { MapNode } from '../../src/client/plan/map'
-import { linkPath, planMap } from '../../src/client/plan/map'
-import type { OutlineNode } from '../../src/shared/plan'
+import { linkPath, planMap, subjectId } from '../../src/client/plan/map'
+import type { OutlineNode, Plan } from '../../src/shared/plan'
 import { makeNode, makePlan, makeReference } from '../shared/plan-fixtures'
 
 /**
  * Where the Map View puts each box. The defaults the layout ships with are the
  * numbers below: a box is 210 wide, columns sit 40 apart, and rows sit 10
- * apart. A box is 48 tall, plus 18 where it carries an intent note and 16 where
- * References are placed at it.
+ * apart. A Section is 48 tall, plus 18 where it carries an intent note; a
+ * Reference is 44.
+ *
+ * The map has two shapes. `references` is the Outline the interface offers —
+ * the title, one layer of Sections, and the References placed at each — and
+ * `sections` nests Sections instead. Both are exercised here.
  */
 
 const NODE = 210
 const COLUMN = NODE + 40
 const ROW = 48 + 10
 
-/** The map of a Plan whose Outline is the nodes given. */
-function mapOf(outline: OutlineNode[]) {
-	return planMap(makePlan({ title: 'The article', outline }))
+/** The map of a Plan whose Outline is the nodes given, in whichever shape. */
+function mapOf(outline: OutlineNode[], plan: Partial<Plan> = {}) {
+	return planMap(makePlan({ title: 'The article', outline, ...plan }))
+}
+
+/** The recursive shape, which is the deferred idea rather than the screen. */
+function nested(outline: OutlineNode[], plan: Partial<Plan> = {}) {
+	return planMap(makePlan({ title: 'The article', outline, ...plan }), {
+		branches: 'sections',
+	})
 }
 
 function at(nodes: MapNode[], key: string): MapNode {
@@ -34,18 +45,21 @@ describe('what the map holds', () => {
 
 		expect(nodes.map((node) => node.key)).toEqual(['root', 'n:a', 'n:b'])
 		expect(at(nodes, 'root').title).toBe('The article')
-		expect(at(nodes, 'root').nodeId).toBeNull()
+		expect(at(nodes, 'root').subject.kind).toBe('article')
 	})
 
-	// A Section whose id is "root" would otherwise take the title's own key.
-	it('keys a Section apart from the root even where its id is root', () => {
-		const { nodes } = mapOf([makeNode({ id: 'root' })])
+	// A Section and a Reference carrying the same id would otherwise take one
+	// key, and the root would take a Section's whose id is "root".
+	it('keys the three kinds apart', () => {
+		const { nodes } = mapOf([makeNode({ id: 'root' })], {
+			references: [makeReference({ id: 'root', nodeId: 'root', text: 'A passage' })],
+		})
 
-		expect(nodes.map((node) => node.key)).toEqual(['root', 'n:root'])
+		expect(nodes.map((node) => node.key)).toEqual(['root', 'n:root', 'r:root'])
 	})
 
-	it('numbers rows the way the Outline does', () => {
-		const { nodes } = mapOf([
+	it('numbers Sections the way the Outline does', () => {
+		const { nodes } = nested([
 			makeNode({ id: 'a' }),
 			makeNode({ id: 'b', children: [makeNode({ id: 'b1' }), makeNode({ id: 'b2' })] }),
 		])
@@ -61,15 +75,66 @@ describe('what the map holds', () => {
 	})
 })
 
-describe('where the boxes sit', () => {
-	it('puts each depth in its own column', () => {
-		const { nodes } = mapOf([makeNode({ id: 'a', children: [makeNode({ id: 'a1' })] })])
-
-		expect(at(nodes, 'root').x).toBe(0)
-		expect(at(nodes, 'n:a').x).toBe(COLUMN)
-		expect(at(nodes, 'n:a1').x).toBe(COLUMN * 2)
+describe('the shape the interface offers', () => {
+	const { nodes } = mapOf([makeNode({ id: 'a' }), makeNode({ id: 'b' })], {
+		references: [
+			makeReference({ id: 'r1', nodeId: 'b', source: { title: 'A report' } }),
+			makeReference({ id: 'r2', nodeId: null, source: { title: 'Unplaced' } }),
+			makeReference({ id: 'r3', nodeId: 'b', text: 'A passage' }),
+		],
 	})
 
+	it('hangs the References placed at a Section off it', () => {
+		expect(nodes.map((node) => node.key)).toEqual(['root', 'n:a', 'n:b', 'r:r1', 'r:r3'])
+	})
+
+	// Three columns and no more: the title, its Sections, and what they draw on.
+	it('puts each kind in its own column', () => {
+		expect(at(nodes, 'root').x).toBe(0)
+		expect(at(nodes, 'n:b').x).toBe(COLUMN)
+		expect(at(nodes, 'r:r1').x).toBe(COLUMN * 2)
+	})
+
+	// A Reference keeps the number it has in the Plan's list, the way a footnote
+	// does, rather than being renumbered by where it sits.
+	it('marks a Reference with its number in the list', () => {
+		expect(at(nodes, 'r:r1').ordinal).toBe('[1]')
+		expect(at(nodes, 'r:r3').ordinal).toBe('[3]')
+	})
+
+	it('names a Reference the way every other surface names it', () => {
+		expect(at(nodes, 'r:r1').title).toBe('A report')
+		expect(at(nodes, 'r:r3').title).toBe('“A passage”')
+	})
+
+	// The Reference is a box of its own here, so a `refs [1] [3]` line under the
+	// Section would say the same placement twice.
+	it('leaves the placed-References line off a Section', () => {
+		expect(at(nodes, 'n:b').referenceNumbers).toEqual([])
+	})
+
+	it('leaves an unplaced Reference off the map', () => {
+		expect(nodes.some((node) => node.key === 'r:r2')).toBe(false)
+	})
+})
+
+describe('the recursive shape', () => {
+	const { nodes } = nested([makeNode({ id: 'a', children: [makeNode({ id: 'a1' })] })], {
+		references: [makeReference({ id: 'r1', nodeId: 'a', text: 'A passage' })],
+	})
+
+	it('hangs the Sections nested inside a Section off it', () => {
+		expect(nodes.map((node) => node.key)).toEqual(['root', 'n:a', 'n:a1'])
+	})
+
+	// Nothing draws the Reference here, so the Section says where it sits.
+	it('says which References are placed at a Section instead', () => {
+		expect(at(nodes, 'n:a').referenceNumbers).toEqual([1])
+		expect(at(nodes, 'n:a').height).toBe(48 + 16)
+	})
+})
+
+describe('where the boxes sit', () => {
 	it('stacks the leaves down the page in reading order', () => {
 		const { nodes } = mapOf([makeNode({ id: 'a' }), makeNode({ id: 'b' })])
 
@@ -86,8 +151,8 @@ describe('where the boxes sit', () => {
 		expect(middle(root)).toBe((middle(at(nodes, 'n:a')) + middle(at(nodes, 'n:b'))) / 2)
 	})
 
-	// The height a Section takes is what a fixed-size tree layout cannot state,
-	// so the layout asks for it per node rather than assuming one number.
+	// The height a box takes is what a fixed-size tree layout cannot state, so
+	// the layout asks for it per box rather than assuming one number.
 	it('gives a Section carrying an intent note a taller box', () => {
 		const { nodes } = mapOf([
 			makeNode({ id: 'a', intent: 'What this Section does' }),
@@ -111,7 +176,7 @@ describe('a parent that would ride up into the box above it', () => {
 				makeNode({ id: 'b', children: [makeNode({ id: 'b1' })] }),
 			],
 		}),
-		{ heightOf: (_node, depth) => (depth === 1 ? 100 : 44) },
+		{ branches: 'sections', heightOf: ({ depth }) => (depth === 1 ? 100 : 44) },
 	)
 
 	it('drops the parent to the floor', () => {
@@ -125,18 +190,24 @@ describe('a parent that would ride up into the box above it', () => {
 })
 
 describe('no two boxes in one column overlap', () => {
-	// Three subtrees of different shapes, so the check meets a short one next to
-	// a tall one in both orders.
-	const { nodes } = mapOf([
-		makeNode({ id: 'a' }),
-		makeNode({
-			id: 'b',
-			intent: 'A note, which makes this box taller',
-			children: [makeNode({ id: 'b1' }), makeNode({ id: 'b2' }), makeNode({ id: 'b3' })],
-		}),
-		makeNode({ id: 'c', children: [makeNode({ id: 'c1' })] }),
-		makeNode({ id: 'd' }),
-	])
+	// Subtrees of different shapes, so the check meets a short one next to a
+	// tall one in both orders.
+	const { nodes } = mapOf(
+		[
+			makeNode({ id: 'a' }),
+			makeNode({ id: 'b', intent: 'A note, which makes this box taller' }),
+			makeNode({ id: 'c' }),
+			makeNode({ id: 'd' }),
+		],
+		{
+			references: [
+				makeReference({ id: 'r1', nodeId: 'b', text: 'One' }),
+				makeReference({ id: 'r2', nodeId: 'b', text: 'Two' }),
+				makeReference({ id: 'r3', nodeId: 'b', text: 'Three' }),
+				makeReference({ id: 'r4', nodeId: 'c', text: 'Four' }),
+			],
+		},
+	)
 
 	const depths = [...new Set(nodes.map((node) => node.depth))]
 
@@ -155,67 +226,60 @@ describe('no two boxes in one column overlap', () => {
 	})
 })
 
-describe('a collapsed Section', () => {
-	const { nodes, links } = planMap(
+describe('a folded Section', () => {
+	const { nodes } = mapOf([makeNode({ id: 'a' })], {
+		references: [
+			makeReference({ id: 'r1', nodeId: 'a', text: 'One' }),
+			makeReference({ id: 'r2', nodeId: 'a', text: 'Two' }),
+		],
+	})
+
+	const folded = planMap(
 		makePlan({
-			outline: [
-				makeNode({ id: 'a', children: [makeNode({ id: 'a1' }), makeNode({ id: 'a2' })] }),
+			outline: [makeNode({ id: 'a' })],
+			references: [
+				makeReference({ id: 'r1', nodeId: 'a', text: 'One' }),
+				makeReference({ id: 'r2', nodeId: 'a', text: 'Two' }),
 			],
 		}),
 		{ collapsed: new Set(['a']) },
 	)
 
 	it('leaves its children undrawn', () => {
-		expect(nodes.map((node) => node.key)).toEqual(['root', 'n:a'])
-		expect(links).toHaveLength(1)
+		expect(nodes).toHaveLength(4)
+		expect(folded.nodes.map((node) => node.key)).toEqual(['root', 'n:a'])
+		expect(folded.links).toHaveLength(1)
 	})
 
 	// The box says how much is folded away, so the writer knows there is
 	// something to open rather than reading a leaf.
 	it('still says how many children it holds', () => {
-		expect(at(nodes, 'n:a').childCount).toBe(2)
-		expect(at(nodes, 'n:a').collapsed).toBe(true)
-	})
-})
-
-describe('the References placed at a Section', () => {
-	// Numbered by position in the Plan's list, which is what `references.ts`
-	// marks them with — a footnote number rather than anything stored.
-	const { nodes } = planMap(
-		makePlan({
-			outline: [makeNode({ id: 'a' }), makeNode({ id: 'b' })],
-			references: [
-				makeReference({ id: 'r1', nodeId: 'b' }),
-				makeReference({ id: 'r2', nodeId: null }),
-				makeReference({ id: 'r3', nodeId: 'b' }),
-			],
-		}),
-	)
-
-	it('marks each box with the numbers placed there', () => {
-		expect(at(nodes, 'n:b').referenceNumbers).toEqual([1, 3])
-		expect(at(nodes, 'n:a').referenceNumbers).toEqual([])
-	})
-
-	// A Reference is placed at a Section or at nothing, so the title never
-	// carries one and its box never grows a row for it.
-	it('leaves the root out of it', () => {
-		expect(at(nodes, 'root').referenceNumbers).toEqual([])
-	})
-
-	it('gives the box a row to say them in', () => {
-		expect(at(nodes, 'n:b').height).toBe(48 + 16)
-		expect(at(nodes, 'n:a').height).toBe(48)
+		expect(at(folded.nodes, 'n:a').childCount).toBe(2)
+		expect(at(folded.nodes, 'n:a').collapsed).toBe(true)
 	})
 })
 
 describe('the path back to the root', () => {
-	const { nodes } = mapOf([makeNode({ id: 'a', children: [makeNode({ id: 'a1' })] })])
+	const { nodes } = mapOf([makeNode({ id: 'a' })], {
+		references: [makeReference({ id: 'r1', nodeId: 'a', text: 'One' })],
+	})
 
 	it('lists every ancestor, nearest first', () => {
-		expect(at(nodes, 'n:a1').ancestors).toEqual(['n:a', 'root'])
+		expect(at(nodes, 'r:r1').ancestors).toEqual(['n:a', 'root'])
 		expect(at(nodes, 'n:a').ancestors).toEqual(['root'])
 		expect(at(nodes, 'root').ancestors).toEqual([])
+	})
+})
+
+describe('what a box stands for', () => {
+	it('gives back the Plan id, and nothing at the title', () => {
+		const { nodes } = mapOf([makeNode({ id: 'a' })], {
+			references: [makeReference({ id: 'r1', nodeId: 'a', text: 'One' })],
+		})
+
+		expect(subjectId(at(nodes, 'root').subject)).toBeNull()
+		expect(subjectId(at(nodes, 'n:a').subject)).toBe('a')
+		expect(subjectId(at(nodes, 'r:r1').subject)).toBe('r1')
 	})
 })
 
@@ -223,8 +287,7 @@ describe('the curve between two boxes', () => {
 	const parent: MapNode = {
 		key: 'root',
 		parentKey: null,
-		nodeId: null,
-		node: null,
+		subject: { kind: 'article' },
 		title: '',
 		ordinal: '',
 		depth: 0,
@@ -262,10 +325,12 @@ describe('the curve between two boxes', () => {
 
 describe('what the SVG has to be big enough for', () => {
 	it('reaches the far edge of the deepest column and the lowest box', () => {
-		const { nodes, width, height } = mapOf([
-			makeNode({ id: 'a', children: [makeNode({ id: 'a1' })] }),
-			makeNode({ id: 'b' }),
-		])
+		const { nodes, width, height } = mapOf(
+			[makeNode({ id: 'a' }), makeNode({ id: 'b' })],
+			{
+				references: [makeReference({ id: 'r1', nodeId: 'a', text: 'One' })],
+			},
+		)
 
 		expect(width).toBe(COLUMN * 2 + NODE)
 		expect(height).toBe(Math.max(...nodes.map((node) => node.y + node.height)))

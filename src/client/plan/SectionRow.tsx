@@ -286,6 +286,25 @@ interface PlaceReferenceProps {
  */
 function PlaceReference({ plan, nodeId, edit, scopeName }: PlaceReferenceProps) {
 	const [asking, setAsking] = useState(false)
+	const trigger = useRef<HTMLButtonElement>(null)
+	const wasAsking = useRef(false)
+
+	// Coming back from the picker, the caret returns to the control that opened
+	// it. The row it was on has gone, so focus would otherwise fall to the page
+	// — where Escape has nothing to close and the row cannot tell it has been
+	// left. Guarded on having been open, so this does not take the caret off the
+	// title when the Section first opens.
+	useEffect(() => {
+		if (asking) {
+			wasAsking.current = true
+
+			return
+		}
+		if (!wasAsking.current) return
+
+		wasAsking.current = false
+		trigger.current?.focus()
+	}, [asking])
 
 	const placed = new Map(
 		outlineEntries(plan.outline).map((entry) => [entry.node.id, sectionLabel(entry)]),
@@ -300,6 +319,7 @@ function PlaceReference({ plan, nodeId, edit, scopeName }: PlaceReferenceProps) 
 	if (!asking) {
 		return (
 			<Button
+				ref={trigger}
 				className="self-start"
 				onClick={() => setAsking(true)}
 				size="sm"

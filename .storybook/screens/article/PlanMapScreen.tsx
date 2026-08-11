@@ -4,27 +4,31 @@ import { ArticleBar } from '../../../src/client/components/ArticleBar'
 import { Chip } from '../../../src/client/components/Chip'
 import { Frame, FrameBody } from '../../../src/client/components/Frame'
 import { Panel, PanelHeader } from '../../../src/client/components/Panel'
-import { cx } from '../../../src/client/lib/cx'
+import type { MapBranches } from '../../../src/client/plan/map'
 import { PlanMap } from '../../../src/client/plan/PlanMap'
+import type { OutlineView } from '../../../src/client/plan/ViewRail'
+import { ViewRail } from '../../../src/client/plan/ViewRail'
 import type { OutlineNode, Plan, ProposalInput } from '../../../src/shared/plan'
 import { applyProposal } from '../../../src/shared/plan'
 import { plan } from '../../mock/content'
 import { PlanOutline } from './PlanBlocks'
 
 /**
- * 2(k) — The Plan Panel's Map View. The same Outline the Panel lists, opened
- * left to right from the Article title.
+ * 2(k) and 2(l) — the Plan Panel's Map View, in its two shapes.
  *
- * The mock Plan is flat, and a map of a flat list is a comb. Two Sections are
- * given Subsections here so the screen shows what the View is for: where the
- * piece branches, and how deep it goes.
+ * 2(k) is the Plan the interface offers: the Article title, one layer of
+ * Sections, and the References placed at each. 2(l) nests Sections inside
+ * Sections instead, which the schema allows and no screen offers — it is here
+ * as an idea, and `context.md` §Subsection is why it is not the other one.
  */
 
 function nest(id: string, children: OutlineNode[]): (node: OutlineNode) => OutlineNode {
 	return (node) => (node.id === id ? { ...node, children } : node)
 }
 
-const mapped: Plan = {
+/** The mock Plan with two Sections given Subsections, for the idea screen. A
+ * map of a flat list is a comb, and the point of that screen is the branching. */
+const recursive: Plan = {
 	...plan,
 	outline: plan.outline
 		.map(
@@ -62,52 +66,17 @@ const mapped: Plan = {
 		),
 }
 
-const VIEWS = ['list', 'map'] as const
-type View = (typeof VIEWS)[number]
-
-/**
- * The switch between the Plan Panel's two Views, built like the Panel rail in
- * the bar above it: the one you are in is solid ink, and neither is accented,
- * because which View you are in is state rather than a decision the screen
- * wants from you — `foundations/Accent.mdx`.
- *
- * It sits here rather than in `src/client/plan/` because the Map View is not
- * wired into the app yet. Wiring it means giving `PlanPanel` a header row to
- * hold this, which it has none of today.
- */
-function ViewRail({ view, onView }: { view: View; onView: (view: View) => void }) {
-	return (
-		<div
-			aria-label="How the Outline is shown"
-			className="flex shrink-0 items-center gap-0.5 rounded-full border border-edge bg-sunk p-0.5"
-			role="group"
-		>
-			{VIEWS.map((one) => (
-				<button
-					key={one}
-					aria-pressed={one === view}
-					className={cx(
-						'rounded-full px-2.5 py-1 text-[0.6875rem] leading-none font-medium transition-colors',
-						one === view
-							? 'bg-ink text-paper'
-							: 'text-faint hover:bg-hush hover:text-muted',
-					)}
-					onClick={() => onView(one)}
-					type="button"
-				>
-					{one}
-				</button>
-			))}
-		</div>
-	)
+export interface PlanMapScreenProps {
+	/** What branches off a Section — `src/client/plan/map.ts`. */
+	branches?: MapBranches
 }
 
-export function PlanMapScreen() {
-	const [view, setView] = useState<View>('map')
+export function PlanMapScreen({ branches = 'references' }: PlanMapScreenProps) {
+	const [view, setView] = useState<OutlineView>('map')
 	// The applier behind the map, the way `EditablePlan` puts it behind the
 	// Panel: every edit runs the ops the app runs, so a refusal shows up here the
 	// way the writer would meet it.
-	const [edited, setEdited] = useState<Plan>(mapped)
+	const [edited, setEdited] = useState<Plan>(branches === 'sections' ? recursive : plan)
 
 	const edit = (ops: ProposalInput | null) => {
 		if (ops === null) return
@@ -134,15 +103,17 @@ export function PlanMapScreen() {
 					/>
 
 					{view === 'map' ? (
-						<PlanMap edit={edit} plan={edited} />
+						<PlanMap branches={branches} edit={edit} plan={edited} />
 					) : (
 						<PlanOutline className="max-w-md" outline={edited.outline} />
 					)}
 
 					<p className="text-[0.6875rem] text-faint">
-						{view === 'map'
-							? 'Click a Section to open its fields over the map, and + to make one inside it. Hover a Section to light its path back to the title, and fold what sits inside it — on this map only, and never in the Plan.'
-							: 'The same Outline, listed. Both Views read one Plan, so neither can show a Section the other does not.'}
+						{view === 'list'
+							? 'The same Outline, listed. Both Views read one Plan, so neither can show a Section the other does not.'
+							: branches === 'sections'
+								? 'An idea, not a screen: a Section holds Sections, as deep as you take it. + on any box makes one inside it.'
+								: 'Click a Section to open its fields, and + on the title to make one. Escape or a click on the space between boxes puts the fields away.'}
 					</p>
 				</Panel>
 			</FrameBody>
