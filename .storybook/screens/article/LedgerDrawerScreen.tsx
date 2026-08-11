@@ -16,8 +16,7 @@ import { midChat } from '../../mock/transcript'
 /**
  * Storybook fixture 2(f): the Offer ledger open over the Chat Panel's
  * transcript, beside a Plan Panel. The drawer, the toggle, and the rulings are
- * the ones the app runs, so the toggle closes what it opened and Escape
- * dismisses.
+ * the app's own rather than stand-ins, so all of them work here.
  */
 export function LedgerDrawerScreen() {
 	const { edit } = useArticle().plan

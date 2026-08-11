@@ -142,8 +142,7 @@ export const B2_ComposerGrows: Story = {
 		const transcript = canvasElement.querySelector('[data-scroller]')!
 		await expect(canvas.queryByLabelText('Scroll to the latest')).toBeNull()
 
-		// Scrolled up, the way back appears. The transcript otherwise stops
-		// mid-sentence against the composer with nothing saying there is more.
+		// Scrolled up, the way back appears.
 		transcript.scrollTop = 0
 		const back = await canvas.findByLabelText('Scroll to the latest')
 
@@ -231,16 +230,15 @@ export const F_LedgerDrawer: Story = {
 		// wrapper's edge rather than at the field.
 		const foot = () => transcript.getBoundingClientRect().bottom
 
-		// Open, the drawer covers the transcript and leaves the composer alone,
-		// which is what keeps the toggle in place for the second click.
+		// The drawer covers the transcript and leaves the composer alone, which is
+		// what keeps the toggle in place for the second click.
 		await expect(toggle.getAttribute('aria-expanded')).toBe('true')
 		await expect(drawer.getBoundingClientRect().top).toBeLessThan(foot())
 		await expect(drawer.getBoundingClientRect().bottom).toBeLessThanOrEqual(
 			composer.getBoundingClientRect().top,
 		)
 
-		// One control, both directions: no traverse to a close button elsewhere.
-		// The geometry waits, because closing is a 200ms slide.
+		// One control, both directions. The geometry waits on the 200ms slide.
 		await userEvent.click(toggle)
 		await expect(toggle.getAttribute('aria-expanded')).toBe('false')
 		await waitFor(() =>
@@ -248,8 +246,8 @@ export const F_LedgerDrawer: Story = {
 		)
 
 		// Opening moves the drawer and nothing else. Focus lands on it while it is
-		// still out of view, and a browser answers that by scrolling whatever box
-		// is clipping it — which drags the transcript up by a drawer's height.
+		// still out of view, and a browser reveals such an element by scrolling the
+		// box clipping it, which would carry the transcript with it.
 		const still = transcript.getBoundingClientRect().top
 		await userEvent.click(toggle)
 		await expect(toggle.getAttribute('aria-expanded')).toBe('true')

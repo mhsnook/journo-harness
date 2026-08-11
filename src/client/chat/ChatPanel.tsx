@@ -112,15 +112,11 @@ export function ChatPanel({
 				</div>
 				{transcript.atFoot ? null : (
 					<>
-						{/* The transcript otherwise stops mid-sentence against the composer,
-						    which reads as the end of it rather than as more below. */}
+						{/* Says the transcript carries on under the composer. */}
 						<div
 							aria-hidden
 							className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-surface to-transparent"
 						/>
-						{/* No width or padding of its own: `sizeClass` owns both, and a
-						    utility fighting it resolves by stylesheet order rather than by
-						    the order it is written in. */}
 						<Button
 							aria-label="Scroll to the latest"
 							className="absolute right-3 bottom-3 shadow-frame"
@@ -155,10 +151,10 @@ const AT_THE_FOOT = 24
  * Keeps the Chat pinned to the bottom as messages stream in. Releases when the
  * writer scrolls up, and re-takes within 24px of the foot.
  *
- * **Only scrolling up releases the pin, rather than the distance alone.** The
- * composer growing shortens the transcript under it, and the browser reports
- * that as a scroll before the observer gets to re-pin — measuring the distance
- * at that moment reads the writer's own paste as them scrolling away from it.
+ * Only an upward scroll releases it. The composer growing shortens the
+ * transcript under it, and the browser reports that as a scroll of its own
+ * before the observer can re-pin, so distance from the foot cannot tell the
+ * writer's paste apart from the writer scrolling away.
  *
  * Returns the ref for the scrolling element, the `onScroll` that tracks it,
  * whether it is at the foot, and a way back down.

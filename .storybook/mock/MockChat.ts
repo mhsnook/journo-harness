@@ -27,8 +27,8 @@ export type MockChat = Omit<
 	ChatPanelProps,
 	'plan' | 'className' | 'leading' | 'drawer'
 > & {
-	/** The same handle the transcript's Offer cards rule through, so a screen
-	 * that also draws the Ledger drawer rules through one ledger and not two. */
+	/** The handle the transcript's Offer cards rule through. A screen drawing
+	 * the Ledger drawer as well passes it this one. */
 	ledger: OfferLedgerHandle
 }
 

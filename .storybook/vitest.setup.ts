@@ -87,8 +87,8 @@ function checkLayout(canvasElement: HTMLElement) {
 		// either way, so it is skipped rather than counted as a pass.
 		//
 		// A Panel that keeps something fixed at its foot scrolls an inner element
-		// marked `data-scroller` instead of scrolling itself. Finding it here is
-		// what stops that Panel dropping out of this check by growing one.
+		// marked `data-scroller` instead of scrolling itself, so that is what gets
+		// scrolled here.
 		const panels = [...body.querySelectorAll<HTMLElement>(':scope > [data-panel]')]
 		if (panels.length < 2) continue
 
