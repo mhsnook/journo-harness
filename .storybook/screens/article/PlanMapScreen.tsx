@@ -141,7 +141,7 @@ export function PlanMapScreen() {
 
 					<p className="text-[0.6875rem] text-faint">
 						{view === 'map'
-							? 'Click a Section to open its fields over the map. Hover one to light its path back to the title, and use the control on a box to fold what sits inside it — on this map only, and never in the Plan.'
+							? 'Click a Section to open its fields over the map, and + to make one inside it. Hover a Section to light its path back to the title, and fold what sits inside it — on this map only, and never in the Plan.'
 							: 'The same Outline, listed. Both Views read one Plan, so neither can show a Section the other does not.'}
 					</p>
 				</Panel>

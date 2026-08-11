@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 
 import type { Plan, ProposalInput } from '../../shared/plan'
 import { cx } from '../lib/cx'
+import { addSection } from './edits'
 import type { MapNode, MapOptions } from './map'
 import { planMap } from './map'
 import { outlineEntries } from './outline'
@@ -90,6 +91,35 @@ export function PlanMap({ plan, edit, padding = 12, layout, className }: PlanMap
 			return next
 		})
 
+	/**
+	 * A new Section inside the box that was clicked, last among what is already
+	 * there. On the root that is a Section, and on a Section it is a Subsection —
+	 * which is the nesting the Panel cannot reach, because `AddSection` anchors
+	 * every choice it offers at the top level.
+	 *
+	 * A Subsection takes none: two levels is what the interface offers, and
+	 * anything deeper wants a word the writer already holds rather than a more
+	 * recursive one — `context.md` §Subsection.
+	 *
+	 * It opens on arrival, the way the Panel opens one the writer just added, so
+	 * the caret is already in the title.
+	 */
+	const add = (parentId: string | null) => {
+		const id = crypto.randomUUID()
+		edit(addSection({ parentId, beforeId: null }, id))
+
+		// A child of a folded Section would land undrawn, so adding one opens it.
+		if (parentId !== null) {
+			setCollapsed((held) => {
+				const next = new Set(held)
+				next.delete(parentId)
+
+				return next
+			})
+		}
+		setOpenId(id)
+	}
+
 	// A folded Section can hold the open one, and a Section can be deleted from
 	// its own detail. Either leaves `openId` naming a box that is not drawn, so
 	// the open node is looked up in what was laid out rather than in the Plan.
@@ -163,8 +193,12 @@ export function PlanMap({ plan, edit, padding = 12, layout, className }: PlanMap
 								folded={node.collapsed}
 								lit={onPath.has(node.key)}
 								node={node}
+								// A Subsection is as deep as the interface goes, so it takes no
+								// `+`. Depth 0 is the title and 1 is a Section, and both do.
+								onAdd={node.depth >= 2 ? undefined : () => add(node.nodeId)}
 								// The root is the Article title rather than a Section, so it
-								// folds nothing and has no Section fields to open.
+								// folds nothing and has no Section fields to open. It still
+								// takes a new Section, which is what `onAdd` gives it.
 								onFold={node.nodeId === null ? undefined : () => fold(node.nodeId!)}
 								onLeave={() => setLit((held) => (held === node.key ? null : held))}
 								onLight={() => setLit(node.key)}
@@ -178,7 +212,11 @@ export function PlanMap({ plan, edit, padding = 12, layout, className }: PlanMap
 				{detail === null ? null : (
 					<div
 						ref={measure}
-						className="absolute z-10 rounded-md shadow-frame"
+						// Grows out of the box's own top-left corner, which is where the
+						// writer clicked, so the fields read as that box opening rather than
+						// as a card arriving from nowhere. `starting:` is the opening state
+						// of a newly mounted element — @starting-style.
+						className="absolute z-10 origin-top-left scale-100 rounded-md opacity-100 shadow-frame transition-[opacity,transform] duration-150 ease-out motion-reduce:transition-none starting:scale-95 starting:opacity-0"
 						style={{
 							left: detail.node.x + padding,
 							top: detail.node.y + padding,
@@ -212,6 +250,9 @@ interface BoxProps {
 	onFold?: () => void
 	/** Absent at the root, which has no Section fields to open. */
 	onOpen?: () => void
+	/** Make a Section inside this one. Absent on a Subsection, which is as deep
+	 * as the interface goes. */
+	onAdd?: () => void
 	onLight: () => void
 	onLeave: () => void
 }
@@ -221,11 +262,23 @@ interface BoxProps {
  * the row it is in the Panel — number, title, target, intent note, References.
  *
  * The whole box opens the Section, and the title carries that as a real button
- * so it is reachable by keyboard and named to a screen reader. The fold control
- * stops the click going any further: it changes what the map draws, and the box
- * around it changes what the writer is editing.
+ * so it is reachable by keyboard and named to a screen reader.
+ *
+ * The right edge holds what the box says about its children: fold what is
+ * already inside, and add one more. Both stop the click going any further,
+ * because the box around them opens what the writer is editing instead.
  */
-function Box({ node, lit, folded, open, onFold, onOpen, onLight, onLeave }: BoxProps) {
+function Box({
+	node,
+	lit,
+	folded,
+	open,
+	onFold,
+	onOpen,
+	onAdd,
+	onLight,
+	onLeave,
+}: BoxProps) {
 	const root = node.nodeId === null
 	const title =
 		node.title === '' ? (root ? 'Untitled article' : 'Untitled section') : node.title
@@ -290,31 +343,57 @@ function Box({ node, lit, folded, open, onFold, onOpen, onLight, onLeave }: BoxP
 				)}
 
 				{/* The References placed here, by the numbers the Panel marks them
-				    with — a footnote number rather than anything stored. */}
+				    with — a footnote number rather than anything stored. One text
+				    node rather than one per number, so it reads as a single line. */}
 				{node.referenceNumbers.length === 0 ? null : (
-					<span className="flex min-w-0 items-baseline gap-1 font-mono text-[0.625rem] text-faint">
-						<span className="shrink-0">refs</span>
-						{node.referenceNumbers.map((number) => (
-							<span key={number}>[{number}]</span>
-						))}
+					<span className="truncate font-mono text-[0.625rem] text-faint">
+						{`refs ${node.referenceNumbers.map((number) => `[${number}]`).join(' ')}`}
 					</span>
 				)}
 			</div>
 
-			{node.childCount === 0 || onFold === undefined ? null : (
-				<button
-					aria-expanded={!folded}
-					aria-label={`${folded ? 'Open' : 'Fold'} the ${node.childCount} inside ${title}`}
-					className="mt-px shrink-0 rounded-full border border-edge px-1 font-mono text-[0.625rem] leading-[1.05rem] text-muted hover:border-ink hover:text-ink"
-					onClick={(event) => {
-						event.stopPropagation()
-						onFold()
-					}}
-					type="button"
-				>
-					{folded ? node.childCount : '–'}
-				</button>
-			)}
+			{/* The two controls about this box's children, on the edge the children
+			    hang off. Stacked rather than side by side, which costs the title
+			    one column of width instead of two. */}
+			<div className="flex h-full shrink-0 flex-col items-end justify-between">
+				{node.childCount === 0 || onFold === undefined ? (
+					<span />
+				) : (
+					<button
+						aria-expanded={!folded}
+						aria-label={`${folded ? 'Open' : 'Fold'} the ${node.childCount} inside ${title}`}
+						className={CONTROL}
+						onClick={(event) => {
+							event.stopPropagation()
+							onFold()
+						}}
+						type="button"
+					>
+						{folded ? node.childCount : '–'}
+					</button>
+				)}
+
+				{onAdd === undefined ? null : (
+					<button
+						aria-label={
+							root ? 'Add a Section to the Outline' : `Add a Section inside ${title}`
+						}
+						className={CONTROL}
+						onClick={(event) => {
+							event.stopPropagation()
+							onAdd()
+						}}
+						type="button"
+					>
+						+
+					</button>
+				)}
+			</div>
 		</div>
 	)
 }
+
+/** Both edge controls, which are the same target at the same weight: quiet
+ * until the pointer or the caret reaches them. */
+const CONTROL =
+	'shrink-0 rounded-full border border-edge px-1 font-mono text-[0.625rem] leading-[1.05rem] text-muted transition-colors hover:border-ink hover:text-ink'

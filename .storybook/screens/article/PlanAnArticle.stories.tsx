@@ -267,11 +267,14 @@ export const K_PlanMap: Story = {
 		<div className="flex flex-col">
 			<PlanMapScreen />
 			<Annotation>
-				A second View of the same Outline, opened left to right. It reads the Plan and
-				never writes it, so folding a Section here hides its Subsections on the map and
-				leaves the Plan alone — the Panel beside it still lists every one. The curve is
-				the cubic a mind map is drawn with: out of the parent's right edge, into the
-				child's left edge, turning halfway between the columns.
+				A second View of the same Outline, opened left to right. The right edge of a box
+				holds what it says about its children: fold what is already inside, and{' '}
+				<code>+</code> one more. On the title that makes a Section, and on a Section it
+				makes a Subsection — the nesting the Panel has no control for, because a map draws
+				nesting and a list does not. Folding is a read and changes nothing in the Plan;
+				everything else writes through the ops the Panel writes through. Clicking a box
+				opens its fields over the map, and placing a Reference is in there rather than on
+				the box, which only says which are placed.
 			</Annotation>
 		</div>
 	),
@@ -327,5 +330,49 @@ export const K_PlanMap: Story = {
 
 		await expect(canvas.queryByLabelText('Title of Subsection 2.1')).toBeNull()
 		await expect(canvas.getByText('The eleven review points')).toBeVisible()
+
+		// `+` on a Section makes a Subsection inside it — the nesting the Panel
+		// has no control for — and opens it with the caret in the title.
+		await userEvent.click(
+			canvas.getByLabelText('Add a Section inside What a faster city would look like'),
+		)
+		const made = canvas.getByLabelText('Title of Subsection 4.1') as HTMLInputElement
+		await expect(made).toHaveValue('')
+		await expect(made).toHaveFocus()
+
+		await userEvent.type(made, 'The permit desk that answers')
+		await userEvent.click(canvas.getByRole('button', { name: 'done' }))
+		await expect(canvas.getByText('The permit desk that answers')).toBeVisible()
+
+		// A Subsection carries no `+`: two levels is what the interface offers,
+		// and a third has no word the writer holds — context.md §Subsection.
+		await expect(
+			canvas.queryByLabelText('Add a Section inside The permit desk that answers'),
+		).toBeNull()
+		await expect(canvas.getByLabelText('Add a Section to the Outline')).toBeVisible()
+
+		// Placing a Reference is in the open Section's fields, not on the box: a
+		// box says which are placed there, and the detail is where that changes.
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'The permit desk that answers', exact: true }),
+		)
+		await userEvent.click(canvas.getByRole('button', { name: 'place a reference' }))
+		await userEvent.click(
+			canvas.getByRole('button', { name: /Zoning and the missing middle/ }),
+		)
+
+		await userEvent.click(canvas.getByRole('button', { name: 'done' }))
+
+		// It sits at the Subsection now. `getByText` would throw on a second
+		// match, so this is also the check that placing moved it rather than
+		// copying it: one Reference sits at one Section.
+		const box = canvas
+			.getByRole('button', { name: 'The permit desk that answers', exact: true })
+			.closest('foreignObject')
+
+		await expect(
+			within(box as unknown as HTMLElement).getByText('refs [2]'),
+		).toBeVisible()
+		await expect(canvas.getByText('refs [2]')).toBeVisible()
 	},
 }
