@@ -1,11 +1,11 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 
 import type { Plan, ProposalInput } from '../../shared/plan'
-import { findNodePath } from '../../shared/plan'
+import { sectionIsEmpty } from '../../shared/plan'
 import { cx } from '../lib/cx'
 import { addSection, deleteSection } from './edits'
-import type { MapBranches, MapNode, MapOptions } from './map'
-import { planMap, subjectId } from './map'
+import type { MapBranches, MapNode } from './map'
+import { planMap } from './map'
 import { outlineEntries } from './outline'
 import { referenceMark } from './references'
 import { SectionRow } from './SectionRow'
@@ -14,10 +14,10 @@ import { SectionRow } from './SectionRow'
  * The Map View of the Plan — the Plan opened left to right, with the Article
  * title as the root.
  *
- * `map.ts` holds every number on screen. This file draws them and computes
- * none, so what a test measures and what the writer sees cannot drift apart.
- * It also picks what branches off a Section: the References placed there, or
- * the Sections nested inside it — `MapOptions.branches`.
+ * `map.ts` places every box and every curve, and picks what branches off a
+ * Section — the References placed there, or the Sections nested inside it
+ * (`MapOptions.branches`). What this file adds is the padding around the
+ * drawing and where the open Section's fields are anchored.
  *
  * **Reading and writing are separate here.** Folding a Section hides its
  * children on this map and changes nothing in the Plan — that state belongs to
@@ -26,24 +26,24 @@ import { SectionRow } from './SectionRow'
  * applier would refuse — `docs/architecture.md` §"The Plan Panel's edits are
  * ops".
  *
- * **The detail sits over the map rather than in it.** Clicking a box opens the
- * Section's fields anchored at that box, painted above its neighbours without
- * joining the layout. Growing the box in place would reflow the whole map —
- * parents recentre and siblings move — so the writer would lose the shape they
- * clicked into. A dialog keeps the map still but throws away where they were.
+ * **The open Section's fields sit over the map, not in it.** They are anchored
+ * at the box and painted above its neighbours without joining the layout, so
+ * nothing reflows around what the writer is editing.
  *
- * The map draws at its own size and scrolls sideways rather than shrinking to
- * fit. Scaling it down would put the detail's pixels out of register with the
- * boxes, and would make a wide Plan unreadable anyway.
+ * **The map draws at its own size and scrolls sideways.** It must not be scaled
+ * to fit: the fields are positioned in the same units the boxes are, and
+ * scaling puts the two out of register.
  *
- * The one colour decision: the path back to the root lights in ink rather than
- * accent, because a hover is transient and the accent is rationed to one thing
- * per screen — `foundations/Accent.mdx`.
+ * The path back to the root lights in ink rather than accent, because the
+ * accent is rationed to one thing per screen — `foundations/Accent.mdx`.
  */
 
-/** How wide the detail sits. Room for the two fields `SectionRow` puts on one
- * line, which a box's own width has none of. */
+/** How wide the open Section's fields sit. Room for the two `SectionRow` puts
+ * on one line, which a box's own width has none of. */
 const DETAIL_WIDTH = 380
+
+/** Room around the drawing, so a lit box's border is not clipped. */
+const PADDING = 12
 
 export interface PlanMapProps {
 	plan: Plan
@@ -51,10 +51,6 @@ export interface PlanMapProps {
 	edit: (ops: ProposalInput | null) => void
 	/** What branches off a Section — `map.ts`. */
 	branches?: MapBranches
-	/** Room around the drawing, so a lit box's border is not clipped. */
-	padding?: number
-	/** Passed through to the layout — column widths, gaps, box heights. */
-	layout?: Omit<MapOptions, 'collapsed' | 'branches'>
 	className?: string
 }
 
@@ -62,8 +58,6 @@ export function PlanMap({
 	plan,
 	edit,
 	branches = 'references',
-	padding = 12,
-	layout,
 	className,
 }: PlanMapProps) {
 	// Which Sections are folded, which box the pointer or the caret is on, and
@@ -97,33 +91,21 @@ export function PlanMap({
 		return () => observer.disconnect()
 	}, [])
 
-	const { nodes, links, width, height } = planMap(plan, {
-		...layout,
-		branches,
-		collapsed,
-	})
+	// Held: a pointer sweeping the map fires `setLit` once per box, and none of
+	// those renders changes where anything sits.
+	const { nodes, links, width, height } = useMemo(
+		() => planMap(plan, { branches, collapsed }),
+		[plan, branches, collapsed],
+	)
 
 	/**
 	 * Leaves whatever is open, and throws away a Section `+` made that the writer
-	 * put nothing into. "Nothing" is every field, not just the two on the first
-	 * line: a Section with an intent note and no title is still work, and losing
-	 * it would be worse than leaving an untitled row on the map.
+	 * put nothing into. Empty means every field: a Section carrying only an
+	 * intent note is still work, and it stays.
 	 */
 	const close = () => {
 		if (made !== null) {
-			const path = findNodePath(plan.outline, made)
-			const node = path === null ? null : path[path.length - 1]!
-			const empty =
-				node !== null &&
-				node.title === '' &&
-				node.target === undefined &&
-				node.intent === undefined &&
-				node.voice === undefined &&
-				node.adjectives === undefined &&
-				node.children.length === 0 &&
-				!plan.references.some((reference) => reference.nodeId === made)
-
-			if (empty) edit(deleteSection(made))
+			if (sectionIsEmpty(plan, made)) edit(deleteSection(made))
 			setMade(null)
 		}
 		setOpenId(null)
@@ -145,12 +127,11 @@ export function PlanMap({
 
 	/**
 	 * A new Section inside the box that was clicked, last among what is already
-	 * there. On the root that is a Section of the Article; deeper than that only
-	 * `branches: 'sections'` offers it, because two levels is what the interface
-	 * offers and a third has no word the writer holds — `context.md` §Subsection.
+	 * there, open on arrival with the caret in its title.
 	 *
-	 * It opens on arrival, the way the Panel opens one the writer just added, so
-	 * the caret is already in the title.
+	 * Only the Article title offers this under `branches: 'references'`. Two
+	 * levels is what the interface offers, and a third has no word the writer
+	 * holds — `context.md` §Subsection.
 	 */
 	const add = (parentId: string | null) => {
 		const id = crypto.randomUUID()
@@ -178,11 +159,9 @@ export function PlanMap({
 			(node) => node.subject.kind === 'section' && node.subject.node.id === openId,
 		) ?? null
 	const entry =
-		opened === null
+		openId === null || opened === null
 			? null
-			: (outlineEntries(plan.outline).find(
-					(one) => one.node.id === subjectId(opened.subject),
-				) ?? null)
+			: (outlineEntries(plan.outline).find((one) => one.node.id === openId) ?? null)
 
 	const detail = opened === null || entry === null ? null : { node: opened, entry }
 
@@ -195,8 +174,8 @@ export function PlanMap({
 		for (const ancestor of traced.ancestors) onPath.add(ancestor)
 	}
 
-	const drawnWidth = width + padding * 2
-	const drawnHeight = height + padding * 2
+	const drawnWidth = width + PADDING * 2
+	const drawnHeight = height + PADDING * 2
 
 	return (
 		<div
@@ -217,19 +196,18 @@ export function PlanMap({
 		>
 			<div
 				className="relative"
-				// Every box and the open detail stop their own clicks, so what is left
-				// here is the space between them. Nothing else on the map does nothing
-				// on a click, which is what makes it the place to shut things.
+				// Every box and the open detail stop their own clicks, so a click that
+				// reaches here is one on the space between them.
 				onClick={close}
 				style={{
 					width:
 						detail === null
 							? drawnWidth
-							: Math.max(drawnWidth, detail.node.x + padding + DETAIL_WIDTH),
+							: Math.max(drawnWidth, detail.node.x + PADDING + DETAIL_WIDTH),
 					height:
 						detail === null
 							? drawnHeight
-							: Math.max(drawnHeight, detail.node.y + padding + detailHeight),
+							: Math.max(drawnHeight, detail.node.y + PADDING + detailHeight),
 				}}
 			>
 				<svg
@@ -237,7 +215,7 @@ export function PlanMap({
 					className="block"
 					height={drawnHeight}
 					role="img"
-					viewBox={`${-padding} ${-padding} ${drawnWidth} ${drawnHeight}`}
+					viewBox={`${-PADDING} ${-PADDING} ${drawnWidth} ${drawnHeight}`}
 					width={drawnWidth}
 				>
 					{links.map((link) => (
@@ -259,6 +237,14 @@ export function PlanMap({
 						// handlers below, which a property access would not.
 						const { subject } = node
 						const section = subject.kind === 'section' ? subject.node : null
+						// Where a new Section would go, and null where this box takes
+						// none. Under `references` that is the Article title alone.
+						const addsInto =
+							subject.kind === 'article'
+								? { id: null }
+								: section !== null && branches === 'sections'
+									? { id: section.id }
+									: null
 
 						return (
 							<foreignObject
@@ -272,16 +258,7 @@ export function PlanMap({
 									folded={node.collapsed}
 									lit={onPath.has(node.key)}
 									node={node}
-									// A Section takes a Section inside it only where the map is
-									// drawing nesting. Under `references` the Article title is
-									// the one box that takes one.
-									onAdd={
-										subject.kind === 'article'
-											? () => add(null)
-											: section !== null && branches === 'sections'
-												? () => add(section.id)
-												: undefined
-									}
+									onAdd={addsInto === null ? undefined : () => add(addsInto.id)}
 									// A Reference is edited in the References list, and the root
 									// is the Article title rather than a Section. Neither folds
 									// or opens Section fields.
@@ -306,8 +283,8 @@ export function PlanMap({
 						className="absolute z-10 origin-top-left scale-100 rounded-md opacity-100 shadow-frame transition-[opacity,transform] duration-150 ease-out motion-reduce:transition-none starting:scale-95 starting:opacity-0"
 						onClick={(event) => event.stopPropagation()}
 						style={{
-							left: detail.node.x + padding,
-							top: detail.node.y + padding,
+							left: detail.node.x + PADDING,
+							top: detail.node.y + PADDING,
 							width: DETAIL_WIDTH,
 						}}
 					>
@@ -368,12 +345,12 @@ function Box({
 	onLeave,
 }: BoxProps) {
 	const { subject } = node
-	const untitled = subject.kind === 'section' && node.title === ''
+	const untitled = node.title === ''
 	const title = untitled
-		? 'Untitled section'
-		: node.title === ''
+		? subject.kind === 'article'
 			? 'Untitled article'
-			: node.title
+			: 'Untitled section'
+		: node.title
 
 	const target = subject.kind === 'section' ? subject.node.target : undefined
 	const intent = subject.kind === 'section' ? subject.node.intent : undefined
@@ -457,10 +434,8 @@ function Box({
 			    hang off. Stacked rather than side by side, which costs the title
 			    one column of width instead of two. */}
 			{onFold === undefined && onAdd === undefined ? null : (
-				<div className="flex h-full shrink-0 flex-col items-end justify-between">
-					{node.childCount === 0 || onFold === undefined ? (
-						<span />
-					) : (
+				<div className="flex h-full shrink-0 flex-col items-end">
+					{node.childCount === 0 || onFold === undefined ? null : (
 						<button
 							aria-expanded={!folded}
 							aria-label={`${folded ? 'Open' : 'Fold'} the ${node.childCount} inside ${title}`}
@@ -482,7 +457,7 @@ function Box({
 									? 'Add a Section to the Outline'
 									: `Add a Section inside ${title}`
 							}
-							className={CONTROL}
+							className={cx(CONTROL, 'mt-auto')}
 							onClick={(event) => {
 								event.stopPropagation()
 								onAdd()

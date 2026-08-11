@@ -1,4 +1,5 @@
 import type { OutlineNode, Plan, Reference } from '../../shared/plan'
+import { outlineEntries } from './outline'
 import { referenceEntries, referenceName } from './references'
 
 /**
@@ -10,12 +11,11 @@ import { referenceEntries, referenceName } from './references'
  * none of it, so what a test measures and what the writer sees cannot drift
  * apart.
  *
- * **Two shapes, and `branches` picks one.** `references` is the Plan v1 has:
+ * **Two shapes, and `branches` picks one.** `references` is what the app draws:
  * the Article title, one layer of Sections, and the References placed at each.
  * `sections` branches the Sections nested inside a Section off it instead,
- * however deep the Plan goes — which the schema allows and the interface does
- * not offer, so it is an idea rather than a screen. `context.md` §Subsection
- * says why.
+ * however deep the Plan goes. The schema holds that nesting and no screen
+ * offers it — `context.md` §Subsection says why.
  */
 
 /** What one box stands for. The three are drawn alike and read differently. */
@@ -82,8 +82,7 @@ export interface MapOptions {
 	rowGap?: number
 	/**
 	 * How tall one box is. A function rather than a number, because what a box
-	 * carries decides how many lines it needs — which is the case a fixed-size
-	 * tree layout cannot express.
+	 * carries decides how many lines it needs.
 	 */
 	heightOf?: (box: Measured) => number
 	/** Sections whose children the map is leaving undrawn. */
@@ -160,8 +159,17 @@ export function planMap(plan: Plan, options: MapOptions = {}): PlanMap {
 	for (const entry of referenceEntries(plan)) {
 		const nodeId = entry.reference.nodeId
 		if (nodeId === null) continue
-		placed.set(nodeId, [...(placed.get(nodeId) ?? []), entry])
+		const held = placed.get(nodeId)
+		if (held === undefined) placed.set(nodeId, [entry])
+		else held.push(entry)
 	}
+
+	// Sections take the numbers the walk the Panel reads gives them, rather than
+	// being counted again here — architecture.md §4: one walk, so no two surfaces
+	// can number a Section differently.
+	const ordinals = new Map(
+		outlineEntries(plan.outline).map((entry) => [entry.node.id, entry.ordinal]),
+	)
 
 	// Where the next leaf goes, counting down the page in reading order.
 	let cursor = 0
@@ -188,7 +196,6 @@ export function planMap(plan: Plan, options: MapOptions = {}): PlanMap {
 	const place = (
 		subject: MapSubject,
 		depth: number,
-		ordinal: string,
 		parentKey: string | null,
 		ancestors: string[],
 	): MapNode => {
@@ -214,7 +221,7 @@ export function planMap(plan: Plan, options: MapOptions = {}): PlanMap {
 			parentKey,
 			subject,
 			title: titleOf(subject, plan),
-			ordinal,
+			ordinal: ordinalOf(subject, ordinals),
 			depth,
 			x: depth * (nodeWidth + columnGap),
 			y: 0,
@@ -232,12 +239,7 @@ export function planMap(plan: Plan, options: MapOptions = {}): PlanMap {
 		nodes.push(entry)
 
 		const drawn = isCollapsed ? [] : held
-		const laid = drawn.map((child, index) =>
-			place(child, depth + 1, childOrdinal(child, ordinal, index), key, [
-				key,
-				...ancestors,
-			]),
-		)
+		const laid = drawn.map((child) => place(child, depth + 1, key, [key, ...ancestors]))
 
 		const floor = floors[depth] ?? 0
 
@@ -262,7 +264,7 @@ export function planMap(plan: Plan, options: MapOptions = {}): PlanMap {
 		return entry
 	}
 
-	place({ kind: 'article' }, 0, '', null, [])
+	place({ kind: 'article' }, 0, null, [])
 
 	const byKey = new Map(nodes.map((entry) => [entry.key, entry]))
 	const links: MapLink[] = []
@@ -282,11 +284,12 @@ export function planMap(plan: Plan, options: MapOptions = {}): PlanMap {
 }
 
 /** A Reference keeps the number it has in the Plan's list, the way a footnote
- * does. A Section is numbered by where it sits. */
-function childOrdinal(subject: MapSubject, parentOrdinal: string, index: number): string {
+ * does. A Section takes the number the Outline gives it. */
+function ordinalOf(subject: MapSubject, ordinals: Map<string, string>): string {
+	if (subject.kind === 'article') return ''
 	if (subject.kind === 'reference') return `[${subject.number}]`
 
-	return parentOrdinal === '' ? `${index + 1}` : `${parentOrdinal}.${index + 1}`
+	return ordinals.get(subject.node.id) ?? ''
 }
 
 /** A Reference is named the way every other surface names it, so the map and

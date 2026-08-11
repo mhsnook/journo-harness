@@ -36,10 +36,9 @@ import { AllocationNote, TargetField } from './WordCount'
  * The row keeps its id through every operation here — a reorder anchors on the
  * neighbour it swaps with, and nothing regenerates an id.
  *
- * **The Panel still makes no Subsection.** The Plan carries them and this row
- * renders one, but no control in the Panel nests or lifts one: `AddSection`
- * anchors every choice it offers at the top level. The Map View's `+` makes one,
- * because a map draws nesting and a list does not.
+ * **Subsections are TBD.** The Plan carries them and this row renders one, but
+ * no control in the app makes, nests, or lifts one — every anchor on offer sits
+ * at the top level. The Outline is flat until the flat one is smooth.
  */
 
 export interface SectionRowProps {
@@ -271,44 +270,19 @@ interface PlaceReferenceProps {
 	plan: Plan
 	nodeId: string
 	edit: (ops: ProposalInput | null) => void
-	/** "Section 2", for the sentence the picker asks. */
+	/** "Section 2", for the control's name. */
 	scopeName: string
 }
 
 /**
- * Placing a Reference from the Section's side. The References list places one
- * from its own side, with the `<select>` on each row; both build the same
- * `placeReference` op, so neither is a second way of storing where a Reference
- * sits.
+ * Placing a Reference from the Section's side, as a picker of what to put here.
+ * `ReferenceList` places one from the Reference's side, with a `<select>` of
+ * Sections on each row; both build the same `placeReference` op, and both are
+ * that same control turned round, so neither reads as a different kind of act.
  *
- * A Reference sits at one Section, so picking one that is placed elsewhere
- * moves it. The row says where it is now, and nothing is offered twice.
+ * A Reference sits at one Section, so picking one placed elsewhere moves it.
  */
 function PlaceReference({ plan, nodeId, edit, scopeName }: PlaceReferenceProps) {
-	const [asking, setAsking] = useState(false)
-	const trigger = useRef<HTMLButtonElement>(null)
-	const wasAsking = useRef(false)
-
-	// Coming back from the picker, the caret returns to the control that opened
-	// it. The row it was on has gone, so focus would otherwise fall to the page
-	// — where Escape has nothing to close and the row cannot tell it has been
-	// left. Guarded on having been open, so this does not take the caret off the
-	// title when the Section first opens.
-	useEffect(() => {
-		if (asking) {
-			wasAsking.current = true
-
-			return
-		}
-		if (!wasAsking.current) return
-
-		wasAsking.current = false
-		trigger.current?.focus()
-	}, [asking])
-
-	const placed = new Map(
-		outlineEntries(plan.outline).map((entry) => [entry.node.id, sectionLabel(entry)]),
-	)
 	const options = referenceEntries(plan).filter(
 		(entry) => entry.reference.nodeId !== nodeId,
 	)
@@ -316,59 +290,26 @@ function PlaceReference({ plan, nodeId, edit, scopeName }: PlaceReferenceProps) 
 	// Nothing to offer: every Reference the Plan holds already sits here.
 	if (options.length === 0) return null
 
-	if (!asking) {
-		return (
-			<Button
-				ref={trigger}
-				className="self-start"
-				onClick={() => setAsking(true)}
-				size="sm"
-				variant="quiet"
-			>
-				place a reference
-			</Button>
-		)
-	}
+	const placed = new Map(
+		outlineEntries(plan.outline).map((entry) => [entry.node.id, sectionLabel(entry)]),
+	)
 
 	return (
-		<div
-			className="flex flex-col items-start gap-1 rounded-md border border-edge bg-sunk p-2"
-			onKeyDown={(event) => {
-				if (event.key !== 'Escape') return
-				event.stopPropagation()
-				setAsking(false)
-			}}
+		<select
+			aria-label={`Place a Reference at ${scopeName}`}
+			className="h-7 w-full rounded-md border border-edge bg-surface px-2 text-[0.75rem] text-muted"
+			onChange={(event) => edit(placeReference(plan, event.target.value, nodeId))}
+			value=""
 		>
-			<p className="label-meta text-muted">Place which Reference at {scopeName}?</p>
-
+			<option value="">place a reference…</option>
 			{options.map((entry) => (
-				<button
-					key={entry.reference.id}
-					className="flex w-full items-baseline gap-1.5 truncate rounded-md border border-edge bg-surface px-2 py-1.5 text-left text-[0.75rem] text-ink hover:border-ink/40 hover:bg-hush"
-					onClick={() => {
-						setAsking(false)
-						edit(placeReference(plan, entry.reference.id, nodeId))
-					}}
-					type="button"
-				>
-					<span className="label-meta shrink-0">{referenceMark(entry)}</span>
-					<span className="truncate">{referenceName(entry.reference)}</span>
-					{entry.reference.nodeId === null ? null : (
-						<span className="ml-auto shrink-0 text-[0.6875rem] text-faint">
-							now at {placed.get(entry.reference.nodeId) ?? '—'}
-						</span>
-					)}
-				</button>
+				<option key={entry.reference.id} value={entry.reference.id}>
+					{referenceMark(entry)} {referenceName(entry.reference)}
+					{entry.reference.nodeId === null
+						? ''
+						: ` — now at ${placed.get(entry.reference.nodeId) ?? '—'}`}
+				</option>
 			))}
-
-			<Button
-				className="self-end"
-				onClick={() => setAsking(false)}
-				size="sm"
-				variant="quiet"
-			>
-				cancel
-			</Button>
-		</div>
+		</select>
 	)
 }

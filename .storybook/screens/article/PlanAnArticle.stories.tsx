@@ -393,9 +393,9 @@ export const K_PlanMap: Story = {
 		await userEvent.click(
 			canvas.getByRole('button', { name: 'What a faster desk does', exact: true }),
 		)
-		await userEvent.click(canvas.getByRole('button', { name: 'place a reference' }))
-		await userEvent.click(
-			canvas.getByRole('button', { name: /Zoning and the missing middle/ }),
+		await userEvent.selectOptions(
+			canvas.getByLabelText('Place a Reference at Section 5'),
+			canvas.getByRole('option', { name: /Zoning and the missing middle/ }),
 		)
 		await userEvent.keyboard('{Escape}')
 

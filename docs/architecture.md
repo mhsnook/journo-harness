@@ -480,6 +480,19 @@ and a structural edit gets the consequences the ops already state — deleting a
 unplaces its References. The writer's own edits never go Stale: staleness is the gap
 between generating a Proposal and applying it, and there is no gap here.
 
+**The Outline has two Views: the list and the map.** `src/client/plan/ViewRail.tsx` sits
+in the Outline heading and switches between them, and `PlanPanel` holds which is up —
+it is a way of looking, and the Article carries no memory of it. `src/client/plan/map.ts`
+places every box and curve off the Plan, `PlanMap.tsx` draws them, and both Views write
+through the ops above, so neither can make a change the other could not. The map draws
+the Article title, its Sections, and the References placed at each; a Section carrying
+none is a leaf. Clicking a Section opens `SectionRow` over the map rather than in it, so
+nothing reflows around what the writer is editing.
+
+Two things the map holds that the list does not, both because they are ways of looking
+rather than facts about the Plan: which Sections are folded, and which box the pointer is
+on. Each View also holds its own open Section, so switching View closes what was open.
+
 **One writer holds the Plan and the debounce**, in `src/client/plan/writer.ts`. It applies
 each edit locally, sends after a pause for the four ops a keystroke produces, and sends at
 once for everything else. An update arriving from the Article Agent over an unsent edit is

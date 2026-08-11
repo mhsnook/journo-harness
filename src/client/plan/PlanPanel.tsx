@@ -119,16 +119,15 @@ export function PlanPanel({
 				Outline
 			</GroupHeading>
 
-			{entries.length === 0 && view === 'list' ? (
+			{view === 'map' ? (
+				// The map carries a `+` on the Article title and draws the References
+				// itself, so the Panel's two Outline controls stand down while it is up.
+				<PlanMap edit={edit} plan={plan} />
+			) : entries.length === 0 ? (
 				<EmptySlot className="min-h-[3.5rem]">
 					Sections appear as you agree on them in the Chat — and you can write your own
 					straight in here
 				</EmptySlot>
-			) : view === 'map' ? (
-				// The map carries its own `+` on the Article title, and draws the
-				// References itself, so the Panel's own two controls stand down while
-				// it is up rather than offering a second way to the same op.
-				<PlanMap edit={edit} plan={plan} />
 			) : (
 				<div className="flex items-start gap-3.5">
 					<div className="flex min-w-0 flex-1 flex-col gap-1.5">

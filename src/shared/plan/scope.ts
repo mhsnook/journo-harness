@@ -69,3 +69,28 @@ export function findNodePath(
 
 	return null
 }
+
+/**
+ * Whether a Section carries nothing at all — no title, no length, no note, no
+ * Tone, nothing inside it, and no Reference placed at it. What a surface does
+ * with the answer is its own business: the Map View throws away a Section the
+ * writer made and left like this.
+ *
+ * Written over the node's own fields rather than as a list of names, so a field
+ * added to `outlineNodeSchema` later counts here without being named. A field
+ * nobody has set reads `undefined`, and one the writer has set does not.
+ */
+export function sectionIsEmpty(plan: Plan, nodeId: string): boolean {
+	const path = findNodePath(plan.outline, nodeId)
+	if (path === null) return false
+
+	const bare = Object.entries(path[path.length - 1]!).every(([field, value]) => {
+		if (field === 'id') return true
+		if (field === 'title') return value === ''
+		if (field === 'children') return (value as OutlineNode[]).length === 0
+
+		return value === undefined
+	})
+
+	return bare && !plan.references.some((reference) => reference.nodeId === nodeId)
+}
