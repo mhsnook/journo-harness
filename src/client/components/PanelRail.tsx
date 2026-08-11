@@ -15,7 +15,7 @@ export interface PanelRailProps {
  * The four-Panel toggle: chat · plan · draft · notes.
  *
  * Deliberately *not* accented. Which Panels are open is state, not a call to
- * action, so the active pill is solid ink and the accent stays free for the
+ * action, so the active pill takes `green` and the accent stays free for the
  * one thing on screen that actually wants a decision.
  */
 export function PanelRail({ open, onToggle, className }: PanelRailProps) {
@@ -43,7 +43,7 @@ export function PanelRail({ open, onToggle, className }: PanelRailProps) {
 							: {})}
 						className={cx(
 							'rounded-full px-2.5 py-1 text-[0.6875rem] leading-none font-medium transition-colors',
-							isOpen ? 'bg-ink text-paper' : 'text-faint',
+							isOpen ? 'bg-green text-green-ink' : 'text-faint',
 							onToggle && !isOpen && 'hover:bg-hush hover:text-muted',
 						)}
 					>

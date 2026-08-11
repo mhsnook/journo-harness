@@ -13,7 +13,7 @@
 	/* Surfaces */
 	--color-paper: #e9e2d5; /* the desk the app sits on: sun-dried earth */
 	--color-surface: #fbf9f5; /* cards, panes, the writing surface */
-	--color-sunk: #ebe8d3; /* secondary panes: plan, notes, sidebars */
+	--color-sunk: #e5ead3; /* secondary panes: plan, notes, sidebars */
 	--color-hush: #e7dfe3; /* your own chat messages, inert fills */
 
 	/* Ink */
@@ -25,6 +25,13 @@
 	--color-rule: #dbd7c3; /* hairlines between rows */
 	--color-edge: #c2bda9; /* card borders, inputs */
 	--color-strong: #2b2229; /* the one heavy divider per frame */
+
+	/* The "you are here" fill: a selected tab, filter or pressed button. It is
+	   `sunk` saturated and inverted, so a selected pill reads as the deep of
+	   the pale green it sits on. State is not a request, so this is not the
+	   accent — but it need not be black either. */
+	--color-green: #4c6141;
+	--color-green-ink: #eef2e2; /* text sitting on green */
 
 	/* The accent — muted rose highlight. Rationed. */
 	--color-accent: #eec9c7;
