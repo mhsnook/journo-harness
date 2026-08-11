@@ -136,6 +136,26 @@ export const B2_ComposerGrows: Story = {
 		const latestBox = latest.getBoundingClientRect()
 		await expect(latestBox.top).toBeGreaterThanOrEqual(panelBox.top)
 		await expect(latestBox.bottom).toBeLessThanOrEqual(composerBox.top)
+
+		// Pinned to the foot, so there is nothing below and nothing offering to
+		// take you there.
+		const transcript = canvasElement.querySelector('[data-scroller]')!
+		await expect(canvas.queryByLabelText('Scroll to the latest')).toBeNull()
+
+		// Scrolled up, the way back appears. The transcript otherwise stops
+		// mid-sentence against the composer with nothing saying there is more.
+		transcript.scrollTop = 0
+		const back = await canvas.findByLabelText('Scroll to the latest')
+
+		await userEvent.click(back)
+		await waitFor(() =>
+			expect(
+				transcript.scrollHeight - transcript.scrollTop - transcript.clientHeight,
+			).toBeLessThanOrEqual(24),
+		)
+		await waitFor(() =>
+			expect(canvas.queryByLabelText('Scroll to the latest')).toBeNull(),
+		)
 	},
 }
 

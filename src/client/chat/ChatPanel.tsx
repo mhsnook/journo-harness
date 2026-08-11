@@ -1,9 +1,11 @@
 import { getToolName, isTextUIPart, isToolUIPart, type UIMessage } from 'ai'
-import { useEffect, useLayoutEffect, useRef, type ReactNode } from 'react'
+import { ChevronDown } from 'lucide-react'
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 
 import { proposePlanChangeTool, recordOffersTool } from '../../shared/chat'
 import type { Offer } from '../../shared/offer'
 import type { Plan } from '../../shared/plan'
+import { Button } from '../components/Button'
 import { ChatComposer, ChatMessage, ChatNote, ChatWorking } from '../components/Chat'
 import { Notice } from '../components/Notice'
 import { Panel, type PanelProps } from '../components/Panel'
@@ -108,6 +110,27 @@ export function ChatPanel({
 					{busy ? <ChatWorking>The guide is answering…</ChatWorking> : null}
 					{failure === null ? null : <Notice>{failure}</Notice>}
 				</div>
+				{transcript.atFoot ? null : (
+					<>
+						{/* The transcript otherwise stops mid-sentence against the composer,
+						    which reads as the end of it rather than as more below. */}
+						<div
+							aria-hidden
+							className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-surface to-transparent"
+						/>
+						{/* No width or padding of its own: `sizeClass` owns both, and a
+						    utility fighting it resolves by stylesheet order rather than by
+						    the order it is written in. */}
+						<Button
+							aria-label="Scroll to the latest"
+							className="absolute right-3 bottom-3 shadow-frame"
+							onClick={transcript.toFoot}
+							size="sm"
+						>
+							<ChevronDown aria-hidden className="size-3.5" />
+						</Button>
+					</>
+				)}
 				{drawer}
 			</div>
 
@@ -130,13 +153,32 @@ const AT_THE_FOOT = 24
 
 /**
  * Keeps the Chat pinned to the bottom as messages stream in. Releases when the
- * writer scrolls up more than 24px, and re-takes when they scroll back down.
+ * writer scrolls up, and re-takes within 24px of the foot.
  *
- * Returns the ref for the scrolling element and the `onScroll` that tracks it.
+ * **Only scrolling up releases the pin, rather than the distance alone.** The
+ * composer growing shortens the transcript under it, and the browser reports
+ * that as a scroll before the observer gets to re-pin — measuring the distance
+ * at that moment reads the writer's own paste as them scrolling away from it.
+ *
+ * Returns the ref for the scrolling element, the `onScroll` that tracks it,
+ * whether it is at the foot, and a way back down.
  */
 function useFootOfTranscript() {
 	const panel = useRef<HTMLDivElement>(null)
 	const pinned = useRef(true)
+	const wasAt = useRef(0)
+	// The ref drives the pin, which has to be current inside a scroll handler and
+	// an observer. This mirrors it for the controls that have to be drawn, and
+	// only on the crossing, so a scroll gesture costs one render rather than one
+	// per event.
+	const [atFoot, setAtFoot] = useState(true)
+
+	const settle = (next: boolean) => {
+		if (pinned.current === next) return
+
+		pinned.current = next
+		setAtFoot(next)
+	}
 
 	const foot = () => {
 		if (panel.current !== null && pinned.current) {
@@ -163,12 +205,24 @@ function useFootOfTranscript() {
 
 	return {
 		ref: panel,
+		atFoot,
 		onScroll: () => {
 			const scroller = panel.current
 			if (scroller === null) return
 
-			pinned.current =
-				scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight <= AT_THE_FOOT
+			const off = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight
+			if (off <= AT_THE_FOOT) settle(true)
+			else if (scroller.scrollTop < wasAt.current) settle(false)
+
+			wasAt.current = scroller.scrollTop
+		},
+		toFoot: () => {
+			const scroller = panel.current
+			if (scroller === null) return
+
+			settle(true)
+			wasAt.current = scroller.scrollHeight
+			scroller.scrollTo({ top: scroller.scrollHeight, behavior: 'smooth' })
 		},
 	}
 }
