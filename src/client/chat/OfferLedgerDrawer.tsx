@@ -47,8 +47,13 @@ export function OfferLedgerDrawer({
 
 	// Focus moves in on open, so Escape has an owner and the writer's next Tab
 	// starts inside the drawer rather than back in the transcript behind it.
+	//
+	// **`preventScroll` is what keeps the Chat still.** At the moment focus
+	// lands, the drawer is still translated out of view, and the browser's reply
+	// to that is to scroll the box clipping it — dragging the transcript up by a
+	// drawer's height and easing it back as the drawer rises.
 	useEffect(() => {
-		if (open) panel.current?.focus()
+		if (open) panel.current?.focus({ preventScroll: true })
 	}, [open])
 
 	const shown = filter === 'all' ? rows.offers : rows.byDisposition[filter]

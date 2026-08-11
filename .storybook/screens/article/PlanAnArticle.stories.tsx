@@ -247,13 +247,21 @@ export const F_LedgerDrawer: Story = {
 			expect(drawer.getBoundingClientRect().top).toBeGreaterThanOrEqual(foot() - 1),
 		)
 
-		// Escape dismisses, and focus lands back on the toggle rather than in the
-		// transcript behind it.
+		// Opening moves the drawer and nothing else. Focus lands on it while it is
+		// still out of view, and a browser answers that by scrolling whatever box
+		// is clipping it — which drags the transcript up by a drawer's height.
+		const still = transcript.getBoundingClientRect().top
 		await userEvent.click(toggle)
 		await expect(toggle.getAttribute('aria-expanded')).toBe('true')
+		await expect(transcript.getBoundingClientRect().top).toBe(still)
+		await expect(drawer.parentElement!.scrollTop).toBe(0)
+
+		// Escape dismisses, and focus lands back on the toggle rather than in the
+		// transcript behind it.
 		await userEvent.keyboard('{Escape}')
 		await expect(toggle.getAttribute('aria-expanded')).toBe('false')
 		await expect(document.activeElement).toBe(toggle)
+		await expect(transcript.getBoundingClientRect().top).toBe(still)
 	},
 }
 
