@@ -12,7 +12,7 @@ import { midChat } from '../../mock/transcript'
 export function MidChatScreen() {
 	const { edit, refusal } = useArticle().plan
 	const plan = useMockPlan()
-	const chat = useMockChat(midChat)
+	const { ledger: _ledger, ...chat } = useMockChat(midChat)
 
 	return (
 		<Frame width={880}>

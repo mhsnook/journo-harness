@@ -11,7 +11,10 @@ import {
 	waitingCount,
 } from '../../src/client/chat/proposals'
 import { useArticle } from '../../src/client/lib/article'
-import { useOfferLedger } from '../../src/client/lib/useOfferLedger'
+import {
+	type OfferLedgerHandle,
+	useOfferLedger,
+} from '../../src/client/lib/useOfferLedger'
 
 /**
  * A Chat held in memory, so a story runs the real applier and the real Offer
@@ -20,7 +23,14 @@ import { useOfferLedger } from '../../src/client/lib/useOfferLedger'
  * sentence back.
  */
 
-export type MockChat = Omit<ChatPanelProps, 'plan' | 'className' | 'leading'>
+export type MockChat = Omit<
+	ChatPanelProps,
+	'plan' | 'className' | 'leading' | 'drawer'
+> & {
+	/** The handle the transcript's Offer cards rule through. A screen drawing
+	 * the Ledger drawer as well passes it this one. */
+	ledger: OfferLedgerHandle
+}
 
 export function useMockChat(start: UIMessage[]): MockChat {
 	const { plan: connection } = useArticle()
@@ -60,6 +70,7 @@ export function useMockChat(start: UIMessage[]): MockChat {
 	}
 
 	return {
+		ledger,
 		messages,
 		busy: false,
 		waiting: waitingCount(messages),
