@@ -14,6 +14,7 @@ import { ChatWithReferencesScreen } from './ChatWithReferencesScreen'
 import { LedgerDrawerScreen } from './LedgerDrawerScreen'
 import { LedgerPopoverScreen } from './LedgerPopoverScreen'
 import { MidChatScreen } from './MidChatScreen'
+import { PlanMapScreen } from './PlanMapScreen'
 import { PlanSheetScreen } from './PlanSheetScreen'
 import { ReadyToDraftScreen } from './ReadyToDraftScreen'
 import { StaleProposalScreen } from './StaleProposalScreen'
@@ -258,4 +259,40 @@ export const J_StaleProposal: Story = {
 			</Annotation>
 		</div>
 	),
+}
+
+export const K_PlanMap: Story = {
+	name: '2(k) The Outline as a map',
+	render: () => (
+		<div className="flex flex-col">
+			<PlanMapScreen />
+			<Annotation>
+				A second View of the same Outline, opened left to right. It reads the Plan and
+				never writes it, so folding a Section here hides its Subsections on the map and
+				leaves the Plan alone — the Panel beside it still lists every one. The curve is
+				the cubic a mind map is drawn with: out of the parent's right edge, into the
+				child's left edge, turning halfway between the columns.
+			</Annotation>
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement)
+
+		// Folding is a read affordance, so the Section stays and only what sits
+		// inside it goes.
+		const fold = canvas.getByLabelText('Fold the 2 inside How review became the process')
+		await expect(canvas.getByText('The eleven points')).toBeVisible()
+
+		await userEvent.click(fold)
+		await expect(canvas.queryByText('The eleven points')).toBeNull()
+		await expect(canvas.getByText('How review became the process')).toBeVisible()
+
+		// The control now says how much is folded away, so the box does not read
+		// as a Section with nothing inside it.
+		const open = canvas.getByLabelText('Open the 2 inside How review became the process')
+		await expect(open).toHaveTextContent('2')
+
+		await userEvent.click(open)
+		await expect(canvas.getByText('The eleven points')).toBeVisible()
+	},
 }
