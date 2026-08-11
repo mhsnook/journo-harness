@@ -102,13 +102,10 @@ export function chatPackMessages(
  * Where the Plan goes: in front of the last message where that message is the
  * writer's, and after the whole conversation otherwise.
  *
- * **A tool result may not be separated from the call it answers.** A tool
- * message answers the assistant message before it, and the AI SDK throws
- * `MissingToolResultsError` at a user message that arrives with a call still
- * unanswered — so the turn that resumes after the writer rules on a Proposal
- * ends in a tool result, and the Plan has to follow it rather than split the
- * pair. That turn wants the Plan last in any case: the ruling has just changed
- * it, and what the model reads is then the Plan the Accept produced.
+ * The Plan is a user message, and the AI SDK refuses a prompt that carries a
+ * user message between an assistant's tool call and the tool result answering
+ * it. A transcript ends in a tool result on the turn that resumes after the
+ * writer rules on a Proposal, so that is the turn this keeps legal.
  */
 function planSlot(conversation: ModelMessage[]): number {
 	const last = conversation.length - 1
