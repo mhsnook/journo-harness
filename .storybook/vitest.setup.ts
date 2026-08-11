@@ -85,19 +85,27 @@ function checkLayout(canvasElement: HTMLElement) {
 		// Each Panel scrolls its own Y: reading down the Plan leaves the Chat
 		// beside it where it was. A Panel with nothing to scroll says nothing
 		// either way, so it is skipped rather than counted as a pass.
+		//
+		// A Panel that keeps something fixed at its foot scrolls an inner element
+		// marked `data-scroller` instead of scrolling itself. Finding it here is
+		// what stops that Panel dropping out of this check by growing one.
 		const panels = [...body.querySelectorAll<HTMLElement>(':scope > [data-panel]')]
 		if (panels.length < 2) continue
 
-		for (const panel of panels) {
-			if (panel.scrollHeight <= panel.clientHeight + TOLERANCE) continue
+		const scrollers = panels.map(
+			(panel) => panel.querySelector<HTMLElement>('[data-scroller]') ?? panel,
+		)
 
-			panel.scrollTop = panel.scrollHeight
+		for (const scroller of scrollers) {
+			if (scroller.scrollHeight <= scroller.clientHeight + TOLERANCE) continue
+
+			scroller.scrollTop = scroller.scrollHeight
 			expect
-				.soft(panel.scrollTop, `Panel did not scroll — ${describe(panel)}`)
+				.soft(scroller.scrollTop, `Panel did not scroll — ${describe(scroller)}`)
 				.toBeGreaterThan(0)
 
-			for (const neighbour of panels) {
-				if (neighbour === panel) continue
+			for (const neighbour of scrollers) {
+				if (neighbour === scroller) continue
 				expect
 					.soft(
 						neighbour.scrollTop,
@@ -106,7 +114,7 @@ function checkLayout(canvasElement: HTMLElement) {
 					.toBe(0)
 			}
 
-			panel.scrollTop = 0
+			scroller.scrollTop = 0
 		}
 	}
 }

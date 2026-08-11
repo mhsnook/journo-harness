@@ -43,6 +43,9 @@ export interface ChatPanelProps {
 	placeholder?: string
 	/** Left of send — the Offer ledger toggle. */
 	leading?: ReactNode
+	/** A layer over the transcript, stopping at the top of the composer. The
+	 * Offer ledger is the one of these. */
+	drawer?: ReactNode
 	className?: string
 }
 
@@ -63,45 +66,52 @@ export function ChatPanel({
 	divider,
 	placeholder,
 	leading,
+	drawer,
 	className,
 }: ChatPanelProps) {
 	const rows = new Map(offers.map((offer) => [offer.id, offer]))
 	const transcript = useFootOfTranscript()
 
 	return (
-		<Panel
-			className={className}
-			divider={divider}
-			onScroll={transcript.onScroll}
-			padded={false}
-			ref={transcript.ref}
-		>
-			<div className="flex flex-1 flex-col gap-3.5 p-3.5">
-				{messages.map((message) => (
-					<Turn
-						key={message.id}
-						message={message}
-						onAccept={onAccept}
-						onAcceptOffer={onAcceptOffer}
-						onDecline={onDecline}
-						onDeclineOffer={onDeclineOffer}
-						plan={plan}
-						refusals={refusals}
-						rows={rows}
-					/>
-				))}
+		<Panel className={className} divider={divider} padded={false}>
+			{/* The transcript and the drawer share this box, so the drawer covers
+			    what the writer is reading and stops at the composer. `overflow-hidden`
+			    is what makes the drawer slide out of sight behind it. */}
+			<div className="relative flex min-h-0 flex-1 overflow-hidden">
+				<div
+					data-scroller=""
+					className="flex min-h-0 flex-1 flex-col gap-3.5 overflow-y-auto p-3.5"
+					onScroll={transcript.onScroll}
+					ref={transcript.ref}
+				>
+					{messages.map((message) => (
+						<Turn
+							key={message.id}
+							message={message}
+							onAccept={onAccept}
+							onAcceptOffer={onAcceptOffer}
+							onDecline={onDecline}
+							onDeclineOffer={onDeclineOffer}
+							plan={plan}
+							refusals={refusals}
+							rows={rows}
+						/>
+					))}
 
-				{messages.length === 0 ? (
-					<ChatNote>
-						Say what the piece is about. The Plan fills in beside you as you agree on it.
-					</ChatNote>
-				) : null}
+					{messages.length === 0 ? (
+						<ChatNote>
+							Say what the piece is about. The Plan fills in beside you as you agree on
+							it.
+						</ChatNote>
+					) : null}
 
-				{busy ? <ChatWorking>The guide is answering…</ChatWorking> : null}
-				{failure === null ? null : <Notice>{failure}</Notice>}
+					{busy ? <ChatWorking>The guide is answering…</ChatWorking> : null}
+					{failure === null ? null : <Notice>{failure}</Notice>}
+				</div>
+				{drawer}
 			</div>
 
-			<div className="sticky bottom-0 z-10 border-t border-edge bg-surface px-3.5 py-2.5">
+			<div className="shrink-0 border-t border-edge bg-surface px-3.5 py-2.5">
 				<ChatComposer
 					blocked={parked(waiting)}
 					busy={busy}
@@ -125,7 +135,7 @@ const AT_THE_FOOT = 24
  * Returns the ref for the scrolling element and the `onScroll` that tracks it.
  */
 function useFootOfTranscript() {
-	const panel = useRef<HTMLElement>(null)
+	const panel = useRef<HTMLDivElement>(null)
 	const pinned = useRef(true)
 
 	const foot = () => {
@@ -141,8 +151,8 @@ function useFootOfTranscript() {
 		const scroller = panel.current
 		if (scroller === null) return
 
-		// The children grow as the transcript and the composer do; the scroller
-		// itself changes height when the window does.
+		// The children grow as turns arrive; the scroller itself changes height
+		// when the window does, or when the composer grows under it.
 		const watch = new ResizeObserver(foot)
 		watch.observe(scroller)
 		for (const child of scroller.children) watch.observe(child)

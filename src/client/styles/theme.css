@@ -44,8 +44,12 @@
 
 	--radius-frame: 0.625rem;
 
-	/* One elevation, used only on the outermost frame */
+	/* One elevation, in the two directions something lifts: the outermost frame
+	   casts down, and a drawer rising from the foot of a Panel casts up. Same
+	   depth, mirrored — a second depth would be a second elevation. */
 	--shadow-frame: 0 1px 2px rgb(27 26 23 / 0.05), 0 8px 24px -16px rgb(27 26 23 / 0.25);
+	--shadow-drawer:
+		0 -1px 2px rgb(27 26 23 / 0.05), 0 -8px 24px -16px rgb(27 26 23 / 0.25);
 }
 
 @layer base {

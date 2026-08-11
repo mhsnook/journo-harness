@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
-import { expect, userEvent, within } from 'storybook/test'
+import { expect, userEvent, waitFor, within } from 'storybook/test'
 
 import { Annotation } from '../../../src/client/components/Annotation'
 import { Frame, FrameBody } from '../../../src/client/components/Frame'
@@ -191,13 +191,50 @@ export const F_LedgerDrawer: Story = {
 				<LedgerDrawerScreen />
 			</MockArticle>
 			<Annotation>
-				The same list at every stage — early on most rows read Undecided, later most are
-				placed. That is precisely why there is no separate triage screen. Accepting a row
-				on the left copies it into the Plan on the right: the row keeps what was turned
-				up, and the copy is the writer's to edit.
+				A drawer over the transcript, not a screen the Chat swaps to: the composer stays
+				uncovered, so the control that opened it closes it, and Escape does too. The same
+				list at every stage — early on most rows read Undecided, later most are placed,
+				which is why there is no separate triage screen. Accepting a row copies it into
+				the Plan on the right: the row keeps what was turned up, and the copy is the
+				writer's to edit.
 			</Annotation>
 		</div>
 	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement)
+		const toggle = canvas.getByRole('button', { name: /Offer ledger/ })
+		const drawer = canvasElement.querySelector('[aria-label="Offer ledger"]')!
+		const transcript = canvasElement.querySelector('[data-scroller]')!
+		const composer = canvasElement.querySelector('[data-composer]')!
+		// Measured against the transcript's foot, not the composer's own box: the
+		// composer sits inside a padded wrapper, and the drawer stops at the
+		// wrapper's edge rather than at the field.
+		const foot = () => transcript.getBoundingClientRect().bottom
+
+		// Open, the drawer covers the transcript and leaves the composer alone,
+		// which is what keeps the toggle in place for the second click.
+		await expect(toggle.getAttribute('aria-expanded')).toBe('true')
+		await expect(drawer.getBoundingClientRect().top).toBeLessThan(foot())
+		await expect(drawer.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+			composer.getBoundingClientRect().top,
+		)
+
+		// One control, both directions: no traverse to a close button elsewhere.
+		// The geometry waits, because closing is a 200ms slide.
+		await userEvent.click(toggle)
+		await expect(toggle.getAttribute('aria-expanded')).toBe('false')
+		await waitFor(() =>
+			expect(drawer.getBoundingClientRect().top).toBeGreaterThanOrEqual(foot() - 1),
+		)
+
+		// Escape dismisses, and focus lands back on the toggle rather than in the
+		// transcript behind it.
+		await userEvent.click(toggle)
+		await expect(toggle.getAttribute('aria-expanded')).toBe('true')
+		await userEvent.keyboard('{Escape}')
+		await expect(toggle.getAttribute('aria-expanded')).toBe('false')
+		await expect(document.activeElement).toBe(toggle)
+	},
 }
 
 export const G_LedgerPopover: Story = {
