@@ -112,7 +112,10 @@ export function SectionRow({
 				style={{ marginLeft: depth * 20 }}
 			>
 				<button
-					className="-mx-1.5 rounded-md px-1.5 py-1 text-left hover:bg-hush"
+					// The border is transparent at rest rather than absent, so the row
+					// does not move by a pixel when the pointer arrives. `hush` is not
+					// used here: the mauve turns muddy on the green of a `sunk` pane.
+					className="-mx-1.5 rounded-md border border-transparent px-1.5 py-1 text-left hover:border-edge hover:bg-surface"
 					onClick={() => onOpen(node.id)}
 					// Opening on mousedown, because the Section that is open closes on
 					// the focus leaving it — which relays out the list and moves this

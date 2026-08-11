@@ -1,5 +1,11 @@
 @import 'tailwindcss';
 
+/* Atkinson Hyperlegible Next, self-hosted. It was drawn by the Braille
+   Institute to be read at a glance: the letters that usually collide — I l 1,
+   O 0, b d — are drawn apart from each other. One variable file covers every
+   weight the interface asks for. */
+@import '@fontsource-variable/atkinson-hyperlegible-next';
+
 /*
  * Joarness design tokens.
  *
@@ -40,7 +46,9 @@
 	--color-accent-ink: #6a2f34; /* text sitting on accent */
 
 	/* Type */
-	--font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+	--font-sans:
+		'Atkinson Hyperlegible Next Variable', ui-sans-serif, system-ui, -apple-system,
+		'Segoe UI', Roboto, sans-serif;
 	--font-serif:
 		'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, ui-serif, serif;
 	--font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
