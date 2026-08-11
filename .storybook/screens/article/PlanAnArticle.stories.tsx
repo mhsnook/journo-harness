@@ -305,5 +305,27 @@ export const K_PlanMap: Story = {
 
 		await userEvent.click(open)
 		await expect(canvas.getByText('The eleven points')).toBeVisible()
+
+		// Clicking a box opens the Section's own fields over the map, anchored at
+		// the box. The map keeps its shape underneath: nothing reflows around it.
+		const before = canvas
+			.getByLabelText('Map of Why Cities Stopped Building')
+			.getBoundingClientRect()
+
+		await userEvent.click(canvas.getByRole('button', { name: 'The eleven points' }))
+		const title = canvas.getByLabelText('Title of Subsection 2.1') as HTMLInputElement
+		await expect(title).toHaveValue('The eleven points')
+		await expect(
+			canvas.getByLabelText('Map of Why Cities Stopped Building').getBoundingClientRect(),
+		).toEqual(before)
+
+		// It writes through the ops the Panel writes through, so the map redraws
+		// off the Plan rather than off anything the detail holds.
+		await userEvent.clear(title)
+		await userEvent.type(title, 'The eleven review points')
+		await userEvent.click(canvas.getByRole('button', { name: 'done' }))
+
+		await expect(canvas.queryByLabelText('Title of Subsection 2.1')).toBeNull()
+		await expect(canvas.getByText('The eleven review points')).toBeVisible()
 	},
 }

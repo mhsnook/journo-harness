@@ -6,7 +6,8 @@ import { Frame, FrameBody } from '../../../src/client/components/Frame'
 import { Panel, PanelHeader } from '../../../src/client/components/Panel'
 import { cx } from '../../../src/client/lib/cx'
 import { PlanMap } from '../../../src/client/plan/PlanMap'
-import type { OutlineNode, Plan } from '../../../src/shared/plan'
+import type { OutlineNode, Plan, ProposalInput } from '../../../src/shared/plan'
+import { applyProposal } from '../../../src/shared/plan'
 import { plan } from '../../mock/content'
 import { PlanOutline } from './PlanBlocks'
 
@@ -103,11 +104,24 @@ function ViewRail({ view, onView }: { view: View; onView: (view: View) => void }
 
 export function PlanMapScreen() {
 	const [view, setView] = useState<View>('map')
+	// The applier behind the map, the way `EditablePlan` puts it behind the
+	// Panel: every edit runs the ops the app runs, so a refusal shows up here the
+	// way the writer would meet it.
+	const [edited, setEdited] = useState<Plan>(mapped)
+
+	const edit = (ops: ProposalInput | null) => {
+		if (ops === null) return
+
+		const result = applyProposal(edited, ops)
+		if (result.ok) setEdited(result.plan)
+	}
 
 	return (
 		<Frame width={860}>
 			<ArticleBar title={plan.title} open={['plan']} status="draft 1" />
-			<FrameBody className="h-[26rem]">
+			{/* Taller than the other Plan screens: the map is wider than a list and
+			    an open Section's fields run below the box they open from. */}
+			<FrameBody className="h-[32rem]">
 				<Panel className="gap-3.5" variant="sunk">
 					<PanelHeader
 						title="Outline"
@@ -120,14 +134,14 @@ export function PlanMapScreen() {
 					/>
 
 					{view === 'map' ? (
-						<PlanMap plan={mapped} />
+						<PlanMap edit={edit} plan={edited} />
 					) : (
-						<PlanOutline className="max-w-md" outline={mapped.outline} />
+						<PlanOutline className="max-w-md" outline={edited.outline} />
 					)}
 
 					<p className="text-[0.6875rem] text-faint">
 						{view === 'map'
-							? 'Hover a Section to light its path back to the title. The control on a box folds what sits inside it — on this map only, and never in the Plan.'
+							? 'Click a Section to open its fields over the map. Hover one to light its path back to the title, and use the control on a box to fold what sits inside it — on this map only, and never in the Plan.'
 							: 'The same Outline, listed. Both Views read one Plan, so neither can show a Section the other does not.'}
 					</p>
 				</Panel>
