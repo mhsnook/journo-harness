@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
-import { expect, userEvent, within } from 'storybook/test'
+import { expect, userEvent, waitFor, within } from 'storybook/test'
 
 import { Annotation } from '../../../src/client/components/Annotation'
 import { Frame, FrameBody } from '../../../src/client/components/Frame'
@@ -137,6 +137,25 @@ export const B2_ComposerGrows: Story = {
 		const latestBox = latest.getBoundingClientRect()
 		await expect(latestBox.top).toBeGreaterThanOrEqual(panelBox.top)
 		await expect(latestBox.bottom).toBeLessThanOrEqual(composerBox.top)
+
+		// Pinned to the foot, so there is nothing below and nothing offering to
+		// take you there.
+		const transcript = canvasElement.querySelector('[data-scroller]')!
+		await expect(canvas.queryByLabelText('Scroll to the latest')).toBeNull()
+
+		// Scrolled up, the way back appears.
+		transcript.scrollTop = 0
+		const back = await canvas.findByLabelText('Scroll to the latest')
+
+		await userEvent.click(back)
+		await waitFor(() =>
+			expect(
+				transcript.scrollHeight - transcript.scrollTop - transcript.clientHeight,
+			).toBeLessThanOrEqual(24),
+		)
+		await waitFor(() =>
+			expect(canvas.queryByLabelText('Scroll to the latest')).toBeNull(),
+		)
 	},
 }
 
@@ -192,13 +211,57 @@ export const F_LedgerDrawer: Story = {
 				<LedgerDrawerScreen />
 			</MockArticle>
 			<Annotation>
-				The same list at every stage — early on most rows read Undecided, later most are
-				placed. That is precisely why there is no separate triage screen. Accepting a row
-				on the left copies it into the Plan on the right: the row keeps what was turned
-				up, and the copy is the writer's to edit.
+				A drawer over the transcript, not a screen the Chat swaps to: the composer stays
+				uncovered, so the control that opened it closes it, and Escape does too. The same
+				list at every stage — early on most rows read Undecided, later most are placed,
+				which is why there is no separate triage screen. Accepting a row copies it into
+				the Plan on the right: the row keeps what was turned up, and the copy is the
+				writer's to edit.
 			</Annotation>
 		</div>
 	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement)
+		const toggle = canvas.getByRole('button', { name: /Offer ledger/ })
+		const drawer = canvasElement.querySelector('[aria-label="Offer ledger"]')!
+		const transcript = canvasElement.querySelector('[data-scroller]')!
+		const composer = canvasElement.querySelector('[data-composer]')!
+		// Measured against the transcript's foot, not the composer's own box: the
+		// composer sits inside a padded wrapper, and the drawer stops at the
+		// wrapper's edge rather than at the field.
+		const foot = () => transcript.getBoundingClientRect().bottom
+
+		// The drawer covers the transcript and leaves the composer alone, which is
+		// what keeps the toggle in place for the second click.
+		await expect(toggle.getAttribute('aria-expanded')).toBe('true')
+		await expect(drawer.getBoundingClientRect().top).toBeLessThan(foot())
+		await expect(drawer.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+			composer.getBoundingClientRect().top,
+		)
+
+		// One control, both directions. The geometry waits on the 200ms slide.
+		await userEvent.click(toggle)
+		await expect(toggle.getAttribute('aria-expanded')).toBe('false')
+		await waitFor(() =>
+			expect(drawer.getBoundingClientRect().top).toBeGreaterThanOrEqual(foot() - 1),
+		)
+
+		// Opening moves the drawer and nothing else. Focus lands on it while it is
+		// still out of view, and a browser reveals such an element by scrolling the
+		// box clipping it, which would carry the transcript with it.
+		const still = transcript.getBoundingClientRect().top
+		await userEvent.click(toggle)
+		await expect(toggle.getAttribute('aria-expanded')).toBe('true')
+		await expect(transcript.getBoundingClientRect().top).toBe(still)
+		await expect(drawer.parentElement!.scrollTop).toBe(0)
+
+		// Escape dismisses, and focus lands back on the toggle rather than in the
+		// transcript behind it.
+		await userEvent.keyboard('{Escape}')
+		await expect(toggle.getAttribute('aria-expanded')).toBe('false')
+		await expect(document.activeElement).toBe(toggle)
+		await expect(transcript.getBoundingClientRect().top).toBe(still)
+	},
 }
 
 export const G_LedgerPopover: Story = {

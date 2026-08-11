@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import type { ButtonHTMLAttributes, ReactNode, Ref } from 'react'
 
 import { cx } from '../lib/cx'
 
@@ -18,6 +18,9 @@ export interface ButtonProps extends Omit<
 	/** "You are here" — the chosen one of a set. State rather than a call to
 	 * action, so it takes ink rather than the accent, the way a solid Chip does. */
 	pressed?: boolean
+	/** For a caller that puts focus back on this Button after closing what it
+	 * opened. */
+	ref?: Ref<HTMLButtonElement>
 	children?: ReactNode
 }
 
@@ -60,6 +63,7 @@ export function Button({
 	variant = 'default',
 	size = 'md',
 	pressed,
+	ref,
 	className,
 	children,
 	type = 'button',
@@ -67,6 +71,7 @@ export function Button({
 }: ButtonProps) {
 	return (
 		<button
+			ref={ref}
 			type={type}
 			aria-pressed={pressed}
 			className={buttonClass({ variant, size, pressed, className })}

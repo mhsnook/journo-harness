@@ -76,8 +76,8 @@ function planMessage(plan: Plan): ModelMessage {
 }
 
 /**
- * The conversation with the Plan in it — after every turn but the last, so the
- * writer's own words are the last thing the model reads.
+ * The conversation with the Plan in it — in front of the writer's last message,
+ * so the writer's own words are the last thing the model reads.
  *
  * Two orderings are defensible and neither has met a real model yet. Appending
  * the Plan after everything is one message cheaper to cache, and it makes a
@@ -93,8 +93,23 @@ export function chatPackMessages(
 	conversation: ModelMessage[],
 	plan: Plan,
 ): ModelMessage[] {
-	const last = conversation.length - 1
-	if (last < 0) return [planMessage(plan)]
+	const at = planSlot(conversation)
 
-	return [...conversation.slice(0, last), planMessage(plan), conversation[last]]
+	return [...conversation.slice(0, at), planMessage(plan), ...conversation.slice(at)]
+}
+
+/**
+ * Calculates where the Plan goes: in front of the last message, or at the end
+ * of the conversation.
+ *
+ * The AI SDK refuses a prompt that places a user message between a tool call
+ * and its tool result. The Plan is a user message, so it goes in front of the
+ * last message only where that message is the writer's, and at the end
+ * otherwise.
+ */
+function planSlot(conversation: ModelMessage[]): number {
+	const last = conversation.length - 1
+	if (last < 0) return 0
+
+	return conversation[last].role === 'user' ? last : conversation.length
 }

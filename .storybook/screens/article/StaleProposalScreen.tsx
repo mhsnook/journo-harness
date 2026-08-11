@@ -9,7 +9,7 @@ import { staleProposal } from '../../mock/transcript'
  * against what it found, and stays open. */
 export function StaleProposalScreen() {
 	const plan = useMockPlan()
-	const chat = useMockChat(staleProposal)
+	const { ledger: _ledger, ...chat } = useMockChat(staleProposal)
 
 	return (
 		<Frame width={560}>
