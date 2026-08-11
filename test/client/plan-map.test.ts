@@ -3,12 +3,13 @@ import { describe, expect, it } from 'vitest'
 import type { MapNode } from '../../src/client/plan/map'
 import { linkPath, planMap } from '../../src/client/plan/map'
 import type { OutlineNode } from '../../src/shared/plan'
-import { makeNode, makePlan } from '../shared/plan-fixtures'
+import { makeNode, makePlan, makeReference } from '../shared/plan-fixtures'
 
 /**
  * Where the Map View puts each box. The defaults the layout ships with are the
- * numbers below: a box is 210 wide, columns sit 40 apart, rows sit 10 apart,
- * and a box is 48 tall until it carries an intent note, which makes it 66.
+ * numbers below: a box is 210 wide, columns sit 40 apart, and rows sit 10
+ * apart. A box is 48 tall, plus 18 where it carries an intent note and 16 where
+ * References are placed at it.
  */
 
 const NODE = 210
@@ -177,6 +178,37 @@ describe('a collapsed Section', () => {
 	})
 })
 
+describe('the References placed at a Section', () => {
+	// Numbered by position in the Plan's list, which is what `references.ts`
+	// marks them with — a footnote number rather than anything stored.
+	const { nodes } = planMap(
+		makePlan({
+			outline: [makeNode({ id: 'a' }), makeNode({ id: 'b' })],
+			references: [
+				makeReference({ id: 'r1', nodeId: 'b' }),
+				makeReference({ id: 'r2', nodeId: null }),
+				makeReference({ id: 'r3', nodeId: 'b' }),
+			],
+		}),
+	)
+
+	it('marks each box with the numbers placed there', () => {
+		expect(at(nodes, 'n:b').referenceNumbers).toEqual([1, 3])
+		expect(at(nodes, 'n:a').referenceNumbers).toEqual([])
+	})
+
+	// A Reference is placed at a Section or at nothing, so the title never
+	// carries one and its box never grows a row for it.
+	it('leaves the root out of it', () => {
+		expect(at(nodes, 'root').referenceNumbers).toEqual([])
+	})
+
+	it('gives the box a row to say them in', () => {
+		expect(at(nodes, 'n:b').height).toBe(48 + 16)
+		expect(at(nodes, 'n:a').height).toBe(48)
+	})
+})
+
 describe('the path back to the root', () => {
 	const { nodes } = mapOf([makeNode({ id: 'a', children: [makeNode({ id: 'a1' })] })])
 
@@ -201,6 +233,7 @@ describe('the curve between two boxes', () => {
 		width: 180,
 		height: 44,
 		childCount: 1,
+		referenceNumbers: [],
 		collapsed: false,
 		ancestors: [],
 	}

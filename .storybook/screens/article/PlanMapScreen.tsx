@@ -1,10 +1,14 @@
+import { useState } from 'react'
+
 import { ArticleBar } from '../../../src/client/components/ArticleBar'
 import { Chip } from '../../../src/client/components/Chip'
 import { Frame, FrameBody } from '../../../src/client/components/Frame'
 import { Panel, PanelHeader } from '../../../src/client/components/Panel'
+import { cx } from '../../../src/client/lib/cx'
 import { PlanMap } from '../../../src/client/plan/PlanMap'
 import type { OutlineNode, Plan } from '../../../src/shared/plan'
 import { plan } from '../../mock/content'
+import { PlanOutline } from './PlanBlocks'
 
 /**
  * 2(k) — The Plan Panel's Map View. The same Outline the Panel lists, opened
@@ -57,7 +61,49 @@ const mapped: Plan = {
 		),
 }
 
+const VIEWS = ['list', 'map'] as const
+type View = (typeof VIEWS)[number]
+
+/**
+ * The switch between the Plan Panel's two Views, built like the Panel rail in
+ * the bar above it: the one you are in is solid ink, and neither is accented,
+ * because which View you are in is state rather than a decision the screen
+ * wants from you — `foundations/Accent.mdx`.
+ *
+ * It sits here rather than in `src/client/plan/` because the Map View is not
+ * wired into the app yet. Wiring it means giving `PlanPanel` a header row to
+ * hold this, which it has none of today.
+ */
+function ViewRail({ view, onView }: { view: View; onView: (view: View) => void }) {
+	return (
+		<div
+			aria-label="How the Outline is shown"
+			className="flex shrink-0 items-center gap-0.5 rounded-full border border-edge bg-sunk p-0.5"
+			role="group"
+		>
+			{VIEWS.map((one) => (
+				<button
+					key={one}
+					aria-pressed={one === view}
+					className={cx(
+						'rounded-full px-2.5 py-1 text-[0.6875rem] leading-none font-medium transition-colors',
+						one === view
+							? 'bg-ink text-paper'
+							: 'text-faint hover:bg-hush hover:text-muted',
+					)}
+					onClick={() => onView(one)}
+					type="button"
+				>
+					{one}
+				</button>
+			))}
+		</div>
+	)
+}
+
 export function PlanMapScreen() {
+	const [view, setView] = useState<View>('map')
+
 	return (
 		<Frame width={860}>
 			<ArticleBar title={plan.title} open={['plan']} status="draft 1" />
@@ -65,13 +111,24 @@ export function PlanMapScreen() {
 				<Panel className="gap-3.5" variant="sunk">
 					<PanelHeader
 						title="Outline"
-						meta="map"
-						actions={<Chip variant="outline">2,400 words target</Chip>}
+						actions={
+							<>
+								<Chip variant="outline">2,400 words target</Chip>
+								<ViewRail onView={setView} view={view} />
+							</>
+						}
 					/>
-					<PlanMap plan={mapped} />
+
+					{view === 'map' ? (
+						<PlanMap plan={mapped} />
+					) : (
+						<PlanOutline className="max-w-md" outline={mapped.outline} />
+					)}
+
 					<p className="text-[0.6875rem] text-faint">
-						Hover a Section to light its path back to the title. The control on a box
-						folds what sits inside it — on this map only, and never in the Plan.
+						{view === 'map'
+							? 'Hover a Section to light its path back to the title. The control on a box folds what sits inside it — on this map only, and never in the Plan.'
+							: 'The same Outline, listed. Both Views read one Plan, so neither can show a Section the other does not.'}
 					</p>
 				</Panel>
 			</FrameBody>

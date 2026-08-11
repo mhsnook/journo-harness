@@ -159,6 +159,17 @@ function Box({ node, lit, folded, onFold, onLight, onLeave }: BoxProps) {
 						)}
 					</span>
 				)}
+
+				{/* The References placed here, by the numbers the Panel marks them
+				    with — a footnote number rather than anything stored. */}
+				{node.referenceNumbers.length === 0 ? null : (
+					<span className="flex min-w-0 items-baseline gap-1 font-mono text-[0.625rem] text-faint">
+						<span className="shrink-0">refs</span>
+						{node.referenceNumbers.map((number) => (
+							<span key={number}>[{number}]</span>
+						))}
+					</span>
+				)}
 			</div>
 
 			{node.childCount === 0 || onFold === undefined ? null : (

@@ -278,6 +278,17 @@ export const K_PlanMap: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement)
 
+		// Both Views read one Plan, so a Section the map draws is one the list
+		// has too. The rail is how the writer gets between them.
+		await userEvent.click(canvas.getByRole('button', { name: 'list' }))
+		await expect(canvas.queryByLabelText(/^Map of /)).toBeNull()
+		await expect(canvas.getByText('One objection resets the clock')).toBeVisible()
+
+		await userEvent.click(canvas.getByRole('button', { name: 'map' }))
+		await expect(
+			canvas.getByLabelText('Map of Why Cities Stopped Building'),
+		).toBeVisible()
+
 		// Folding is a read affordance, so the Section stays and only what sits
 		// inside it goes.
 		const fold = canvas.getByLabelText('Fold the 2 inside How review became the process')

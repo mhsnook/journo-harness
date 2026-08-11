@@ -36,6 +36,10 @@ export interface MapNode {
 	height: number
 	/** How many children the node holds, drawn or not. */
 	childCount: number
+	/** The References placed here, by their position in the Plan's list — the
+	 * numbers `references.ts` marks them with. Empty at the root, which holds
+	 * none: a Reference is placed at a Section or at nothing. */
+	referenceNumbers: number[]
 	/** True where the node holds children this map is not drawing. */
 	collapsed: boolean
 	/** Every key from the parent up to the root, nearest first. Hovering a box
@@ -66,22 +70,29 @@ export interface MapOptions {
 	/** The gap between two boxes in the same column. */
 	rowGap?: number
 	/**
-	 * How tall one box is. A function rather than a number, because a Section
-	 * carrying an intent note is taller than one that does not — which is the
-	 * case a fixed-size tree layout cannot express.
+	 * How tall one box is. A function rather than a number, because what a
+	 * Section carries decides how many lines it needs — which is the case a
+	 * fixed-size tree layout cannot express.
 	 */
-	heightOf?: (node: OutlineNode | null, depth: number) => number
+	heightOf?: (node: OutlineNode | null, depth: number, referenceCount: number) => number
 	/** Sections whose children the map is leaving undrawn. */
 	collapsed?: ReadonlySet<string>
 }
 
-/** Room for the ordinal and a two-line title, plus a line where an intent note
- * is there to read. A title runs to two lines often enough at this width that
- * the shorter box is not worth the clipping. */
-function defaultHeight(node: OutlineNode | null): number {
+/**
+ * Room for the ordinal and a two-line title, plus a line for each of the two
+ * things a Section can carry underneath: its intent note, and the References
+ * placed at it. A title runs to two lines often enough at this width that the
+ * shorter box is not worth the clipping.
+ */
+function defaultHeight(
+	node: OutlineNode | null,
+	_depth: number,
+	referenceCount: number,
+): number {
 	if (node === null) return 48
 
-	return node.intent === undefined ? 48 : 66
+	return 48 + (node.intent === undefined ? 0 : 18) + (referenceCount === 0 ? 0 : 16)
 }
 
 /** The curve between two boxes: out of the parent's right edge, into the
@@ -116,6 +127,14 @@ export function planMap(plan: Plan, options: MapOptions = {}): PlanMap {
 
 	const nodes: MapNode[] = []
 
+	// Numbered once, off the one list, so the box and `references.ts` cannot
+	// mark the same Reference two different ways.
+	const placed = new Map<string, number[]>()
+	plan.references.forEach((reference, index) => {
+		if (reference.nodeId === null) return
+		placed.set(reference.nodeId, [...(placed.get(reference.nodeId) ?? []), index + 1])
+	})
+
 	// Where the next leaf goes, counting down the page in reading order.
 	let cursor = 0
 	// The bottom edge each column has reached, so a parent centred on a short
@@ -130,7 +149,8 @@ export function planMap(plan: Plan, options: MapOptions = {}): PlanMap {
 		ancestors: string[],
 	): MapNode => {
 		const key = node === null ? 'root' : `n:${node.id}`
-		const height = heightOf(node, depth)
+		const referenceNumbers = node === null ? [] : (placed.get(node.id) ?? [])
+		const height = heightOf(node, depth, referenceNumbers.length)
 		const children = node === null ? plan.outline : node.children
 		const isCollapsed = node !== null && collapsed.has(node.id)
 
@@ -147,6 +167,7 @@ export function planMap(plan: Plan, options: MapOptions = {}): PlanMap {
 			width: nodeWidth,
 			height,
 			childCount: children.length,
+			referenceNumbers,
 			collapsed: isCollapsed,
 			ancestors,
 		}
