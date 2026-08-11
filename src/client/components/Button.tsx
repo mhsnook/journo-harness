@@ -10,7 +10,7 @@ export interface ButtonProps extends Omit<
 	'children'
 > {
 	/**
-	 * `accent` is the yellow one. A screen should have at most one — it marks
+	 * `accent` is the rose one. A screen should have at most one — it marks
 	 * the single thing the app wants you to do next.
 	 */
 	variant?: ButtonVariant

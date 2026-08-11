@@ -15,7 +15,7 @@ export interface PanelRailProps {
  * The four-Panel toggle: chat · plan · draft · notes.
  *
  * Deliberately *not* accented. Which Panels are open is state, not a call to
- * action, so the active pill is solid ink and the yellow stays free for the
+ * action, so the active pill is solid ink and the accent stays free for the
  * one thing on screen that actually wants a decision.
  */
 export function PanelRail({ open, onToggle, className }: PanelRailProps) {

@@ -3,33 +3,34 @@
 /*
  * Joarness design tokens.
  *
- * The page is deliberately quiet: paper, ink, and three greys. `accent` is the
- * one colour that asks for attention, and it is rationed — see the "Accent"
- * docs page in Storybook. If a screen has two yellow things on it, one of them
- * is probably wrong.
+ * The page is deliberately quiet: earth, ink, and three soft neutrals, tinted
+ * off a Deccan winter — dry brown ground, dried-scrub green, dusty mauve.
+ * `accent` is the one colour that asks for attention, and it is rationed — see
+ * the "Accent" docs page in Storybook. If a screen has two rose things on it,
+ * one of them is probably wrong.
  */
 @theme {
 	/* Surfaces */
-	--color-paper: #f4f2ee; /* the desk the app sits on */
-	--color-surface: #ffffff; /* cards, panes, the writing surface */
-	--color-sunk: #faf8f5; /* secondary panes: plan, notes, sidebars */
-	--color-hush: #f0ede7; /* your own chat messages, inert fills */
+	--color-paper: #e9e2d5; /* the desk the app sits on: sun-dried earth */
+	--color-surface: #fbf9f5; /* cards, panes, the writing surface */
+	--color-sunk: #ebe8d3; /* secondary panes: plan, notes, sidebars */
+	--color-hush: #e7dfe3; /* your own chat messages, inert fills */
 
 	/* Ink */
-	--color-ink: #1b1a17; /* body + headings */
-	--color-muted: #6b665e; /* secondary copy */
-	--color-faint: #9b958a; /* meta, counts, timestamps */
+	--color-ink: #2b2229; /* body + headings: brown-black with a purple cast */
+	--color-muted: #5c6050; /* secondary copy: dried scrub green */
+	--color-faint: #8e858a; /* meta, counts, timestamps: dusty mauve */
 
 	/* Lines */
-	--color-rule: #e3dfd7; /* hairlines between rows */
-	--color-edge: #cdc7bc; /* card borders, inputs */
-	--color-strong: #1b1a17; /* the one heavy divider per frame */
+	--color-rule: #dbd7c3; /* hairlines between rows */
+	--color-edge: #c2bda9; /* card borders, inputs */
+	--color-strong: #2b2229; /* the one heavy divider per frame */
 
-	/* The accent — light yellow highlight. Rationed. */
-	--color-accent: #ffe6a3;
-	--color-accent-soft: #fff6df; /* wash behind an accented block */
-	--color-accent-edge: #e3c471;
-	--color-accent-ink: #6a5312; /* text sitting on accent */
+	/* The accent — muted rose highlight. Rationed. */
+	--color-accent: #eec9c7;
+	--color-accent-soft: #fbebe8; /* wash behind an accented block */
+	--color-accent-edge: #bd7f83;
+	--color-accent-ink: #6a2f34; /* text sitting on accent */
 
 	/* Type */
 	--font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -45,7 +46,7 @@
 	--radius-frame: 0.625rem;
 
 	/* One elevation, used only on the outermost frame */
-	--shadow-frame: 0 1px 2px rgb(27 26 23 / 0.05), 0 8px 24px -16px rgb(27 26 23 / 0.25);
+	--shadow-frame: 0 1px 2px rgb(43 34 41 / 0.05), 0 8px 24px -16px rgb(43 34 41 / 0.25);
 }
 
 @layer base {
