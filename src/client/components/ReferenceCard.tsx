@@ -44,19 +44,18 @@ export function ReferenceCard({
 	const declined = offer.disposition === 'declined'
 	const accepted = offer.disposition === 'accepted'
 	const ruled = accepted || declined
-	const heading = referenceName(offer)
-	// A Quote with no source is its own heading; do not print it twice.
-	const passage = offer.text !== undefined && offer.text !== heading
+	// The card prints a passage once, under the title it came from, the way the
+	// Plan row it will be copied into does. A Quote that names no title is headed
+	// by nothing and prints its passage alone.
+	const heading = offer.text === undefined ? referenceName(offer) : offer.source?.title
 	const url = offer.source?.url
-	// Whether the link goes on the heading or on the line below. A Quote is
-	// headed by its passage, and an underlined passage reads as emphasis.
-	const headingLinks = url !== undefined && offer.text === undefined
+	// Whether the link goes on the heading or on the line below. A passage is
+	// never the heading, because an underlined passage reads as emphasis.
+	const headingLinks = url !== undefined && heading !== undefined
 	const cited: ReactNode[] = [
 		...(favourite ? [<FavouriteMark key="favourite" type={favourite} />] : []),
 		...attribution(offer.source),
-		...(url !== undefined && !headingLinks
-			? [<SourceLink className="break-all" key="url" url={url} />]
-			: []),
+		...(url !== undefined && !headingLinks ? [<SourceLink key="url" url={url} />] : []),
 	]
 
 	return (
@@ -72,7 +71,7 @@ export function ReferenceCard({
 				// Decline and nothing undoes an Accept, so there is no state to go back to.
 				<Check
 					checked={accepted}
-					label={`Accept ${heading}`}
+					label={`Accept ${referenceName(offer)}`}
 					onChange={accepted ? undefined : onAccept}
 				/>
 			) : null}
@@ -81,15 +80,17 @@ export function ReferenceCard({
 			) : null}
 
 			<div className="flex min-w-0 flex-1 flex-col gap-1">
-				<h4 className="text-[0.8125rem] leading-snug font-semibold text-ink">
-					{headingLinks ? <SourceLink url={url}>{heading}</SourceLink> : heading}
-				</h4>
-				<CitedLine parts={cited} />
-				{passage ? (
-					<blockquote className="border-l-2 border-rule pl-2 text-[0.75rem] leading-relaxed text-ink">
+				{heading === undefined ? null : (
+					<h4 className="text-[0.8125rem] leading-snug font-semibold text-ink">
+						{headingLinks ? <SourceLink url={url}>{heading}</SourceLink> : heading}
+					</h4>
+				)}
+				{offer.text === undefined ? null : (
+					<blockquote className="border-l-2 border-rule pl-2.5 text-[0.8125rem] leading-relaxed text-ink">
 						“{offer.text}”
 					</blockquote>
-				) : null}
+				)}
+				<CitedLine className="break-all" parts={cited} />
 				{!compact && offer.note !== undefined ? (
 					<p className="text-[0.75rem] leading-relaxed text-muted">{offer.note}</p>
 				) : null}
