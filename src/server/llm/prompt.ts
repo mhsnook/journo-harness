@@ -99,13 +99,13 @@ export function chatPackMessages(
 }
 
 /**
- * Where the Plan goes: in front of the last message where that message is the
- * writer's, and after the whole conversation otherwise.
+ * Calculates where the Plan goes: in front of the last message, or at the end
+ * of the conversation.
  *
- * The Plan is a user message, and the AI SDK refuses a prompt that carries a
- * user message between an assistant's tool call and the tool result answering
- * it. A transcript ends in a tool result on the turn that resumes after the
- * writer rules on a Proposal, so that is the turn this keeps legal.
+ * The AI SDK refuses a prompt that places a user message between a tool call
+ * and its tool result. The Plan is a user message, so it goes in front of the
+ * last message only where that message is the writer's, and at the end
+ * otherwise.
  */
 function planSlot(conversation: ModelMessage[]): number {
 	const last = conversation.length - 1
