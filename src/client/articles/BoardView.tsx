@@ -11,17 +11,19 @@ import { boardColumns } from './grouping'
 /**
  * A column's width, and the one number the Board's layout turns on.
  *
- * 307px is a quarter of the rail at a 1298px window: four columns, three 12px
- * gaps, and the rail's own 16px of padding each side. So 1298px and wider shows
- * four even columns with nothing in the scroll zone.
+ * The columns grow to share the rail, so any window with room for four takes
+ * four even quarters and no sideways scroll — never four columns and a gap on
+ * the right.
  *
- * Narrower than that, the columns hold 307px and the Board scrolls sideways
- * until 30% of the rail is the smaller number (≈1055px, with two thirds of Done
- * off the end), and from there every column shrinks together. 16rem is the
- * floor: past it the columns hold their width again and more of the Board's
- * right-hand end goes into the scroll zone.
+ * 307px is where growing stops and scrolling starts: a quarter of the rail at a
+ * 1298px window, once three 12px gaps and the rail's own 16px of padding each
+ * side are out. Narrower than that, the columns hold 307px and the Board
+ * scrolls sideways until 30% of the rail is the smaller number (≈1055px, with
+ * two thirds of Done off the end), and from there every column shrinks
+ * together. 16rem is the floor: past it the columns hold their width again and
+ * more of the Board's right-hand end goes into the scroll zone.
  */
-const columnWidth = 'w-[clamp(16rem,30%,307px)]'
+const columnWidth = 'grow basis-[clamp(16rem,30%,307px)]'
 
 /**
  * The hairline in the gutter, standing in for the fill each column used to

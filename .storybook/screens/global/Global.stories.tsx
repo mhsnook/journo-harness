@@ -44,11 +44,12 @@ export const B_Board: Story = {
 			<BoardScreen />
 			<Annotation>
 				Reading only. No drag-and-drop: the writer sets an Article's status on the Article
-				screen, which is where they are when they decide it has moved on. A 1298px window
-				shows four even columns and no sideways scroll; narrower than that the columns
-				scale down to 16rem and then hold, so the Board scrolls sideways rather than
-				squeezing four columns into a phone. A hairline in the gutter separates them, one
-				card tall — enough to read four columns as four without a fill behind each.
+				screen, which is where they are when they decide it has moved on. Any window with
+				room for four columns — 1298px and up — takes four even quarters and no sideways
+				scroll. Below that the columns scale down to 16rem and then hold, so the Board
+				scrolls sideways rather than squeezing four columns into a phone. A hairline in
+				the gutter separates them, one card tall — enough to read four columns as four
+				without a fill behind each.
 			</Annotation>
 		</div>
 	),
