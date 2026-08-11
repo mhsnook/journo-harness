@@ -1,7 +1,9 @@
+import type { UIMessage } from 'ai'
 import { MockLanguageModelV3, simulateReadableStream } from 'ai/test'
 import { env, runInDurableObject } from 'cloudflare:test'
 import { describe, expect, it } from 'vitest'
 
+import { chatTurn } from '../../src/server/llm/chat-turn'
 import type { ProposalInput } from '../../src/shared/plan'
 import { makeNode, makePlan } from '../shared/plan-fixtures'
 import { type Frame, openAgentSocket } from './agent-socket'
@@ -195,6 +197,57 @@ describe('a Chat turn', () => {
 		expect(planBlock).toContain('Open on one refused permit.')
 
 		expect(JSON.stringify(conversation.at(-1))).toContain('What is the opening for?')
+	})
+
+	// A tool result answers the assistant message before it, and the Plan is a
+	// user message, so packing it in front of the last message would split the
+	// pair — which the AI SDK refuses with MissingToolResultsError before the
+	// model is called at all. The turn that resumes after the writer rules on a
+	// Proposal is exactly that transcript.
+	//
+	// `chatTurn` directly rather than through the socket: the harness sends one
+	// user message, and this case needs a transcript with a settled tool part
+	// already in it.
+	it('packs the Plan after a tool result rather than in front of it', async () => {
+		const model = speaks('Noted.')
+		const ruled = [
+			{
+				id: 'm1',
+				role: 'user',
+				parts: [{ type: 'text', text: 'Give the opening a word count.' }],
+			},
+			{
+				id: 'm2',
+				role: 'assistant',
+				parts: [
+					{
+						type: 'tool-proposePlanChange',
+						toolCallId: 'call-1',
+						state: 'output-available',
+						input: { ops: proposal },
+						output: 'The writer Accepted this Proposal.',
+					},
+				],
+			},
+		] as unknown as UIMessage[]
+
+		const response = await chatTurn({
+			model,
+			plan,
+			messages: ruled,
+			onFinish: async () => {},
+		})
+
+		// The stream carries the turn rather than an error, and the model was
+		// reached — the pack is refused before the first call, so a turn that
+		// never happened is what the defect looks like.
+		expect(await response.text()).not.toContain('Tool result is missing')
+		expect(model.doStreamCalls).toHaveLength(1)
+
+		// The Plan is last here, after the tool result that ends the transcript.
+		const [call] = model.doStreamCalls
+		expect(JSON.stringify(call.prompt.at(-1))).toContain('The permit queue')
+		expect(call.prompt.at(-2)?.role).toBe('tool')
 	})
 
 	it('offers both tools to the model', async () => {
