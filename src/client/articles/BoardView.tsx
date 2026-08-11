@@ -5,7 +5,32 @@ import { FrameBody } from '../components/Frame'
 import { MetaLabel } from '../components/MetaLabel'
 import { Notice } from '../components/Notice'
 import { BackLink, TitleBar } from '../components/TitleBar'
+import { cx } from '../lib/cx'
 import { boardColumns } from './grouping'
+
+/**
+ * A column's width, and the one number the Board's layout turns on.
+ *
+ * 307px is a quarter of the rail at a 1298px window: four columns, three 12px
+ * gaps, and the rail's own 16px of padding each side. So 1298px and wider shows
+ * four even columns with nothing in the scroll zone.
+ *
+ * Narrower than that, the columns hold 307px and the Board scrolls sideways
+ * until 30% of the rail is the smaller number (≈1055px, with two thirds of Done
+ * off the end), and from there every column shrinks together. 16rem is the
+ * floor: past it the columns hold their width again and more of the Board's
+ * right-hand end goes into the scroll zone.
+ */
+const columnWidth = 'w-[clamp(16rem,30%,307px)]'
+
+/**
+ * The hairline in the gutter, standing in for the fill each column used to
+ * carry. It is one card tall because it marks where a column starts rather than
+ * fencing the whole of it, and it sits half a gutter left of the column edge,
+ * which centres it in the gap.
+ */
+const columnDivider =
+	'before:absolute before:top-0 before:-left-1.5 before:h-24 before:w-px before:bg-rule'
 
 /**
  * The Board View: the same unarchived Articles the list shows, by status.
@@ -43,14 +68,24 @@ export function BoardView({ articles, failure = null, onNew }: BoardViewProps) {
 				</div>
 			)}
 			<FrameBody className="gap-3 overflow-x-auto p-4" row>
-				{columns.map((column) => (
-					// A sunk fill, so four columns read as four rather than as one field
-					// of cards. The tiles stay white and lift off it.
+				{columns.map((column, index) => (
+					// A divider in the gutter and a rule under the label, so four columns
+					// read as four. The column itself draws nothing, which is what lets
+					// the gutter stay this narrow: the tiles are the only boxes here.
 					<div
-						className="flex w-[12rem] shrink-0 flex-col gap-2 rounded-lg border border-rule bg-sage p-2"
+						className={cx(
+							'relative flex shrink-0 flex-col gap-2',
+							columnWidth,
+							index === 0 ? null : columnDivider,
+						)}
 						key={column.status}
 					>
-						<MetaLabel className="shrink-0 px-0.5" count={column.articles.length}>
+						{/* The negative margin runs the rule to the middle of each gutter,
+						    so the four rules meet and read as one line. */}
+						<MetaLabel
+							className="-mx-1.5 shrink-0 border-b border-rule px-1.5 pb-1.5"
+							count={column.articles.length}
+						>
 							{column.label}
 						</MetaLabel>
 						{/* Each column scrolls its own Y. */}

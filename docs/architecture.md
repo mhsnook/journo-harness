@@ -454,7 +454,9 @@ an Article and then leaving it.
 
 **The Articles Area is the list at `/` and the Board View at `/board`**, over the one index
 read, under a pathless layout route that holds both. The Board draws a column per status,
-keeps its columns' width, and scrolls sideways rather than squeezing them. It carries no
+sizes each at `clamp(16rem, 30%, 307px)`, and scrolls sideways rather than squeezing them
+below 16rem. 307px is a quarter of the rail at a 1298px window, so a window that wide or
+wider shows four even columns with no sideways scroll at all. It carries no
 drag-and-drop and no control on a card: the writer sets a status on the Article screen,
 which is where they are when they decide the piece has moved on. The Archive View is not built, and Archived Articles are a group at the foot of
 the list until it is.
