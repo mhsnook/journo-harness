@@ -9,7 +9,7 @@ import { researchTurn } from '../../mock/transcript'
  * Offer ledger rows, so Accepting one copies it into the Plan. */
 export function ChatWithReferencesScreen() {
 	const plan = useMockPlan()
-	const chat = useMockChat(researchTurn)
+	const { ledger: _ledger, ...chat } = useMockChat(researchTurn)
 
 	return (
 		<Frame width={700}>
