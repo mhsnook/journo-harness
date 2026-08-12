@@ -1,9 +1,5 @@
 @import 'tailwindcss';
 
-/* Atkinson Hyperlegible Next, self-hosted. It was drawn by the Braille
-   Institute to be read at a glance: the letters that usually collide — I l 1,
-   O 0, b d — are drawn apart from each other. One variable file covers every
-   weight the interface asks for. */
 @import '@fontsource-variable/atkinson-hyperlegible-next';
 
 /*
@@ -32,10 +28,7 @@
 	--color-edge: #c2bda9; /* card borders, inputs */
 	--color-strong: #2b2229; /* the one heavy divider per frame */
 
-	/* The "you are here" fill: a selected tab, filter or pressed button. It is
-	   `sunk` saturated and inverted, so a selected pill reads as the deep of
-	   the pale green it sits on. State is not a request, so this is not the
-	   accent — but it need not be black either. */
+	/* "You are here": a selected tab, filter or pressed button */
 	--color-green: #4c6141;
 	--color-green-ink: #eef2e2; /* text sitting on green */
 

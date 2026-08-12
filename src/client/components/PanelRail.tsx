@@ -44,7 +44,6 @@ export function PanelRail({ open, onToggle, className }: PanelRailProps) {
 						className={cx(
 							'rounded-full px-2.5 py-1 text-[0.6875rem] leading-none font-medium transition-colors',
 							isOpen ? 'bg-green text-green-ink' : 'text-faint',
-							// `hush` would be mauve on the rail's green, which goes muddy.
 							onToggle && !isOpen && 'hover:bg-surface hover:text-muted',
 						)}
 					>
