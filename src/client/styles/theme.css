@@ -57,8 +57,6 @@
 
 	--radius-frame: 0.625rem;
 
-	/* Three screens, and no more. A phone is the unprefixed one, `md` is a
-	   laptop, and `lg` is a maximized window on the main user's monitor. */
 	--breakpoint-*: initial;
 	--breakpoint-md: 48rem; /* 768px */
 	--breakpoint-lg: 1298px;
