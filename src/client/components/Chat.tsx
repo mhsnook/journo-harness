@@ -66,14 +66,11 @@ export interface ChatComposerProps {
  * load-bearing: `scrollHeight` reads back the height the field already has, so
  * without the reset the field could grow but never shrink.
  *
- * The reset drops the field to its one `rows` line for an instant, and the
- * transcript above it is what takes the space. A scroller that grows has less
- * run below it, so the browser clamps its `scrollTop` — and it does not give
- * it back when the field returns. Both writes land in one block, so the
- * observer watching the transcript sees no net change and never re-pins it,
- * which leaves the writer looking at the middle of a conversation they were
- * reading the foot of. Holding the composer's own box across the measurement
- * keeps the transcript still, so nothing is clamped to give back. */
+ * The composer's box is held across the reset, because `auto` collapses the
+ * field to its one `rows` line and the transcript above it grows into the gap.
+ * The browser clamps a grown scroller's `scrollTop` and does not restore it,
+ * and both writes land in one block, so the ResizeObserver that re-pins the
+ * transcript sees no net change and never fires. */
 function grow(field: HTMLTextAreaElement) {
 	const composer = field.closest<HTMLElement>('[data-composer]')
 	if (composer !== null) composer.style.height = `${composer.offsetHeight}px`
