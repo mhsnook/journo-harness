@@ -11,7 +11,8 @@ A top-level destination. There are three: Articles, House, and Team.
 _Avoid_: section, page, tab, workspace
 
 **View**:
-One way of looking at an Area. The Articles Area has a Board View and an Archive View.
+One way of looking at an Area or a Panel. The Articles Area has a Board View and an
+Archive View; the Chat Panel has the Offer ledger.
 _Avoid_: mode (a Mode is Plan or Write), screen, filter
 
 **Team**:

@@ -2,7 +2,7 @@ import { useState } from 'react'
 
 import type { ResolvedScope } from '../../shared/plan'
 import { Chip } from '../components/Chip'
-import { InlineInput, TextField } from '../components/Field'
+import { FieldRow, InlineInput, TextField } from '../components/Field'
 import { cx } from '../lib/cx'
 
 /**
@@ -49,59 +49,56 @@ export function ToneFields({
 		onAdjectives([...adjectives, adjective])
 	}
 
-	// Both labels in one column, so Voice and Adjectives read as the pair they
-	// are rather than as two unrelated fields.
+	// `FieldRow` puts both labels in the same gutter every other minor field
+	// uses, so Voice and Adjectives line up with the References beneath them.
 	return (
-		<div
-			className={cx(
-				'grid grid-cols-[5rem_minmax(0,1fr)] items-center gap-x-2 gap-y-1.5',
-				className,
-			)}
-		>
-			<span className="label-meta text-muted">Voice</span>
-			<TextField
-				hiddenLabel={`Voice for ${scopeName}`}
-				onChange={(typed) => onVoice(typed.trim() === '' ? null : typed)}
-				placeholder={inherited === null ? 'no Voice set' : `${inherited}, inherited`}
-				size="sm"
-				value={voice ?? ''}
-			/>
-
-			<span className="label-meta text-muted">Adjectives</span>
-			<div className="flex flex-wrap items-center gap-1.5">
-				{inheritedAdjectives.map((adjective) => (
-					<Chip key={adjective} dimmed title="inherited" variant="outline">
-						{adjective}
-					</Chip>
-				))}
-				{adjectives.map((adjective) => (
-					<Chip key={adjective}>
-						{adjective}
-						<button
-							aria-label={`Remove ${adjective} from ${scopeName}`}
-							className="text-faint hover:text-ink"
-							onClick={() =>
-								onAdjectives(adjectives.filter((held) => held !== adjective))
-							}
-							type="button"
-						>
-							×
-						</button>
-					</Chip>
-				))}
-				<InlineInput
-					className="w-24 text-[0.6875rem]"
-					label={`Add an Adjective to ${scopeName}`}
-					onChange={setAdding}
-					onKeyDown={(event) => {
-						if (event.key !== 'Enter') return
-						event.preventDefault()
-						add()
-					}}
-					placeholder="+ adjective"
-					value={adding}
+		<div className={cx('flex flex-col gap-1.5', className)}>
+			<FieldRow label="Voice">
+				<TextField
+					hiddenLabel={`Voice for ${scopeName}`}
+					onChange={(typed) => onVoice(typed.trim() === '' ? null : typed)}
+					placeholder={inherited === null ? 'no Voice set' : `${inherited}, inherited`}
+					size="sm"
+					value={voice ?? ''}
 				/>
-			</div>
+			</FieldRow>
+
+			<FieldRow label="Adjectives">
+				<div className="flex flex-wrap items-center gap-1.5">
+					{inheritedAdjectives.map((adjective) => (
+						<Chip key={adjective} dimmed title="inherited" variant="outline">
+							{adjective}
+						</Chip>
+					))}
+					{adjectives.map((adjective) => (
+						<Chip key={adjective}>
+							{adjective}
+							<button
+								aria-label={`Remove ${adjective} from ${scopeName}`}
+								className="text-faint hover:text-ink"
+								onClick={() =>
+									onAdjectives(adjectives.filter((held) => held !== adjective))
+								}
+								type="button"
+							>
+								×
+							</button>
+						</Chip>
+					))}
+					<InlineInput
+						className="w-24 text-[0.6875rem]"
+						label={`Add an Adjective to ${scopeName}`}
+						onChange={setAdding}
+						onKeyDown={(event) => {
+							if (event.key !== 'Enter') return
+							event.preventDefault()
+							add()
+						}}
+						placeholder="+ adjective"
+						value={adding}
+					/>
+				</div>
+			</FieldRow>
 		</div>
 	)
 }

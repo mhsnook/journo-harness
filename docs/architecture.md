@@ -4,6 +4,10 @@ What is true now. The reasoning behind each decision lives in the wayfinding map
 and its closed tickets; this document does not repeat it. Vocabulary is fixed in
 [`context.md`](../context.md) and governs the code, the UI, and this file.
 
+**What belongs here is a decision that binds more than one module.** A claim you can change
+by editing one file is not architecture: it belongs in that file, next to the code that
+would have to change with it.
+
 The product: **the writer writes the prose and an AI acts as a guide.** Nothing here has the
 model producing prose for the Draft.
 
@@ -481,6 +485,11 @@ in builds the same op a Proposal would carry, `src/client/plan/edits.ts` reads i
 and a structural edit gets the consequences the ops already state — deleting a Section
 unplaces its References. The writer's own edits never go Stale: staleness is the gap
 between generating a Proposal and applying it, and there is no gap here.
+
+**The Outline has two Views, and both write the same way.** The list of Sections and the
+map (`src/client/plan/map.ts`, `PlanMap.tsx`) build ops and hand them to the same `edit`,
+so neither can make a change the other could not. Which View is up is a way of looking:
+`PlanPanel` holds it, and the Article carries no memory of it.
 
 **One writer holds the Plan and the debounce**, in `src/client/plan/writer.ts`. It applies
 each edit locally, sends after a pause for the four ops a keystroke produces, and sends at

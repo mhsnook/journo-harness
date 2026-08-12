@@ -14,6 +14,7 @@ import { ChatWithReferencesScreen } from './ChatWithReferencesScreen'
 import { LedgerDrawerScreen } from './LedgerDrawerScreen'
 import { LedgerPopoverScreen } from './LedgerPopoverScreen'
 import { MidChatScreen } from './MidChatScreen'
+import { PlanMapScreen } from './PlanMapScreen'
 import { PlanSheetScreen } from './PlanSheetScreen'
 import { ReadyToDraftScreen } from './ReadyToDraftScreen'
 import { StaleProposalScreen } from './StaleProposalScreen'
@@ -300,10 +301,32 @@ export const I_PlanPanelWired: Story = {
 			<Annotation>
 				Every field here writes through the same ops the Chat proposes in, so the Panel
 				cannot make a change the applier would refuse. Typing debounces: the Plan is one
-				blob re-broadcast on every write, and a keystroke is not a write.
+				blob re-broadcast on every write, and a keystroke is not a write. The rail on the
+				Outline heading swaps the list for the map, which is wider than this Panel and
+				scrolls sideways inside it.
 			</Annotation>
 		</div>
 	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement)
+
+		await userEvent.click(canvas.getByRole('button', { name: 'map' }))
+
+		// Measured on the box that scrolls, not on the SVG inside it: the SVG
+		// carries its own height attribute and keeps it either way. The map is
+		// taller than this Panel and `overflow-x-auto` resolves that box's
+		// `min-height` to 0, so a flex column that overflows squeezes it to
+		// nothing unless it refuses to shrink.
+		const map = canvasElement.querySelector('[data-plan-map]')!
+		await expect(map.getBoundingClientRect().height).toBeGreaterThan(100)
+
+		// The Panel's own two Outline controls stand down while the map is up,
+		// because the map carries a `+` of its own.
+		await expect(canvas.queryByRole('button', { name: '+ section' })).toBeNull()
+
+		await userEvent.click(canvas.getByRole('button', { name: 'list' }))
+		await expect(canvas.getByRole('button', { name: '+ section' })).toBeVisible()
+	},
 }
 
 export const J_StaleProposal: Story = {
@@ -321,4 +344,170 @@ export const J_StaleProposal: Story = {
 			</Annotation>
 		</div>
 	),
+}
+
+export const K_PlanMap: Story = {
+	name: '2(k) The Plan as a map',
+	render: () => (
+		<div className="flex flex-col">
+			<PlanMapScreen />
+			<Annotation>
+				A second View of the same Plan, opened left to right: the Article title, its
+				Sections, and the References placed at each. Three columns, which is the whole
+				Plan — an unplaced Reference is in the list below and not on the map. Clicking a
+				Section opens its fields over it, anchored at the box, so nothing reflows around
+				what you are editing. Escape or a click on the space between boxes puts them away.{' '}
+				<code>+</code> on the title makes a Section, and one made with nothing in it is
+				thrown away again when you leave it.
+			</Annotation>
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement)
+
+		// Both Views read one Plan, so a Section the map draws is one the list
+		// has too. The rail is how the writer gets between them.
+		await userEvent.click(canvas.getByRole('button', { name: 'list' }))
+		await expect(canvas.queryByLabelText(/^Map of /)).toBeNull()
+		await expect(canvas.getByText('Who actually pays for the delay')).toBeVisible()
+
+		await userEvent.click(canvas.getByRole('button', { name: 'map' }))
+		await expect(
+			canvas.getByLabelText('Map of Why Cities Stopped Building'),
+		).toBeVisible()
+
+		// A Reference placed at a Section is a box hanging off it, keeping the
+		// number it has in the Plan's list.
+		const cost = canvas
+			.getByRole('button', { name: 'Who actually pays for the delay', exact: true })
+			.closest('foreignObject')!
+		await expect(within(cost as unknown as HTMLElement).getByText('–')).toBeVisible()
+		await expect(canvas.getByText('Zoning and the missing middle')).toBeVisible()
+
+		// Folding is a read affordance, so the Section stays and only what sits
+		// inside it goes.
+		await userEvent.click(
+			canvas.getByLabelText('Fold the 1 inside Who actually pays for the delay'),
+		)
+		await expect(canvas.queryByText('Zoning and the missing middle')).toBeNull()
+		await expect(canvas.getByText('Who actually pays for the delay')).toBeVisible()
+		await userEvent.click(
+			canvas.getByLabelText('Open the 1 inside Who actually pays for the delay'),
+		)
+
+		// Clicking a box opens the Section's own fields over the map, anchored at
+		// the box. The map keeps its shape underneath: nothing reflows around it.
+		const before = canvas
+			.getByLabelText('Map of Why Cities Stopped Building')
+			.getBoundingClientRect()
+
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'The year the cranes stopped', exact: true }),
+		)
+		const title = canvas.getByLabelText('Title of Section 1') as HTMLInputElement
+		await expect(title).toHaveValue('The year the cranes stopped')
+		await expect(
+			canvas.getByLabelText('Map of Why Cities Stopped Building').getBoundingClientRect(),
+		).toEqual(before)
+
+		// Escape puts the fields away, which is what `SectionRow` already does for
+		// the Panel.
+		await userEvent.keyboard('{Escape}')
+		await expect(canvas.queryByLabelText('Title of Section 1')).toBeNull()
+
+		// So does the space between the boxes, which is the one place on the map
+		// that does nothing else on a click.
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'The year the cranes stopped', exact: true }),
+		)
+		// In the document rather than visible: the fields fade in from nothing, so
+		// an assertion this close to the click can land inside the transition.
+		await expect(canvas.getByLabelText('Title of Section 1')).toBeInTheDocument()
+		await userEvent.click(canvas.getByLabelText('Map of Why Cities Stopped Building'))
+		await expect(canvas.queryByLabelText('Title of Section 1')).toBeNull()
+
+		// `+` on the title makes a Section, last in the Outline, open with the
+		// caret in it. A Section takes none: References branch off it here.
+		await expect(
+			canvas.queryByLabelText('Add a Section inside The year the cranes stopped'),
+		).toBeNull()
+
+		await userEvent.click(canvas.getByLabelText('Add a Section to the Outline'))
+		const made = canvas.getByLabelText('Title of Section 5') as HTMLInputElement
+		await expect(made).toHaveValue('')
+		await expect(made).toHaveFocus()
+
+		// Left with nothing in it, it goes again rather than leaving an untitled
+		// box on the map.
+		await userEvent.keyboard('{Escape}')
+		await expect(canvas.queryByLabelText('Title of Section 5')).toBeNull()
+		await expect(canvas.queryByText('Untitled section')).toBeNull()
+
+		// Given a title, it stays.
+		await userEvent.click(canvas.getByLabelText('Add a Section to the Outline'))
+		await userEvent.type(
+			canvas.getByLabelText('Title of Section 5'),
+			'What a faster desk does',
+		)
+		await userEvent.keyboard('{Escape}')
+		await expect(canvas.getByText('What a faster desk does')).toBeVisible()
+
+		// Placing a Reference is in the open Section's fields, not on the box.
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'What a faster desk does', exact: true }),
+		)
+		await userEvent.selectOptions(
+			canvas.getByLabelText('Place a Reference at Section 5'),
+			canvas.getByRole('option', { name: /Zoning and the missing middle/ }),
+		)
+		await userEvent.keyboard('{Escape}')
+
+		// It moved rather than being copied: one Reference sits at one Section, so
+		// the new Section now has one box hanging off it, and the Section it came
+		// from has none.
+		await expect(
+			canvas.getByLabelText('Fold the 1 inside What a faster desk does'),
+		).toBeVisible()
+		await expect(
+			canvas.queryByLabelText('Fold the 1 inside Who actually pays for the delay'),
+		).toBeNull()
+		await expect(canvas.getByText('Zoning and the missing middle')).toBeVisible()
+	},
+}
+
+export const L_PlanMapRecursive: Story = {
+	name: '2(l) Outline with recursion (idea)',
+	render: () => (
+		<div className="flex flex-col">
+			<PlanMapScreen branches="sections" />
+			<Annotation>
+				An idea, not a screen. Here a Section branches into the Sections inside it rather
+				than into its References, as deep as the writer takes it, and <code>+</code> on
+				any box makes one more. The Plan's schema already holds this — `OutlineNode` is
+				recursive — and the interface offers two levels, because anything deeper wants a
+				word writers already hold, like Chapter, rather than a more recursive one. 2(k) is
+				what we are building. Each Section says which References sit at it, since nothing
+				here draws them.
+			</Annotation>
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement)
+
+		// The whole point of the idea: a Section takes a Section inside it, and
+		// the one it makes takes another.
+		await userEvent.click(
+			canvas.getByLabelText('Add a Section inside What a faster city would look like'),
+		)
+		const made = canvas.getByLabelText('Title of Subsection 4.1') as HTMLInputElement
+		await userEvent.type(made, 'The permit desk that answers')
+		await userEvent.keyboard('{Escape}')
+
+		await expect(
+			canvas.getByLabelText('Add a Section inside The permit desk that answers'),
+		).toBeVisible()
+
+		// Nothing draws a Reference here, so a Section says which sit at it.
+		await expect(canvas.getByText('refs [1] [3]')).toBeVisible()
+	},
 }

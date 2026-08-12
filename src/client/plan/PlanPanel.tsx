@@ -11,10 +11,13 @@ import { AddSection } from './AddSection'
 import type { SectionAnchor } from './edits'
 import { addSection, setAdjectives, setTarget, setTitle, setVoice } from './edits'
 import { outlineEntries } from './outline'
+import { PlanMap } from './PlanMap'
 import { ReferenceList } from './ReferenceList'
 import { refusalText } from './refusalText'
 import { SectionRow } from './SectionRow'
 import { ToneFields } from './ToneFields'
+import type { OutlineView } from './ViewRail'
+import { ViewRail } from './ViewRail'
 import { AllocationNote, TargetField } from './WordCount'
 
 /**
@@ -49,6 +52,15 @@ export function PlanPanel({
 	const [openId, setOpenId] = useState<string | null>(null)
 	const [made, setMade] = useState<string | null>(null)
 	const [accented, setAccented] = useState<string | null>(null)
+	// Not in the Plan: the Article carries no memory of which View was up.
+	const [view, setView] = useState<OutlineView>('list')
+
+	/** Shows a View, closing whatever Section the last one had open. */
+	const showView = (next: OutlineView) => {
+		setView(next)
+		setOpenId(null)
+		setMade(null)
+	}
 
 	// Held: the accented row's effect lists it, and a new function each render
 	// would restart that row's scroll on every keystroke elsewhere in the Panel.
@@ -106,9 +118,17 @@ export function PlanPanel({
 				voice={plan.voice ?? null}
 			/>
 
-			<GroupHeading count={plan.outline.length}>Outline</GroupHeading>
+			<GroupHeading
+				actions={<ViewRail onView={showView} view={view} />}
+				count={plan.outline.length}
+			>
+				Outline
+			</GroupHeading>
 
-			{entries.length === 0 ? (
+			{view === 'map' ? (
+				// The map carries its own `+` and draws the References itself.
+				<PlanMap edit={edit} plan={plan} />
+			) : entries.length === 0 ? (
 				<EmptySlot className="min-h-[3.5rem]">
 					Sections appear as you agree on them in the Chat — and you can write your own
 					straight in here
@@ -135,9 +155,11 @@ export function PlanPanel({
 				</div>
 			)}
 
-			<div className="flex">
-				<AddSection onAdd={add} outline={plan.outline} />
-			</div>
+			{view === 'map' ? null : (
+				<div className="flex">
+					<AddSection onAdd={add} outline={plan.outline} />
+				</div>
+			)}
 
 			<GroupHeading count={plan.references.length}>References</GroupHeading>
 			<ReferenceList

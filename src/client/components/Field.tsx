@@ -196,3 +196,27 @@ export function EmptySlot({ children, className }: EmptySlotProps) {
 		</div>
 	)
 }
+
+export interface FieldRowProps {
+	label: ReactNode
+	children: ReactNode
+	className?: string
+}
+
+/**
+ * A row with the label in a fixed left gutter and the children to the right of
+ * it. Used for Voice, Adjectives, and the References line.
+ *
+ * The gutter is a fixed width, so separate FieldRows line up without sharing a
+ * grid. Children that wrap grow downwards; the label stays at the top.
+ */
+export function FieldRow({ label, children, className }: FieldRowProps) {
+	return (
+		<div
+			className={cx('grid grid-cols-[5rem_minmax(0,1fr)] items-start gap-x-2', className)}
+		>
+			<span className="label-meta pt-1 text-muted">{label}</span>
+			<div className="min-w-0">{children}</div>
+		</div>
+	)
+}

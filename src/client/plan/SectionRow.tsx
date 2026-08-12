@@ -3,12 +3,13 @@ import { useEffect, useRef, useState } from 'react'
 import type { Plan, ProposalInput } from '../../shared/plan'
 import { nodeAllocation, resolveNodeScope } from '../../shared/plan'
 import { Button } from '../components/Button'
-import { InlineInput, TextField } from '../components/Field'
+import { FieldRow, InlineInput, TextField } from '../components/Field'
 import { OutlineRow } from '../components/OutlineRow'
 import { cx } from '../lib/cx'
 import {
 	deleteSection,
 	moveSection,
+	placeReference,
 	setAdjectives,
 	setIntent,
 	setTarget,
@@ -16,8 +17,14 @@ import {
 	setVoice,
 } from './edits'
 import type { OutlineEntry } from './outline'
-import { depthName } from './outline'
-import { referenceMark, referenceName, referencesAt } from './references'
+import { depthName, outlineEntries, sectionLabel } from './outline'
+import type { ReferenceEntry } from './references'
+import {
+	referenceEntries,
+	referenceMark,
+	referenceName,
+	referencesAt,
+} from './references'
 import { ToneFields } from './ToneFields'
 import { AllocationNote, TargetField } from './WordCount'
 
@@ -31,8 +38,8 @@ import { AllocationNote, TargetField } from './WordCount'
  * neighbour it swaps with, and nothing regenerates an id.
  *
  * **Subsections are TBD.** The Plan carries them and this row renders one, but
- * the Panel offers no control that makes, nests, or lifts one. The Outline is
- * flat until the flat one is smooth.
+ * no control in the app makes, nests, or lifts one — every anchor on offer sits
+ * at the top level. The Outline is flat until the flat one is smooth.
  */
 
 export interface SectionRowProps {
@@ -45,8 +52,9 @@ export interface SectionRowProps {
 	onOpen: (nodeId: string | null) => void
 	/** Take the caret, because the writer just made this Section. */
 	takeCaret?: boolean
-	/** Show a Reference placed here, down in the References list. */
-	onShowReference: (referenceId: string) => void
+	/** Scrolls to a placed Reference. Can be absent when the caller draws no
+	 * References list; the name then reads as text. */
+	onShowReference?: (referenceId: string) => void
 	className?: string
 }
 
@@ -68,11 +76,15 @@ export function SectionRow({
 	const title = useRef<HTMLInputElement>(null)
 	const row = useRef<HTMLDivElement>(null)
 
-	const placed = referencesAt(plan, node.id)
+	const placedReferences = referencesAt(plan, node.id)
+	const unplaceReference = (referenceId: string) =>
+		edit(placeReference(plan, referenceId, null))
+	const offerableReferences = referenceEntries(plan).filter(
+		(entry) => entry.reference.nodeId !== node.id,
+	)
 
-	// Opening a Section puts the caret in its title. Without it the focus stays
-	// on the closed row's button, which this row has just replaced — so it falls
-	// to the page, and Escape has nothing to close.
+	// Opening a Section puts the caret in its title: the closed row's button has
+	// just been replaced, so focus would otherwise fall to the page.
 	useEffect(() => {
 		if (!open) return
 
@@ -80,27 +92,44 @@ export function SectionRow({
 		if (takeCaret) row.current?.scrollIntoView({ block: 'nearest' })
 	}, [open, takeCaret])
 
-	/** Enter is done. Nothing is lost by leaving — the Section reopens on a
-	 * click, and the write has already gone. */
+	/** Enter closes the Section. The write has already gone. */
 	const doneOnEnter = (event: { key: string; preventDefault: () => void }) => {
 		if (event.key !== 'Enter') return
 		event.preventDefault()
 		onOpen(null)
 	}
 
-	const references =
-		placed.length === 0 ? null : (
-			<div className="flex flex-col gap-0.5 pl-[1.375rem]">
-				{placed.map((held) => (
-					<button
+	const placedList =
+		placedReferences.length === 0 ? null : (
+			<div className="flex flex-col gap-0.5">
+				{placedReferences.map((held) => (
+					<span
 						key={held.reference.id}
-						className="flex items-baseline gap-1.5 truncate text-left text-[0.6875rem] text-muted hover:text-ink"
-						onClick={() => onShowReference(held.reference.id)}
-						type="button"
+						className="flex w-full items-baseline gap-1.5 text-[0.6875rem] text-muted"
 					>
 						<span className="label-meta shrink-0">{referenceMark(held)}</span>
-						<span className="truncate">{referenceName(held.reference)}</span>
-					</button>
+						{onShowReference === undefined ? (
+							<span className="min-w-0 flex-1 truncate">
+								{referenceName(held.reference)}
+							</span>
+						) : (
+							<button
+								className="min-w-0 flex-1 truncate text-left hover:text-ink"
+								onClick={() => onShowReference(held.reference.id)}
+								type="button"
+							>
+								{referenceName(held.reference)}
+							</button>
+						)}
+						<button
+							aria-label={`Take ${referenceName(held.reference)} off ${scopeName}`}
+							className="shrink-0 text-faint hover:text-ink"
+							onClick={() => unplaceReference(held.reference.id)}
+							type="button"
+						>
+							×
+						</button>
+					</span>
 				))}
 			</div>
 		)
@@ -114,9 +143,8 @@ export function SectionRow({
 				<button
 					className="-mx-1.5 rounded-md border border-transparent px-1.5 py-1 text-left hover:border-edge hover:bg-surface"
 					onClick={() => onOpen(node.id)}
-					// Opening on mousedown, because the Section that is open closes on
-					// the focus leaving it — which relays out the list and moves this
-					// row out from under the pointer before the click lands.
+					// On mousedown: the open Section closes on blur, which relays the
+					// list and moves this row before a click would land.
 					onMouseDown={(event) => {
 						event.preventDefault()
 						onOpen(node.id)
@@ -130,7 +158,7 @@ export function SectionRow({
 						</p>
 					) : null}
 				</button>
-				{references}
+				{placedList === null ? null : <div className="pl-[1.375rem]">{placedList}</div>}
 			</div>
 		)
 	}
@@ -147,8 +175,7 @@ export function SectionRow({
 			)}
 			onBlur={(event) => {
 				// Reaching for another field closes this Section. A blur with nowhere
-				// to go — clicking the page, or the row being moved in the list — is
-				// not the writer leaving, so it does not close anything.
+				// to go is not the writer leaving.
 				const to = event.relatedTarget
 				if (to !== null && !event.currentTarget.contains(to)) onOpen(null)
 			}}
@@ -202,18 +229,38 @@ export function SectionRow({
 					value={node.intent ?? ''}
 				/>
 
-				<ToneFields
-					adjectives={node.adjectives ?? []}
-					onAdjectives={(adjectives) => edit(setAdjectives(plan, node.id, adjectives))}
-					onVoice={(voice) => edit(setVoice(plan, node.id, voice))}
-					resolved={resolved}
-					scopeName={scopeName}
-					voice={node.voice ?? null}
-				/>
+				{/* Voice, Adjectives, and References are one run of minor fields, so
+				    they sit in one column at one rhythm rather than as a block and a
+				    stray row beneath it. */}
+				<div className="flex flex-col gap-1.5">
+					<ToneFields
+						adjectives={node.adjectives ?? []}
+						onAdjectives={(adjectives) => edit(setAdjectives(plan, node.id, adjectives))}
+						onVoice={(voice) => edit(setVoice(plan, node.id, voice))}
+						resolved={resolved}
+						scopeName={scopeName}
+						voice={node.voice ?? null}
+					/>
 
-				{references}
+					{/* The label and the picker take one line; what is placed here runs
+					    the full width beneath them. */}
+					{placedList === null && offerableReferences.length === 0 ? null : (
+						<div className="flex flex-col gap-1">
+							<FieldRow label="References">
+								<SelectReferenceToPlace
+									edit={edit}
+									nodeId={node.id}
+									offerableReferences={offerableReferences}
+									plan={plan}
+									scopeName={scopeName}
+								/>
+							</FieldRow>
+							{placedList}
+						</div>
+					)}
+				</div>
 
-				<div className="flex items-center gap-1.5 pt-0.5">
+				<div className="flex flex-wrap items-center gap-1.5 pt-0.5">
 					<Button
 						aria-label={`Move ${scopeName} up`}
 						disabled={index === 0}
@@ -256,5 +303,49 @@ export function SectionRow({
 				</div>
 			</div>
 		</div>
+	)
+}
+
+interface SelectReferenceToPlaceProps {
+	plan: Plan
+	nodeId: string
+	offerableReferences: ReferenceEntry[]
+	edit: (ops: ProposalInput | null) => void
+	/** "Section 2", for the control's name. */
+	scopeName: string
+}
+
+/** A Reference sits at one Section, so picking one placed elsewhere moves it. */
+function SelectReferenceToPlace({
+	plan,
+	nodeId,
+	offerableReferences,
+	edit,
+	scopeName,
+}: SelectReferenceToPlaceProps) {
+	if (offerableReferences.length === 0) return null
+
+	const placed = new Map(
+		outlineEntries(plan.outline).map((entry) => [entry.node.id, sectionLabel(entry)]),
+	)
+
+	return (
+		// Styled as `InlineInput` is, to match the Adjective field beside it.
+		<select
+			aria-label={`Place a Reference at ${scopeName}`}
+			className="w-24 appearance-none rounded-sm border-b border-transparent bg-transparent text-[0.6875rem] text-faint outline-none hover:border-edge focus:border-edge"
+			onChange={(event) => edit(placeReference(plan, event.target.value, nodeId))}
+			value=""
+		>
+			<option value="">+ reference</option>
+			{offerableReferences.map((entry) => (
+				<option key={entry.reference.id} value={entry.reference.id}>
+					{referenceMark(entry)} {referenceName(entry.reference)}
+					{entry.reference.nodeId === null
+						? ''
+						: ` — now at ${placed.get(entry.reference.nodeId) ?? '—'}`}
+				</option>
+			))}
+		</select>
 	)
 }

@@ -69,3 +69,25 @@ export function findNodePath(
 
 	return null
 }
+
+/**
+ * Whether a Section carries nothing: no title, no length, no note, no Tone,
+ * nothing inside it, and no Reference placed at it.
+ *
+ * Reads the node's own fields rather than a list of names, so a field added to
+ * `outlineNodeSchema` later counts here without being named.
+ */
+export function sectionIsEmpty(plan: Plan, nodeId: string): boolean {
+	const path = findNodePath(plan.outline, nodeId)
+	if (path === null) return false
+
+	const bare = Object.entries(path[path.length - 1]!).every(([field, value]) => {
+		if (field === 'id') return true
+		if (field === 'title') return value === ''
+		if (field === 'children') return (value as OutlineNode[]).length === 0
+
+		return value === undefined
+	})
+
+	return bare && !plan.references.some((reference) => reference.nodeId === nodeId)
+}
