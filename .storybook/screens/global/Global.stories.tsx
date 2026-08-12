@@ -44,12 +44,10 @@ export const B_Board: Story = {
 			<BoardScreen />
 			<Annotation>
 				Reading only. No drag-and-drop: the writer sets an Article's status on the Article
-				screen, which is where they are when they decide it has moved on. At `lg` —
-				1298px, a maximized window on the main writer's monitor — the columns take four
-				even quarters and there is no sideways scroll. Below that they scale down to 16rem
-				and then hold, so the Board scrolls sideways rather than squeezing four columns
-				into a phone. A hairline in the gutter separates them, one card tall — enough to
-				read four columns as four without a fill behind each.
+				screen, which is where they are when they decide it has moved on. A hairline in
+				the gutter separates the columns, one card tall — enough to read four columns as
+				four without a fill behind each. The columns scale with the window and the Board
+				scrolls sideways rather than squeezing four columns into a phone.
 			</Annotation>
 		</div>
 	),
