@@ -56,6 +56,15 @@ export function PlanPanel({
 	// the Plan: it is a way of looking, and the Article carries no memory of it.
 	const [view, setView] = useState<OutlineView>('list')
 
+	// Changing View puts the open Section away, rather than leaving it open
+	// behind the other View. Reaching for the rail already blurs the open row,
+	// which closes it; this says so outright instead of resting on that.
+	const showView = (next: OutlineView) => {
+		setView(next)
+		setOpenId(null)
+		setMade(null)
+	}
+
 	// Held: the accented row's effect lists it, and a new function each render
 	// would restart that row's scroll on every keystroke elsewhere in the Panel.
 	const clearAccent = useCallback(() => setAccented(null), [])
@@ -113,7 +122,7 @@ export function PlanPanel({
 			/>
 
 			<GroupHeading
-				actions={<ViewRail onView={setView} view={view} />}
+				actions={<ViewRail onView={showView} view={view} />}
 				count={plan.outline.length}
 			>
 				Outline

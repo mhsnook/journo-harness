@@ -4,6 +4,16 @@ What is true now. The reasoning behind each decision lives in the wayfinding map
 and its closed tickets; this document does not repeat it. Vocabulary is fixed in
 [`context.md`](../context.md) and governs the code, the UI, and this file.
 
+**What belongs here is a decision that binds more than one module.** Where writes go, what
+the Plan holds, who may write it, what the Panels are. A claim you can change by editing one
+file is not architecture: it belongs in that file, next to the code that would have to
+change with it. Put it here and it goes stale the first time someone edits that file, and
+the next reader has to run the code to find out which of the two is current.
+
+That rules out how a control behaves, what a screen does on a click, and which component
+holds which piece of local state. Those are real decisions and they are written down — in
+the component's own doc comment, and in the Storybook screen that shows them.
+
 The product: **the writer writes the prose and an AI acts as a guide.** Nothing here has the
 model producing prose for the Draft.
 
@@ -482,18 +492,10 @@ and a structural edit gets the consequences the ops already state — deleting a
 unplaces its References. The writer's own edits never go Stale: staleness is the gap
 between generating a Proposal and applying it, and there is no gap here.
 
-**The Outline has two Views: the list and the map.** `src/client/plan/ViewRail.tsx` sits
-in the Outline heading and switches between them, and `PlanPanel` holds which is up —
-it is a way of looking, and the Article carries no memory of it. `src/client/plan/map.ts`
-places every box and curve off the Plan, `PlanMap.tsx` draws them, and both Views write
-through the ops above, so neither can make a change the other could not. The map draws
-the Article title, its Sections, and the References placed at each; a Section carrying
-none is a leaf. Clicking a Section opens `SectionRow` over the map rather than in it, so
-nothing reflows around what the writer is editing.
-
-Two things the map holds that the list does not, both because they are ways of looking
-rather than facts about the Plan: which Sections are folded, and which box the pointer is
-on. Each View also holds its own open Section, so switching View closes what was open.
+**The Outline has two Views, and both write the same way.** The list of Sections and the
+map (`src/client/plan/map.ts`, `PlanMap.tsx`) build ops and hand them to the same `edit`,
+so neither can make a change the other could not. Which View is up is a way of looking:
+`PlanPanel` holds it, and the Article carries no memory of it.
 
 **One writer holds the Plan and the debounce**, in `src/client/plan/writer.ts`. It applies
 each edit locally, sends after a pause for the four ops a keystroke produces, and sends at
