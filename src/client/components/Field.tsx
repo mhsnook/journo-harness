@@ -196,3 +196,33 @@ export function EmptySlot({ children, className }: EmptySlotProps) {
 		</div>
 	)
 }
+
+export interface FieldRowProps {
+	/** The word in the gutter: "Voice", "Adjectives", "References". */
+	label: ReactNode
+	children: ReactNode
+	className?: string
+}
+
+/**
+ * One labelled row of a Section's minor fields: the word in a fixed gutter, the
+ * control after it.
+ *
+ * Each row is its own grid rather than all of them sharing one, which they can
+ * be because the gutter is a fixed width — so rows written in different
+ * components still line up, and a row can be added anywhere without threading
+ * it through whoever owns the grid.
+ */
+export function FieldRow({ label, children, className }: FieldRowProps) {
+	return (
+		<div
+			className={cx(
+				'grid grid-cols-[5rem_minmax(0,1fr)] items-center gap-x-2',
+				className,
+			)}
+		>
+			<span className="label-meta text-muted">{label}</span>
+			<div className="min-w-0">{children}</div>
+		</div>
+	)
+}

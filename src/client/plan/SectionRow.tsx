@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { Plan, ProposalInput } from '../../shared/plan'
 import { nodeAllocation, resolveNodeScope } from '../../shared/plan'
 import { Button } from '../components/Button'
-import { InlineInput, TextField } from '../components/Field'
+import { FieldRow, InlineInput, TextField } from '../components/Field'
 import { OutlineRow } from '../components/OutlineRow'
 import { cx } from '../lib/cx'
 import {
@@ -18,6 +18,7 @@ import {
 } from './edits'
 import type { OutlineEntry } from './outline'
 import { depthName, outlineEntries, sectionLabel } from './outline'
+import type { ReferenceEntry } from './references'
 import {
 	referenceEntries,
 	referenceMark,
@@ -75,6 +76,11 @@ export function SectionRow({
 	const row = useRef<HTMLDivElement>(null)
 
 	const placed = referencesAt(plan, node.id)
+	// What the picker could offer: a Reference sits at one Section, so anything
+	// not already here can be moved here. With none, the row has nothing to say.
+	const offerable = referenceEntries(plan).filter(
+		(entry) => entry.reference.nodeId !== node.id,
+	)
 
 	// Opening a Section puts the caret in its title. Without it the focus stays
 	// on the closed row's button, which this row has just replaced — so it falls
@@ -94,9 +100,9 @@ export function SectionRow({
 		onOpen(null)
 	}
 
-	const references =
+	const placedList =
 		placed.length === 0 ? null : (
-			<div className="flex flex-col gap-0.5 pl-[1.375rem]">
+			<div className="flex flex-col gap-0.5">
 				{placed.map((held) => (
 					<button
 						key={held.reference.id}
@@ -136,7 +142,7 @@ export function SectionRow({
 						</p>
 					) : null}
 				</button>
-				{references}
+				{placedList === null ? null : <div className="pl-[1.375rem]">{placedList}</div>}
 			</div>
 		)
 	}
@@ -208,17 +214,36 @@ export function SectionRow({
 					value={node.intent ?? ''}
 				/>
 
-				<ToneFields
-					adjectives={node.adjectives ?? []}
-					onAdjectives={(adjectives) => edit(setAdjectives(plan, node.id, adjectives))}
-					onVoice={(voice) => edit(setVoice(plan, node.id, voice))}
-					resolved={resolved}
-					scopeName={scopeName}
-					voice={node.voice ?? null}
-				/>
+				{/* Voice, Adjectives, and References are one run of minor fields, so
+				    they sit in one column at one rhythm rather than as a block and a
+				    stray row beneath it. */}
+				<div className="flex flex-col gap-1.5">
+					<ToneFields
+						adjectives={node.adjectives ?? []}
+						onAdjectives={(adjectives) => edit(setAdjectives(plan, node.id, adjectives))}
+						onVoice={(voice) => edit(setVoice(plan, node.id, voice))}
+						resolved={resolved}
+						scopeName={scopeName}
+						voice={node.voice ?? null}
+					/>
 
-				{references}
-				<PlaceReference edit={edit} nodeId={node.id} plan={plan} scopeName={scopeName} />
+					{placedList === null && offerable.length === 0 ? null : (
+						<FieldRow className="items-start" label="References">
+							{/* Stretched, not `items-start`: a placed Reference has to be
+							    allowed to shrink before `truncate` will cut it. */}
+							<div className="flex flex-col gap-0.5">
+								{placedList}
+								<PlaceReference
+									edit={edit}
+									nodeId={node.id}
+									offerable={offerable}
+									plan={plan}
+									scopeName={scopeName}
+								/>
+							</div>
+						</FieldRow>
+					)}
+				</div>
 
 				<div className="flex flex-wrap items-center gap-1.5 pt-0.5">
 					<Button
@@ -269,6 +294,8 @@ export function SectionRow({
 interface PlaceReferenceProps {
 	plan: Plan
 	nodeId: string
+	/** Every Reference not already here, worked out by the row. */
+	offerable: ReferenceEntry[]
 	edit: (ops: ProposalInput | null) => void
 	/** "Section 2", for the control's name. */
 	scopeName: string
@@ -282,27 +309,31 @@ interface PlaceReferenceProps {
  *
  * A Reference sits at one Section, so picking one placed elsewhere moves it.
  */
-function PlaceReference({ plan, nodeId, edit, scopeName }: PlaceReferenceProps) {
-	const options = referenceEntries(plan).filter(
-		(entry) => entry.reference.nodeId !== nodeId,
-	)
-
+function PlaceReference({
+	plan,
+	nodeId,
+	offerable,
+	edit,
+	scopeName,
+}: PlaceReferenceProps) {
 	// Nothing to offer: every Reference the Plan holds already sits here.
-	if (options.length === 0) return null
+	if (offerable.length === 0) return null
 
 	const placed = new Map(
 		outlineEntries(plan.outline).map((entry) => [entry.node.id, sectionLabel(entry)]),
 	)
 
 	return (
+		// Styled as `InlineInput` is, so it reads as the same kind of control as
+		// the Adjective field beside it: faint until the writer reaches for it.
 		<select
 			aria-label={`Place a Reference at ${scopeName}`}
-			className="h-7 w-full rounded-md border border-edge bg-surface px-2 text-[0.75rem] text-muted"
+			className="min-w-0 appearance-none self-start rounded-sm border-b border-transparent bg-transparent text-[0.6875rem] text-faint outline-none hover:border-edge focus:border-edge"
 			onChange={(event) => edit(placeReference(plan, event.target.value, nodeId))}
 			value=""
 		>
-			<option value="">place a reference…</option>
-			{options.map((entry) => (
+			<option value="">+ reference</option>
+			{offerable.map((entry) => (
 				<option key={entry.reference.id} value={entry.reference.id}>
 					{referenceMark(entry)} {referenceName(entry.reference)}
 					{entry.reference.nodeId === null
