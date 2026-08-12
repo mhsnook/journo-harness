@@ -44,14 +44,12 @@ export function ReferenceCard({
 	const declined = offer.disposition === 'declined'
 	const accepted = offer.disposition === 'accepted'
 	const ruled = accepted || declined
-	// The card prints a passage once, under the title it came from, the way the
-	// Plan row it will be copied into does. A Quote that names no title is headed
-	// by nothing and prints its passage alone.
-	const heading = offer.text === undefined ? referenceName(offer) : offer.source?.title
+	const headingText =
+		offer.text === undefined ? referenceName(offer) : offer.source?.title
 	const url = offer.source?.url
-	// Whether the link goes on the heading or on the line below. A passage is
-	// never the heading, because an underlined passage reads as emphasis.
-	const headingLinks = url !== undefined && heading !== undefined
+	// Whether the link goes on the heading or on the line below. A passage never
+	// heads a card, because an underlined passage reads as emphasis.
+	const headingLinks = url !== undefined && headingText !== undefined
 	const cited: ReactNode[] = [
 		...(favourite ? [<FavouriteMark key="favourite" type={favourite} />] : []),
 		...attribution(offer.source),
@@ -80,9 +78,13 @@ export function ReferenceCard({
 			) : null}
 
 			<div className="flex min-w-0 flex-1 flex-col gap-1">
-				{heading === undefined ? null : (
+				{headingText === undefined ? null : (
 					<h4 className="text-[0.8125rem] leading-snug font-semibold text-ink">
-						{headingLinks ? <SourceLink url={url}>{heading}</SourceLink> : heading}
+						{headingLinks ? (
+							<SourceLink url={url}>{headingText}</SourceLink>
+						) : (
+							headingText
+						)}
 					</h4>
 				)}
 				{offer.text === undefined ? null : (
