@@ -57,6 +57,14 @@
 
 	--radius-frame: 0.625rem;
 
+	/* Three screens, and no more: a phone, a small laptop, and a maximized
+	   window on the main user's monitor. Clearing the scale first drops
+	   Tailwind's md, xl, and 2xl, so a fourth tier has to be added here on
+	   purpose rather than reached for in a className. */
+	--breakpoint-*: initial;
+	--breakpoint-sm: 48rem; /* 768px */
+	--breakpoint-lg: 1298px;
+
 	/* One depth, cast in whichever direction the thing lifts: the outermost
 	   frame downwards, a drawer rising from a Panel's foot upwards. */
 	--shadow-frame: 0 1px 2px rgb(43 34 41 / 0.05), 0 8px 24px -16px rgb(43 34 41 / 0.25);

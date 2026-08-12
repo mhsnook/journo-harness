@@ -8,7 +8,7 @@ import { BackLink, TitleBar } from '../components/TitleBar'
 import { cx } from '../lib/cx'
 import { boardColumns } from './grouping'
 
-const columnWidth = 'grow basis-[clamp(16rem,30%,307px)]'
+const columnWidth = 'w-[clamp(16rem,30%,307px)] lg:w-auto lg:grow lg:basis-0'
 
 const columnDivider =
 	'before:absolute before:top-0 before:-left-1.5 before:h-24 before:w-px before:bg-rule'
