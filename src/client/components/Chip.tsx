@@ -19,8 +19,8 @@ const variantClass: Record<ChipVariant, string> = {
 	outline: 'border-edge bg-transparent text-muted',
 	muted: 'border-transparent bg-transparent text-faint',
 	// `solid` is "you are here" — a tab or filter that is currently selected.
-	// State, not a call to action, so it takes ink rather than the accent.
-	solid: 'border-ink bg-ink text-paper',
+	// State, not a call to action, so it takes `green` rather than the accent.
+	solid: 'border-green bg-green text-green-ink',
 }
 
 /** The pill's own geometry, exported for a control that cannot be a `Chip` —

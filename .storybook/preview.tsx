@@ -38,8 +38,8 @@ const preview: Preview = {
 		controls: { expanded: true },
 		backgrounds: {
 			options: {
-				paper: { name: 'Paper', value: '#f4f2ee' },
-				surface: { name: 'Surface', value: '#ffffff' },
+				paper: { name: 'Paper', value: '#e9e2d5' },
+				surface: { name: 'Surface', value: '#fbf9f5' },
 			},
 		},
 		options: {

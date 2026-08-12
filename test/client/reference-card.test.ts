@@ -108,6 +108,40 @@ describe('the url a card carries', () => {
 	})
 })
 
+describe('the passage a Quote card carries', () => {
+	function quoted(source: Offer['source']) {
+		const offer: Offer = {
+			id: 'o1',
+			type: 'quote',
+			text: 'Forty separate times.',
+			source,
+			disposition: 'undecided',
+			createdAt: 0,
+			decidedAt: null,
+		}
+
+		return renderToStaticMarkup(createElement(ReferenceCard, { offer }))
+	}
+
+	// The card headed the passage and then quoted it again below.
+	it('prints the passage once', () => {
+		const html = quoted({ title: 'Permit throughput', author: 'R. Okonkwo' })
+
+		expect(html.split('Forty separate times.')).toHaveLength(2)
+	})
+
+	it('heads the passage with the title it came from', () => {
+		const html = quoted({ title: 'Permit throughput', author: 'R. Okonkwo' })
+
+		expect(html).toContain('Permit throughput')
+		expect(html).toContain('R. Okonkwo')
+	})
+
+	it('prints the passage alone where the source names no title', () => {
+		expect(quoted({ author: 'R. Okonkwo' })).toContain('Forty separate times.')
+	})
+})
+
 describe('the tick a Ledger card carries', () => {
 	// Nothing undoes an Accept — `restoreOffer` undoes a Decline — so the tick
 	// does not offer a state to go back to.

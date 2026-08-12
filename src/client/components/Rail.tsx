@@ -5,8 +5,8 @@ import { cx } from '../lib/cx'
  * and the View rail on the Plan Panel's Outline heading.
  *
  * **Deliberately not accented.** What is on is state, not a call to action, so
- * the on pill is solid ink and the yellow stays free for the one thing on
- * screen that wants a decision — `foundations/Accent.mdx`.
+ * the on pill takes green and the accent stays free for the one thing on screen
+ * that actually wants a decision — `foundations/Accent.mdx`.
  *
  * Static without `onPick`, which is how a rail reads when it is showing what is
  * open rather than offering to change it.
@@ -55,8 +55,8 @@ export function Rail<Item extends string>({
 							: {})}
 						className={cx(
 							'rounded-full px-2.5 py-1 text-[0.6875rem] leading-none font-medium transition-colors',
-							isOn ? 'bg-ink text-paper' : 'text-faint',
-							onPick && !isOn && 'hover:bg-hush hover:text-muted',
+							isOn ? 'bg-green text-green-ink' : 'text-faint',
+							onPick && !isOn && 'hover:bg-surface hover:text-muted',
 						)}
 					>
 						{item}
