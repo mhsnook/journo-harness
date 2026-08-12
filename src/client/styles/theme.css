@@ -58,10 +58,7 @@
 	--radius-frame: 0.625rem;
 
 	/* Three screens, and no more. A phone is the unprefixed one, `md` is a
-	   laptop, and `lg` is a maximized window on the main user's monitor.
-	   Clearing the scale first drops Tailwind's sm, xl, and 2xl, so a fourth
-	   tier has to be added here on purpose rather than reached for in a
-	   className. */
+	   laptop, and `lg` is a maximized window on the main user's monitor. */
 	--breakpoint-*: initial;
 	--breakpoint-md: 48rem; /* 768px */
 	--breakpoint-lg: 1298px;

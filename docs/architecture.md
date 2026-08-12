@@ -440,13 +440,6 @@ narrow screen. `usePanels` holds which are open, keeps them in the one order the
 and refuses to close the last of them. All four stay mounted and a closed one is hidden. The
 **Areas** are Articles (with Board and Archive Views), House, and Team.
 
-**Three screen sizes, and the scale holds no others.** `theme.css` clears Tailwind's
-breakpoints and names two: `md` at 48rem is a laptop, and `lg` at 1298px is a maximized
-window on the main writer's monitor. A phone is the unprefixed one, so it has no name to
-misuse. `sm`, `xl`, and `2xl` generate nothing, and Tailwind fails an unknown variant
-silently, so a fourth tier is a decision made in the theme rather than a prefix someone
-reaches for.
-
 **A screen never draws a value it has not got.** An empty title, a zero count and four empty
 columns are answers, and a screen that puts one on the page before it has read anything has
 said something untrue. Whatever is still coming says so — `Skeleton` where the shape is
