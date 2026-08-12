@@ -175,6 +175,34 @@ Describes an Accepted Offer the writer has placed in a Section but not yet worke
 the Draft.
 _Avoid_: pending, staged, assigned
 
+## What research turned up, and what was learned from it
+
+**Batch** (or offer batch):
+One call to the research tool, and everything it surfaced. The unit a policy is compared
+at, and the reason an Offer's position is worth keeping — the writer read a set, not a
+row.
+_Avoid_: turn (a turn is a Chat exchange), set, run, result page
+
+**Appearance**:
+One Offer surfaced in one Batch. An Offer is the thing itself and carries the writer's
+ruling; an Appearance is one time it was put in front of them, so a source two Batches
+both turned up has one Offer and two Appearances.
+_Avoid_: impression, showing, hit, occurrence
+
+**Policy** (or research policy):
+The routine that produced a Batch. Named by the harness rather than by the model, because
+the label is what a comparison between routines rests on. One serves every Batch until a
+Skill is a Policy of its own at 1b.
+_Avoid_: strategy, arm, variant, mode, agent
+
+**Learned rule**:
+A sentence about what the writer takes and what they turn down, read off Offers they have
+already ruled on. The writer rules on it the way they rule on an Offer, and an Accepted one
+joins the guide's instructions on every turn. Not a **standing rule**, which this document
+reserves for House material the writer authors themselves — the difference is who wrote it,
+and it is the difference that decides whether the writer may be told it is theirs.
+_Avoid_: standing rule (see above), preference, insight, learning, heuristic, weight
+
 **Used** (Phase 2):
 Describes an Accepted Offer that appears in the Draft.
 _Avoid_: applied, written, done

@@ -24,6 +24,18 @@ import {
 	type ReferenceType,
 	type Source,
 } from '../shared/plan'
+import {
+	defaultResearchPolicy,
+	type OfferBatch,
+	researchPolicySchema,
+} from '../shared/research'
+import { migrateAgentSchema } from './agent-schema'
+import {
+	type AppearanceRecord,
+	markRuling,
+	recordAppearances,
+} from './learning/appearances'
+import { acceptedRules } from './learning/rules'
 import { chatTurn } from './llm/chat-turn'
 import { model } from './llm/model'
 
@@ -55,8 +67,69 @@ function toOffer(row: OfferRow): Offer {
 	}
 }
 
+/** One batch row as SQLite returns it. */
+type OfferBatchRow = {
+	seq: number
+	id: string
+	policy: string
+	created_at: number
+	offered: number
+}
+
+function toBatch(row: OfferBatchRow): OfferBatch {
+	return {
+		id: row.id,
+		policy: row.policy,
+		createdAt: row.created_at,
+		offered: row.offered,
+	}
+}
+
 /** `duplicate` means the row was already there and nothing was written. */
 export type RecordedOffer = { offer: Offer; duplicate: boolean }
+
+/** What one research turn recorded: the batch it was, and what it surfaced in
+ * the order the writer sees them. */
+export type RecordedBatch = { batch: OfferBatch; recorded: RecordedOffer[] }
+
+/** One appearance as D1 holds it — the Offer's own fields flattened onto the
+ * batch that surfaced it, so a query there wakes no Article Agent. */
+function appearanceOf(
+	articleId: string,
+	batch: OfferBatch,
+	offer: Offer,
+	position: number,
+	duplicate: boolean,
+): AppearanceRecord {
+	return {
+		articleId,
+		batchId: batch.id,
+		policy: batch.policy,
+		position,
+		duplicate,
+		offerId: offer.id,
+		type: offer.type,
+		text: offer.text,
+		source: offer.source,
+		note: offer.note,
+		disposition: offer.disposition,
+		// The batch's clock rather than the Offer's: a re-offer keeps the row it
+		// already had, and when it was first turned up is not when this turn
+		// showed it.
+		offeredAt: batch.createdAt,
+		decidedAt: offer.decidedAt,
+	}
+}
+
+function appearancesOf(
+	articleId: string,
+	batch: OfferBatch,
+	recorded: readonly RecordedOffer[],
+): AppearanceRecord[] {
+	return recorded.map((entry, position) =>
+		appearanceOf(articleId, batch, entry.offer, position, entry.duplicate),
+	)
+}
 
 /**
  * One Article Agent per Article — docs/architecture.md §2, and §3 for what goes
@@ -67,23 +140,11 @@ export type RecordedOffer = { offer: Offer; duplicate: boolean }
 export class ArticleAgent extends AIChatAgent<Env, Plan> {
 	initialState = emptyPlan()
 
-	/** Runs on every wake, so every statement here has to be idempotent. A new
-	 * table can join this one. A new column cannot — SQLite has no ADD COLUMN
-	 * IF NOT EXISTS, so the second wake throws on a duplicate column. */
+	/** Runs on every wake. The schema and the steps that build it are in
+	 * `agent-schema.ts`, which records how far this Agent has got — so a step
+	 * runs once rather than having to be safe to run on every wake. */
 	onStart(): void {
-		this.sql`
-			CREATE TABLE IF NOT EXISTS offer (
-				seq INTEGER PRIMARY KEY AUTOINCREMENT,
-				id TEXT NOT NULL UNIQUE,
-				type TEXT NOT NULL,
-				disposition TEXT NOT NULL,
-				text TEXT,
-				source TEXT,
-				note TEXT,
-				created_at INTEGER NOT NULL,
-				decided_at INTEGER
-			)
-		`
+		migrateAgentSchema(this.ctx)
 	}
 
 	async onRequest(_request: Request): Promise<Response> {
@@ -116,7 +177,26 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 			messages: this.messages,
 			abortSignal: options?.abortSignal,
 			onFinish,
+			rules: await this.learnedRules(),
 		})
+	}
+
+	/**
+	 * The Accepted Learned rules, for this turn's prompt — §12.
+	 *
+	 * Read here rather than in `chatTurn`, which reaches no binding by design.
+	 * A failure answers none rather than failing the turn: a guide running
+	 * without the rules is the guide as it was last month, where a turn that
+	 * will not start is the writer's Chat broken.
+	 */
+	private async learnedRules(): Promise<string[]> {
+		try {
+			return (await acceptedRules(this.env.DB)).map((rule) => rule.text)
+		} catch (error) {
+			console.error('The Learned rules did not load. The turn runs without them.', error)
+
+			return []
+		}
 	}
 
 	/**
@@ -179,22 +259,49 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 		return this.sql<OfferRow>`SELECT * FROM offer ORDER BY seq`.map(toOffer)
 	}
 
+	/** Every research turn this Article has had, oldest first. Read-only, so it
+	 * joins the callable set: what a turn turned up is the writer's to look at.
+	 *
+	 * `seq` orders it rather than `created_at`, the same way `listOffers` is
+	 * ordered and for the same reason — the clock does not move between two
+	 * writes in one invocation. */
+	@callable()
+	listOfferBatches(): OfferBatch[] {
+		return this.sql<OfferBatchRow>`SELECT * FROM offer_batch ORDER BY seq`.map(toBatch)
+	}
+
 	/**
 	 * One research turn. An entry this Article already carries comes back as it
 	 * stands, keeping the disposition the writer gave it — §5.
 	 *
+	 * The turn is recorded as a **batch** with one **appearance** per entry, so
+	 * what the writer was shown survives as a set rather than as a scattering of
+	 * rows with nearby timestamps — §12. The duplicates get appearances too: an
+	 * Offer already on the table writes no second row, and without the
+	 * appearance a policy that turned up a source the writer had already taken
+	 * would leave no sign it had turned it up.
+	 *
+	 * **The policy is named by the harness, never by the model.** It defaults to
+	 * the one routine there is; at 1b a House Skill names its own.
+	 *
 	 * Not `@callable`, and neither is `createOffer`: the research tool is the
 	 * only caller and it runs inside this Agent (§3, rule 4).
 	 */
-	recordOffers(batch: unknown): RecordedOffer[] {
+	async recordOffers(
+		batch: unknown,
+		policy: string = defaultResearchPolicy,
+	): Promise<RecordedBatch> {
+		// Both parsed before any row is written, so a bad policy refuses the turn
+		// where it would otherwise leave a batch labelled with nothing.
 		const found = offerBatchSchema.parse(batch)
+		const named = researchPolicySchema.parse(policy)
 
 		// Added to as the batch is written, so a turn dedupes against itself.
 		const held = new Map(
 			this.listOffers().map((offer) => [offerFingerprint(offer), offer]),
 		)
 
-		return found.map((material) => {
+		const recorded = found.map((material) => {
 			const fingerprint = offerFingerprint(material)
 			const already = held.get(fingerprint)
 			if (already !== undefined) return { offer: already, duplicate: true }
@@ -204,6 +311,97 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 
 			return { offer, duplicate: false }
 		})
+
+		const written = this.createBatch(named, recorded)
+		await this.mirror(() =>
+			recordAppearances(this.env.DB, appearancesOf(this.name, written, recorded)),
+		)
+
+		return { batch: written, recorded }
+	}
+
+	/** The batch row and its appearances, in the order the writer sees them. */
+	private createBatch(policy: string, recorded: readonly RecordedOffer[]): OfferBatch {
+		const batch: OfferBatch = {
+			id: crypto.randomUUID(),
+			policy,
+			createdAt: Date.now(),
+			offered: recorded.length,
+		}
+
+		this.sql`
+			INSERT INTO offer_batch (id, policy, created_at, offered)
+			VALUES (${batch.id}, ${batch.policy}, ${batch.createdAt}, ${batch.offered})
+		`
+
+		recorded.forEach((entry, position) => {
+			this.sql`
+				INSERT INTO offer_appearance (batch_id, offer_id, position, duplicate)
+				VALUES (${batch.id}, ${entry.offer.id}, ${position}, ${entry.duplicate ? 1 : 0})
+			`
+		})
+
+		return batch
+	}
+
+	/**
+	 * Copy this Article's rulings into D1, where a query can read across every
+	 * Article — §12. Answers how many appearances it wrote.
+	 *
+	 * The repair path for a mirror write that was lost. The ids are built from
+	 * the Article, the batch, and the position, so running this twice replaces
+	 * rows rather than doubling them.
+	 */
+	@callable()
+	async syncAppearances(): Promise<number> {
+		const offers = new Map(this.listOffers().map((offer) => [offer.id, offer]))
+		const batches = this.listOfferBatches()
+
+		let written = 0
+		for (const batch of batches) {
+			const rows = this.sql<{ offer_id: string; position: number; duplicate: number }>`
+				SELECT offer_id, position, duplicate FROM offer_appearance
+				WHERE batch_id = ${batch.id} ORDER BY position
+			`
+
+			const records = rows.flatMap((row) => {
+				const offer = offers.get(row.offer_id)
+				// An appearance naming an Offer no longer on the table would be a
+				// bug rather than a state to handle, and skipping it keeps the
+				// repair path from failing whole on one bad row.
+				if (offer === undefined) return []
+
+				return [appearanceOf(this.name, batch, offer, row.position, row.duplicate === 1)]
+			})
+
+			await this.mirror(() => recordAppearances(this.env.DB, records))
+			written += records.length
+		}
+
+		return written
+	}
+
+	/**
+	 * A write to the copy in D1.
+	 *
+	 * **Best effort, and deliberately so.** This Agent is the record; D1 holds
+	 * the copy a query reads across Articles. A failure here costs one row to
+	 * learn from, where letting it through would cost the writer the ruling they
+	 * just made — so it is logged and swallowed, and `syncAppearances` is how it
+	 * gets repaired.
+	 *
+	 * Awaited rather than handed to `waitUntil`: the write is one small
+	 * statement, and awaiting is what lets a test assert the copy landed.
+	 */
+	private async mirror(write: () => Promise<void>): Promise<void> {
+		try {
+			await write()
+		} catch (error) {
+			console.error(
+				'An appearance did not reach D1. The Article Agent kept its row.',
+				error,
+			)
+		}
 	}
 
 	/** Starts Undecided. */
@@ -235,7 +433,7 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 
 	/** Mark an Offer as having been Accepted or Declined by the client. */
 	@callable()
-	setOfferDisposition(id: string, disposition: Ruling): Offer {
+	async setOfferDisposition(id: string, disposition: Ruling): Promise<Offer> {
 		const ruling = rulingSchema.parse(disposition)
 
 		const rows = this.sql<OfferRow>`
@@ -244,23 +442,35 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 		`
 		if (rows.length === 0) throw missingOffer(id)
 
-		return toOffer(rows[0])
+		const offer = toOffer(rows[0])
+		// Every appearance of it, not just the batch that got there first: a
+		// source two policies both turned up was turned up by both.
+		await this.mirror(() =>
+			markRuling(this.env.DB, this.name, offer.id, offer.disposition, offer.decidedAt),
+		)
+
+		return offer
 	}
 
 	/** Restore a Declined Offer back to Undecided. */
 	@callable()
-	restoreOffer(id: string): Offer {
+	async restoreOffer(id: string): Promise<Offer> {
 		// Read first: an Offer that is Accepted and one that does not exist have
 		// to be told apart, and one conditional UPDATE cannot do that.
-		const offer = this.readOffer(id)
-		if (offer.disposition !== 'declined') throw notDeclined(offer)
+		const held = this.readOffer(id)
+		if (held.disposition !== 'declined') throw notDeclined(held)
 
 		const rows = this.sql<OfferRow>`
 			UPDATE offer SET disposition = 'undecided', decided_at = NULL
 			WHERE id = ${id} RETURNING *
 		`
 
-		return toOffer(rows[0])
+		const offer = toOffer(rows[0])
+		await this.mirror(() =>
+			markRuling(this.env.DB, this.name, offer.id, offer.disposition, offer.decidedAt),
+		)
+
+		return offer
 	}
 
 	private readOffer(id: string): Offer {

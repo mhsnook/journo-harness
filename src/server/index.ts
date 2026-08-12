@@ -6,6 +6,7 @@ import { Hono } from 'hono'
 
 import { ArticleAgent } from './article-agent'
 import { articleIndex } from './article-index'
+import { learning } from './learning/routes'
 
 // Re-exported so the Durable Object class ships with the Worker bundle.
 export { ArticleAgent }
@@ -17,6 +18,10 @@ app.get('/api/health', (c) => c.json({ ok: true }))
 // The article index, over D1 — architecture.md §9. Mounted ahead of the
 // catch-all below, which Hono would otherwise match first.
 app.route('/api/articles', articleIndex)
+
+// Learned rules and the policy tally, over D1 — architecture.md §12. Neither
+// takes an Article: both are writer-scoped, and they move to the House at 1b.
+app.route('/api/learning', learning)
 
 // routeAgentRequest maps /agents/article-agent/:name onto the ArticleAgent
 // binding — the path segment is the binding name in kebab-case.

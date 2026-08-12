@@ -9,6 +9,7 @@ import {
 	recordOffersTool,
 } from '../../shared/chat'
 import { offerBatchSchema } from '../../shared/offer'
+import { defaultResearchPolicy } from '../../shared/research'
 import type { ArticleAgent } from '../article-agent'
 
 /**
@@ -81,7 +82,13 @@ const recordOffers = tool({
 		if (agent === undefined)
 			throw new Error('The Offer tool ran outside an Article Agent.')
 
-		return agent.recordOffers(offers).map(({ offer, duplicate }) => ({
+		// The policy is passed here rather than asked of the model — the label is
+		// what a comparison between research routines rests on, and a model
+		// naming its own arm would be marking its own homework. One routine
+		// serves every turn until a House Skill is one of its own at 1b.
+		const { recorded } = await agent.recordOffers(offers, defaultResearchPolicy)
+
+		return recorded.map(({ offer, duplicate }) => ({
 			id: offer.id,
 			name: offer.source?.title ?? offer.text,
 			disposition: offer.disposition,

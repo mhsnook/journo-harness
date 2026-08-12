@@ -1,5 +1,5 @@
 import { env, evictDurableObject, runInDurableObject } from 'cloudflare:test'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 
 import type { RecordedOffer } from '../../src/server/article-agent'
 import { referenceForOffer, referenceFromOffer } from '../../src/shared/ledger'
@@ -19,11 +19,15 @@ function createOffer(name: string, content: ReferenceContent): Promise<Offer> {
 	return runInDurableObject(stub, (agent) => agent.createOffer(content))
 }
 
-/** One research turn, the way the tool will run it. */
+/** One research turn, the way the tool will run it. The batch it recorded is
+ * `research-batches.test.ts`'s subject; what it surfaced is this file's. */
 function recordOffers(name: string, batch: unknown): Promise<RecordedOffer[]> {
 	const stub = env.ArticleAgent.get(env.ArticleAgent.idFromName(name))
 
-	return runInDurableObject(stub, (agent) => agent.recordOffers(batch))
+	return runInDurableObject(
+		stub,
+		async (agent) => (await agent.recordOffers(batch)).recorded,
+	)
 }
 
 /** A Plan that parses: one Section, and one Reference placed at it. */
@@ -54,6 +58,14 @@ const reference = {
 	source: { title: 'Zoning and the missing middle', author: 'A. Weill' },
 	note: 'Primary data for the opening figure.',
 }
+
+// Recording an Offer now mirrors an appearance into D1, and isolated storage
+// does not roll a D1 write back between tests — the article index test says the
+// same. Nothing here reads the copy; this only stops one file's rows reaching
+// the next.
+beforeEach(async () => {
+	await env.DB.prepare('DELETE FROM appearance').run()
+})
 
 describe('the Plan in Article Agent state', () => {
 	it('opens a new Article on the empty Plan', async () => {
@@ -112,17 +124,24 @@ describe('the Plan in Article Agent state', () => {
 
 describe('Offers in the Article Agent', () => {
 	// `@callable` is the whole allowlist of what a browser may invoke on this
-	// Durable Object, so the set is worth naming — `createOffer` is absent
-	// because only the Chat records an Offer. It also proves the decorator
-	// survived the build: oxc does not lower one, and `agents/vite` does.
-	it('marks the three writer-facing Offer methods callable', async () => {
+	// Durable Object, so the set is worth naming — `createOffer` and
+	// `recordOffers` are absent because only the Chat records an Offer. It also
+	// proves the decorator survived the build: oxc does not lower one, and
+	// `agents/vite` does.
+	it('marks the writer-facing Offer methods callable, and no others', async () => {
 		const stub = env.ArticleAgent.get(env.ArticleAgent.idFromName('callable-set'))
 
 		const methods = await runInDurableObject(stub, (agent) => [
 			...agent.getCallableMethods().keys(),
 		])
 
-		expect(methods.sort()).toEqual(['listOffers', 'restoreOffer', 'setOfferDisposition'])
+		expect(methods.sort()).toEqual([
+			'listOfferBatches',
+			'listOffers',
+			'restoreOffer',
+			'setOfferDisposition',
+			'syncAppearances',
+		])
 	})
 
 	it('records an Offer as Undecided and lists it', async () => {

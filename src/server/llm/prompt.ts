@@ -44,15 +44,45 @@ const guideRules = [
 ].join('\n')
 
 /**
+ * What the writer has Accepted about their own taste, distilled from the Offers
+ * they ruled on — `docs/architecture.md` §12.
+ *
+ * Accepted only, and that is the whole guard: a candidate the writer has not
+ * read has no business steering the guide, which is the difference between this
+ * and a model quietly retraining on its own output.
+ *
+ * They are marked as read off past decisions rather than stated as fact,
+ * because that is what they are — a pattern in a few hundred rulings, which the
+ * writer may contradict on this piece and is entitled to.
+ */
+function learnedRules(rules: readonly string[]): string {
+	if (rules.length === 0) return ''
+
+	return [
+		'',
+		'',
+		"Read off this writer's past decisions about research offered to them. Follow them",
+		'unless this Article says otherwise, and let what the writer asks for here win:',
+		...rules.map((rule) => `- ${rule}`),
+	].join('\n')
+}
+
+/**
  * The stable prefix of one Chat turn.
  *
- * Two things join the guide rules here, and both arrive with the House at 1b:
- * the Lexicon entries in play, and the writer's own standing rules. Nothing
- * goes in either slot until then. The Plan does not belong here — see the
- * ordering note above.
+ * Learned rules join the guide rules here. The other two things that belong in
+ * this slot arrive with the House at 1b: the Lexicon entries in play, and the
+ * writer's own standing rules, which `context.md` reserves for material the
+ * writer authors rather than material a pass read off them. The Plan does not
+ * belong here — see the ordering note above.
+ *
+ * They sit inside the cached prefix, so Accepting or Declining one costs the
+ * next turn its cache hit. That is the right trade at a handful of rules the
+ * writer rules on now and then, and the wrong one if anything ever writes here
+ * per turn.
  */
-export function chatSystemPrompt(): string {
-	return guideRules
+export function chatSystemPrompt(rules: readonly string[] = []): string {
+	return `${guideRules}${learnedRules(rules)}`
 }
 
 /**

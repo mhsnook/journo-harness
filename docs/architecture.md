@@ -584,13 +584,131 @@ Settings and known defects. None is a decision to make; all are things to get ri
   Article with a Plan and a transcript already in it, so a screen can be opened rather than
   built up by hand every time.
 
-## 12. Out of scope
+## 12. Learning from the writer's rulings
+
+The writer rules on every Offer, and each ruling is a preference label. This section is
+what the app does with them.
+
+**What this can buy, and what it cannot.** A ruling says which of the candidates the guide
+produced the writer wanted. It cannot say anything about a source the guide never
+surfaced, so no amount of learning here raises the ceiling on what research turns up — the
+guide cannot browse (§7), and reordering what it already knows is the whole of what a
+preference set supports. Retrieval is the separate and larger problem.
+
+**Nothing is trained.** One writer produces a few hundred rulings a year, which is far too
+few to move a model's weights and plenty to notice that they never take a source without a
+year on it. So the artifact is a **Learned rule** — a sentence, which the writer reads and
+rules on — rather than a weight. A wrong sentence is one they can Decline; a wrong weight
+is invisible. A reranker over a larger candidate set is the next rung and is not built;
+what makes it possible later is the record below, not a decision taken now.
+
+### What a research turn records
+
+**A research turn is a Batch, and each entry in it is an Appearance.** A turn is one call
+to the research tool. Both are rows in the Article Agent, on the same SQLite as the Offers.
+
+**Appearances are a table rather than columns on an Offer.** A source the Article already
+carries writes no second Offer row (§5), so a second research routine that turns up the
+same source would otherwise leave no sign it had turned it up — and which routine surfaced
+what is the question the record exists to answer. One turn that repeats itself gets two
+appearances at two positions, and the second is marked a duplicate.
+
+**The harness names the Policy, never the model.** The label is what a comparison between
+research routines rests on, and a model asked to name its own arm would be marking its own
+homework. Today one routine serves every turn and `defaultResearchPolicy` names it. At 1b
+a House Skill is a policy of its own, which is why the field is an open string rather than
+a union — a writer authors a Skill without a deploy.
+
+**Writing a second policy and reading the tally is the intended use.** `GET
+/api/learning/policies` reports what each one turned up and what became of it. That is the
+cheap version of an experiment, and it is the reason the label is recorded at all.
+
+### Where the rulings live
+
+**The Article Agent is the record and D1 holds the copy.** An Agent can only ever answer
+for its own Article, and a query across every Article's rulings would have to wake every
+Article Agent there is. So each appearance is mirrored into a D1 `appearance` table with
+the Offer's own fields flattened onto it, and every reading query runs there.
+
+**The mirror is best effort, and deliberately so.** A lost mirror write costs one row to
+learn from; letting the failure through would cost the writer the ruling they just made.
+So it is caught and logged at the Agent, and `syncAppearances` re-mirrors an Article to
+repair it. Appearance ids are built from the Article, the batch, and the position, which is
+what makes running the repair twice a no-op.
+
+**A ruling reaches every appearance of the Offer**, not only the batch that got there
+first: a source two policies both turned up was turned up by both, and crediting the
+earlier one would score a policy on its luck.
+
+### The distillation pass
+
+**It reads ruled Offers and writes down what it sees**, as Learned rules the writer Accepts
+or Declines. Accepted rules join the guide's instructions on every turn; Declined ones stay
+as the record of a reading the writer rejected and are shown to the next pass, so it stops
+offering the same rejected rule forever.
+
+**Learned rules are writer-scoped, and they are House material.** A preference belongs to
+the writer rather than to one piece, and one Article carries far too few rulings to read
+one off. They live in D1 until the House exists at 1b, and the move is a data migration
+rather than a redesign.
+
+**Accepted only ever reaches a turn.** A candidate the writer has not read has no business
+steering the guide, and that is the whole difference between this and a model quietly
+retraining on its own output.
+
+**The pass refuses below a floor of ruled Offers.** A model given four decisions will find
+a pattern in them, the writer cannot tell that pattern from a real one, and an Accepted
+rule then steers every turn. The floor is the one guard here that carries real weight.
+
+**Undecided is not a Decline.** A writer who ruled on six of seventeen left eleven unread,
+and counting those as negatives would teach the pass that everything below the fold is bad
+and score a policy on how far the writer scrolled. Undecided Offers stay out of the accept
+rate and out of the pass, and are reported beside both.
+
+**Learned rules sit in the cached prefix**, so ruling on one costs the next turn its cache
+hit. That is the right trade for a handful of rules ruled on now and then, and the wrong
+one if anything ever writes there per turn.
+
+### Known gaps
+
+**The record is off-policy, and nothing corrects for it.** The app only ever observes
+rulings on what the guide chose to offer, so a preference learned from it narrows onto the
+guide's own past behaviour. The standard fix is to keep part of each batch deliberately
+exploratory; the policy label is the half of that which is built, and the exploration is
+not.
+
+**Used is the signal worth having and is not collected.** `context.md` defines **Ready**
+and **Used** for Phase 2, and an Accepted Offer that reaches the Draft is a far stronger
+label than one that was merely Accepted — Accepting is cheap and using is expensive.
+Collecting it waits on the Draft.
+
+**Rulings on Proposals are not recorded at all.** A Proposal leaves no record by design
+(§6), so which outline changes the writer took is invisible to everything here. The same
+is true of Guidance notes at Phase 2. Both are the same kind of preference data as an Offer
+ruling, and giving either one a record is an open design question rather than an oversight.
+
+### The schema guard
+
+**The Article Agent's SQLite is versioned**, in `src/server/agent-schema.ts`. `onStart`
+runs on every wake, so `CREATE TABLE IF NOT EXISTS` was enough while every change added a
+table — a column is where that breaks, because SQLite has no `ADD COLUMN IF NOT EXISTS` and
+the second wake throws on the duplicate. Each Agent records the last step it ran and a wake
+runs only what comes after it, so a step is written plainly rather than defensively.
+
+**Steps are append-only.** A deployed Agent has already run the ones it carries, so editing
+a step changes what a fresh Agent builds without changing what an old one holds, and the
+two stop agreeing with no error to say so. Correct a step by adding the one that fixes it.
+Step 1 is the old `offer` table restated with `IF NOT EXISTS`, which is what lets one runner
+serve an Agent that predates the runner and one built by it.
+
+## 13. Out of scope
 
 - **The tracking model** — affirmed Boundaries and text-relocating operations, which would
   make Section membership a fact the app operates on rather than something the Guide infers.
 - **Multi-user scoping beyond one Team of two** — House sharing, per-publication sets,
   collaboration.
 - **Any harness that evaluates the Guide's output.** The Guide writes Guidance notes, and v1
-  ships nothing that scores them.
+  ships nothing that scores them. §12's policy tally is not this: it counts what the writer
+  ruled, and nothing there judges an Offer on the app's own account.
 - **Future ideas** parked in [`later.md`](./later.md): the public showcase, the arc note,
   Review lenses, exemplar pieces, a copy-edit pass, and Transition word-count attribution.

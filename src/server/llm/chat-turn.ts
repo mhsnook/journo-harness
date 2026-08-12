@@ -26,6 +26,10 @@ export type ChatTurn = {
 	messages: UIMessage[]
 	onFinish: GenerateTextOnFinishCallback<ToolSet>
 	abortSignal?: AbortSignal
+	/** The Accepted Learned rules, already read — §12. Passed in rather than
+	 * fetched here, because this function reaches no binding and a test drives
+	 * it with a scripted model and no D1. */
+	rules?: readonly string[]
 }
 
 export async function chatTurn({
@@ -34,11 +38,12 @@ export async function chatTurn({
 	messages,
 	onFinish,
 	abortSignal,
+	rules = [],
 }: ChatTurn): Promise<Response> {
 	const result = streamText({
 		model,
 		// Rules, then conversation and Plan, per Architecture §7
-		system: chatSystemPrompt(),
+		system: chatSystemPrompt(rules),
 		messages: chatPackMessages(await convertToModelMessages(messages), plan),
 		tools: chatTools,
 		abortSignal,
