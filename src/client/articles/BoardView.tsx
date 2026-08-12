@@ -11,7 +11,7 @@ import { boardColumns } from './grouping'
 const columnWidth = 'w-[clamp(16rem,30%,307px)] lg:w-auto lg:grow lg:basis-0'
 
 const columnDivider =
-	'before:absolute before:top-0 before:-left-1.5 before:h-24 before:w-px before:bg-rule'
+	'before:absolute before:top-0 before:-left-1.5 before:h-30 before:w-px before:bg-rule'
 
 /**
  * The Board View: the same unarchived Articles the list shows, by status.
@@ -64,7 +64,7 @@ export function BoardView({ articles, failure = null, onNew }: BoardViewProps) {
 						{/* The negative margin runs the rule to the middle of each gutter,
 						    so the four rules meet and read as one line. */}
 						<MetaLabel
-							className="-mx-1.5 shrink-0 border-b border-rule px-1.5 pb-1.5"
+							className="-mx-1.5 shrink-0 border-b border-rule px-1.5 py-1.5"
 							count={column.articles.length}
 						>
 							{column.label}
