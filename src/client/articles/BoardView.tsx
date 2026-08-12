@@ -5,7 +5,13 @@ import { FrameBody } from '../components/Frame'
 import { MetaLabel } from '../components/MetaLabel'
 import { Notice } from '../components/Notice'
 import { BackLink, TitleBar } from '../components/TitleBar'
+import { cx } from '../lib/cx'
 import { boardColumns } from './grouping'
+
+const columnWidth = 'w-[clamp(16rem,30%,307px)] lg:w-auto lg:grow lg:basis-0'
+
+const columnDivider =
+	'before:absolute before:top-0 before:-left-1.5 before:h-40 before:w-px before:bg-rule'
 
 /**
  * The Board View: the same unarchived Articles the list shows, by status.
@@ -43,14 +49,24 @@ export function BoardView({ articles, failure = null, onNew }: BoardViewProps) {
 				</div>
 			)}
 			<FrameBody className="gap-3 overflow-x-auto p-4" row>
-				{columns.map((column) => (
-					// A sunk fill, so four columns read as four rather than as one field
-					// of cards. The tiles stay white and lift off it.
+				{columns.map((column, index) => (
+					// A divider in the gutter and a rule under the label, so four columns
+					// read as four. The column itself draws nothing, which is what lets
+					// the gutter stay this narrow: the tiles are the only boxes here.
 					<div
-						className="flex w-[12rem] shrink-0 flex-col gap-2 rounded-lg border border-rule bg-sage p-2"
+						className={cx(
+							'relative flex shrink-0 flex-col gap-2',
+							columnWidth,
+							index === 0 ? null : columnDivider,
+						)}
 						key={column.status}
 					>
-						<MetaLabel className="shrink-0 px-0.5" count={column.articles.length}>
+						{/* The negative margin runs the rule to the middle of each gutter,
+						    so the four rules meet and read as one line. */}
+						<MetaLabel
+							className="-mx-1.5 shrink-0 border-b border-rule px-1.5 py-1.5"
+							count={column.articles.length}
+						>
 							{column.label}
 						</MetaLabel>
 						{/* Each column scrolls its own Y. */}

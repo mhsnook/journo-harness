@@ -44,9 +44,11 @@ export const B_Board: Story = {
 			<BoardScreen />
 			<Annotation>
 				Reading only. No drag-and-drop: the writer sets an Article's status on the Article
-				screen, which is where they are when they decide it has moved on. The columns keep
-				their width and the Board scrolls sideways rather than squeezing four columns into
-				a phone.
+				screen, which is where they are when they decide it has moved on. A hairline in
+				the gutter separates the columns, running a little past the first card — enough to
+				read four columns as four without a fill behind each. The columns scale with the
+				window and the Board scrolls sideways rather than squeezing four columns into a
+				phone.
 			</Annotation>
 		</div>
 	),

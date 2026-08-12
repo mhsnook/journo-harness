@@ -19,7 +19,7 @@
 	--color-paper: #fbecdb; /* the desk the app sits on: red-brown earth */
 	--color-surface: #fbf9f5; /* cards, panes, the writing surface */
 	--color-sunk: #f7f2ea; /* secondary panes: plan, notes, sidebars */
-	--color-sage: #d5ead3; /* chrome: title bars, Board columns */
+	--color-sage: #d5ead3; /* chrome: title bars */
 	--color-hush: #e7dfe3; /* your own chat messages, inert fills */
 
 	/* Ink */
@@ -56,6 +56,10 @@
 	--text-meta--letter-spacing: 0.02em;
 
 	--radius-frame: 0.625rem;
+
+	--breakpoint-*: initial;
+	--breakpoint-md: 48rem; /* 768px */
+	--breakpoint-lg: 1298px;
 
 	/* One depth, cast in whichever direction the thing lifts: the outermost
 	   frame downwards, a drawer rising from a Panel's foot upwards. */
