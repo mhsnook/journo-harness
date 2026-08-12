@@ -4,15 +4,9 @@ What is true now. The reasoning behind each decision lives in the wayfinding map
 and its closed tickets; this document does not repeat it. Vocabulary is fixed in
 [`context.md`](../context.md) and governs the code, the UI, and this file.
 
-**What belongs here is a decision that binds more than one module.** Where writes go, what
-the Plan holds, who may write it, what the Panels are. A claim you can change by editing one
-file is not architecture: it belongs in that file, next to the code that would have to
-change with it. Put it here and it goes stale the first time someone edits that file, and
-the next reader has to run the code to find out which of the two is current.
-
-That rules out how a control behaves, what a screen does on a click, and which component
-holds which piece of local state. Those are real decisions and they are written down — in
-the component's own doc comment, and in the Storybook screen that shows them.
+**What belongs here is a decision that binds more than one module.** A claim you can change
+by editing one file is not architecture: it belongs in that file, next to the code that
+would have to change with it.
 
 The product: **the writer writes the prose and an AI acts as a guide.** Nothing here has the
 model producing prose for the Draft.
