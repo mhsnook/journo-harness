@@ -212,16 +212,17 @@ export interface FieldRowProps {
  * be because the gutter is a fixed width — so rows written in different
  * components still line up, and a row can be added anywhere without threading
  * it through whoever owns the grid.
+ *
+ * **The label sits at the top, not the middle.** A row whose control wraps —
+ * Adjectives, once there are a few — grows downwards, and a centred label would
+ * drift down the gutter with it.
  */
 export function FieldRow({ label, children, className }: FieldRowProps) {
 	return (
 		<div
-			className={cx(
-				'grid grid-cols-[5rem_minmax(0,1fr)] items-center gap-x-2',
-				className,
-			)}
+			className={cx('grid grid-cols-[5rem_minmax(0,1fr)] items-start gap-x-2', className)}
 		>
-			<span className="label-meta text-muted">{label}</span>
+			<span className="label-meta pt-1 text-muted">{label}</span>
 			<div className="min-w-0">{children}</div>
 		</div>
 	)

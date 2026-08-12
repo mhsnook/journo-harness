@@ -52,8 +52,10 @@ export interface SectionRowProps {
 	onOpen: (nodeId: string | null) => void
 	/** Take the caret, because the writer just made this Section. */
 	takeCaret?: boolean
-	/** Show a Reference placed here, down in the References list. */
-	onShowReference: (referenceId: string) => void
+	/** Show a Reference placed here, down in the References list. Absent where
+	 * the caller has no such list — the Map View — and the name then reads as
+	 * text rather than as a control that does nothing. */
+	onShowReference?: (referenceId: string) => void
 	className?: string
 }
 
@@ -76,6 +78,9 @@ export function SectionRow({
 	const row = useRef<HTMLDivElement>(null)
 
 	const placed = referencesAt(plan, node.id)
+	// Taking a Reference off this Section, the way × takes an Adjective off it.
+	// Placing it elsewhere is the picker's job; this only says "not here".
+	const unplace = (referenceId: string) => edit(placeReference(plan, referenceId, null))
 	// What the picker could offer: a Reference sits at one Section, so anything
 	// not already here can be moved here. With none, the row has nothing to say.
 	const offerable = referenceEntries(plan).filter(
@@ -104,15 +109,35 @@ export function SectionRow({
 		placed.length === 0 ? null : (
 			<div className="flex flex-col gap-0.5">
 				{placed.map((held) => (
-					<button
+					<span
 						key={held.reference.id}
-						className="flex items-baseline gap-1.5 truncate text-left text-[0.6875rem] text-muted hover:text-ink"
-						onClick={() => onShowReference(held.reference.id)}
-						type="button"
+						className="flex w-full items-baseline gap-1.5 text-[0.6875rem] text-muted"
 					>
 						<span className="label-meta shrink-0">{referenceMark(held)}</span>
-						<span className="truncate">{referenceName(held.reference)}</span>
-					</button>
+						{onShowReference === undefined ? (
+							<span className="min-w-0 flex-1 truncate">
+								{referenceName(held.reference)}
+							</span>
+						) : (
+							<button
+								className="min-w-0 flex-1 truncate text-left hover:text-ink"
+								onClick={() => onShowReference(held.reference.id)}
+								type="button"
+							>
+								{referenceName(held.reference)}
+							</button>
+						)}
+						{unplace === undefined ? null : (
+							<button
+								aria-label={`Take ${referenceName(held.reference)} off ${scopeName}`}
+								className="shrink-0 text-faint hover:text-ink"
+								onClick={() => unplace(held.reference.id)}
+								type="button"
+							>
+								×
+							</button>
+						)}
+					</span>
 				))}
 			</div>
 		)
@@ -227,12 +252,12 @@ export function SectionRow({
 						voice={node.voice ?? null}
 					/>
 
+					{/* Not a labelled row like the two above: what is placed here runs
+					    the full width of the card rather than inside the gutter, so the
+					    label and the control take one line and the list takes the rest. */}
 					{placedList === null && offerable.length === 0 ? null : (
-						<FieldRow className="items-start" label="References">
-							{/* Stretched, not `items-start`: a placed Reference has to be
-							    allowed to shrink before `truncate` will cut it. */}
-							<div className="flex flex-col gap-0.5">
-								{placedList}
+						<div className="flex flex-col gap-1">
+							<FieldRow label="References">
 								<PlaceReference
 									edit={edit}
 									nodeId={node.id}
@@ -240,8 +265,9 @@ export function SectionRow({
 									plan={plan}
 									scopeName={scopeName}
 								/>
-							</div>
-						</FieldRow>
+							</FieldRow>
+							{placedList}
+						</div>
 					)}
 				</div>
 
@@ -328,7 +354,7 @@ function PlaceReference({
 		// the Adjective field beside it: faint until the writer reaches for it.
 		<select
 			aria-label={`Place a Reference at ${scopeName}`}
-			className="min-w-0 appearance-none self-start rounded-sm border-b border-transparent bg-transparent text-[0.6875rem] text-faint outline-none hover:border-edge focus:border-edge"
+			className="w-24 appearance-none rounded-sm border-b border-transparent bg-transparent text-[0.6875rem] text-faint outline-none hover:border-edge focus:border-edge"
 			onChange={(event) => edit(placeReference(plan, event.target.value, nodeId))}
 			value=""
 		>

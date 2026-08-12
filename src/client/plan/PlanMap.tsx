@@ -38,9 +38,13 @@ import { SectionRow } from './SectionRow'
  * accent is rationed to one thing per screen — `foundations/Accent.mdx`.
  */
 
-/** How wide the open Section's fields sit. Room for the two `SectionRow` puts
- * on one line, which a box's own width has none of. */
-const DETAIL_WIDTH = 380
+/**
+ * How wide the open Section's fields sit — well past a box's own width, and
+ * past what the two fields on the title line strictly need. A Section is a
+ * thing the writer works in rather than glances at, so the card reads as
+ * somewhere to write rather than as a box that grew.
+ */
+const DETAIL_WIDTH = 520
 
 /** Room around the drawing, so a lit box's border is not clipped. */
 const PADDING = 12
@@ -288,13 +292,14 @@ export function PlanMap({
 							width: DETAIL_WIDTH,
 						}}
 					>
+						{/* No `onShowReference`: the map has no References list to send
+						    the writer down to, so a placed Reference reads as text here
+						    rather than as a control that would do nothing. */}
 						<SectionRow
+							className="gap-3 p-3.5"
 							edit={edit}
 							entry={detail.entry}
 							onOpen={close}
-							// The map has no References list to send the writer down to.
-							// Placing one is in the row's own fields, which are right here.
-							onShowReference={() => {}}
 							open
 							plan={plan}
 						/>
