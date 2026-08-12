@@ -11,7 +11,7 @@ import { boardColumns } from './grouping'
 const columnWidth = 'w-[clamp(16rem,30%,307px)] lg:w-auto lg:grow lg:basis-0'
 
 const columnDivider =
-	'before:absolute before:top-0 before:-left-1.5 before:h-30 before:w-px before:bg-rule'
+	'before:absolute before:top-0 before:-left-1.5 before:h-40 before:w-px before:bg-rule'
 
 /**
  * The Board View: the same unarchived Articles the list shows, by status.
