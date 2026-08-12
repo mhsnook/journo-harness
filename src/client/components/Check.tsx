@@ -11,7 +11,7 @@ export interface CheckProps {
  * The square tick used for accepting a Reference, an Offer, or a Guidance note.
  *
  * Checked is the accented state — accepting something is the one decision
- * these lists are asking for, so the yellow belongs here.
+ * these lists are asking for, so the accent belongs here.
  */
 export function Check({ checked = false, onChange, label, className }: CheckProps) {
 	return (

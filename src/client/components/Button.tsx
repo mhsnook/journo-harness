@@ -10,13 +10,14 @@ export interface ButtonProps extends Omit<
 	'children'
 > {
 	/**
-	 * `accent` is the yellow one. A screen should have at most one — it marks
+	 * `accent` is the rose one. A screen should have at most one — it marks
 	 * the single thing the app wants you to do next.
 	 */
 	variant?: ButtonVariant
 	size?: ButtonSize
 	/** "You are here" — the chosen one of a set. State rather than a call to
-	 * action, so it takes ink rather than the accent, the way a solid Chip does. */
+	 * action, so it takes `green` rather than the accent, the way a solid Chip
+	 * does. */
 	pressed?: boolean
 	/** For a caller that puts focus back on this Button after closing what it
 	 * opened. */
@@ -26,9 +27,9 @@ export interface ButtonProps extends Omit<
 
 // `pressed` replaces the variant rather than layering over it. Two utilities
 // setting the same property resolve by their order in the stylesheet, not by
-// the order they are written in, so `bg-ink` next to `bg-surface` is a coin
-// toss — and it landed on ink fill with ink text.
-const pressedClass = 'border border-ink bg-ink text-paper hover:brightness-125'
+// the order they are written in, so `bg-green` next to `bg-surface` is a coin
+// toss — and it landed on green fill with ink text.
+const pressedClass = 'border border-green bg-green text-green-ink hover:brightness-125'
 
 const variantClass: Record<ButtonVariant, string> = {
 	default: 'border border-edge bg-surface text-ink hover:border-ink/40 hover:bg-hush',
