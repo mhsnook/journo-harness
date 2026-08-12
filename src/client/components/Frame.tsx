@@ -60,7 +60,7 @@ export interface ScreenProps {
  */
 export function Screen({ children, className }: ScreenProps) {
 	return (
-		<div className={cx('flex h-dvh flex-col bg-surface text-ink', className)}>
+		<div className={cx('flex h-dvh flex-col bg-paper text-ink', className)}>
 			{children}
 		</div>
 	)

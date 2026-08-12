@@ -4,10 +4,16 @@ import { Meta } from '@storybook/addon-docs/blocks'
 
 # The accent
 
-The page is earth, ink and three soft neutrals, tinted off a Deccan winter: dry
-brown ground, sunlit granite in the secondary panes, scrub green in the
-secondary copy, dusty mauve in the meta. Those hues are scenery — they say
-nothing about the screen they are on.
+The page is earth, ink and three soft neutrals, tinted off a Deccan winter:
+red-brown ground, pale sage in the secondary panes, scrub green in the secondary
+copy, dusty mauve in the meta. Those hues are scenery — they say nothing about
+the screen they are on.
+
+**The ground is redder than the panes on purpose.** `--color-paper` sits at hue
+32° and `--color-sunk` at 84°, and the 52° between them is what makes the sage
+read as sage. Closing that gap does not make the palette calmer, it makes both
+colours read as the same tired beige — which is what a 34° gap did. If you warm
+`sunk` or cool `paper`, you lose the sage on every screen at once.
 
 Two colours do carry meaning, and they answer different questions.
 `--color-green`, a deep scrub green, `#4c6141`, says **where you are**.
@@ -82,9 +88,9 @@ one of the two is not really asking for a decision.
 
 <div style={{ display: 'flex', gap: '0.75rem', margin: '1.5rem 0', flexWrap: 'wrap' }}>
   {[
-    ['--color-paper', '#e9e2d5'],
+    ['--color-paper', '#ebdccb'],
     ['--color-surface', '#fbf9f5'],
-    ['--color-sunk', '#f2eade'],
+    ['--color-sunk', '#e0ebd0'],
     ['--color-hush', '#e7dfe3'],
     ['--color-ink', '#2b2229'],
     ['--color-muted', '#5c6050'],
