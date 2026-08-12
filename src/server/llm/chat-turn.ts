@@ -37,9 +37,7 @@ export async function chatTurn({
 }: ChatTurn): Promise<Response> {
 	const result = streamText({
 		model,
-		// The guide rules, then the conversation, then the Plan. The transcript is
-		// the append-only part and the Plan is not, so the Plan goes after it —
-		// docs/architecture.md §7. `chatPackMessages` says where exactly.
+		// Rules, then conversation and Plan, per Architecture §7
 		system: chatSystemPrompt(),
 		messages: chatPackMessages(await convertToModelMessages(messages), plan),
 		tools: chatTools,

@@ -69,16 +69,10 @@ export function useOfferLedger(): OfferLedgerHandle {
 		failure,
 		reload,
 
-		// Two writes against two stores, decoupled — §5. The Plan goes first and
-		// lands locally, because the copy is built from what the Offer says and
-		// needs nothing the ruling returns. A ruling that then fails leaves the
-		// copy in place and the row Undecided, which the writer clears by
-		// Accepting again: the second `acceptOffer` builds no op.
-		//
-		// **A refused copy stops the ruling.** Sending it anyway would leave the
-		// row reading Accepted with the Plan holding nothing — invisible on the
-		// Ledger and unfixable from it, which is the stranded case §5 is built to
-		// avoid. The applier's refusal is what the writer is told about instead.
+		// Two writes against two stores, decoupled — §5, which says why this
+		// order and not the other. The Plan goes first because the copy is built
+		// from what the Offer says and needs nothing the ruling returns, and a
+		// refused copy stops the ruling rather than sending it anyway.
 		accept(offer) {
 			setFailure(null)
 

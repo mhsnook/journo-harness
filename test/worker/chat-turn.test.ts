@@ -1,9 +1,10 @@
-import type { UIMessage } from 'ai'
+import type { ModelMessage, UIMessage } from 'ai'
 import { MockLanguageModelV3, simulateReadableStream } from 'ai/test'
 import { env, runInDurableObject } from 'cloudflare:test'
 import { describe, expect, it } from 'vitest'
 
 import { chatTurn } from '../../src/server/llm/chat-turn'
+import { chatPackMessages } from '../../src/server/llm/prompt'
 import type { ProposalInput } from '../../src/shared/plan'
 import { makeNode, makePlan } from '../shared/plan-fixtures'
 import { type Frame, openAgentSocket } from './agent-socket'
@@ -348,5 +349,59 @@ describe('a Chat turn', () => {
 
 		expect(messages.map((message) => message.role)).toEqual(['user', 'assistant'])
 		expect(JSON.stringify(messages)).not.toContain('The permit queue')
+	})
+})
+
+/**
+ * Where the Plan lands, read off `chatPackMessages` directly — §7.
+ *
+ * The turns above drive the two transcripts the product actually produces: one
+ * ending on the writer's message, and one ending on a settled tool result. The
+ * two below are the transcripts the slot rule also has to answer for, and
+ * neither arrives through a socket, so they are asserted on the function.
+ */
+describe('the Plan slot', () => {
+	const carriesThePlan = (message: ModelMessage) =>
+		JSON.stringify(message).includes('The permit queue')
+
+	it('puts the Plan first when there is no conversation yet', () => {
+		const packed = chatPackMessages([], plan)
+
+		expect(packed).toHaveLength(1)
+		expect(carriesThePlan(packed[0])).toBe(true)
+	})
+
+	// An assistant message ends the transcript whenever the writer sends the
+	// next turn before reading the last one, and after a turn that answered in
+	// prose and stopped. There is no tool pair to split, so nothing forbids the
+	// Plan in front of it — it goes last anyway, because the rule reads the role
+	// of the final message rather than hunting for the writer's own.
+	it('puts the Plan last when the conversation ends on the assistant', () => {
+		const conversation: ModelMessage[] = [
+			{ role: 'user', content: 'What is the opening for?' },
+			{ role: 'assistant', content: 'It opens on one refused permit.' },
+		]
+
+		const packed = chatPackMessages(conversation, plan)
+
+		expect(packed).toHaveLength(3)
+		expect(carriesThePlan(packed[2])).toBe(true)
+		expect(packed[1].role).toBe('assistant')
+	})
+
+	// The packing never edits the conversation it was handed: every message
+	// arrives in the order it was given, with the Plan the only addition.
+	it('leaves the conversation in order and adds nothing else', () => {
+		const conversation: ModelMessage[] = [
+			{ role: 'user', content: 'What is the opening for?' },
+			{ role: 'assistant', content: 'It opens on one refused permit.' },
+			{ role: 'user', content: 'Give it a word count.' },
+		]
+
+		const packed = chatPackMessages(conversation, plan)
+
+		expect(packed).toHaveLength(4)
+		expect(packed.filter(carriesThePlan)).toHaveLength(1)
+		expect(packed.filter((message) => !carriesThePlan(message))).toEqual(conversation)
 	})
 })

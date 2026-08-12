@@ -1,15 +1,19 @@
 # Architecture
 
-What is true now. The reasoning behind each decision lives in the wayfinding map, issue #5,
-and its closed tickets; this document does not repeat it. Vocabulary is fixed in
-[`context.md`](../context.md) and governs the code, the UI, and this file.
+This document records the current and planned/decided architecture of the application,
+particularly for patterns that are used to coordinate or bind more than one module.
+The reasoning behind each decision lives in the wayfinding map, issue #5, and its closed
+tickets.
 
-**What belongs here is a decision that binds more than one module.** A claim you can change
-by editing one file is not architecture: it belongs in that file, next to the code that
-would have to change with it.
+This document should make very clear what is a rule (and what it's for), vs. descriptions
+of how we're doing things now, so as not to over-specify and constrain future innovation.
 
-The product: **the writer writes the prose and an AI acts as a guide.** Nothing here has the
-model producing prose for the Draft.
+- Vocabulary is fixed in [`context.md`](./context.md) and governs the code, the UI,
+  and this file.
+- UI decisions and patterns go in [`ui.md`](./ui.md) or the Storybook stories it includes
+  by reference.
+- Certain key architecture decisions are recorded in the [`adr`](./adr/) folder.
+- Use [`later.md`](./later.md) sparingly.
 
 ## 1. Build order
 
@@ -47,18 +51,18 @@ Browser — React + Vite + TanStack Router
 **Cloudflare throughout.** Workers, Durable Objects, D1, R2, Workers AI.
 
 **One Article Agent per Article**, built on the Cloudflare Agents SDK. It holds everything
-about one Article. It is always named in full — an unqualified "agent" could mean this
-object, the Guide, or the Chat.
+about one Article. It is named in full as "Article Agent" to distinguish from the general
+term or a different agent we might add later.
 
-**The House** arrives at 1b as a single party-db room persisted to D1, holding the writer's
+**House Style** arrives at 1b as a single party-db room persisted to D1, holding the writer's
 own standing material: the Lexicon, the standing rules, the Skills, and House-scoped Voice
-and Adjectives. The House is small, constantly read, and exactly CRUD over a few
-collections, so defining the collections _is_ the API: no endpoints, no query keys, no
-invalidation.
+and Adjectives. The House is small, read frequently, simple CRUD over a few
+collections, so the API is just the PartyDB collections talking to the PartyDbServer.
 
-**The House holds what the writer authors and reuses.** Spanning Articles is not on its own
-a reason to put something there, and where a body of accumulated _research_ lives is open —
-issue #40, with the shape it might take in [`later.md`](./later.md).
+**The House holds style and process guides that the writer authors and reuses.** These are
+things like research skills/formats, preferred writing Voice, definitions for key Adjectives,
+such as "punchy" or "serious", favourite authors and publications -- things that the Article
+Agent will use to either gather research, make suggestions, or review the draft.
 
 **Plain D1 tables** hold Archived Plans, Drafts, and Finals, read through a Worker endpoint
 rather than synced. D1 also carries the backup story, because a Durable Object's storage has
@@ -72,8 +76,6 @@ naming each domain.
 Recorded in [ADR 0001](./adr/0001-phase-1-storage-shape.md).
 
 ## 3. Where writes go
-
-Five rules. Apply them to anything new without reopening the question.
 
 1. **Article Agent state holds only the Plan, and only the client writes it.** `setState`
    replaces the entire blob, so a write meant to change one Section rewrites every
@@ -89,18 +91,19 @@ Five rules. Apply them to anything new without reopening the question.
    Reference, Accepting a Proposal, Declining an Offer, retitling the Article. Accepting is
    CRUD even though a model produced the thing being accepted, because applying it is a
    plain write.
-4. **The Guide writes only to the Notes.** Guidance notes and Rounds are its own output,
-   which the writer never authors. It never writes the Plan or the Draft — it produces
-   Proposals and Offers, which stay inert until the writer Accepts them.
+4. **The Guide writes only Notes.** Guidance notes and Rounds are its own output,
+   which the writer doesn't (currently) author.
 5. **Accepting copies into the Plan and keeps the Provenance.** The Plan's copy is the
    writer's to edit; the original stays as the record of what was produced. A later
    correction therefore arrives as a new Proposal rather than silently rewriting a citation
    the writer already approved.
 
-**The blob is the reactive store; the tables are the on-demand store.** Rows in a Durable
+**The blob is a reactive store; the tables are an on-demand store.** Rows in a Durable
 Object's SQLite have no sync — `@callable` RPC is request and response, so nothing tells a
 client a row changed. That suits Offers, Notes, and Rounds, which are read when a Panel
-opens. It does not suit the Plan, which is on screen continuously.
+opens. It does not suit the Plan, which is on screen continuously. (It's worth keeping
+open the question of which items should be included under the PartyDB collections, once
+they're added.)
 
 ## 4. The Plan
 
@@ -124,27 +127,29 @@ plan: {
 - **References are flat with an optional `nodeId`**, so an Accepted Reference can sit at a
   Section or nowhere yet.
 - **References are type Link or Quote**, and Reference is the umbrella over either type. The
-  type is **stored, not derived from the text**, so an Offer and the Reference it was
-  Accepted into carry one answer and the Offer ledger and the Plan Panel label them the same
-  way. A Quote carries a text; a Link may carry one without being a Quote. Amended in
+  type is **assigned, not derived from the contents**, so an Offer and the Reference it was
+  Accepted into carry the same `type`. Amended in
   [ADR 0002](./adr/0002-the-plan-data-model.md).
 - **Voice cascades; Adjectives compose.** Both resolve down the same path — House, then
   Article, then Section, **at read time** — and they differ when two Scopes each state one.
   The nearest Voice wins outright. Adjectives accumulate instead: a "slow" Section inside a
   "fast" Article carries both, and the resolved list runs widest first, so the nearest lands
-  last and reads as the strongest. Restating a term moves it to the end, which is how the
-  writer says it again for emphasis.
+  last and reads as the strongest. Restating a term moves it to the end, which lets the
+  writer say it again for emphasis.
 - **The word-count total is stored rather than derived/summed.** The parts may disagree with
   the whole; the gap is information about under/over allocation.
 - **One spelling per state.** A field that may be absent says "nothing here" by being
   absent, and not also by an empty string or an empty list — the blob is written whole,
   compared whole-field by a Proposal's `expected`, and sent whole in every prompt pack, so
-  two Plans that mean the same thing can differ byte for byte and an `expected` that should
-  match will not. The schema enforces this today: an empty `adjectives` on a Section is
-  refused. Three fields carry their key always and say "nothing here" with a value: a
-  Reference's `nodeId`, which is null until it is placed, the Article's `adjectives`, and a
-  Section's `children`, both of them the empty list. A Section's own `adjectives` is the
-  other way round, and says it by being absent.
+  two Plans that mean the same thing should be the same, field for field. The schema enforces
+  this today: an empty `adjectives` on a Section is refused. Some fields always carry their
+  key and indicate "nothing here" with a value; others are absent when empty, but we make
+  sure to accept only one or the other. **Choosing for a new field: a question the record is
+  always asked carries its key and answers with a value, and a Section's own refinement is
+  absent until it is set.** `nodeId`, `totalTarget`, and `children` are the first kind — every
+  Reference has a placement even when unplaced. `intent`, `target`, and `voice` are the
+  second. Read which one a field takes off `src/shared/plan/schema.ts` rather than from a
+  list here.
 
 **The schema guards client writes.** `validateStateChange` parses the whole Plan on every
 write, and the model's outputs do not go through it — the Chat proposes and the client
@@ -165,27 +170,18 @@ limit on a single row or value. Growth comes from References carrying long passa
 relief valve is moving References into SQLite rows, which is the phase 2 move anyway.
 **Debounce `setState` while the writer types**, or 40 KB goes over the wire per keystroke.
 
-## 5. Offers and the Ledger
+## 5. Chat and the Offers Ledger
 
 The Chat turns up Offers — Links and Quotes — as SQLite rows in the Article Agent. The
-**Ledger** is a View over Offers in the Chat Panel. Each Offer carries a disposition:
-**Undecided**, **Accepted**, or **Declined** (Declining is restorable).
-
-**The Ledger belongs to the Chat Panel and doesn't read the Plan.** Its data model and its
-visual representation should both be understood to relate to the Chat Panel itself. It
-opens from the control left of the composer as a drawer over that Panel's transcript, taking
-whatever width the Panel has rather than being a fifth Panel of its own. **It covers the
-transcript and not the composer**, so the control that opened it is still there to close it,
-and the writer can go on typing with the record open. Escape closes it too, and focus makes
-the same round trip.
-It shows one flat list with a chip per disposition to filter it, and `all` first, so the
-Undecided pile can be read on its own without losing the record. When the writer Accepts an
-Offer, it sends the Reference over to the Plan Panel; then it belongs to the Plan, where it
-becomes an editable record carrying its Provenance (rule 5) back to the original Offer.
-Screen 2(g) draws the same rows grouped rather than filtered, in a popover; that one is not
-built.
-
-Offers are flat. Two Quotes from one publication are two Offers.
+**Ledger** is a View over all the Offers surfaced in this Chat. Offers can be
+**Undecided**, **Accepted**, or **Declined** (restorable). In this way, the Ledger is used
+as a direct sibling to, or alternative to, showing the chat transcript. We toggle it on or
+off within the Chat Panel to view something specific about the Chat. It doesn't attempt to
+do the job of any other Panels; when Offers are Accepted, they get promoted into the Plan
+as new References, and this is the end of the Offer Ledger's job. It's just throwing the
+new Reference over the wall to the next Panel, moving curated pieces of knowledge from the
+first Panel to the second. The Plan Panel's references are their own editable clones,
+so the Offers don't really have to keep track.
 
 **The research tool carries an `execute`**, where the Proposal tool does not. An Offer is an
 inert row rather than something the writer rules on mid-turn, so suspending the call would
@@ -201,31 +197,23 @@ rather than writing a second one, still carrying the disposition the writer gave
 Asking whether an Offer is already in the Plan runs on the Provenance instead: the writer
 edits their copy, and content stops matching the moment they do.
 
-**Accepting is two writes against two stores, and nothing makes them atomic. The copy goes
-first.** A `createReference` op through the applier like every other Plan edit, then
-`setOfferDisposition` over RPC. `referenceFromOffer` reads what the Offer says and not what
-the writer ruled, so the copy needs nothing the ruling returns and the order is free to be
-this way round.
+**Accepting is two writes against two stores, and nothing makes them atomic.** The copy goes
+first, with a `createReference` op through the applier like every other Plan edit, then
+`setOfferDisposition` over RPC. This way round a failure does not create an un-recoverable
+middle state. The Plan write is local so as long as it succeeds, the RPC can fail and the
+only consequence is an Undecided Offer in the Ledger. If the writer attempts to Accept it
+again, `acceptOffer` returns `null` and builds no op at all.
 
-**It is this way round so the failure does not outlive the click.** The Plan write is local
-and the RPC is the one that can fail, so what a half-done Accept leaves is a copy in the
-Plan and a row still reading Undecided. The writer sees an unticked row, Accepts again, and
-both halves are right: `acceptOffer` follows the Provenance, finds the copy, and builds no
-op, so the retry sends the ruling and nothing else. Nothing to reconcile, nothing to show,
-and no state that persists waiting to be noticed.
-
-The other order buys the opposite. The row would read Accepted with the Plan holding
-nothing — invisible on the Ledger, unfixable from it, and needing a group and a re-add of
-its own to get back out. That was the earlier design, and the group it needed was the
-Ledger reading the Plan.
+**The other order strands the writer, which is why the order is fixed.** Ruling first leaves
+the row reading Accepted with the Plan holding nothing. That state is invisible on the
+Ledger, because the Ledger shows a ruled Offer as settled and does not read the Plan to
+check. It is also unfixable from the Ledger, because there is no control that re-runs the
+copy for an Offer already Accepted. Nothing recovers it, and nothing surfaces it.
 
 **A refused copy stops the ruling for the same reason.** `edit` hands back the applier's
 refusal, and `useOfferLedger` reads it: sending the ruling anyway would land the app in
-exactly the state the order above is chosen to avoid. The writer gets the applier's sentence
-instead, built at the edge from `refusal.reason` like every other one (§6).
-
-A Reference sitting at no Section is a different thing entirely, and an ordinary one: the
-Plan Panel lists it and its Section reads "not placed".
+exactly that stranded state. The writer gets the applier's sentence instead, built at the
+edge from `refusal.reason` like every other one (§6).
 
 **The writer pastes their own References straight into the Plan**, and those carry
 `provenance: { type: 'writer' }` rather than an Offer id. They never enter the Ledger: an
@@ -237,9 +225,7 @@ of one. `referenceForOffer` answers with the first match on the strength of it, 
 answer is what makes a retried Accept build no op — so a second copy would turn every retry
 into another copy.
 
-**A Proposal is not an Offer.** The writer rules on both the same way, but a Proposal lives
-in the Chat turn that made it, goes Stale, and leaves no record, where an Offer is a row that
-keeps its disposition.
+**Proposals are not Offers.** See below.
 
 ## 6. Chat and Proposals
 
@@ -248,12 +234,8 @@ approved edits, and an output artifact is well-trodden territory.
 
 **The Article Agent extends `AIChatAgent`** from `@cloudflare/ai-chat`, which is where that
 class now lives — importing `agents/ai-chat-agent` throws and says so. It routes a turn to
-`onChatMessage`, and the Chat rides the socket the Plan and the RPC already share.
-
-**The transcript stays in the Agents SDK's own store** and is never mirrored anywhere. The
-server is what consumes it.
-
-**The Chat proposes; the client applies.** The Chat never writes to the Plan.
+`onChatMessage`, and the Chat rides the socket the Plan and the RPC already share. The
+transcript stays in the Agents SDK's own store.
 
 **The Chat Panel is `src/client/chat/`.** `useArticleChat` is the wiring — the transcript,
 the composer, and the two rulings — and `ChatPanel` is the surface, taking a transcript and
@@ -261,10 +243,13 @@ the rulings the way `PlanPanel` takes a Plan and one `edit`. The rule itself is
 `ruleProposal`, a pure function the app and the showcase both run, so a story cannot rule
 differently from the product.
 
-**Accepting is `edit(ops)`, the same call every Plan edit makes.** The Proposal's ops go
-through `createPlanWriter` rather than a `setState` of their own: the writer holds the Plan
-the writer sees, debounces, and drops an incoming update over an unsent write, and a second
-writer around it would undo what is on screen (§3, rule 1).
+**The Chat can make proposals; only the writer (client) can apply them to the Plan.** The
+Chat doesn't get to write to the Plan directly; it surfaces Proposals; the writer can click
+to Accept or Decline them. Accepting is `edit(ops)`, the same call every Plan edit makes.
+The Proposal's ops go through `createPlanWriter` rather than a
+`setState` of their own: the writer holds the Plan the writer sees, so the Plan always gets
+updated in a way that will make sense to the writer, even if server and client are out of
+sync (§3, rule 1).
 
 **A refused Accept answers nothing and leaves the card open.** The card shows the applier's
 sentence, the writer may fix the Plan and Accept again, and Declining sends that sentence
@@ -329,16 +314,15 @@ where they cannot drift away from the union. It also parses the Plan it produces
 Proposal the Article Agent would reject is refused here, where there is a reason to show,
 rather than there, where there is none.
 
-**A refusal has two readers, and the applier writes for one of them.** `refusal.message` is
-the model's: a Declined Proposal sends it back, so it names the op and the ids and may run
-long. The writer's sentence is built at the edge from `refusal.reason` — a closed code
+**A refusal has two readers, the LLM and the human.** `refusal.message` is for the model's:
+a Declined Proposal sends it back, so it names the op and the ids and may run long. The
+writer's sentence is built at the edge from `refusal.reason` — a closed code
 naming exactly what went wrong — plus the records it is about, in
 `src/client/plan/refusalText.ts`. The Panel that shows it holds the Plan, so it can name a
 Section the way the Outline numbers it, where the applier only has an id.
 
-Two things follow. **One English string lives in `src/shared`**, aimed at a reader with no
-eyes, and it never needs translating — the model is taught in English by `llm/tools.ts`
-already. And the writer's half is a table over a closed union, so a second language is a
+Two things follow. **One English string lives in `src/shared`**, aimed at a an LLM. The
+writer's half is a table over a closed union, so if we used a second language, it would be a
 second table rather than a sweep through the applier. `refusalText.ts` is total over
 `RefusalReason`, so a new refusal site stops it compiling until it says what the new one
 reads as.
@@ -353,16 +337,20 @@ payload to strip.
 
 **Staleness is not a multi-client problem.** It comes from the gap between generating a
 Proposal and applying it, and inference is slower than typing, so it exists with one writer
-in one tab.
+in one tab. We are currently quite strict about marking Proposals as stale, but as time goes
+on we may want to come up with heuristics that allow us to be a bit more forgiving.
 
 ## 7. Inference
 
-**`@cf/zai-org/glm-5.2` on Workers AI**, over the `env.AI` binding. 262k context, tool calling
-and streaming supported, Workers Paid plan required. **If its tool calling or structured
-output disappoints, swap the string to `@cf/moonshotai/kimi-k2.6` and move on.**
+**Currently using `@cf/zai-org/glm-5.2` on Workers AI**, over the `env.AI` binding. 262k
+context, tool calling and streaming supported, Workers Paid plan required. **If its tool
+calling or structured output disappoints, swap the string to `@cf/moonshotai/kimi-k2.6`
+and move on.** We are not (currently) planning a bunch of automated benchmarking or anything
+like that, but we do have plans to let the writer evaluate how well the Review tool matches
+their expectations, which may lead us down that road in the long run.
 
-**One model serves every call** — the Chat, the ambient Guidance notes, the Review. No
-routing machinery, no per-call-type model selection.
+**Currently, one model serves every call** — the Chat, the ambient Guidance notes, the
+Review. No routing machinery, no per-call-type model selection is included here.
 
 **The swappable boundary is the model instance, not a wrapper API.** AI SDK v7 already
 provides `generateText`, `streamText`, and `generateObject`; a wrapper would duplicate it and
@@ -390,20 +378,29 @@ settings and has nowhere to put one, because a Workers AI binding call is same-a
 authenticates itself. So an authenticated Gateway is the one setting to leave off — turn it
 on and these calls have no way to present the header it wants.
 
-**Structured output, never parsed prose.** `generateObject` with a zod schema, validated in
-the Article Agent, with one retry that includes the validation error.
+**Structured outputs rather than parsed prose.** `generateObject` with a zod schema,
+validated in the Article Agent, with one retry that includes the validation error.
 
 **Prompt packs put the stable part first** — system prompt, then Lexicon entries in play,
-then the standing rules, then everything that changes.
+then the standing rules, then everything that changes. The Plan and the Draft change all the
+time, so they go at the end.
 
-**Stable means append-only, and the Plan is not.** A transcript only grows, while the Plan
-changes on every Accepted Proposal, so **the Plan goes after the conversation** and the Draft
-or the deltas go last in the packs that carry those. Put the Plan in front and the product's
-main loop invalidates the whole transcript behind it on every pass.
+**Where the writer has just spoken, their message is the last thing the model reads**, and
+the Plan sits in front of it. A model weights the final message as the one to answer, so a
+pack ending on the Plan's JSON risks a turn that discusses the Plan rather than the question
+the writer asked. This is the rule the Chat pack is built around.
 
-**Whether that ordering saves money on Workers AI is unverified.** Prefix caching is what
-would make it pay, priced elsewhere at $0.26 per million cached against $1.40 uncached — and
-the `env.AI` binding bills in neurons, so those are not its numbers and nothing here has
+**The exception is a turn that resumes after a tool call**, where the transcript ends with a
+tool result rather than the writer. A tool result answers the assistant message before it,
+and the Plan is a user message, so slotting it in front would split that pair — which the AI
+SDK refuses outright with `MissingToolResultsError`, before the model is called at all. The
+Plan goes last in that case, and there is no writer message to keep last anyway.
+`chatPackMessages` and `planSlot` in `src/server/llm/prompt.ts` are the whole of it, and
+`test/worker/chat-turn.test.ts` holds both cases plus the empty transcript.
+
+Note: Whether that ordering saves time or money on Workers AI is unverified. Prefix caching is
+what would make it pay, priced elsewhere at $0.26 per million cached against $1.40 uncached —
+and the `env.AI` binding bills in neurons, so those are not its numbers and nothing here has
 measured it. The ordering stands on the structural argument above either way, and the saving
 is a claim to check on the first real turn rather than one to design around.
 
@@ -411,7 +408,7 @@ Each row below reads in pack order, stable to volatile.
 
 | Pack       | Contents                                                                                    |
 | ---------- | ------------------------------------------------------------------------------------------- |
-| Chat turn  | The Chat transcript, then the Plan                                                          |
+| Chat turn  | The Chat transcript, then the Plan, then the writer's own last message                      |
 | Proposal   | The affected span, plus adjacent Section titles and intent notes. Nothing else              |
 | Guide pass | The Plan, then the Draft or active Section with neighbours, then recent deltas. **No Chat** |
 | Review     | The same, plus the existing Notes. **No Chat**                                              |
@@ -436,45 +433,23 @@ party-db's lobby and write path at 1b, archived reads, and export.
 already reactive through Article Agent state and, at 1b, party-db's TanStack DB collections.
 
 **The Article screen has four Panels** — Chat, Plan, Draft, Notes — which become tabs on a
-narrow screen. `usePanels` holds which are open, keeps them in the one order the rail draws,
-and refuses to close the last of them. All four stay mounted and a closed one is hidden. The
-**Areas** are Articles (with Board and Archive Views), House, and Team.
+narrow screen, and which are all more or less their own little interfaces, with very specific
+and explicit, user-gated interactions between them. `usePanels` holds which are open, keeps
+them in the one order, drawn by a `Rail` component in the navbar.
 
-**A screen never draws a value it has not got.** An empty title, a zero count and four empty
-columns are answers, and a screen that puts one on the page before it has read anything has
-said something untrue. Whatever is still coming says so — `Skeleton` where the shape is
+**Use Loading states instead of drawing empty values.** An empty title, a zero count and four
+empty columns are answers, and a screen that puts one on the page before it has read anything
+has said something untrue. Whatever is still coming says so — `Skeleton` where the shape is
 known, a sentence like "Opening the Plan…" where it is not, and a route's `pendingComponent`
 where the whole screen is waiting. This is why the Article bar takes `title: string | null`:
 `''` is the title the writer cleared, and it cannot also mean "not read yet".
 
-**Navigation is a `Link`.** A control that only goes somewhere is an anchor, so it opens in
-a new tab, copies as a URL, reads as a link, and warms its route on hover — the router runs
-`defaultPreload: 'intent'`. A callback is for a control that does work first, like Archiving
-an Article and then leaving it.
+**Navigation is a `Link`.** Tanstack Router provides this component for us, with the very
+helpful `defaultPreload: 'intent'` which allows us to trigger functions, such as waking up a
+different Article Agent's Durable Object to improve loading times.
 
 **The Articles Area is the list at `/` and the Board View at `/board`**, over the one index
-read, under a pathless layout route that holds both. The Board draws a column per status,
-and scrolls sideways. The Archive View is not built yet, so Archived Articles are a group at
-the foot of the list until it is.
-
-**The list's tiles supplement it rather than replacing rows in it.** The three most recently
-changed Articles sit on top as tiles, and every one of them is still listed underneath, so
-scanning the list never means remembering which rows were lifted out of it.
-
-**Opening an Article creates the row first and asks its name second.** The button fires the
-create, a dialog asks what the piece is called while that request is in flight, and the
-typed title travels into the Article screen on the navigation rather than being written from
-the list — writing it there would put the copy in front of the thing it copies. `useSeedTitle`
-puts it in the Plan on arrival and `useTitleCopy` sends the copy on behind it, which is the
-same order every later rename takes. Backing out discards the row, and discards nothing else:
-an Article nobody has opened has no Plan and no Chat, because its Article Agent is not built
-until the Article screen connects to it.
-
-**Each Panel scrolls its own Y.** Reading down the Plan does not move the Chat beside it.
-The Panel is the scroll container and the Frame body gives it the height to scroll within,
-so a Panel header that should stay put is `sticky` inside its own Panel. The `stories`
-Vitest project holds every story to that in a real browser, so a class chain that reads as
-though it works has to measure as though it does — see `.storybook/vitest.setup.ts`.
+read, under a pathless layout route that holds both.
 
 **The Plan Panel's edits are ops, and the applier applies them.** A field the writer types
 in builds the same op a Proposal would carry, `src/client/plan/edits.ts` reads its
@@ -483,11 +458,6 @@ in builds the same op a Proposal would carry, `src/client/plan/edits.ts` reads i
 and a structural edit gets the consequences the ops already state — deleting a Section
 unplaces its References. The writer's own edits never go Stale: staleness is the gap
 between generating a Proposal and applying it, and there is no gap here.
-
-**The Outline has two Views, and both write the same way.** The list of Sections and the
-map (`src/client/plan/map.ts`, `PlanMap.tsx`) build ops and hand them to the same `edit`,
-so neither can make a change the other could not. Which View is up is a way of looking:
-`PlanPanel` holds it, and the Article carries no memory of it.
 
 **One writer holds the Plan and the debounce**, in `src/client/plan/writer.ts`. It applies
 each edit locally, sends after a pause for the four ops a keystroke produces, and sends at
@@ -519,9 +489,8 @@ House. An Article created on one machine appears on the other, which is what mak
 worth having at all. Issue #29 built it.
 
 **It is a list, not a store.** One row carries `{ id, title, status, createdAt, updatedAt,
-archivedAt }` and nothing else, so losing the whole table costs the reader their list and
-costs no Article anything. The Article Agent stays the source of truth for an Article, and
-nothing on the index path reaches into one.
+archivedAt }` and nothing else, so the Article Agent stays the source of truth for the
+contents of the Article, and nothing on the index path reaches into one.
 
 **The title is the one field that lives in two places.** The Plan holds the real one, and the
 index holds a copy written by the same client action that renames the Article —
@@ -541,9 +510,9 @@ moving to one of its own. Both Views filter the one list the index answers with:
 shows Archived Articles as a group at its foot, and the Board View leaves them out. Moving
 the Chat to R2 is still §11's, still unbuilt, and independent of this flag.
 
-**Nothing in 1a may require the `Cf-Access-Jwt-Assertion` header.** Localhost has no Access
-gate at all, so in development there is no header and no gate. Read it if present, tolerate
-its absence, and build no dev stub for something 1a does not use.
+**Avoiding the `Cf-Access-Jwt-Assertion` header makes localhost dev easier.** Localhost has
+no Access gate at all, so in development there is no header and no gate. We can change our
+DX later if we want to; for now this practice keeps things simple.
 
 **Identity arrives at 1b**, when party-db's `authorize` runs in the partyserver lobby and
 needs a verified identity before the object wakes. Access injects

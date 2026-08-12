@@ -3,18 +3,8 @@ import type { ModelMessage } from 'ai'
 import type { Plan } from '../../shared/plan'
 
 /**
- * The Chat turn's prompt pack — `docs/architecture.md` §7. The pack is the
- * conversation plus the Plan, in that order: **the transcript is append-only
- * and the Plan is not**, so the conversation is the stable part and the Plan
- * is the volatile one.
- *
- * That reverses the ordering §7 first stated, which put the Plan in the system
- * prefix ahead of the conversation. Under that arrangement every Accepted
- * Proposal changed a prefix the whole transcript sat behind, so the product's
- * main loop invalidated its own cache on each pass. It is also simply the
- * clearer structure: the beginning of the Chat stays the beginning of the
- * context, and the artifact under construction sits where the model reads it
- * last.
+ * The Chat turn's prompt pack — The pack is the conversation plus the Plan,
+ * in roughly that order. See Architecture §7.
  */
 
 /** The product's own instructions to the guide, identical on every turn of
@@ -22,21 +12,35 @@ import type { Plan } from '../../shared/plan'
  * **standing rules**, which `context.md` reserves for House material the
  * writer authors and which land in the same prompt at 1b. */
 const guideRules = [
-	'You are the guide in a writing harness. The writer writes the prose and you help them plan it.',
+	'You are the guide in a writing harness, helping a human writer research, structure, and plan.',
 	'',
-	'You never write prose for the Draft, and you never write the Plan. You propose changes to the',
-	'Plan with the proposePlanChange tool and the writer Accepts or Declines each one. A turn that',
-	'answers a question, or asks one, carries no tool call at all.',
+	'You never write prose for the article; you chat with them about the type of',
+	'article they want to write, how they want it to flow, what kind of tone and voice it should',
+	'carry, what intellectual or philosophical patterns they want to employ or explore. And then to',
+	'1) offer links and quotes with the recordOffers tool, which the writer might want to read or',
+	'use in their article, and 2) propose changes to the Plan with the proposePlanChange tool.',
+	'The writer Accepts or Declines each Offer and Proposal. A turn that answers a question,',
+	'or asks one, or just yaps with the writer, carries no tool call at all.',
 	'',
-	'Judge the writing only against the Plan, its intent notes, and the Lexicon. Your own taste is',
-	'borrowed and does not count: a Section that meets its stated intent in a register you would not',
-	'have chosen is right, and saying so is the job. Where the Plan says nothing, ask rather than',
+	'When asked to review the Article Draft, judge the writing only against the Plan, its intent',
+	'notes, and the Lexicon. Your own taste is borrowed and does not count: a Section that meets its',
+	'stated intent in a register you would not have chosen is correct for what the writer is trying',
+	'to express, and your job would be to say so. Where the Plan says nothing, ask rather than',
 	'supplying a preference of your own.',
 	'',
 	'One Voice applies at a time and the nearest Scope wins outright, so switching a Voice replaces',
 	'it. Adjectives compose instead, accumulating from the Article down to the Section. They arrive',
 	'widest first, so the nearest ones weigh most: where a Section and the Article pull against each',
 	"other, the Section's term is the one to write to.",
+	'',
+	'You cannot browse, so every Offer you record comes from your prior knowledge. Offer a source',
+	'only where you are confident it',
+	'exists and you have the attribution roughly correct. Give a url only where you are confident',
+	'of the url itself, and leave it out otherwise — a source with an author and a publication',
+	"and no url is useful, and an invented url wastes the writer's time. Where you are working",
+	"from memory rather than certainty, say so in the Offer's note.",
+	'',
+	'You do not use marketing-speak, or make claims you have not verified.',
 ].join('\n')
 
 /**
@@ -77,17 +81,7 @@ function planMessage(plan: Plan): ModelMessage {
 
 /**
  * The conversation with the Plan in it — in front of the writer's last message,
- * so the writer's own words are the last thing the model reads.
- *
- * Two orderings are defensible and neither has met a real model yet. Appending
- * the Plan after everything is one message cheaper to cache, and it makes a
- * JSON blob the final thing in the prompt, which risks a turn that answers the
- * Plan rather than the question — a model weights the last message as the one
- * to respond to, and this one opens "The Plan for this Article". Slotting it in
- * front of the last message costs one message of prefix and follows the
- * ordinary shape of retrieved context, which precedes the question that needs
- * it. That is the one taken here, and flipping it is one line. Check it on the
- * first real turn, before #26 builds a Panel around the answer.
+ * so the writer's words are the last thing the model reads, per Architecture §7.
  */
 export function chatPackMessages(
 	conversation: ModelMessage[],
@@ -99,13 +93,7 @@ export function chatPackMessages(
 }
 
 /**
- * Calculates where the Plan goes: in front of the last message, or at the end
- * of the conversation.
- *
- * The AI SDK refuses a prompt that places a user message between a tool call
- * and its tool result. The Plan is a user message, so it goes in front of the
- * last message only where that message is the writer's, and at the end
- * otherwise.
+ * Calculates where the Plan goes, per Architecture §7.
  */
 function planSlot(conversation: ModelMessage[]): number {
 	const last = conversation.length - 1

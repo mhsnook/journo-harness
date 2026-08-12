@@ -1,19 +1,10 @@
 # Journo Harness
 
 A writing harness where the writer writes the prose and an AI acts as a guide. What is
-true now is [docs/architecture.md](./docs/architecture.md), and what is deferred is
-[docs/later.md](./docs/later.md); this file fixes the words, and nothing else.
+true now is [docs/architecture.md](./architecture.md), and what is deferred is
+[docs/later.md](./later.md); this file fixes the words, and nothing else.
 
 ## The app
-
-**Area**:
-A top-level destination. There are three: Articles, House, and Team.
-_Avoid_: section, page, tab, workspace
-
-**View**:
-One way of looking at an Area or a Panel. The Articles Area has a Board View and an
-Archive View; the Chat Panel has the Offer ledger.
-_Avoid_: mode (a Mode is Plan or Write), screen, filter
 
 **Team**:
 The people who may read the same material, and the Area where the writer manages them.
@@ -22,7 +13,7 @@ else is.
 _Avoid_: room (party-db's word for its own sync unit, not ours), organisation, tenant,
 workspace, account
 
-**House**:
+**House** (or house style):
 The writer's own material, held across every Article — the Lexicon, the standing rules,
 the Skills, and the writing samples. Named for house style, and reached from its own
 top-level entry point rather than from inside an Article.
@@ -42,10 +33,6 @@ _Avoid_: layer, pane, section (a Section is part of the Article), stage (the wri
 their own process, and we do not name it for them), rail (a rail is a collapsed Panel,
 not a different thing)
 
-**Mode**:
-Which way of working the Article screen is set up for — Plan or Write.
-_Avoid_: view, state, phase (a Phase is a build stage: 1a, 1b, 2)
-
 **Chat**:
 The dialogue between the writer and the guide about one Article.
 _Avoid_: conversation, thread
@@ -57,23 +44,18 @@ and it plays the role a plan plays in an agentic coding tool.
 _Avoid_: **brief** (see below), outline (the Outline is one part of the Plan), context
 stash, spec
 
-**Brief**:
-Reserved, and not ours to redefine. In journalism a brief is the commissioning document
-a writer already holds, often long before they open this app. If the product ever takes
-one in, it is an input to the Plan and never another word for it.
-
 **Draft**:
-The Article's prose. One continuous text, written by the writer.
+The Article's prose, which they draft in Panel 3. One continuous text, written by the writer.
 _Avoid_: document, content, body
 
-**Notes**:
+**Notes** (or review notes):
 The guide's accumulated observations about one Article. Some arrive alongside the Draft
 as the writer works, and some arrive in batches from a Review.
 _Avoid_: feedback, comments, findings, suggestions, review (a Review produces Notes)
 
 ## Inside the Plan
 
-**Outline**:
+**Outline** (or article outline):
 The Plan's ordered tree of Sections, and the Panel material the writer rearranges. One
 part of the Plan rather than another word for it.
 _Avoid_: structure, TOC, table of contents
@@ -93,7 +75,7 @@ Anything deeper wants a word writers already hold — Chapter, for a book — ra
 more recursive one, and we would rather add that word later than ask a writer to think in
 trees.
 
-**Node**:
+**Node** (or section node):
 The code word for the recursive unit a Section and a Subsection are both instances of, and
 the name it keeps in the schema: `OutlineNode` in `src/shared/plan`. Depth picks the word
 the writer reads — 0 is a Section and 1 is a Subsection.
@@ -128,7 +110,7 @@ _Avoid_: level, tier, inheritance chain
 
 ## Offers and the Ledger
 
-**Offer**:
+**Offer** (or reference offer):
 Something the Chat turns up and hands to the writer to rule on. Two types so far, Links
 and Quotes, and Offers stay flat — two Quotes from one publication are two Offers, not a
 Quote nested in something else.
@@ -159,7 +141,7 @@ the type is stored on the record rather than read off the text. That is what sto
 Offer ledger and the Plan Panel naming one item two ways.
 _Avoid_: excerpt, passage, snippet, pull quote
 
-**Ledger**:
+**Ledger** (or offer ledger):
 The View of an Article's Offers and what the writer decided about each — a query over
 Offers, not a store of its own. Name it the **Offer ledger** wherever the phrase stands on
 its own, in a heading, a story name, or a menu item: a bare "Ledger" makes the reader
@@ -168,20 +150,20 @@ prose that has already named it.
 _Avoid_: source ledger (a source is the attribution inside a Reference), inbox, tray,
 queue, history
 
-**Undecided**:
+**Undecided** (or undecided offer):
 The disposition of an Offer the writer has not ruled on. The starting state.
 _Avoid_: pending, new, unread
 
-**Accepted**:
+**Accepted** (or accepted offer):
 The disposition of an Offer the writer has taken into the Plan.
 _Avoid_: kept, approved, selected, promoted
 
-**Declined**:
+**Declined** (or declined offer):
 The disposition of an Offer the writer has ruled out. Restorable — nothing is deleted.
 _Avoid_: cut (the writer cuts their own prose), rejected, dismissed (a Guidance note is
 dismissed), discarded
 
-**Provenance**:
+**Provenance** (or a reference's provenance):
 Where a record came from. An Accepted Offer is **copied** into the Plan as a new,
 editable record that keeps its Provenance — so the Plan's copy is the writer's to change,
 and the Offer keeps what was actually turned up. A Lexicon entry carries Provenance the
@@ -199,15 +181,15 @@ _Avoid_: applied, written, done
 
 ## Inside the Draft
 
-**Transition**:
+**Transition** (or transition block):
 The connective prose between two Sections, belonging to neither.
 
-**Boundary**:
+**Boundary** (or section boundary):
 The place where one Section's prose ends and the next begins. Inferred lazily (for now)
 and reported approximately — the Draft is stored as a flat run of Blocks, so which Section
 a Block serves is read out rather than written down.
 
-**Block**:
+**Block** (or text block):
 The unit the Draft is stored and synced in, usually one paragraph. Blocks settle lazily
 and hold loosely — a paragraph the writer is in the middle of splitting may stay one
 Block until they move on, and the structure is never enforced against them mid-flow.
@@ -215,12 +197,12 @@ _Avoid_: row, chunk, node (a Node is the code word for a Section)
 
 ## The guide and its output
 
-**Guide**:
+**Guide** (or review guide):
 The AI in its ambient role, reading the Draft against the Plan and writing Guidance
 notes. The same model in dialogue is the Chat.
 _Avoid_: coach, assistant, agent (an Agent is a Durable Object class)
 
-**Guidance note**:
+**Note** (or review note):
 One observation from the Guide — a type, an anchor to a Section or a paragraph range,
 and a body of one or two sentences. The unit that fills the Notes Panel.
 _Avoid_: finding, suggestion, comment, tip, feedback

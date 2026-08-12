@@ -3,8 +3,9 @@
 An AI harness so you can have your own Clippy so good that even you want to use it 🖇️
 
 The writer writes the prose and an AI acts as a guide. The architecture is in
-[`docs/architecture.md`](./docs/architecture.md), and the words it uses are fixed in
-[`context.md`](./context.md).
+[`docs/architecture.md`](./docs/architecture.md), the words it uses are fixed in
+[`docs/context.md`](./docs/context.md), and UI/design guidelines are described in
+[`docs/ui.md`](./docs/ui.md).
 
 ## Running it
 
