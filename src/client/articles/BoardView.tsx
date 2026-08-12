@@ -47,7 +47,7 @@ export function BoardView({ articles, failure = null, onNew }: BoardViewProps) {
 					// A sunk fill, so four columns read as four rather than as one field
 					// of cards. The tiles stay white and lift off it.
 					<div
-						className="flex w-[12rem] shrink-0 flex-col gap-2 rounded-lg border border-rule bg-sunk p-2"
+						className="flex w-[12rem] shrink-0 flex-col gap-2 rounded-lg border border-rule bg-sage p-2"
 						key={column.status}
 					>
 						<MetaLabel className="shrink-0 px-0.5" count={column.articles.length}>

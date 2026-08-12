@@ -38,7 +38,7 @@ const preview: Preview = {
 		controls: { expanded: true },
 		backgrounds: {
 			options: {
-				paper: { name: 'Paper', value: '#e9e2d5' },
+				paper: { name: 'Paper', value: '#fbecdb' },
 				surface: { name: 'Surface', value: '#fbf9f5' },
 			},
 		},

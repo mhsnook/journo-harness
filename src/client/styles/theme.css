@@ -6,16 +6,20 @@
  * Joarness design tokens.
  *
  * The page is deliberately quiet: earth, ink, and three soft neutrals, tinted
- * off a Deccan winter — dry brown ground, dried-scrub green, dusty mauve.
- * `accent` is the one colour that asks for attention, and it is rationed — see
- * the "Accent" docs page in Storybook. If a screen has two rose things on it,
- * one of them is probably wrong.
+ * off a Deccan winter — red-brown ground, pale sage chrome, scrub green in the
+ * secondary copy, dusty mauve in the meta. Sage is chrome and never a large
+ * pane; a pane beside the writing surface takes `sunk`, a neutral. `accent` is
+ * the one colour that asks for attention, and it is rationed. Both rules — why
+ * the ground is redder than the sage, and what earns the accent — are on the
+ * "Accent" docs page in Storybook. If a screen has two rose things on it, one
+ * of them is probably wrong.
  */
 @theme {
 	/* Surfaces */
-	--color-paper: #e9e2d5; /* the desk the app sits on: sun-dried earth */
+	--color-paper: #fbecdb; /* the desk the app sits on: red-brown earth */
 	--color-surface: #fbf9f5; /* cards, panes, the writing surface */
-	--color-sunk: #e5ead3; /* secondary panes: plan, notes, sidebars */
+	--color-sunk: #f7f2ea; /* secondary panes: plan, notes, sidebars */
+	--color-sage: #d5ead3; /* chrome: title bars, Board columns */
 	--color-hush: #e7dfe3; /* your own chat messages, inert fills */
 
 	/* Ink */

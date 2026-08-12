@@ -23,7 +23,7 @@ export function TitleBar({ back, title, subtitle, actions, className }: TitleBar
 	return (
 		<header
 			className={cx(
-				'flex shrink-0 items-center gap-2.5 border-b border-edge bg-sunk px-4 py-2.5',
+				'flex shrink-0 items-center gap-2.5 border-b border-edge bg-sage px-4 py-2.5',
 				className,
 			)}
 		>

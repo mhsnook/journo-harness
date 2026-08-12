@@ -25,9 +25,10 @@ export interface ArticleBarProps {
 }
 
 /**
- * The article window's own bar — quieter than {@link TitleBar} because it sits
- * above a writing surface. Title and status recede; the Panel rail is the only
- * thing with any weight.
+ * The article window's own bar. It takes the same sage as {@link TitleBar}, so
+ * the chrome reads as one band across every screen, but the type inside it is
+ * quieter: it sits above a writing surface, so title and status recede and the
+ * Panel rail is the only thing with any weight.
  */
 export function ArticleBar({
 	back,
@@ -44,7 +45,7 @@ export function ArticleBar({
 	return (
 		<header
 			className={cx(
-				'flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-2',
+				'flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1.5 bg-sage px-3 py-2',
 				divided && 'border-b border-rule',
 				className,
 			)}
