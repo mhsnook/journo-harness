@@ -47,8 +47,7 @@ export function ReferenceCard({
 	const headingText =
 		offer.text === undefined ? referenceName(offer) : offer.source?.title
 	const url = offer.source?.url
-	// Whether the link goes on the heading or on the line below. A passage never
-	// heads a card, because an underlined passage reads as emphasis.
+	// Whether the link goes on the heading or on the line below.
 	const headingLinks = url !== undefined && headingText !== undefined
 	const cited: ReactNode[] = [
 		...(favourite ? [<FavouriteMark key="favourite" type={favourite} />] : []),
