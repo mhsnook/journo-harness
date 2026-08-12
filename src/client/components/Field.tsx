@@ -198,24 +198,17 @@ export function EmptySlot({ children, className }: EmptySlotProps) {
 }
 
 export interface FieldRowProps {
-	/** The word in the gutter: "Voice", "Adjectives", "References". */
 	label: ReactNode
 	children: ReactNode
 	className?: string
 }
 
 /**
- * One labelled row of a Section's minor fields: the word in a fixed gutter, the
- * control after it.
+ * A row with the label in a fixed left gutter and the children to the right of
+ * it. Used for Voice, Adjectives, and the References line.
  *
- * Each row is its own grid rather than all of them sharing one, which they can
- * be because the gutter is a fixed width — so rows written in different
- * components still line up, and a row can be added anywhere without threading
- * it through whoever owns the grid.
- *
- * **The label sits at the top, not the middle.** A row whose control wraps —
- * Adjectives, once there are a few — grows downwards, and a centred label would
- * drift down the gutter with it.
+ * The gutter is a fixed width, so separate FieldRows line up without sharing a
+ * grid. Children that wrap grow downwards; the label stays at the top.
  */
 export function FieldRow({ label, children, className }: FieldRowProps) {
 	return (

@@ -11,39 +11,17 @@ import { referenceMark } from './references'
 import { SectionRow } from './SectionRow'
 
 /**
- * The Map View of the Plan — the Plan opened left to right, with the Article
- * title as the root.
+ * A mind-map View of the Plan, opening left to right from the Article title.
  *
- * `map.ts` places every box and every curve, and picks what branches off a
- * Section — the References placed there, or the Sections nested inside it
- * (`MapOptions.branches`). What this file adds is the padding around the
- * drawing and where the open Section's fields are anchored.
+ * `map.ts` places every box and curve. This component draws them, anchors the
+ * open Section's fields over the box they belong to, and holds what the writer
+ * has folded, lit, or opened.
  *
- * **Reading and writing are separate here.** Folding a Section hides its
- * children on this map and changes nothing in the Plan — that state belongs to
- * the View. Editing goes the one way every Plan surface goes: `SectionRow`
- * builds ops and `edit` applies them, so the map cannot make a change the
- * applier would refuse — `docs/architecture.md` §"The Plan Panel's edits are
- * ops".
- *
- * **The open Section's fields sit over the map, not in it.** They are anchored
- * at the box and painted above its neighbours without joining the layout, so
- * nothing reflows around what the writer is editing.
- *
- * **The map draws at its own size and scrolls sideways.** It must not be scaled
- * to fit: the fields are positioned in the same units the boxes are, and
- * scaling puts the two out of register.
- *
- * The path back to the root lights in ink rather than accent, because the
- * accent is rationed to one thing per screen — `foundations/Accent.mdx`.
+ * The map draws at its own size and scrolls sideways rather than scaling to
+ * fit, because the anchored fields are positioned in the map's own units.
  */
 
-/**
- * How wide the open Section's fields sit — well past a box's own width, and
- * past what the two fields on the title line strictly need. A Section is a
- * thing the writer works in rather than glances at, so the card reads as
- * somewhere to write rather than as a box that grew.
- */
+/** How wide the open Section's fields sit, in the map's own units. */
 const DETAIL_WIDTH = 520
 
 /** Room around the drawing, so a lit box's border is not clipped. */
@@ -64,29 +42,19 @@ export function PlanMap({
 	branches = 'references',
 	className,
 }: PlanMapProps) {
-	// Which Sections are folded, which box the pointer or the caret is on, and
-	// which one is open. All three belong to this View: none is in the Plan, and
-	// reopening the Panel starts the map unfolded and shut.
+	// None of this is in the Plan: the map opens unfolded and shut every time.
 	const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set())
 	const [lit, setLit] = useState<string | null>(null)
 	const [openId, setOpenId] = useState<string | null>(null)
-	// The Section `+` just made, which is thrown away again if the writer leaves
-	// it with nothing in it.
-	const [made, setMade] = useState<string | null>(null)
-	// What the open detail measured, so the scroll area reaches its foot. Read
-	// off the element rather than guessed: how tall the fields run depends on
-	// what the Section carries, and it changes under the writer as they type an
-	// intent note long enough to wrap.
+	const [madeId, setMadeId] = useState<string | null>(null)
 	const [detailHeight, setDetailHeight] = useState(0)
 
-	// Held, so React attaches it once rather than re-running it every render.
+	// Measures the open fields, so the scroll area reaches their foot, and keeps
+	// measuring: how tall they run changes as the writer types.
 	const measure = useCallback((element: HTMLDivElement | null) => {
 		if (element === null) return
 
 		setDetailHeight(element.offsetHeight)
-		// The box that was clicked is on screen, but the fields that open below it
-		// need not be. `nearest` moves the Panel the least that shows them, so a
-		// Section near the top does not move at all.
 		element.scrollIntoView({ block: 'nearest', inline: 'nearest' })
 
 		const observer = new ResizeObserver(() => setDetailHeight(element.offsetHeight))
@@ -95,27 +63,22 @@ export function PlanMap({
 		return () => observer.disconnect()
 	}, [])
 
-	// Held: a pointer sweeping the map fires `setLit` once per box, and none of
-	// those renders changes where anything sits.
+	// Held: a pointer sweeping the map fires `setLit` once per box, and the
+	// layout is the same on every one of those renders.
 	const { nodes, links, width, height } = useMemo(
 		() => planMap(plan, { branches, collapsed }),
 		[plan, branches, collapsed],
 	)
 
-	/**
-	 * Leaves whatever is open, and throws away a Section `+` made that the writer
-	 * put nothing into. Empty means every field: a Section carrying only an
-	 * intent note is still work, and it stays.
-	 */
+	/** Closes the open Section, discarding one `+` made and left empty. */
 	const close = () => {
-		if (made !== null) {
-			if (sectionIsEmpty(plan, made)) edit(deleteSection(made))
-			setMade(null)
+		if (madeId !== null) {
+			if (sectionIsEmpty(plan, madeId)) edit(deleteSection(madeId))
+			setMadeId(null)
 		}
 		setOpenId(null)
 	}
 
-	/** Opens one box, having first cleared up after the last. */
 	const open = (id: string) => {
 		close()
 		setOpenId(id)
@@ -129,20 +92,14 @@ export function PlanMap({
 			return next
 		})
 
-	/**
-	 * A new Section inside the box that was clicked, last among what is already
-	 * there, open on arrival with the caret in its title.
-	 *
-	 * Only the Article title offers this under `branches: 'references'`. Two
-	 * levels is what the interface offers, and a third has no word the writer
-	 * holds — `context.md` §Subsection.
-	 */
+	/** Adds a Section last inside `parentId`, open with the caret in its title.
+	 * Null adds one to the Outline. */
 	const add = (parentId: string | null) => {
 		const id = crypto.randomUUID()
 		close()
 		edit(addSection({ parentId, beforeId: null }, id))
 
-		// A child of a folded Section would land undrawn, so adding one opens it.
+		// A child of a folded Section would land undrawn.
 		if (parentId !== null) {
 			setCollapsed((held) => {
 				const next = new Set(held)
@@ -152,12 +109,11 @@ export function PlanMap({
 			})
 		}
 		setOpenId(id)
-		setMade(id)
+		setMadeId(id)
 	}
 
-	// A folded Section can hold the open one, and a Section can be deleted from
-	// its own detail. Either leaves `openId` naming a box that is not drawn, so
-	// the open box is looked up in what was laid out rather than in the Plan.
+	// Looked up in what was drawn, not in the Plan: folding or deleting can leave
+	// `openId` naming a box the map is not showing.
 	const opened =
 		nodes.find(
 			(node) => node.subject.kind === 'section' && node.subject.node.id === openId,
@@ -170,7 +126,7 @@ export function PlanMap({
 	const detail = opened === null || entry === null ? null : { node: opened, entry }
 
 	// The pointer wins over the open Section, so the writer can trace another
-	// branch without shutting what they are editing. With neither, nothing lights.
+	// branch without shutting what they are editing.
 	const onPath = new Set<string>()
 	const traced = nodes.find((node) => node.key === (lit ?? opened?.key))
 	if (traced !== undefined) {
@@ -183,25 +139,22 @@ export function PlanMap({
 
 	return (
 		<div
-			// Found by this attribute rather than by a class, the way the Frame and
-			// the Panel are, so renaming a Tailwind class cannot quietly empty the
-			// test that measures this box.
+			// The browser test finds this box by the attribute rather than by a class.
 			data-plan-map=""
-			// `shrink-0` because `overflow-x-auto` resolves this box's `min-height`
-			// to 0, and the Panel is a flex column that overflows — without it the
-			// map is squeezed to nothing rather than scrolling the Panel.
+			// `shrink-0`: `overflow-x-auto` zeroes this box's min-height, and the
+			// Panel around it is a flex column that overflows.
 			className={cx('relative shrink-0 overflow-x-auto', className)}
 			onKeyDown={(event) => {
-				// `SectionRow` stops its own Escape, so this one only ever reaches a
-				// box the writer tabbed to rather than the fields they have open.
+				// `SectionRow` stops its own Escape, so this one only reaches a box
+				// the writer tabbed to.
 				if (event.key !== 'Escape') return
 				close()
 			}}
 		>
 			<div
 				className="relative"
-				// Every box and the open detail stop their own clicks, so a click that
-				// reaches here is one on the space between them.
+				// Closes the open Section: boxes and its fields stop their own clicks,
+				// so this one is on the space between them.
 				onClick={close}
 				style={{
 					width:
@@ -237,12 +190,10 @@ export function PlanMap({
 					))}
 
 					{nodes.map((node) => {
-						// Pulled out of the node so the narrowing survives into the
-						// handlers below, which a property access would not.
+						// Destructured so the narrowing survives into the handlers below.
 						const { subject } = node
 						const section = subject.kind === 'section' ? subject.node : null
-						// Where a new Section would go, and null where this box takes
-						// none. Under `references` that is the Article title alone.
+						// Where `+` would add a Section, or null where this box offers none.
 						const addsInto =
 							subject.kind === 'article'
 								? { id: null }
@@ -263,9 +214,6 @@ export function PlanMap({
 									lit={onPath.has(node.key)}
 									node={node}
 									onAdd={addsInto === null ? undefined : () => add(addsInto.id)}
-									// A Reference is edited in the References list, and the root
-									// is the Article title rather than a Section. Neither folds
-									// or opens Section fields.
 									onFold={section === null ? undefined : () => fold(section.id)}
 									onLeave={() => setLit((held) => (held === node.key ? null : held))}
 									onLight={() => setLit(node.key)}
@@ -280,10 +228,7 @@ export function PlanMap({
 				{detail === null ? null : (
 					<div
 						ref={measure}
-						// Grows out of the box's own top-left corner, which is where the
-						// writer clicked, so the fields read as that box opening rather than
-						// as a card arriving from nowhere. `starting:` is the opening state
-						// of a newly mounted element — @starting-style.
+						// Grows out of the box's own top-left corner.
 						className="absolute z-10 origin-top-left scale-100 rounded-md opacity-100 shadow-frame transition-[opacity,transform] duration-150 ease-out motion-reduce:transition-none starting:scale-95 starting:opacity-0"
 						onClick={(event) => event.stopPropagation()}
 						style={{
@@ -292,9 +237,7 @@ export function PlanMap({
 							width: DETAIL_WIDTH,
 						}}
 					>
-						{/* No `onShowReference`: the map has no References list to send
-						    the writer down to, so a placed Reference reads as text here
-						    rather than as a control that would do nothing. */}
+						{/* No `onShowReference`: the map draws no References list. */}
 						<SectionRow
 							className="gap-3 p-3.5"
 							edit={edit}
@@ -314,29 +257,22 @@ interface BoxProps {
 	node: MapNode
 	lit: boolean
 	folded: boolean
-	/** True while this Section's fields sit open over the map. */
 	open: boolean
-	/** Absent where the box holds no Sections to fold. */
 	onFold?: () => void
-	/** Absent where the box has no Section fields to open. */
 	onOpen?: () => void
-	/** Make a Section inside this one. Absent where the map draws none there. */
 	onAdd?: () => void
 	onLight: () => void
 	onLeave: () => void
 }
 
 /**
- * One box. The root reads as the Article title, a Section reads as the row it
- * is in the Panel, and a Reference reads as its mark and its name.
+ * The box drawn on the map for one node — the Article title, a Section, or a
+ * Reference. Clicking anywhere on it opens that Section's fields, and the title
+ * is a real button so the same is reachable by keyboard and named to a screen
+ * reader. The controls for its own children sit on the right edge.
  *
- * The whole box opens the Section, and the title carries that as a real button
- * so it is reachable by keyboard and named to a screen reader.
- *
- * The right edge holds what the box says about its children: fold what is
- * already inside, and add one more. Every control here stops the click going
- * any further, so a click that reaches the map behind them is a click on the
- * space between boxes, which is what shuts whatever is open.
+ * Every control here stops its click, so only clicks on the map between boxes
+ * reach `PlanMap` to close what is open.
  */
 function Box({
 	node,
@@ -377,9 +313,6 @@ function Box({
 			onMouseLeave={onLeave}
 		>
 			{node.ordinal === '' ? null : (
-				// No fixed width, unlike the Panel's row: a Reference is marked "[3]"
-				// and would sit under its own name in the three-space the Panel gives
-				// a Section.
 				<span className="mt-px shrink-0 font-mono text-[0.6875rem] text-faint">
 					{node.ordinal}
 				</span>
@@ -426,8 +359,7 @@ function Box({
 					</span>
 				)}
 
-				{/* Only where the References are not boxes of their own — otherwise
-				    the map would say the same placement twice. */}
+				{/* Only drawn where References are not boxes of their own. */}
 				{node.referenceNumbers.length === 0 ? null : (
 					<span className="truncate font-mono text-[0.625rem] text-faint">
 						{`refs ${node.referenceNumbers.map((number) => `[${number}]`).join(' ')}`}
@@ -435,9 +367,7 @@ function Box({
 				)}
 			</div>
 
-			{/* The two controls about this box's children, on the edge the children
-			    hang off. Stacked rather than side by side, which costs the title
-			    one column of width instead of two. */}
+			{/* The two controls for this box's children, stacked: fold and add. */}
 			{onFold === undefined && onAdd === undefined ? null : (
 				<div className="flex h-full shrink-0 flex-col items-end">
 					{node.childCount === 0 || onFold === undefined ? null : (
@@ -478,7 +408,5 @@ function Box({
 	)
 }
 
-/** Both edge controls, which are the same target at the same weight: quiet
- * until the pointer or the caret reaches them. */
 const CONTROL =
 	'shrink-0 rounded-full border border-edge px-1 font-mono text-[0.625rem] leading-[1.05rem] text-muted transition-colors hover:border-ink hover:text-ink'

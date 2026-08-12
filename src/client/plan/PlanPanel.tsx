@@ -52,13 +52,10 @@ export function PlanPanel({
 	const [openId, setOpenId] = useState<string | null>(null)
 	const [made, setMade] = useState<string | null>(null)
 	const [accented, setAccented] = useState<string | null>(null)
-	// Which View of the Outline is up. It belongs to the Panel rather than to
-	// the Plan: it is a way of looking, and the Article carries no memory of it.
+	// Not in the Plan: the Article carries no memory of which View was up.
 	const [view, setView] = useState<OutlineView>('list')
 
-	// Changing View puts the open Section away, rather than leaving it open
-	// behind the other View. Reaching for the rail already blurs the open row,
-	// which closes it; this says so outright instead of resting on that.
+	/** Shows a View, closing whatever Section the last one had open. */
 	const showView = (next: OutlineView) => {
 		setView(next)
 		setOpenId(null)
@@ -129,8 +126,7 @@ export function PlanPanel({
 			</GroupHeading>
 
 			{view === 'map' ? (
-				// The map carries a `+` on the Article title and draws the References
-				// itself, so the Panel's two Outline controls stand down while it is up.
+				// The map carries its own `+` and draws the References itself.
 				<PlanMap edit={edit} plan={plan} />
 			) : entries.length === 0 ? (
 				<EmptySlot className="min-h-[3.5rem]">

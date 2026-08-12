@@ -52,9 +52,8 @@ export interface SectionRowProps {
 	onOpen: (nodeId: string | null) => void
 	/** Take the caret, because the writer just made this Section. */
 	takeCaret?: boolean
-	/** Show a Reference placed here, down in the References list. Absent where
-	 * the caller has no such list — the Map View — and the name then reads as
-	 * text rather than as a control that does nothing. */
+	/** Scrolls to a placed Reference. Can be absent when the caller draws no
+	 * References list; the name then reads as text. */
 	onShowReference?: (referenceId: string) => void
 	className?: string
 }
@@ -77,19 +76,15 @@ export function SectionRow({
 	const title = useRef<HTMLInputElement>(null)
 	const row = useRef<HTMLDivElement>(null)
 
-	const placed = referencesAt(plan, node.id)
-	// Taking a Reference off this Section, the way × takes an Adjective off it.
-	// Placing it elsewhere is the picker's job; this only says "not here".
-	const unplace = (referenceId: string) => edit(placeReference(plan, referenceId, null))
-	// What the picker could offer: a Reference sits at one Section, so anything
-	// not already here can be moved here. With none, the row has nothing to say.
-	const offerable = referenceEntries(plan).filter(
+	const placedReferences = referencesAt(plan, node.id)
+	const unplaceReference = (referenceId: string) =>
+		edit(placeReference(plan, referenceId, null))
+	const offerableReferences = referenceEntries(plan).filter(
 		(entry) => entry.reference.nodeId !== node.id,
 	)
 
-	// Opening a Section puts the caret in its title. Without it the focus stays
-	// on the closed row's button, which this row has just replaced — so it falls
-	// to the page, and Escape has nothing to close.
+	// Opening a Section puts the caret in its title: the closed row's button has
+	// just been replaced, so focus would otherwise fall to the page.
 	useEffect(() => {
 		if (!open) return
 
@@ -97,8 +92,7 @@ export function SectionRow({
 		if (takeCaret) row.current?.scrollIntoView({ block: 'nearest' })
 	}, [open, takeCaret])
 
-	/** Enter is done. Nothing is lost by leaving — the Section reopens on a
-	 * click, and the write has already gone. */
+	/** Enter closes the Section. The write has already gone. */
 	const doneOnEnter = (event: { key: string; preventDefault: () => void }) => {
 		if (event.key !== 'Enter') return
 		event.preventDefault()
@@ -106,9 +100,9 @@ export function SectionRow({
 	}
 
 	const placedList =
-		placed.length === 0 ? null : (
+		placedReferences.length === 0 ? null : (
 			<div className="flex flex-col gap-0.5">
-				{placed.map((held) => (
+				{placedReferences.map((held) => (
 					<span
 						key={held.reference.id}
 						className="flex w-full items-baseline gap-1.5 text-[0.6875rem] text-muted"
@@ -127,16 +121,14 @@ export function SectionRow({
 								{referenceName(held.reference)}
 							</button>
 						)}
-						{unplace === undefined ? null : (
-							<button
-								aria-label={`Take ${referenceName(held.reference)} off ${scopeName}`}
-								className="shrink-0 text-faint hover:text-ink"
-								onClick={() => unplace(held.reference.id)}
-								type="button"
-							>
-								×
-							</button>
-						)}
+						<button
+							aria-label={`Take ${referenceName(held.reference)} off ${scopeName}`}
+							className="shrink-0 text-faint hover:text-ink"
+							onClick={() => unplaceReference(held.reference.id)}
+							type="button"
+						>
+							×
+						</button>
 					</span>
 				))}
 			</div>
@@ -151,9 +143,8 @@ export function SectionRow({
 				<button
 					className="-mx-1.5 rounded-md border border-transparent px-1.5 py-1 text-left hover:border-edge hover:bg-surface"
 					onClick={() => onOpen(node.id)}
-					// Opening on mousedown, because the Section that is open closes on
-					// the focus leaving it — which relays out the list and moves this
-					// row out from under the pointer before the click lands.
+					// On mousedown: the open Section closes on blur, which relays the
+					// list and moves this row before a click would land.
 					onMouseDown={(event) => {
 						event.preventDefault()
 						onOpen(node.id)
@@ -184,8 +175,7 @@ export function SectionRow({
 			)}
 			onBlur={(event) => {
 				// Reaching for another field closes this Section. A blur with nowhere
-				// to go — clicking the page, or the row being moved in the list — is
-				// not the writer leaving, so it does not close anything.
+				// to go is not the writer leaving.
 				const to = event.relatedTarget
 				if (to !== null && !event.currentTarget.contains(to)) onOpen(null)
 			}}
@@ -252,16 +242,15 @@ export function SectionRow({
 						voice={node.voice ?? null}
 					/>
 
-					{/* Not a labelled row like the two above: what is placed here runs
-					    the full width of the card rather than inside the gutter, so the
-					    label and the control take one line and the list takes the rest. */}
-					{placedList === null && offerable.length === 0 ? null : (
+					{/* The label and the picker take one line; what is placed here runs
+					    the full width beneath them. */}
+					{placedList === null && offerableReferences.length === 0 ? null : (
 						<div className="flex flex-col gap-1">
 							<FieldRow label="References">
-								<PlaceReference
+								<SelectReferenceToPlace
 									edit={edit}
 									nodeId={node.id}
-									offerable={offerable}
+									offerableReferences={offerableReferences}
 									plan={plan}
 									scopeName={scopeName}
 								/>
@@ -317,41 +306,31 @@ export function SectionRow({
 	)
 }
 
-interface PlaceReferenceProps {
+interface SelectReferenceToPlaceProps {
 	plan: Plan
 	nodeId: string
-	/** Every Reference not already here, worked out by the row. */
-	offerable: ReferenceEntry[]
+	offerableReferences: ReferenceEntry[]
 	edit: (ops: ProposalInput | null) => void
 	/** "Section 2", for the control's name. */
 	scopeName: string
 }
 
-/**
- * Placing a Reference from the Section's side, as a picker of what to put here.
- * `ReferenceList` places one from the Reference's side, with a `<select>` of
- * Sections on each row; both build the same `placeReference` op, and both are
- * that same control turned round, so neither reads as a different kind of act.
- *
- * A Reference sits at one Section, so picking one placed elsewhere moves it.
- */
-function PlaceReference({
+/** A Reference sits at one Section, so picking one placed elsewhere moves it. */
+function SelectReferenceToPlace({
 	plan,
 	nodeId,
-	offerable,
+	offerableReferences,
 	edit,
 	scopeName,
-}: PlaceReferenceProps) {
-	// Nothing to offer: every Reference the Plan holds already sits here.
-	if (offerable.length === 0) return null
+}: SelectReferenceToPlaceProps) {
+	if (offerableReferences.length === 0) return null
 
 	const placed = new Map(
 		outlineEntries(plan.outline).map((entry) => [entry.node.id, sectionLabel(entry)]),
 	)
 
 	return (
-		// Styled as `InlineInput` is, so it reads as the same kind of control as
-		// the Adjective field beside it: faint until the writer reaches for it.
+		// Styled as `InlineInput` is, to match the Adjective field beside it.
 		<select
 			aria-label={`Place a Reference at ${scopeName}`}
 			className="w-24 appearance-none rounded-sm border-b border-transparent bg-transparent text-[0.6875rem] text-faint outline-none hover:border-edge focus:border-edge"
@@ -359,7 +338,7 @@ function PlaceReference({
 			value=""
 		>
 			<option value="">+ reference</option>
-			{offerable.map((entry) => (
+			{offerableReferences.map((entry) => (
 				<option key={entry.reference.id} value={entry.reference.id}>
 					{referenceMark(entry)} {referenceName(entry.reference)}
 					{entry.reference.nodeId === null

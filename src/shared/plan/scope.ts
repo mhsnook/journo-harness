@@ -71,14 +71,11 @@ export function findNodePath(
 }
 
 /**
- * Whether a Section carries nothing at all — no title, no length, no note, no
- * Tone, nothing inside it, and no Reference placed at it. What a surface does
- * with the answer is its own business: the Map View throws away a Section the
- * writer made and left like this.
+ * Whether a Section carries nothing: no title, no length, no note, no Tone,
+ * nothing inside it, and no Reference placed at it.
  *
- * Written over the node's own fields rather than as a list of names, so a field
- * added to `outlineNodeSchema` later counts here without being named. A field
- * nobody has set reads `undefined`, and one the writer has set does not.
+ * Reads the node's own fields rather than a list of names, so a field added to
+ * `outlineNodeSchema` later counts here without being named.
  */
 export function sectionIsEmpty(plan: Plan, nodeId: string): boolean {
 	const path = findNodePath(plan.outline, nodeId)
