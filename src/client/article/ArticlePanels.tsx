@@ -3,6 +3,7 @@ import { Activity, type ReactNode } from 'react'
 import { ArticleChatPanel } from '../chat/ArticleChatPanel'
 import { Panel, PanelHeader, type PanelProps } from '../components/Panel'
 import { PANELS, type PanelId } from '../components/PanelRail'
+import { PrototypeDraftSwitch } from '../draft/PrototypeDraftSwitch'
 import type { ArticleSocket } from '../lib/useArticleAgent'
 import { ArticlePlanPanel } from '../plan/ArticlePlanPanel'
 
@@ -55,12 +56,9 @@ function PanelFor({
 			return <ArticlePlanPanel divider={edge} />
 
 		case 'draft':
-			return (
-				<EmptyPanel divider={edge} title="Draft">
-					The writing surface arrives with phase 2. Plan the piece here and write it
-					elsewhere for now.
-				</EmptyPanel>
-			)
+			// PROTOTYPE — issue #14 mounts a throwaway ProseMirror surface here to
+			// pick the Draft editor. Phase 2 replaces it; main keeps the empty Panel.
+			return <PrototypeDraftSwitch divider={edge} />
 
 		case 'notes':
 			// Notes is always the narrow one — screen 4(e).
