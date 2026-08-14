@@ -527,7 +527,8 @@ payload size and staleness, not about `metadata` as such.
 
 ## 10. Phase 2, at low resolution
 
-Decided now so 1a cannot paint itself into a corner. Not built.
+Decided now so 1a cannot paint itself into a corner. The writing surface stands and holds
+its document in memory; nothing else here is built, and nothing is persisted.
 
 - **The Draft is one row per Block**, meaning per paragraph. Not one row for the whole Draft,
   and not one row per Section — a row per Section would make Section Boundaries a storage
@@ -545,7 +546,16 @@ Decided now so 1a cannot paint itself into a corner. Not built.
   room." An alarm earns its place only when work must happen while nobody is connected, and
   there is no such work. A stale Proposal or an orphaned tool batch expires lazily on read.
 - **Guidance notes do not stream.** A Review is the thing that should.
-- **Editor** — unchosen, issue #14. Note anchoring and Boundary inference wait on it.
+- **The Draft is a ProseMirror document, built with TipTap**, because the Guide has to draw
+  things the Draft does not contain. **A Proposal is a decoration and an accepted annotation
+  is a mark**: a proposed section break is drawn from state and reaches no stored row, while
+  a comment rides in the prose, because only a mark survives the writer rewriting around it
+  in a session that never drew the note. So **a comment is not a Block reference** — it is a
+  set of marked runs spanning any number of Blocks, targeting the span from its first to its
+  last. `docs/adr/0003-the-draft-editor.md`.
+- **The writer types their own headings and section breaks.** Boundaries are inferred, so
+  nothing can place a title automatically; writer control is the tiebreaker, and what the
+  writer typed is then the strongest hint the inference has.
 
 ## 11. Carries
 

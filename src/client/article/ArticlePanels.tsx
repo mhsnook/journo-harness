@@ -3,12 +3,13 @@ import { Activity, type ReactNode } from 'react'
 import { ArticleChatPanel } from '../chat/ArticleChatPanel'
 import { Panel, PanelHeader, type PanelProps } from '../components/Panel'
 import { PANELS, type PanelId } from '../components/PanelRail'
+import { DraftPanel } from '../draft/DraftPanel'
 import type { ArticleSocket } from '../lib/useArticleAgent'
 import { ArticlePlanPanel } from '../plan/ArticlePlanPanel'
 
 /**
- * The four Panels of the Article screen — architecture.md §8. Chat and Plan are
- * live; Draft and Notes are here and empty until phase 2. This row is what gives
+ * The four Panels of the Article screen — architecture.md §8. Chat, Plan, and
+ * Draft are live; Notes is here and empty until phase 2. This row is what gives
  * them a height to scroll their own Y within.
  */
 
@@ -55,12 +56,7 @@ function PanelFor({
 			return <ArticlePlanPanel divider={edge} />
 
 		case 'draft':
-			return (
-				<EmptyPanel divider={edge} title="Draft">
-					The writing surface arrives with phase 2. Plan the piece here and write it
-					elsewhere for now.
-				</EmptyPanel>
-			)
+			return <DraftPanel divider={edge} />
 
 		case 'notes':
 			// Notes is always the narrow one — screen 4(e).
