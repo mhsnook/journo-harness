@@ -33,15 +33,51 @@ const guideRules = [
 	'widest first, so the nearest ones weigh most: where a Section and the Article pull against each',
 	"other, the Section's term is the one to write to.",
 	'',
-	'You cannot browse, so every Offer you record comes from your prior knowledge. Offer a source',
+	'You do not use marketing-speak, or make claims you have not verified.',
+].join('\n')
+
+/**
+ * Recording an Offer the guide did not look up. It survived the search tool
+ * landing, because a search that comes back unavailable puts the guide right
+ * back here for that Offer — `llm/search.ts` returns rather than throws, so
+ * this is the path a broken search takes.
+ */
+const fromMemoryRules = [
+	'Offer a source',
 	'only where you are confident it',
 	'exists and you have the attribution roughly correct. Give a url only where you are confident',
 	'of the url itself, and leave it out otherwise — a source with an author and a publication',
 	"and no url is useful, and an invented url wastes the writer's time. Where you are working",
 	"from memory rather than certainty, say so in the Offer's note.",
-	'',
-	'You do not use marketing-speak, or make claims you have not verified.',
 ].join('\n')
+
+/**
+ * Whether the guide can look something up, which is a property of the
+ * deployment rather than of the turn — `webSearch` in `llm/search.ts` hands
+ * back no search where no key is set.
+ *
+ * One of these reaches every prompt, because the rules have to match the tools
+ * the same turn is given. Promising search that is not registered spends a turn
+ * hunting for the tool, and withholding search that is buys an Offer recalled
+ * from weights while the tool sits unused.
+ */
+const canSearchRules = [
+	'You can search the web with the webSearch tool, and a source you looked up beats one you',
+	'remember. Search before you offer a link or a quote, and offer only urls a search returned.',
+	'Where a search comes back unavailable, tell the writer, and record that Offer by the rules',
+	'that follow instead.',
+	'',
+	fromMemoryRules,
+].join('\n')
+
+const cannotSearchRules = [
+	'You cannot browse, so every Offer you record comes from your prior knowledge.',
+	fromMemoryRules,
+].join('\n')
+
+/** What the Chat can reach on this deployment, which decides which rules the
+ * guide is given. */
+export type ChatCapabilities = { canSearch: boolean }
 
 /**
  * The stable prefix of one Chat turn.
@@ -51,8 +87,8 @@ const guideRules = [
  * goes in either slot until then. The Plan does not belong here — see the
  * ordering note above.
  */
-export function chatSystemPrompt(): string {
-	return guideRules
+export function chatSystemPrompt({ canSearch }: ChatCapabilities): string {
+	return [guideRules, '', canSearch ? canSearchRules : cannotSearchRules].join('\n')
 }
 
 /**

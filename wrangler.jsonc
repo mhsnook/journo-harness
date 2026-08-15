@@ -60,6 +60,15 @@
   // `wrangler deploy` — so declaring it even as an empty placeholder would wipe
   // the one set from the CLI. Its type is in src/server/env.d.ts, and
   // llm/model.ts is the only thing that reads it.
+  //
+  // EXA_API_KEY is absent for the same reason and one more: it is a secret
+  // rather than a var. Set it with `wrangler secret put EXA_API_KEY`, and put
+  // it in .dev.vars for `pnpm dev`. Unset gives the Chat no search tool, which
+  // is what a fresh clone runs as. llm/search.ts is the only reader.
+  //
+  // The search call does not go through the AI Gateway and cannot: the Gateway
+  // proxies inference, not an arbitrary search API. So this key stays a Worker
+  // secret and the Gateway stays unauthenticated — architecture.md §7.
 
   "observability": {
     "enabled": true,

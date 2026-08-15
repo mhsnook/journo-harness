@@ -14,4 +14,10 @@ interface Env {
 	 * attaches no Gateway. A Gateway that does not exist fails the call, so an
 	 * unset value is the safe state rather than a degraded one. */
 	AI_GATEWAY_ID?: string
+
+	/** The search provider's key, set from the CLI as a secret. Unset gives the
+	 * Chat no search tool and tells the guide it cannot browse, which is what a
+	 * fresh clone and every test run as. `llm/search.ts` is the only thing that
+	 * reads it. */
+	EXA_API_KEY?: string
 }

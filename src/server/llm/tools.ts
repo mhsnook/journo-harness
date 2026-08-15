@@ -7,9 +7,13 @@ import {
 	proposePlanChangeTool,
 	recordedOffersOutput,
 	recordOffersTool,
+	webSearchInput,
+	webSearchOutput,
+	webSearchTool,
 } from '../../shared/chat'
 import { offerBatchSchema } from '../../shared/offer'
 import type { ArticleAgent } from '../article-agent'
+import type { WebSearch } from './search'
 
 /**
  * The tools a Chat turn is given, and the descriptions that teach a model to
@@ -25,7 +29,8 @@ import type { ArticleAgent } from '../article-agent'
  * `execute` this product does not have.
  *
  * The Offer tool below carries an `execute` instead, because an Offer is a row
- * the writer rules on later rather than mid-turn — §5.
+ * the writer rules on later rather than mid-turn — §5. So does the search
+ * tool: a search result is not something the writer rules on at all.
  */
 
 const proposePlanChange = tool({
@@ -69,6 +74,10 @@ const recordOffers = tool({
 		'Offer the same source again freely: an entry this Article already carries comes back',
 		'marked a duplicate, keeping whatever the writer already decided about it, and no',
 		'second row is written.',
+		'',
+		"Where you searched, a Quote's text is copied from a result's excerpt word for word, and",
+		'the source is filled in from the same result. Say in the note where the Offer came',
+		'from - the search that turned it up, or your own memory.',
 	].join('\n'),
 	// An object at the top level, like the Proposal tool's input.
 	inputSchema: z.strictObject({ offers: offerBatchSchema }),
@@ -90,10 +99,59 @@ const recordOffers = tool({
 	},
 })
 
-/** Typed as the whole `ToolSet` rather than inferred: the Proposal tool has no
+/**
+ * Search, built around the one thing it is for: a url the model returns is a
+ * url it looked up, where a url it recalls is a url it might have invented.
+ *
+ * Takes the search rather than importing one, so the Article Agent supplies it
+ * the way it supplies the model, and a test drives a turn with a scripted
+ * search and no network.
+ */
+function searchTool(search: WebSearch) {
+	return tool({
+		description: [
+			'Search the web. Use it before you offer a link or a quote, so what you offer is',
+			'something you retrieved rather than something you remember.',
+			'',
+			'Search more than once in a turn when the first query comes back thin, or when the',
+			'writer\'s question has several sides worth searching separately. Pass "since" as',
+			'YYYY-MM-DD where only recent material counts.',
+			'',
+			'Each result carries a url, and usually a title, an author, a published date, and an',
+			'excerpt - a passage pulled off the page for this query. Only offer urls this tool',
+			"returned. A Quote's text is copied from an excerpt word for word: an excerpt can",
+			'start or end mid-sentence, so trim it back to a whole sentence rather than writing',
+			'the missing words yourself.',
+			'',
+			'A status of "unavailable" means the search did not happen, and the reason says why.',
+			'Tell the writer search is down, answer from what you know, and mark any Offer you',
+			'make as coming from memory.',
+		].join('\n'),
+		inputSchema: webSearchInput,
+		// The Chat Panel reads the call to say the guide is looking something up,
+		// and the model reads the output — so bind both to the one schema.
+		outputSchema: webSearchOutput,
+		// Never rejects, by `search`'s contract. A rejected `execute` ends the
+		// turn, and a failed search should cost the turn its results rather than
+		// its answer to the writer.
+		execute: (input, { abortSignal }) => search(input, abortSignal),
+	})
+}
+
+/**
+ * The registry one turn is given. A function rather than a const, because
+ * whether the Chat can search is a property of the deployment: with no search
+ * key set there is no search tool to offer, and the guide rules say so instead
+ * — `llm/prompt.ts`.
+ *
+ * Typed as the whole `ToolSet` rather than inferred: the Proposal tool has no
  * `execute` and so no return type to infer, and the wide type is what lets the
- * Agent's `onFinish` callback fit `streamText`'s. */
-export const chatTools: ToolSet = {
-	[proposePlanChangeTool]: proposePlanChange,
-	[recordOffersTool]: recordOffers,
+ * Agent's `onFinish` callback fit `streamText`'s.
+ */
+export function chatTools(search?: WebSearch): ToolSet {
+	return {
+		[proposePlanChangeTool]: proposePlanChange,
+		[recordOffersTool]: recordOffers,
+		...(search !== undefined && { [webSearchTool]: searchTool(search) }),
+	}
 }

@@ -26,6 +26,7 @@ import {
 } from '../shared/plan'
 import { chatTurn } from './llm/chat-turn'
 import { model } from './llm/model'
+import { webSearch, type WebSearch } from './llm/search'
 
 /** One Offer row as SQLite returns it. `this.sql` asserts the row type rather
  * than checking it, and this class is the table's only writer, so the columns
@@ -101,6 +102,14 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 		return model(this.env)
 	}
 
+	/** How a Chat turn looks something up, or undefined where no search key is
+	 * set — `llm/search.ts` is the boundary, and this reads it for the same
+	 * reason `chatModel` reads the model one: a workerd test has no network to
+	 * reach, and replaces this with a scripted search. */
+	chatSearch(): WebSearch | undefined {
+		return webSearch(this.env)
+	}
+
 	/**
 	 * One Chat turn. `llm/chat-turn.ts` composes it; this supplies the three
 	 * things only the Article Agent holds — the model, the Plan, and the
@@ -112,6 +121,7 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 	): Promise<Response> {
 		return chatTurn({
 			model: this.chatModel(),
+			search: this.chatSearch(),
 			plan: this.planForTurn(options?.body),
 			messages: this.messages,
 			abortSignal: options?.abortSignal,

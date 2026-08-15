@@ -58,6 +58,19 @@ pnpm wrangler login
 CF_REMOTE_BINDINGS=true pnpm dev
 ```
 
+### Letting the Chat search the web
+
+The guide looks sources up through [Exa](https://exa.ai) rather than recalling them. It needs
+an API key, in `.dev.vars` for `pnpm dev`:
+
+```sh
+echo 'EXA_API_KEY=your-key-here' >> .dev.vars
+```
+
+Leaving it unset takes the search tool out of the Chat and tells the guide it cannot browse,
+which is what a fresh clone and `pnpm test` run as. Search reaches Exa directly rather than
+through the AI Gateway — the Gateway proxies inference, not a search API.
+
 ### Deploying
 
 The article index has a D1 database of its own, named in `wrangler.jsonc`. Apply the schema
@@ -85,6 +98,12 @@ pnpm wrangler secret put AI_GATEWAY_ID
 Leaving it unset attaches no Gateway, which is what a deployment without one wants — a
 Gateway that does not exist fails the call. Leave the Gateway itself **unauthenticated**: a
 Workers AI binding call is same-account and carries no place to put a Gateway token.
+
+The search key goes the same way, as a secret rather than a var:
+
+```sh
+pnpm wrangler secret put EXA_API_KEY
+```
 
 The Worker needs the Workers Paid plan for the model, and Cloudflare Access gates it at the
 edge. Nothing in the app reads the `Cf-Access-Jwt-Assertion` header — localhost has no

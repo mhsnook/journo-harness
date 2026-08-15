@@ -10,6 +10,7 @@ import {
 import type { Plan } from '../../shared/plan'
 import { chatPackMessages, chatSystemPrompt } from './prompt'
 import { repairToolCall } from './repair'
+import type { WebSearch } from './search'
 import { chatTools } from './tools'
 
 /**
@@ -22,6 +23,11 @@ import { chatTools } from './tools'
  */
 export type ChatTurn = {
 	model: LanguageModel
+	/** How this turn looks something up, or absent where the deployment sets no
+	 * search key. Absent takes the search tool out of the registry and switches
+	 * the guide rules to say the Chat cannot browse — the two have to agree, so
+	 * one value decides both. */
+	search?: WebSearch
 	plan: Plan
 	messages: UIMessage[]
 	onFinish: GenerateTextOnFinishCallback<ToolSet>
@@ -30,6 +36,7 @@ export type ChatTurn = {
 
 export async function chatTurn({
 	model,
+	search,
 	plan,
 	messages,
 	onFinish,
@@ -38,9 +45,9 @@ export async function chatTurn({
 	const result = streamText({
 		model,
 		// Rules, then conversation and Plan, per Architecture §7
-		system: chatSystemPrompt(),
+		system: chatSystemPrompt({ canSearch: search !== undefined }),
 		messages: chatPackMessages(await convertToModelMessages(messages), plan),
-		tools: chatTools,
+		tools: chatTools(search),
 		abortSignal,
 		onFinish,
 		repairToolCall: repairToolCall(model),

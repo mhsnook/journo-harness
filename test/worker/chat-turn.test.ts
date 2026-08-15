@@ -251,7 +251,9 @@ describe('a Chat turn', () => {
 		expect(call.prompt.at(-2)?.role).toBe('tool')
 	})
 
-	it('offers both tools to the model', async () => {
+	// No search key in the test env, so `chatSearch()` hands back nothing and
+	// the turn offers the two tools that need no network.
+	it('offers the tools the deployment can reach', async () => {
 		const writer = await openAgentSocket('chat-tools')
 		const model = speaks('Noted.')
 		await scriptModel('chat-tools', model)
@@ -263,6 +265,56 @@ describe('a Chat turn', () => {
 			'proposePlanChange',
 			'recordOffers',
 		])
+	})
+
+	/**
+	 * The rules and the tools are one decision — `llm/prompt.ts`. A turn that
+	 * can search is told to search; a turn that cannot is told it cannot, and
+	 * gets the rules for offering a source from memory either way, because an
+	 * unavailable search puts the guide back on that path.
+	 */
+	it('tells the guide it cannot browse when no search is wired', async () => {
+		const writer = await openAgentSocket('chat-no-search')
+		const model = speaks('Noted.')
+		await scriptModel('chat-no-search', model)
+
+		await writer.chat('Find me something recent on permits.', { plan })
+
+		const [call] = model.doStreamCalls
+		const system = String(
+			call.prompt.find((message) => message.role === 'system')?.content,
+		)
+
+		expect(system).toContain('You cannot browse')
+		expect(system).not.toContain('webSearch tool')
+		// The memory rules survive the search tool landing, so they are here too.
+		expect(system).toContain('an invented url wastes')
+	})
+
+	it('offers the search tool and the rules to match when a search is wired', async () => {
+		const writer = await openAgentSocket('chat-search')
+		const model = speaks('Noted.')
+		const stub = env.ArticleAgent.get(env.ArticleAgent.idFromName('chat-search'))
+		await runInDurableObject(stub, (agent) => {
+			agent.chatModel = () => model
+			agent.chatSearch = () => async () => ({ status: 'ok', results: [] })
+		})
+
+		await writer.chat('Find me something recent on permits.', { plan })
+
+		const [call] = model.doStreamCalls
+		expect(call.tools?.map((tool) => tool.name)).toEqual([
+			'proposePlanChange',
+			'recordOffers',
+			'webSearch',
+		])
+
+		const system = String(
+			call.prompt.find((message) => message.role === 'system')?.content,
+		)
+		expect(system).toContain('webSearch tool')
+		expect(system).not.toContain('You cannot browse')
+		expect(system).toContain('an invented url wastes')
 	})
 
 	it('falls back to the Plan in state when the turn carries no body', async () => {
