@@ -8,10 +8,12 @@ import { useDraft } from './useDraft'
 
 export interface ArticleDraftPanelProps {
 	divider?: PanelProps['divider']
+	/** This Panel's share of the Panel row — `panelShare`. */
+	grow?: PanelProps['grow']
 	className?: string
 }
 
-export function ArticleDraftPanel({ divider, className }: ArticleDraftPanelProps) {
+export function ArticleDraftPanel({ divider, grow, className }: ArticleDraftPanelProps) {
 	const { blocks, failure, status, attachEditor, touch } = useDraft(useArticle().draft)
 
 	// The editor is built from the Blocks and reads them once, so it mounts
@@ -20,7 +22,7 @@ export function ArticleDraftPanel({ divider, className }: ArticleDraftPanelProps
 	// what had just been read.
 	if (blocks === null) {
 		return (
-			<Panel className={className} divider={divider}>
+			<Panel className={className} divider={divider} grow={grow}>
 				<PanelHeader title="Draft" />
 				{failure === null ? (
 					<p className="text-[0.75rem] text-faint">Opening the Draft…</p>
@@ -36,6 +38,7 @@ export function ArticleDraftPanel({ divider, className }: ArticleDraftPanelProps
 			blocks={blocks}
 			className={className}
 			divider={divider}
+			grow={grow}
 			onAttach={attachEditor}
 			onChange={touch}
 			status={status}

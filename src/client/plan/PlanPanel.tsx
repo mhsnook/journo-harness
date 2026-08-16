@@ -31,6 +31,8 @@ export interface PlanPanelProps {
 	edit: (ops: ProposalInput | null) => void
 	/** The rule between this Panel and its neighbour. */
 	divider?: PanelProps['divider']
+	/** This Panel's share of the Panel row — `panelShare`. */
+	grow?: PanelProps['grow']
 	/** Why the last edit did not land. */
 	refusal?: Refusal | null
 	/** What the Article Agent said when a write did not parse. */
@@ -42,6 +44,7 @@ export function PlanPanel({
 	plan,
 	edit,
 	divider,
+	grow,
 	refusal = null,
 	rejected = null,
 	className,
@@ -85,7 +88,7 @@ export function PlanPanel({
 	}
 
 	return (
-		<Panel className={className} divider={divider} variant="sunk">
+		<Panel className={className} divider={divider} grow={grow} variant="sunk">
 			{refusal === null ? null : <Notice>{refusalText(plan, refusal)}</Notice>}
 			{rejected === null ? null : (
 				<Notice>The Article Agent refused the write. {rejected}</Notice>

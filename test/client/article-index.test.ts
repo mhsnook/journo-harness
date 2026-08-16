@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest'
 
-import { nextOpenPanels } from '../../src/client/article/usePanels'
+import { nextOpenPanels, panelShare } from '../../src/client/article/usePanels'
 import {
 	archivedArticles,
 	boardColumns,
 	recentArticles,
 	unarchivedArticles,
 } from '../../src/client/articles/grouping'
+import type { PanelId } from '../../src/client/components/PanelRail'
 import { shortDate } from '../../src/client/lib/when'
 import {
 	type ArticleEntry,
@@ -163,6 +164,39 @@ describe('the Panel rail', () => {
 
 	it('keeps the last Panel open rather than leaving nothing on screen', () => {
 		expect(nextOpenPanels(['plan'], 'plan', false)).toEqual(['plan'])
+	})
+})
+
+describe('how wide each Panel gets', () => {
+	/** Reads the whole row at once, which is what the shares are about. */
+	const shares = (open: PanelId[]) => open.map((panel) => panelShare(open, panel))
+
+	it('gives one Panel the whole row', () => {
+		expect(shares(['draft'])).toEqual([1])
+		expect(shares(['notes'])).toEqual([1])
+	})
+
+	it('gives the Draft twice what a supporting Panel gets', () => {
+		expect(shares(['plan', 'draft'])).toEqual([1 / 3, 2 / 3])
+		expect(shares(['chat', 'plan', 'draft'])).toEqual([0.25, 0.25, 0.5])
+	})
+
+	it('keeps Notes narrow and splits what is left', () => {
+		expect(shares(['draft', 'notes'])).toEqual([0.75, 0.25])
+		expect(shares(['chat', 'plan', 'draft', 'notes'])).toEqual([0.2, 0.2, 0.4, 0.2])
+	})
+
+	it('adds up to the whole row', () => {
+		const total = shares(['chat', 'plan', 'draft', 'notes']).reduce(
+			(sum, share) => sum + share,
+			0,
+		)
+
+		expect(total).toBeCloseTo(1)
+	})
+
+	it('gives a hidden Panel nothing, since nothing reads it', () => {
+		expect(panelShare(['chat', 'draft'], 'notes')).toBe(0)
 	})
 })
 
