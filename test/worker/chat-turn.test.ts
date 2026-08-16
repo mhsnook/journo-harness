@@ -251,8 +251,7 @@ describe('a Chat turn', () => {
 		expect(call.prompt.at(-2)?.role).toBe('tool')
 	})
 
-	// No search key in the test env, so `chatSearch()` hands back nothing and
-	// the turn offers the two tools that need no network.
+	// No search key in the test env, so `chatSearch()` hands back nothing.
 	it('offers the tools the deployment can reach', async () => {
 		const writer = await openAgentSocket('chat-tools')
 		const model = speaks('Noted.')
@@ -267,12 +266,9 @@ describe('a Chat turn', () => {
 		])
 	})
 
-	/**
-	 * The rules and the tools are one decision — `llm/prompt.ts`. A turn that
-	 * can search is told to search; a turn that cannot is told it cannot, and
-	 * gets the rules for offering a source from memory either way, because an
-	 * unavailable search puts the guide back on that path.
-	 */
+	/** The rules and the tools are one decision — `llm/prompt.ts`. The rules for
+	 * offering a source from memory are in both, because an unavailable search
+	 * puts the guide back on that path. */
 	it('tells the guide it cannot browse when no search is wired', async () => {
 		const writer = await openAgentSocket('chat-no-search')
 		const model = speaks('Noted.')
@@ -287,7 +283,6 @@ describe('a Chat turn', () => {
 
 		expect(system).toContain('You cannot browse')
 		expect(system).not.toContain('webSearch tool')
-		// The memory rules survive the search tool landing, so they are here too.
 		expect(system).toContain('an invented url wastes')
 	})
 

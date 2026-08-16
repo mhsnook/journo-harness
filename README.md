@@ -67,9 +67,8 @@ an API key, in `.dev.vars` for `pnpm dev`:
 echo 'EXA_API_KEY=your-key-here' >> .dev.vars
 ```
 
-Leaving it unset takes the search tool out of the Chat and tells the guide it cannot browse,
-which is what a fresh clone and `pnpm test` run as. Search reaches Exa directly rather than
-through the AI Gateway — the Gateway proxies inference, not a search API.
+Leaving it unset takes the search tool out of the Chat and tells the guide to answer from
+memory, which is what a fresh clone and `pnpm test` run as.
 
 ### Deploying
 

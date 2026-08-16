@@ -99,14 +99,8 @@ const recordOffers = tool({
 	},
 })
 
-/**
- * Search, built around the one thing it is for: a url the model returns is a
- * url it looked up, where a url it recalls is a url it might have invented.
- *
- * Takes the search rather than importing one, so the Article Agent supplies it
- * the way it supplies the model, and a test drives a turn with a scripted
- * search and no network.
- */
+/** Takes the search rather than importing one, so the Article Agent supplies
+ * it the way it supplies the model and a test can script it. */
 function searchTool(search: WebSearch) {
 	return tool({
 		description: [
@@ -128,21 +122,18 @@ function searchTool(search: WebSearch) {
 			'make as coming from memory.',
 		].join('\n'),
 		inputSchema: webSearchInput,
-		// The Chat Panel reads the call to say the guide is looking something up,
-		// and the model reads the output — so bind both to the one schema.
+		// The Chat Panel parses this output too — so bind both ends to the one
+		// schema.
 		outputSchema: webSearchOutput,
-		// Never rejects, by `search`'s contract. A rejected `execute` ends the
-		// turn, and a failed search should cost the turn its results rather than
-		// its answer to the writer.
+		// `search` never rejects, so a failed search does not end the turn.
 		execute: (input, { abortSignal }) => search(input, abortSignal),
 	})
 }
 
 /**
- * The registry one turn is given. A function rather than a const, because
- * whether the Chat can search is a property of the deployment: with no search
- * key set there is no search tool to offer, and the guide rules say so instead
- * — `llm/prompt.ts`.
+ * The registry one turn is given. A function rather than a const, because a
+ * deployment with no search key gets no search tool — and `llm/prompt.ts`
+ * switches the guide rules off the same value.
  *
  * Typed as the whole `ToolSet` rather than inferred: the Proposal tool has no
  * `execute` and so no return type to infer, and the wide type is what lets the

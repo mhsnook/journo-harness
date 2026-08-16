@@ -359,15 +359,8 @@ function Turn({
 	)
 }
 
-/**
- * What the transcript says about one search. A line rather than a card,
- * because the writer rules on nothing here: the Offers the search led to are
- * the cards, and this says where they came from.
- *
- * A failure is one short sentence. The guide relays the provider's own reason
- * in its reply, so repeating it here would say the same thing twice in two
- * different registers.
- */
+/** The line one search gets in the transcript. A failure stays short here: the
+ * guide relays the provider's own reason in its reply. */
 function searchNote({ query, found, failed }: SearchCall): string {
 	const asked = query === null ? 'the web' : `“${query}”`
 

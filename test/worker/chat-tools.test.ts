@@ -9,8 +9,7 @@ import {
 } from '../../src/shared/chat'
 import { chatOpNames } from '../../src/shared/plan'
 
-/** A search that answers nothing, for the tests that only ask which tools the
- * registry holds. */
+/** A search that answers nothing. */
 const noResults: WebSearch = async () => ({ status: 'ok', results: [] })
 
 /** The registry as a deployment with a search key gets it. */
@@ -63,12 +62,8 @@ describe('the Offer tool', () => {
 	})
 })
 
-/**
- * The search tool is registered per deployment rather than always — a Chat
- * with no search key is offered no search tool, and the guide rules say it
- * cannot browse instead. The two have to agree, and `chatTurn` reads one value
- * to decide both.
- */
+/** Registered per deployment rather than always: a Chat with no search key is
+ * offered no search tool, and `chatSystemPrompt` reads the same value. */
 describe('the search tool', () => {
 	it('is offered where a search is given, and runs on the server', () => {
 		expect(Object.keys(tools)).toContain(webSearchTool)
@@ -79,8 +74,7 @@ describe('the search tool', () => {
 		expect(Object.keys(chatTools())).toEqual([proposePlanChangeTool, recordOffersTool])
 	})
 
-	// The whole reason the tool exists, and the one instruction that stops a
-	// retrieved Quote from being reworded on its way into an Offer.
+	// What stops a retrieved Quote being reworded on its way into an Offer.
 	it('teaches that a Quote is copied from an excerpt', () => {
 		const described = tools[webSearchTool].description
 		const description = typeof described === 'string' ? described : ''
@@ -89,8 +83,6 @@ describe('the search tool', () => {
 		expect(description).toContain('Only offer urls this tool')
 	})
 
-	// A failed search is an ordinary output rather than a throw, so the model
-	// has to be told what the failed output looks like.
 	it('teaches what an unavailable search means', () => {
 		const described = tools[webSearchTool].description
 

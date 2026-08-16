@@ -36,52 +36,34 @@ export type ProposePlanChangeInput = z.infer<typeof proposePlanChangeInput>
 export const recordOffersTool = 'recordOffers'
 
 /** The name the search tool is registered and matched under. The client
- * answers nothing here either, and reads the call so the transcript says the
- * guide is looking something up rather than sitting silent. */
+ * answers nothing, and reads the call to say what the guide looked up. */
 export const webSearchTool = 'webSearch'
 
-/**
- * What the model fills in to search. Strict like the Proposal's input, so a
- * model that invents a field is refused and retried with the error rather than
- * having the field stripped — §6.
- *
- * Three fields and no more. `category` and the domain filters are reachable in
- * Exa and are left out until something asks for them: every field here is one
- * the model has to be taught, and one it can get wrong.
- */
+/** What the model fills in to search. Strict like the Proposal's input, so an
+ * invented field is refused and retried rather than stripped — §6. */
 export const webSearchInput = z.strictObject({
 	query: z.string().min(1),
-	/** Capped at the provider's bundled ten. Each result carries an excerpt, and
-	 * the excerpts are what a turn spends its context on. */
 	count: z.number().int().min(1).max(10).optional(),
-	/** Published on or after this date, as YYYY-MM-DD. The reason this tool
-	 * exists: the writer's deadline is not the model's training cutoff. */
+	/** Published on or after this date, as YYYY-MM-DD. */
 	since: z.iso.date().optional(),
 })
 export type WebSearchInput = z.infer<typeof webSearchInput>
 
-/** One result, in the shape an Offer is written from: a `source` needs the
- * url, the title, the author, and a year, and a Quote needs a passage that
- * came off the page. */
+/** One result, in the shape an Offer is written from — a `source` and, for a
+ * Quote, a passage off the page. */
 export const webSearchResult = z.object({
 	url: z.url(),
 	title: z.string().optional(),
 	author: z.string().optional(),
-	/** YYYY-MM-DD, as the provider estimated it from the page. */
+	/** YYYY-MM-DD, estimated by the provider from the page. */
 	published: z.string().optional(),
-	/** The passage the provider pulled for this query. A Quote's text is copied
-	 * out of here, and this is the whole point of retrieving rather than
-	 * recalling. */
+	/** The passage the provider pulled for this query. */
 	excerpt: z.string().optional(),
 })
 export type WebSearchResult = z.infer<typeof webSearchResult>
 
-/**
- * What a search hands back. Two branches, because a turn still owes the writer
- * an answer when search breaks: `ok` with no results means the web had nothing,
- * and `unavailable` means the search did not happen. The tool never throws, so
- * neither ends the turn — see `src/server/llm/search.ts`.
- */
+/** `ok` with no results is a search that found nothing; `unavailable` is a
+ * search that did not happen. */
 export const webSearchOutput = z.discriminatedUnion('status', [
 	z.object({ status: z.literal('ok'), results: z.array(webSearchResult) }),
 	z.object({ status: z.literal('unavailable'), reason: z.string() }),

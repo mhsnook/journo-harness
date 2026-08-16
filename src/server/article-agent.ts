@@ -102,10 +102,9 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 		return model(this.env)
 	}
 
-	/** How a Chat turn looks something up, or undefined where no search key is
-	 * set — `llm/search.ts` is the boundary, and this reads it for the same
-	 * reason `chatModel` reads the model one: a workerd test has no network to
-	 * reach, and replaces this with a scripted search. */
+	/** The search a Chat turn runs on, undefined where no key is set.
+	 * `llm/search.ts` is the boundary; this reads it so a test can replace it,
+	 * as `chatModel` does for the model. */
 	chatSearch(): WebSearch | undefined {
 		return webSearch(this.env)
 	}

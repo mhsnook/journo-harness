@@ -23,10 +23,8 @@ import { chatTools } from './tools'
  */
 export type ChatTurn = {
 	model: LanguageModel
-	/** How this turn looks something up, or absent where the deployment sets no
-	 * search key. Absent takes the search tool out of the registry and switches
-	 * the guide rules to say the Chat cannot browse — the two have to agree, so
-	 * one value decides both. */
+	/** Absent takes the search tool out of the registry and switches the guide
+	 * rules to say the Chat cannot browse. One value decides both. */
 	search?: WebSearch
 	plan: Plan
 	messages: UIMessage[]

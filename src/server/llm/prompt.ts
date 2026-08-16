@@ -36,12 +36,8 @@ const guideRules = [
 	'You do not use marketing-speak, or make claims you have not verified.',
 ].join('\n')
 
-/**
- * Recording an Offer the guide did not look up. It survived the search tool
- * landing, because a search that comes back unavailable puts the guide right
- * back here for that Offer — `llm/search.ts` returns rather than throws, so
- * this is the path a broken search takes.
- */
+/** Recording an Offer the guide did not look up. In both prompts below: a
+ * search that comes back unavailable puts the guide back on this path. */
 const fromMemoryRules = [
 	'Offer a source',
 	'only where you are confident it',
@@ -51,16 +47,8 @@ const fromMemoryRules = [
 	"from memory rather than certainty, say so in the Offer's note.",
 ].join('\n')
 
-/**
- * Whether the guide can look something up, which is a property of the
- * deployment rather than of the turn — `webSearch` in `llm/search.ts` hands
- * back no search where no key is set.
- *
- * One of these reaches every prompt, because the rules have to match the tools
- * the same turn is given. Promising search that is not registered spends a turn
- * hunting for the tool, and withholding search that is buys an Offer recalled
- * from weights while the tool sits unused.
- */
+/** One of these two is in every prompt, decided by whether the same turn was
+ * given the search tool — `chatTools` in `llm/tools.ts`. */
 const canSearchRules = [
 	'You can search the web with the webSearch tool, and a source you looked up beats one you',
 	'remember. Search before you offer a link or a quote, and offer only urls a search returned.',
@@ -75,8 +63,6 @@ const cannotSearchRules = [
 	fromMemoryRules,
 ].join('\n')
 
-/** What the Chat can reach on this deployment, which decides which rules the
- * guide is given. */
 export type ChatCapabilities = { canSearch: boolean }
 
 /**

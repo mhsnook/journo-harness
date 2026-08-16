@@ -7,60 +7,29 @@ import {
 } from '../../shared/chat'
 
 /**
- * The whole search boundary — `docs/architecture.md` §7. One provider serves
- * every search, and this is the only place it is named.
- *
- * **Cloudflare has no web search index to query.** AI Search reads your own
- * data, Browser Rendering retrieves a url you already hold, and AI Gateway's
- * Web Search turns on the *upstream provider's* native search tool on an
- * inference call rather than offering a search endpoint. None of them
- * discovers a url for a Workers AI model, so discovery routes to a third party
- * and this module is where it goes.
- *
- * **It does not route through AI Gateway**, and cannot: the Gateway proxies
- * inference, not an arbitrary search API. So the key stays a Worker secret and
- * §7's unauthenticated Gateway is untouched by any of this.
+ * Web search, over Exa's `POST /search` — `docs/architecture.md` §7. The only
+ * place a search provider is named.
  */
 
 const endpoint = 'https://api.exa.ai/search'
-
-/** Enough for the writer to rule on, short of the context a research turn
- * spends. The model can ask for up to ten. */
 const defaultCount = 6
-
-/** Per result. Highlights are the query-relevant passages off the page, so
- * this is the budget for the part of a page that becomes a Quote. Pulling a
- * page whole is Browser Rendering's job and a separate step. */
 const excerptCharacters = 1200
-
-/** A search that hangs would hold the turn open with the writer watching. */
 const timeoutMs = 15_000
 
-/** How much of a provider error to carry back. The model relays it to the
- * writer, so it wants to be a sentence rather than a page of HTML. */
+/** How much of a provider error to carry back. It reaches the writer through
+ * the model's reply, so it wants to be a sentence rather than a page. */
 const reasonCharacters = 300
 
-/**
- * One search. Never rejects: a rejected `execute` ends the turn, and the turn
- * still owes the writer an answer — so a failure comes back as
- * `status: 'unavailable'` for the model to relay.
- */
+/** Never rejects. A rejected tool `execute` ends the turn, so a failure comes
+ * back as `status: 'unavailable'` instead. */
 export type WebSearch = (
 	input: WebSearchInput,
 	abortSignal?: AbortSignal,
 ) => Promise<WebSearchOutput>
 
-/**
- * The search the Chat is given, or `undefined` where no key is set.
- *
- * Undefined rather than a function that always fails, because the tool
- * registry and the guide rules both read it: a deployment with no key offers
- * the model no search tool and tells it it cannot browse, rather than handing
- * it a tool that burns a turn to report its own absence.
- *
- * `EXA_API_KEY` is a secret set from the CLI rather than checked in — the same
- * argument as `AI_GATEWAY_ID`, and `wrangler.jsonc` carries it.
- */
+/** Undefined where no key is set, which `chatTools` reads to leave the search
+ * tool out of the registry and `chatSystemPrompt` reads to tell the guide it
+ * cannot browse. */
 export function webSearch(env: Env): WebSearch | undefined {
 	const key = env.EXA_API_KEY
 	if (!key) return undefined
@@ -73,9 +42,6 @@ async function runSearch(
 	input: WebSearchInput,
 	abortSignal?: AbortSignal,
 ): Promise<WebSearchOutput> {
-	// Both signals, so the writer stopping the turn and the timeout each end
-	// the request. `AbortSignal.any` ignores an undefined member, so the filter
-	// is what keeps the outer signal optional.
 	const signals = [AbortSignal.timeout(timeoutMs)]
 	if (abortSignal !== undefined) signals.push(abortSignal)
 
@@ -95,9 +61,8 @@ async function runSearch(
 
 		return { status: 'ok', results: readResults(await response.json()) }
 	} catch (error) {
-		// A DNS failure, a timeout, the writer stopping the turn, or a body that
-		// is not JSON. All four are the same thing to the model: no results, and
-		// a sentence saying why.
+		// A timeout, a transport failure, the writer stopping the turn, or a body
+		// that is not JSON.
 		return unavailable(error instanceof Error ? error.message : String(error))
 	}
 }
@@ -106,12 +71,8 @@ function unavailable(reason: string): WebSearchOutput {
 	return { status: 'unavailable', reason }
 }
 
-/**
- * The provider's request body. Highlights rather than full page text: a
- * highlight is the passage that answers the query, where the text is the whole
- * page — and ten whole pages would cost the turn its context to say what six
- * passages already say.
- */
+/** Highlights and not `text`: a highlight is the passage that answers the
+ * query, where the text is the whole page. */
 export function searchRequest(input: WebSearchInput): Record<string, unknown> {
 	return {
 		query: input.query,
@@ -124,17 +85,9 @@ export function searchRequest(input: WebSearchInput): Record<string, unknown> {
 	}
 }
 
-/**
- * The provider's response, read loosely on purpose. Every field but the url is
- * optional at the source — a page with no byline has no author, and a
- * published date is estimated from the HTML rather than known — so a result
- * missing one is ordinary rather than a fault. A result missing its url is not
- * a result, and is dropped.
- *
- * Not strict, unlike everything the Plan parses: this is a third party's
- * response rather than our own data, and a field they add should not fail a
- * search that otherwise worked.
- */
+/** Loose rather than strict, unlike everything the Plan parses: a field the
+ * provider adds should not fail a search that otherwise worked. Every field but
+ * the url is optional at the source — a page with no byline has no author. */
 const providerResult = z.object({
 	url: z.url(),
 	title: z.string().nullish(),
@@ -149,8 +102,8 @@ export function readResults(body: unknown): WebSearchResult[] {
 	const answered = providerResponse.safeParse(body)
 	if (!answered.success) return []
 
-	// Per result rather than as an array, so one malformed entry costs its own
-	// row instead of the whole search.
+	// Parsed per result, so one malformed entry costs its own row rather than
+	// the whole search.
 	return (answered.data.results ?? []).flatMap((entry) => {
 		const parsed = providerResult.safeParse(entry)
 
@@ -161,8 +114,7 @@ export function readResults(body: unknown): WebSearchResult[] {
 type ProviderResult = z.infer<typeof providerResult>
 
 function toResult(found: ProviderResult): WebSearchResult {
-	// The provider dates a result as either YYYY-MM-DD or a full timestamp, and
-	// an Offer's source carries a year. Ten characters is the date either way.
+	// The provider sends either YYYY-MM-DD or a full timestamp.
 	const published = found.publishedDate?.slice(0, 10)
 	const excerpt = (found.highlights ?? [])
 		.map((highlight) => highlight.trim())

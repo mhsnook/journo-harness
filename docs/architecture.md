@@ -225,11 +225,9 @@ of one. `referenceForOffer` answers with the first match on the strength of it, 
 answer is what makes a retried Accept build no op — so a second copy would turn every retry
 into another copy.
 
-**A retrieved Offer is the same row as a recalled one.** The Chat can search the web (§7), and
-an Offer it retrieved carries no field saying so: `provenance` stays `writer` or `offer`, and
-where the material came from goes in the note. Recording the retrieval properly — a fetched
-url and a retrieved-at date — moves the Plan schema, and that belongs with #40's answer about
-where a finding lives rather than in front of it.
+**A retrieved Offer is the same row as a recalled one.** `provenance` is `writer` or `offer`
+and says nothing about whether the Chat looked the source up or remembered it (§7). How to
+mark that on an Offer and on the Reference it becomes is open, and waits on #40.
 
 **Proposals are not Offers.** See below.
 
@@ -384,47 +382,17 @@ settings and has nowhere to put one, because a Workers AI binding call is same-a
 authenticates itself. So an authenticated Gateway is the one setting to leave off — turn it
 on and these calls have no way to present the header it wants.
 
-**Search is a second boundary beside the model one**, and `src/server/llm/search.ts` is the
-whole of it — the one place a provider is named, the way `llm/model.ts` is for the model.
-**Currently using Exa**, over its `POST /search` endpoint.
+**Search is Exa**, in `src/server/llm/search.ts` — the one place a provider is named, as
+`llm/model.ts` is for the model. It does not route through the AI Gateway, which proxies
+inference rather than an arbitrary API, so `EXA_API_KEY` is a Worker secret and the rule above
+about leaving the Gateway unauthenticated is unaffected.
 
-**Cloudflare has no web search index to query**, which is why this boundary reaches outside
-the account at all. AI Search reads data you own. Browser Rendering fetches a url you already
-hold. AI Gateway's Web Search turns on the _upstream provider's_ native search tool on an
-inference call, and Workers AI `@cf/` models are not on that list — so it does nothing over
-the `env.AI` binding. Discovery routes to a third party either way, and swapping the model to
-reach a provider's native search would trade glm-5.2 and neuron billing for a feature
-reachable without either.
+**No key means no search tool**, and the guide is told to answer from memory instead. The
+registry and the guide rules read one value, so they cannot disagree about what the turn can
+reach.
 
-**The search call does not route through the Gateway, and cannot.** The Gateway proxies
-inference, not an arbitrary search API. So the key stays a Worker secret, and the
-unauthenticated-Gateway rule above is untouched by search existing.
-
-**`EXA_API_KEY` is a secret set from the CLI**, for the same reason `AI_GATEWAY_ID` is a var
-set from the CLI. Unset is ordinary rather than broken: a fresh clone and every test run
-without one.
-
-**No key means no search tool, rather than a search tool that fails.** `webSearch(env)` hands
-back `undefined`, `chatTools` leaves the tool out of the registry, and the guide rules switch
-to the paragraph saying the Chat cannot browse. The rules and the registry are one decision
-because a prompt that promises a tool the turn was not given spends the turn hunting for it.
-
-**A search that fails answers rather than throws.** A rejected `execute` ends the turn, and
-the turn still owes the writer an answer — so a timeout, a rate limit, a provider outage, and
-the writer stopping the turn all come back as `status: 'unavailable'` carrying the reason, and
-the guide relays it and falls back to naming sources from memory. Nothing found is a different
-answer to that, and reads as the search working.
-
-**The tool returns excerpts rather than pages.** The provider's highlights are the passages
-that answer the query, where the page text is the whole page — six whole pages would cost the
-turn its context to say what six passages already say. A Quote's text is copied from an
-excerpt word for word. Pulling a page whole, through Browser Rendering, is the step after this
-one and is not built.
-
-**A retrieved Offer records its retrieval in its note, not in a field.** `provenance` stays
-`writer` or `offer`, because giving an Offer a retrieved-at date and a fetched url moves the
-Plan schema, and that decision belongs with #40's answer about where a finding lives. The note
-is the stopgap and is honest about being one.
+**A search that fails answers rather than throws**, because a rejected `execute` ends a turn
+that still owes the writer a reply.
 
 **Structured outputs rather than parsed prose.** `generateObject` with a zod schema,
 validated in the Article Agent, with one retry that includes the validation error.
