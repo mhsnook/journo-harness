@@ -5,6 +5,14 @@ import { z } from 'zod'
 
 import { chatRequestBody } from '../shared/chat'
 import {
+	type BlockJson,
+	type BlockRow,
+	checkChangeSize,
+	type DraftChange,
+	draftChangeSchema,
+	type DraftSaved,
+} from '../shared/draft'
+import {
 	type Disposition,
 	missingOffer,
 	notDeclined,
@@ -55,6 +63,18 @@ function toOffer(row: OfferRow): Offer {
 	}
 }
 
+/** One Block row as SQLite returns it, read the same way `OfferRow` is. */
+type BlockDbRow = {
+	id: string
+	ord: number
+	json: string
+	updated_at: number
+}
+
+function toBlock(row: BlockDbRow): BlockRow {
+	return { id: row.id, ord: row.ord, json: JSON.parse(row.json) as BlockJson }
+}
+
 /** `duplicate` means the row was already there and nothing was written. */
 export type RecordedOffer = { offer: Offer; duplicate: boolean }
 
@@ -68,8 +88,10 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 	initialState = emptyPlan()
 
 	/** Runs on every wake, so every statement here has to be idempotent. A new
-	 * table can join this one. A new column cannot — SQLite has no ADD COLUMN
-	 * IF NOT EXISTS, so the second wake throws on a duplicate column. */
+	 * table can join this one. A new column cannot go in bare — SQLite has no
+	 * ADD COLUMN IF NOT EXISTS, so the second wake throws on a duplicate and
+	 * takes the Chat and the Plan down with it. `pragma_table_info` is what makes
+	 * a guarded ALTER possible when a column does have to change. */
 	onStart(): void {
 		this.sql`
 			CREATE TABLE IF NOT EXISTS offer (
@@ -84,6 +106,20 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 				decided_at INTEGER
 			)
 		`
+
+		// One row per Block, ordered by a fractional index the client assigns.
+		// `json` is the editor's own document JSON for that Block, which is why
+		// nothing else here describes the content: a change to what a Block can
+		// hold is a change inside that column and not a change to this table.
+		this.sql`
+			CREATE TABLE IF NOT EXISTS block (
+				id TEXT PRIMARY KEY,
+				ord REAL NOT NULL,
+				json TEXT NOT NULL,
+				updated_at INTEGER NOT NULL
+			)
+		`
+		this.sql`CREATE INDEX IF NOT EXISTS block_by_ord ON block (ord)`
 	}
 
 	async onRequest(_request: Request): Promise<Response> {
@@ -268,5 +304,52 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 		if (rows.length === 0) throw missingOffer(id)
 
 		return toOffer(rows[0])
+	}
+
+	/** The whole Draft, in reading order. Empty for an Article nobody has
+	 * written in yet, which is how the Panel tells "still loading" from
+	 * "nothing here" — so this answers rather than throwing. */
+	@callable()
+	listBlocks(): BlockRow[] {
+		return this.sql<BlockDbRow>`SELECT * FROM block ORDER BY ord`.map(toBlock)
+	}
+
+	/**
+	 * One save. A delta rather than the whole Draft: a client can only name a
+	 * Block it has already seen, so a second tab's paragraph is not something
+	 * this one can delete.
+	 *
+	 * The content is stored, not inspected — §3 leaves the client as the Draft's
+	 * only writer, and reading the document here would put the editor's schema in
+	 * the Worker. Size is checked, because that is the failure the writer cannot
+	 * see coming.
+	 */
+	@callable()
+	saveBlocks(change: unknown): DraftSaved {
+		const { blocks, removed } = draftChangeSchema.parse(change) as DraftChange
+		checkChangeSize({ blocks, removed })
+
+		const savedAt = Date.now()
+
+		// Removals first, so a Block taken out and put back under the same id
+		// ends up present. Nothing checks a row count, unlike the Offer methods:
+		// removing a Block that has already gone is the retry path — the save
+		// failed, the writer kept typing — and it has to land rather than throw.
+		for (const id of removed) {
+			this.sql`DELETE FROM block WHERE id = ${id}`
+		}
+
+		for (const block of blocks) {
+			this.sql`
+				INSERT INTO block (id, ord, json, updated_at)
+				VALUES (${block.id}, ${block.ord}, ${JSON.stringify(block.json)}, ${savedAt})
+				ON CONFLICT(id) DO UPDATE SET
+					ord = excluded.ord,
+					json = excluded.json,
+					updated_at = excluded.updated_at
+			`
+		}
+
+		return { savedAt, written: blocks.length, removed: removed.length }
 	}
 }

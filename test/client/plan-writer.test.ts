@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { addSection, setIntent, setTitle } from '../../src/client/plan/edits'
-import { createPlanWriter, WRITE_DELAY } from '../../src/client/plan/writer'
+import { createPlanWriter, WRITE_DELAY_MS } from '../../src/client/plan/writer'
 import type { Plan } from '../../src/shared/plan'
 import { makeNode, makePlan } from '../shared/plan-fixtures'
 
@@ -35,7 +35,7 @@ describe('typing', () => {
 		expect(seen.map((plan) => plan.outline[0].title)).toEqual(['A', 'W', 'Wh', 'Why'])
 		expect(sent).toHaveLength(0)
 
-		vi.advanceTimersByTime(WRITE_DELAY)
+		vi.advanceTimersByTime(WRITE_DELAY_MS)
 		expect(sent).toHaveLength(1)
 		expect(sent[0].outline[0].title).toBe('Why')
 	})
@@ -44,9 +44,9 @@ describe('typing', () => {
 		const { writer, sent } = harness()
 
 		writer.edit(setIntent(writer.plan as Plan, 'a', 'One'))
-		vi.advanceTimersByTime(WRITE_DELAY - 1)
+		vi.advanceTimersByTime(WRITE_DELAY_MS - 1)
 		writer.edit(setIntent(writer.plan as Plan, 'a', 'Two'))
-		vi.advanceTimersByTime(WRITE_DELAY - 1)
+		vi.advanceTimersByTime(WRITE_DELAY_MS - 1)
 		expect(sent).toHaveLength(0)
 
 		vi.advanceTimersByTime(1)
@@ -67,7 +67,7 @@ describe('everything that is not typing', () => {
 		expect(sent[0].outline[1].id).toBe('b')
 
 		// The pause that was pending has nothing left to send.
-		vi.advanceTimersByTime(WRITE_DELAY)
+		vi.advanceTimersByTime(WRITE_DELAY_MS)
 		expect(sent).toHaveLength(1)
 	})
 })
@@ -115,7 +115,7 @@ describe('going away', () => {
 		expect(sent).toHaveLength(1)
 		expect(sent[0].outline[0].title).toBe('Unsaved')
 
-		vi.advanceTimersByTime(WRITE_DELAY)
+		vi.advanceTimersByTime(WRITE_DELAY_MS)
 		expect(sent).toHaveLength(1)
 	})
 })

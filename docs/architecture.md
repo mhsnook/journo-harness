@@ -41,7 +41,7 @@ Browser — React + Vite + TanStack Router
   ├─ Plan Panel    ├── useAgent WebSocket ──► Article Agent (one per Article)
   ├─ Draft Panel   │                            ├─ Agents SDK store: the Chat transcript
   └─ Notes Panel  ─┘                            ├─ Agent state (one JSON blob): the Plan
-                                                ├─ SQLite rows: Offers, Notes, Rounds
+                                                ├─ SQLite rows: Blocks, Offers, Notes, Rounds
                    ── party-db WebSocket ──►  The House (one party-db room, → D1)   [1b]
                    ── HTTP (Hono) ─────────►  The article index (→ D1)
                                               Archived reads, export
@@ -82,10 +82,10 @@ Recorded in [ADR 0001](./adr/0001-phase-1-storage-shape.md).
    field from whatever version the client last read. A second writer's changes vanish with
    no conflict and no error.
 2. **Every other per-Article record is a SQLite row in the Article Agent**, read and written
-   over `@callable` RPC on the WebSocket the client already holds. That covers Offers,
-   Notes, and Rounds. Row writes touch named columns, so the Guide can append a Round while
-   the writer Declines an Offer and neither erases the other. Adding a per-Article record
-   type needs no endpoint, no store, and no sync library.
+   over `@callable` RPC on the WebSocket the client already holds. That covers the Draft's
+   Blocks, and Offers, Notes, and Rounds. Row writes touch named columns, so the Guide can
+   append a Round while the writer Declines an Offer and neither erases the other. Adding a
+   per-Article record type needs no endpoint, no store, and no sync library.
 3. **A request is an action when it runs a model, and CRUD otherwise.** Actions: sending a
    Chat turn, running a Review, running research. CRUD: editing a Section, editing a
    Reference, Accepting a Proposal, Declining an Offer, retitling the Article. Accepting is
@@ -527,16 +527,24 @@ payload size and staleness, not about `metadata` as such.
 
 ## 10. Phase 2, at low resolution
 
-Decided now so 1a cannot paint itself into a corner. Not built.
+Decided now so 1a cannot paint itself into a corner. The Draft is built and persists; the
+Guide, the Notes Panel, and everything that reads the prose are not.
 
 - **The Draft is one row per Block**, meaning per paragraph. Not one row for the whole Draft,
   and not one row per Section — a row per Section would make Section Boundaries a storage
-  fact, and they are approximate and inferred.
+  fact, and they are approximate and inferred. A list or a blockquote is one Block too: a
+  Block is a top-level child of the document, whatever kind it is.
 - **The Draft is edited locally** and persisted to the server. A server-authoritative
-  ProseMirror step stream is ruled out; it is mutually exclusive with party-db.
-- **Sync arrives with the Draft**: `mhsnook/party-db`, checked out at `~/code/party-db`,
-  persisting to SQLite embedded in the Durable Object. Findings #7 and #18 are suspended, not
-  withdrawn — correct, not load-bearing until then, and not to be assumed before.
+  ProseMirror step stream is ruled out — the client is the Draft's only writer, the same way
+  it is the Plan's.
+- **A Block is a row in the Article Agent's SQLite**, written over `@callable` RPC by rule 2,
+  and **a save carries a delta** rather than the whole Draft. The delta is what bounds a
+  stale tab: a client can only name a Block it has already seen, so a paragraph written
+  somewhere else is not one it can delete.
+- **Sync is not here yet.** party-db (`mhsnook/party-db`, checked out at `~/code/party-db`)
+  arrives with the House at 1b, and the Draft can move onto it later without changing shape.
+  Until then two tabs on one Draft is last-write-wins per Block, which is what §1's "only one
+  editor at a time" costs. Findings #7 and #18 stand and are not load-bearing yet.
 - **Notes is the fourth Panel.** A **Review** is an intentional pass producing a batch of
   Guidance notes at once, accumulating in numbered **Rounds**, grouped by **type**, which the
   writer selects among and hands back to the Chat.
@@ -545,7 +553,19 @@ Decided now so 1a cannot paint itself into a corner. Not built.
   room." An alarm earns its place only when work must happen while nobody is connected, and
   there is no such work. A stale Proposal or an orphaned tool batch expires lazily on read.
 - **Guidance notes do not stream.** A Review is the thing that should.
-- **Editor** — unchosen, issue #14. Note anchoring and Boundary inference wait on it.
+- **The Draft is a ProseMirror document, built with TipTap.** The reason is narrow: a
+  decoration is **drawn as part of the document's layout while staying out of its content**,
+  which is what the Guide needs for anything it shows beside the prose without writing it.
+  Marks decide nothing — every candidate stores a comment as one. So **a Proposal is a
+  decoration and an accepted annotation is a mark**: a proposed section break parts the
+  paragraphs and reaches no stored row, while a comment rides in the prose, because only a
+  mark survives the writer rewriting around it in a session that never drew the note. And
+  **a comment is not a Block reference** — it is a set of marked runs spanning any number of
+  Blocks, targeting the span from its first to its last.
+  `docs/adr/0003-the-draft-editor.md`.
+- **The writer types their own headings and section breaks.** Boundaries are inferred, so
+  nothing can place a title automatically; writer control is the tiebreaker, and what the
+  writer typed is then the strongest hint the inference has.
 
 ## 11. Carries
 
