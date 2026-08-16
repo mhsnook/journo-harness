@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { readResults, searchRequest, webSearch } from '../../src/server/llm/search'
+import { webSearch } from '../../src/server/llm/search'
+import type { WebSearchInput } from '../../src/shared/chat'
 
 /**
  * The search boundary — `docs/architecture.md` §7. No test reaches the
@@ -30,40 +31,55 @@ afterEach(() => {
 	vi.unstubAllGlobals()
 })
 
+/** One search against a stubbed provider, with the request it sent. */
+async function searched(
+	results: unknown[],
+	input: WebSearchInput = { query: 'permit backlog' },
+) {
+	const fetched = answers(providerBody(results))
+	vi.stubGlobal('fetch', fetched)
+
+	const outcome = await webSearch(withKey)?.(input)
+	const [url, init] = fetched.mock.calls[0]
+
+	return { outcome, url, init, sent: JSON.parse(String(init.body)) }
+}
+
+/** The results of a search that worked, or [] for one that did not. */
+async function resultsOf(results: unknown[]) {
+	const { outcome } = await searched(results)
+
+	return outcome?.status === 'ok' ? outcome.results : []
+}
+
 describe('the search boundary', () => {
 	it('offers no search where no key is set', () => {
 		expect(webSearch(withoutKey)).toBeUndefined()
 		expect(webSearch(withKey)).toBeTypeOf('function')
 	})
 
-	it('sends the query, the key, and a capped result count', async () => {
-		const fetched = answers(providerBody([]))
-		vi.stubGlobal('fetch', fetched)
+	it('sends the query and the key to the provider', async () => {
+		const { url, init, sent } = await searched([])
 
-		await webSearch(withKey)?.({ query: 'permit backlog', count: 3 })
-
-		const [url, init] = fetched.mock.calls[0]
 		expect(url).toBe('https://api.exa.ai/search')
 		expect(init.method).toBe('POST')
 		expect(new Headers(init.headers).get('x-api-key')).toBe('test-key')
-
-		const sent = JSON.parse(String(init.body))
-		expect(sent).toMatchObject({ query: 'permit backlog', numResults: 3 })
+		expect(sent).toMatchObject({ query: 'permit backlog', numResults: 6 })
 	})
 
-	it('passes a since date through as the published-date floor', () => {
-		expect(searchRequest({ query: 'permit backlog', since: '2026-01-01' })).toMatchObject(
-			{
-				startPublishedDate: '2026-01-01',
-			},
-		)
-		expect(searchRequest({ query: 'permit backlog' })).not.toHaveProperty(
-			'startPublishedDate',
-		)
+	it('passes a since date through as the published-date floor', async () => {
+		const withSince = await searched([], {
+			query: 'permit backlog',
+			since: '2026-01-01',
+		})
+		expect(withSince.sent).toMatchObject({ startPublishedDate: '2026-01-01' })
+
+		const withoutSince = await searched([])
+		expect(withoutSince.sent).not.toHaveProperty('startPublishedDate')
 	})
 
-	it('asks for highlights against the same query, and not for page text', () => {
-		const sent = searchRequest({ query: 'permit backlog' })
+	it('asks for highlights against the same query, and not for page text', async () => {
+		const { sent } = await searched([])
 
 		expect(sent.contents).toMatchObject({ highlights: { query: 'permit backlog' } })
 		expect(sent.contents).not.toHaveProperty('text')
@@ -71,18 +87,16 @@ describe('the search boundary', () => {
 })
 
 describe('a provider result', () => {
-	it('carries the fields an Offer is written from', () => {
-		const [result] = readResults({
-			results: [
-				{
-					url: 'https://example.test/permits',
-					title: 'The permit queue',
-					author: 'A Reporter',
-					publishedDate: '2026-03-04T09:12:00.000Z',
-					highlights: ['The backlog stood at 4,100 in March.'],
-				},
-			],
-		})
+	it('carries the fields an Offer is written from', async () => {
+		const [result] = await resultsOf([
+			{
+				url: 'https://example.test/permits',
+				title: 'The permit queue',
+				author: 'A Reporter',
+				publishedDate: '2026-03-04T09:12:00.000Z',
+				highlights: ['The backlog stood at 4,100 in March.'],
+			},
+		])
 
 		expect(result).toEqual({
 			url: 'https://example.test/permits',
@@ -94,54 +108,50 @@ describe('a provider result', () => {
 	})
 
 	// Every field but the url is optional at the source.
-	it('drops the fields the page did not carry, and keeps the url', () => {
-		const [result] = readResults({
-			results: [{ url: 'https://example.test/permits', author: null, highlights: [] }],
-		})
+	it('drops the fields the page did not carry, and keeps the url', async () => {
+		const [result] = await resultsOf([
+			{ url: 'https://example.test/permits', author: null, highlights: [] },
+		])
 
 		expect(result).toEqual({ url: 'https://example.test/permits' })
 	})
 
-	it('joins several highlights into one excerpt', () => {
-		const [result] = readResults({
-			results: [
-				{
-					url: 'https://example.test/permits',
-					highlights: [
-						'  The backlog stood at 4,100.  ',
-						'',
-						'It had doubled in a year.',
-					],
-				},
-			],
-		})
+	it('joins several highlights into one excerpt', async () => {
+		const [result] = await resultsOf([
+			{
+				url: 'https://example.test/permits',
+				highlights: ['  The backlog stood at 4,100.  ', '', 'It had doubled in a year.'],
+			},
+		])
 
 		expect(result.excerpt).toBe('The backlog stood at 4,100. … It had doubled in a year.')
 	})
 
-	it('drops a result with no url and keeps the rest', () => {
-		const results = readResults({
-			results: [
-				{ title: 'No url here' },
-				{ url: 'not-a-url' },
-				{ url: 'https://example.test/permits' },
-			],
-		})
+	it('drops a result with no url and keeps the rest', async () => {
+		const results = await resultsOf([
+			{ title: 'No url here' },
+			{ url: 'not-a-url' },
+			{ url: 'https://example.test/permits' },
+		])
 
 		expect(results.map((result) => result.url)).toEqual(['https://example.test/permits'])
 	})
 
-	it('ignores fields the provider added', () => {
-		const [result] = readResults({
-			results: [{ url: 'https://example.test/permits', score: 0.46, favicon: 'x.ico' }],
-		})
+	it('ignores fields the provider added', async () => {
+		const [result] = await resultsOf([
+			{ url: 'https://example.test/permits', score: 0.46, favicon: 'x.ico' },
+		])
 
 		expect(result).toEqual({ url: 'https://example.test/permits' })
 	})
 
-	it('makes nothing of a body that is not a search response', () => {
-		expect(readResults({ error: 'nope' })).toEqual([])
-		expect(readResults(null)).toEqual([])
+	it('makes nothing of a body with no results in it', async () => {
+		vi.stubGlobal('fetch', answers(JSON.stringify({ error: 'nope' })))
+
+		expect(await webSearch(withKey)?.({ query: 'permit backlog' })).toEqual({
+			status: 'ok',
+			results: [],
+		})
 	})
 })
 

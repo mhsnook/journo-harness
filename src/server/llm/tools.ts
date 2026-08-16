@@ -99,31 +99,31 @@ const recordOffers = tool({
 	},
 })
 
+const searchDescription = [
+	'Search the web. Use it before you offer a link or a quote, so what you offer is',
+	'something you retrieved rather than something you remember.',
+	'',
+	'Search more than once in a turn when the first query comes back thin, or when the',
+	'writer\'s question has several sides worth searching separately. Pass "since" as',
+	'YYYY-MM-DD where only recent material counts.',
+	'',
+	'Each result carries a url, and usually a title, an author, a published date, and an',
+	'excerpt - a passage pulled off the page for this query. Only offer urls this tool',
+	"returned. A Quote's text is copied from an excerpt word for word: an excerpt can",
+	'start or end mid-sentence, so trim it back to a whole sentence rather than writing',
+	'the missing words yourself.',
+	'',
+	'A status of "unavailable" means the search did not happen, and the reason says why.',
+	'Tell the writer search is down, answer from what you know, and mark any Offer you',
+	'make as coming from memory.',
+].join('\n')
+
 /** Takes the search rather than importing one, so the Article Agent supplies
  * it the way it supplies the model and a test can script it. */
 function searchTool(search: WebSearch) {
 	return tool({
-		description: [
-			'Search the web. Use it before you offer a link or a quote, so what you offer is',
-			'something you retrieved rather than something you remember.',
-			'',
-			'Search more than once in a turn when the first query comes back thin, or when the',
-			'writer\'s question has several sides worth searching separately. Pass "since" as',
-			'YYYY-MM-DD where only recent material counts.',
-			'',
-			'Each result carries a url, and usually a title, an author, a published date, and an',
-			'excerpt - a passage pulled off the page for this query. Only offer urls this tool',
-			"returned. A Quote's text is copied from an excerpt word for word: an excerpt can",
-			'start or end mid-sentence, so trim it back to a whole sentence rather than writing',
-			'the missing words yourself.',
-			'',
-			'A status of "unavailable" means the search did not happen, and the reason says why.',
-			'Tell the writer search is down, answer from what you know, and mark any Offer you',
-			'make as coming from memory.',
-		].join('\n'),
+		description: searchDescription,
 		inputSchema: webSearchInput,
-		// The Chat Panel parses this output too — so bind both ends to the one
-		// schema.
 		outputSchema: webSearchOutput,
 		// `search` never rejects, so a failed search does not end the turn.
 		execute: (input, { abortSignal }) => search(input, abortSignal),

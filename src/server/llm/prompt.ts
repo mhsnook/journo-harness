@@ -39,42 +39,41 @@ const guideRules = [
 /** Recording an Offer the guide did not look up. In both prompts below: a
  * search that comes back unavailable puts the guide back on this path. */
 const fromMemoryRules = [
-	'Offer a source',
-	'only where you are confident it',
+	'Offer a source only where you are confident it',
 	'exists and you have the attribution roughly correct. Give a url only where you are confident',
 	'of the url itself, and leave it out otherwise — a source with an author and a publication',
 	"and no url is useful, and an invented url wastes the writer's time. Where you are working",
 	"from memory rather than certainty, say so in the Offer's note.",
 ].join('\n')
 
-/** One of these two is in every prompt, decided by whether the same turn was
- * given the search tool — `chatTools` in `llm/tools.ts`. */
+/** One of these two, decided by whether the same turn was given the search
+ * tool — `chatTools` in `llm/tools.ts`. */
 const canSearchRules = [
 	'You can search the web with the webSearch tool, and a source you looked up beats one you',
 	'remember. Search before you offer a link or a quote, and offer only urls a search returned.',
 	'Where a search comes back unavailable, tell the writer, and record that Offer by the rules',
 	'that follow instead.',
-	'',
-	fromMemoryRules,
 ].join('\n')
 
-const cannotSearchRules = [
-	'You cannot browse, so every Offer you record comes from your prior knowledge.',
-	fromMemoryRules,
-].join('\n')
-
-export type ChatCapabilities = { canSearch: boolean }
+const cannotSearchRules =
+	'You cannot browse, so every Offer you record comes from your prior knowledge.'
 
 /**
- * The stable prefix of one Chat turn.
+ * The stable prefix of one Chat turn, built once per deployment rather than
+ * per turn — nothing in it varies with the Article.
  *
  * Two things join the guide rules here, and both arrive with the House at 1b:
  * the Lexicon entries in play, and the writer's own standing rules. Nothing
  * goes in either slot until then. The Plan does not belong here — see the
  * ordering note above.
  */
-export function chatSystemPrompt({ canSearch }: ChatCapabilities): string {
-	return [guideRules, '', canSearch ? canSearchRules : cannotSearchRules].join('\n')
+const searchingPrompt = [guideRules, '', canSearchRules, '', fromMemoryRules].join('\n')
+const recallingPrompt = [guideRules, '', cannotSearchRules, '', fromMemoryRules].join(
+	'\n',
+)
+
+export function chatSystemPrompt(canSearch: boolean): string {
+	return canSearch ? searchingPrompt : recallingPrompt
 }
 
 /**

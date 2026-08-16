@@ -12,7 +12,7 @@ import {
  */
 
 const endpoint = 'https://api.exa.ai/search'
-const defaultCount = 6
+const resultCount = 6
 const excerptCharacters = 1200
 const timeoutMs = 15_000
 
@@ -73,11 +73,11 @@ function unavailable(reason: string): WebSearchOutput {
 
 /** Highlights and not `text`: a highlight is the passage that answers the
  * query, where the text is the whole page. */
-export function searchRequest(input: WebSearchInput): Record<string, unknown> {
+function searchRequest(input: WebSearchInput): Record<string, unknown> {
 	return {
 		query: input.query,
 		type: 'auto',
-		numResults: input.count ?? defaultCount,
+		numResults: resultCount,
 		...(input.since !== undefined && { startPublishedDate: input.since }),
 		contents: {
 			highlights: { maxCharacters: excerptCharacters, query: input.query },
@@ -98,7 +98,7 @@ const providerResult = z.object({
 
 const providerResponse = z.object({ results: z.array(z.unknown()).nullish() })
 
-export function readResults(body: unknown): WebSearchResult[] {
+function readResults(body: unknown): WebSearchResult[] {
 	const answered = providerResponse.safeParse(body)
 	if (!answered.success) return []
 

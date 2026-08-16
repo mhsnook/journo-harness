@@ -43,7 +43,6 @@ export const webSearchTool = 'webSearch'
  * invented field is refused and retried rather than stripped — §6. */
 export const webSearchInput = z.strictObject({
 	query: z.string().min(1),
-	count: z.number().int().min(1).max(10).optional(),
 	/** Published on or after this date, as YYYY-MM-DD. */
 	since: z.iso.date().optional(),
 })

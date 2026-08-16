@@ -43,7 +43,7 @@ export async function chatTurn({
 	const result = streamText({
 		model,
 		// Rules, then conversation and Plan, per Architecture §7
-		system: chatSystemPrompt({ canSearch: search !== undefined }),
+		system: chatSystemPrompt(search !== undefined),
 		messages: chatPackMessages(await convertToModelMessages(messages), plan),
 		tools: chatTools(search),
 		abortSignal,

@@ -14,7 +14,7 @@ import { readRecordedOffers } from './offers'
 import { ProposalCard } from './ProposalCard'
 import { readProposal, type ProposalCall, type Refusals } from './proposals'
 import { RuledProposal } from './RuledProposal'
-import { readWebSearch, type SearchCall } from './search'
+import { readWebSearch, searchNote } from './search'
 
 /**
  * The Chat Panel takes a transcript & rulings; `ArticleChatPanel` drives it from
@@ -276,7 +276,9 @@ function Turn({
 
 				if (!isToolUIPart(part)) return null
 
-				if (getToolName(part) === proposePlanChangeTool) {
+				const called = getToolName(part)
+
+				if (called === proposePlanChangeTool) {
 					switch (part.state) {
 						case 'input-streaming':
 							return <ChatNote key={key}>Writing a Proposal…</ChatNote>
@@ -317,7 +319,7 @@ function Turn({
 					}
 				}
 
-				if (getToolName(part) === recordOffersTool) {
+				if (called === recordOffersTool) {
 					const recorded = readRecordedOffers(part)
 					if (recorded === null) return <ChatNote key={key}>Looking things up…</ChatNote>
 
@@ -345,28 +347,12 @@ function Turn({
 					)
 				}
 
-				if (getToolName(part) === webSearchTool) {
-					const search = readWebSearch(part)
-
-					return search === null ? null : (
-						<ChatNote key={key}>{searchNote(search)}</ChatNote>
-					)
+				if (called === webSearchTool) {
+					return <ChatNote key={key}>{searchNote(readWebSearch(part))}</ChatNote>
 				}
 
 				return null
 			})}
 		</>
 	)
-}
-
-/** The line one search gets in the transcript. A failure stays short here: the
- * guide relays the provider's own reason in its reply. */
-function searchNote({ query, found, failed }: SearchCall): string {
-	const asked = query === null ? 'the web' : `“${query}”`
-
-	if (failed) return `Searching ${asked} failed, so the guide answered without it.`
-	if (found === null) return `Searching ${asked}…`
-	if (found === 0) return `Searched ${asked}, and found nothing.`
-
-	return `Searched ${asked} — ${found} ${found === 1 ? 'result' : 'results'}.`
 }
