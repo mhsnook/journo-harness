@@ -546,13 +546,16 @@ its document in memory; nothing else here is built, and nothing is persisted.
   room." An alarm earns its place only when work must happen while nobody is connected, and
   there is no such work. A stale Proposal or an orphaned tool batch expires lazily on read.
 - **Guidance notes do not stream.** A Review is the thing that should.
-- **The Draft is a ProseMirror document, built with TipTap**, because the Guide has to draw
-  things the Draft does not contain. **A Proposal is a decoration and an accepted annotation
-  is a mark**: a proposed section break is drawn from state and reaches no stored row, while
-  a comment rides in the prose, because only a mark survives the writer rewriting around it
-  in a session that never drew the note. So **a comment is not a Block reference** — it is a
-  set of marked runs spanning any number of Blocks, targeting the span from its first to its
-  last. `docs/adr/0003-the-draft-editor.md`.
+- **The Draft is a ProseMirror document, built with TipTap.** The reason is narrow: a
+  decoration is **drawn as part of the document's layout while staying out of its content**,
+  which is what the Guide needs for anything it shows beside the prose without writing it.
+  Marks decide nothing — every candidate stores a comment as one. So **a Proposal is a
+  decoration and an accepted annotation is a mark**: a proposed section break parts the
+  paragraphs and reaches no stored row, while a comment rides in the prose, because only a
+  mark survives the writer rewriting around it in a session that never drew the note. And
+  **a comment is not a Block reference** — it is a set of marked runs spanning any number of
+  Blocks, targeting the span from its first to its last.
+  `docs/adr/0003-the-draft-editor.md`.
 - **The writer types their own headings and section breaks.** Boundaries are inferred, so
   nothing can place a title automatically; writer control is the tiebreaker, and what the
   writer typed is then the strongest hint the inference has.

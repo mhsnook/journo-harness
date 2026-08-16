@@ -7,31 +7,55 @@ Block. Around it the Guide has to show things that are not prose — a note besi
 paragraph, a section break it suggests, a passage someone commented on. This decides what
 the writing surface is built on, and where each of those things lives.
 
-Resolved on #14, which held a prototype of both candidate layers. #7 fixed the Block shape
-and #6 retired the previous argument for ProseMirror when the tracking model left v1 scope.
+Resolved on #14, which held ProseMirror and Lexical as working prototypes over the same
+typography. #7 fixed the Block shape, and #6 retired the previous argument for ProseMirror
+when the tracking model left v1 scope.
 
 ## The editor is ProseMirror, reached through TipTap
 
-**Decorations are the reason.** A widget decoration renders DOM at a position the document
-does not contain, and is re-mapped as the text moves. A section break the Guide proposes is
-exactly that: visible between two Blocks, absent from every stored row, gone if the writer
-ignores it. Nothing else considered can draw at a position that is not in the text.
+**The reason is what a decoration can do, and it is narrow.** ProseMirror renders something
+**as part of the document's layout while keeping it out of the document's content.** A
+widget decoration parts the paragraphs, reflows when the text above it changes, and takes a
+click where it is drawn — every behaviour of being in the document — while never being
+content. It does not serialise, does not sync, and never reaches the Final.
 
-Position mapping is the second half, and is what would let a note anchor to a phrase rather
-than a paragraph. v1 anchors at paragraph range, so this is a door kept open rather than a
-v1 need — but it is the same machinery, at no extra cost.
+**Marks are not the reason.** Storing a comment as a mark is ordinary, and every candidate
+does it. The decision turns only on the things that must be drawn _with_ the prose and
+stored _outside_ it: a proposed section break, a Block flagged as diverging from the Plan, a
+budget marker beside a Section that has run long.
+
+Position mapping comes with it, and is what would let a note anchor to a phrase rather than
+a paragraph. v1 anchors at paragraph range, so that is a door kept open rather than a v1
+need.
 
 **TipTap over bare ProseMirror**, on cost alone. `StarterKit` carries the marks and
 keymaps, and `UniqueID` reproduces the Block-id contract that otherwise wants a hand-written
 `appendTransaction`, split and merge handling included. Bare ProseMirror stays reachable:
 `ProposedBreaks` in `src/client/draft/annotations.ts` is a raw ProseMirror plugin.
 
-**Rejected:** a plain textarea with computed offsets, which has nowhere to put a Proposal
-and no mark to anchor a comment to; CodeMirror, whose document is text rather than a node
-tree, so headings and section breaks would be encoded into the prose and durable anchors
-would live in a side table that goes stale on every offline edit. **Lexical was not
-prototyped** — it was judged against the requirements rather than tested against them, and
-that is the softest part of this decision.
+### Why the others lost
+
+**Lexical — the close one, and better than ProseMirror at marks.** It held stable Block ids
+through a split and held a comment's anchor through a rewrite in front of it. `@lexical/mark`
+is purpose-built for comments and its `MarkNode` carries an **array** of ids, so overlapping
+comments on one passage are a first-class case there and are not here.
+
+It loses on the one case above. Lexical has no decoration layer — a `DecoratorNode` is a
+node _in_ the document — so anything drawn but not stored has to be an overlay positioned
+from a measured rectangle. An overlay occupies no space, so it lies across the prose instead
+of parting it, and it swallows clicks to the text beneath unless it is made click-through.
+Making it part the paragraphs means reaching in and setting margin on the Block below, which
+is coordinating the editor's layout from outside it.
+
+Stable Block ids also cost more there: Lexical's node keys are per-session and are not
+serialised, so each node type needs a class of its own, plus a third because `MarkNode`
+writes its ids nowhere in the DOM. That is ~146 lines against a five-line `UniqueID.configure`.
+
+**Reasoned about rather than prototyped**, and recorded as the softer half of this decision:
+a plain textarea with computed offsets, which has nowhere to put a Proposal and no mark to
+anchor a comment to; and CodeMirror, whose document is text rather than a node tree, so
+headings and section breaks would be encoded into the prose and durable anchors would live
+in a side table that goes stale on every offline edit.
 
 ## A Proposal is a decoration; an accepted annotation is a mark
 
@@ -79,5 +103,14 @@ easier rather than harder.
 - **`ord` is a float midpoint and exhausts precision after roughly fifty splits in one
   gap.** A Draft that reaches it needs base-62 string indices. `assignOrds` is the only
   place that would change.
+- **Two comments cannot overlap the same passage.** The mark holds one `commentId`, so a
+  second comment across the same words replaces the first. Lexical's `MarkNode` carries an
+  array and does not have this limit. Either an array attribute or `excludes: ''` lifts it —
+  neither is tested, and it is worth a spike before threads are built rather than after.
+- **A Block stores the editor's own JSON, not a neutral format.** Both engines read and
+  write HTML, and the ids already ride as `data-block-id` and `data-comment-id` attributes,
+  so changing engines later is a conversion pass over stored Blocks rather than a rewrite.
+  Native JSON keeps full fidelity now and leaves that pass as the price of a change that may
+  never come.
 - **Nothing is persisted yet.** The Panel holds the document in memory, and party-db arrives
   with phase 2. `toRows` is the shape the sync layer takes, and is tested ahead of it.
