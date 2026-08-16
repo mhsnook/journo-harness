@@ -143,6 +143,11 @@ export const B2_ComposerGrows: Story = {
 		const transcript = canvasElement.querySelector('[data-scroller]')!
 		await expect(canvas.queryByLabelText('Scroll to the latest')).toBeNull()
 
+		// Wait for layout to settle and confirm transcript overflows before scrolling
+		await waitFor(() =>
+			expect(transcript.scrollHeight).toBeGreaterThan(transcript.clientHeight),
+		)
+
 		// Scrolled up, the way back appears.
 		transcript.scrollTop = 0
 		const back = await canvas.findByLabelText('Scroll to the latest')
