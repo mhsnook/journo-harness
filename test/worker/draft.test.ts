@@ -14,7 +14,7 @@ const block = (id: string, ord: number, text = id): BlockRow => ({
 const textOf = (row: BlockRow) =>
 	(row.json.content as [{ text: string }] | undefined)?.[0].text ?? ''
 
-async function open(name: string) {
+async function openDraft(name: string) {
 	const socket = await openAgentSocket(name)
 	await socket.next('cf_agent_state')
 
@@ -28,7 +28,7 @@ async function open(name: string) {
 
 describe('the Draft', () => {
 	it('is empty for an Article nobody has written in', async () => {
-		const draft = await open('draft-empty')
+		const draft = await openDraft('draft-empty')
 
 		// Empty rather than a failure: the Panel tells "still loading" from
 		// "nothing here" by this answering with a list.
@@ -36,7 +36,7 @@ describe('the Draft', () => {
 	})
 
 	it('reads back in ord order rather than the order it was written', async () => {
-		const draft = await open('draft-order')
+		const draft = await openDraft('draft-order')
 		await draft.save([block('c', 3), block('a', 1), block('b', 2)])
 
 		const rows = await draft.list()
@@ -44,7 +44,7 @@ describe('the Draft', () => {
 	})
 
 	it('keeps the content the editor gave it, marks and all', async () => {
-		const draft = await open('draft-content')
+		const draft = await openDraft('draft-content')
 		const heading: BlockRow = {
 			id: 'h',
 			ord: 1,
@@ -60,7 +60,7 @@ describe('the Draft', () => {
 	})
 
 	it('writes only the Blocks a save carries and leaves the rest alone', async () => {
-		const draft = await open('draft-delta')
+		const draft = await openDraft('draft-delta')
 		await draft.save([block('a', 1, 'One.'), block('b', 2, 'Two.')])
 
 		const receipt = await draft.save([block('b', 2, 'Two, rewritten.')])
@@ -71,7 +71,7 @@ describe('the Draft', () => {
 	})
 
 	it('removes a Block by id', async () => {
-		const draft = await open('draft-remove')
+		const draft = await openDraft('draft-remove')
 		await draft.save([block('a', 1), block('b', 2)])
 		await draft.save([], ['a'])
 
@@ -79,7 +79,7 @@ describe('the Draft', () => {
 	})
 
 	it('takes a removal of a Block that has already gone', async () => {
-		const draft = await open('draft-remove-twice')
+		const draft = await openDraft('draft-remove-twice')
 		await draft.save([block('a', 1)])
 		await draft.save([], ['a'])
 
@@ -89,7 +89,7 @@ describe('the Draft', () => {
 	})
 
 	it('puts a Block back when one save removes and re-adds the same id', async () => {
-		const draft = await open('draft-resurrect')
+		const draft = await openDraft('draft-resurrect')
 		await draft.save([block('a', 1, 'First.')])
 		await draft.save([block('a', 1, 'Second.')], ['a'])
 
@@ -97,7 +97,7 @@ describe('the Draft', () => {
 	})
 
 	it('refuses a change that does not parse, and writes nothing', async () => {
-		const draft = await open('draft-refuse')
+		const draft = await openDraft('draft-refuse')
 		await draft.save([block('a', 1)])
 
 		await expect(
@@ -108,7 +108,7 @@ describe('the Draft', () => {
 	})
 
 	it('refuses an oversized Block, and names it', async () => {
-		const draft = await open('draft-too-big')
+		const draft = await openDraft('draft-too-big')
 		const huge: BlockRow = {
 			id: 'fat',
 			ord: 1,
@@ -120,7 +120,7 @@ describe('the Draft', () => {
 	})
 
 	it('keeps the Blocks across a hibernation', async () => {
-		const draft = await open('draft-hibernate')
+		const draft = await openDraft('draft-hibernate')
 		await draft.save([block('a', 1, 'Survives.')])
 
 		await evictDurableObject(
@@ -128,12 +128,12 @@ describe('the Draft', () => {
 		)
 
 		// `onStart` runs again on the wake, so its DDL has to be idempotent.
-		const woken = await open('draft-hibernate')
+		const woken = await openDraft('draft-hibernate')
 		expect((await woken.list()).map(textOf)).toEqual(['Survives.'])
 	})
 
 	it('does not disturb the Plan', async () => {
-		const draft = await open('draft-quiet')
+		const draft = await openDraft('draft-quiet')
 		await draft.save([block('a', 1)])
 
 		// The two stores are separate on purpose — §3. A row write that

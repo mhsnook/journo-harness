@@ -25,10 +25,10 @@ export function mintBlockId(): string {
  * and a Block type missing from here gets no id and is dropped on the next save.
  */
 export function topLevelTypes(schema: Schema): string[] {
-	const start = schema.nodes.doc.contentMatch
+	const docContent = schema.nodes.doc.contentMatch
 
 	return Object.values(schema.nodes)
-		.filter((type) => start.matchType(type) !== null)
+		.filter((type) => docContent.matchType(type) !== null)
 		.map((type) => type.name)
 		.sort()
 }
@@ -64,27 +64,27 @@ export function assignOrds(
 	entries: readonly BlockEntry[],
 	previous: readonly BlockRow[],
 ): BlockRow[] {
-	const held = new Map(previous.map((row) => [row.id, row.ord]))
+	const previousOrds = new Map(previous.map((row) => [row.id, row.ord]))
 	const rows: BlockRow[] = []
-	let last = 0
+	let lastOrd = 0
 
 	entries.forEach((entry, i) => {
-		const kept = held.get(entry.id)
-		// A held ord survives only while it still sorts after the row before it,
+		const keptOrd = previousOrds.get(entry.id)
+		// A kept ord survives only while it still sorts after the row before it,
 		// so a Block that moved is renumbered and its neighbours are not.
-		let ord = kept !== undefined && kept > last ? kept : null
+		let ord = keptOrd !== undefined && keptOrd > lastOrd ? keptOrd : null
 
 		if (ord === null) {
-			const after = entries
+			const nextOrd = entries
 				.slice(i + 1)
-				.map((later) => held.get(later.id))
-				.find((value) => value !== undefined && value > last)
+				.map((later) => previousOrds.get(later.id))
+				.find((value) => value !== undefined && value > lastOrd)
 
-			ord = after === undefined ? last + 1 : (last + after) / 2
+			ord = nextOrd === undefined ? lastOrd + 1 : (lastOrd + nextOrd) / 2
 		}
 
 		rows.push({ id: entry.id, ord, json: entry.json })
-		last = ord
+		lastOrd = ord
 	})
 
 	// Midpoints stop separating after ~52 splits in one gap, and two equal ords

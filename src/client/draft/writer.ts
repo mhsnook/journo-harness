@@ -55,93 +55,96 @@ export function createDraftWriter(options: DraftWriterOptions): DraftWriter {
 	const delay = options.delay ?? DRAFT_WRITE_DELAY
 	const maxWait = options.maxWait ?? DRAFT_MAX_WAIT
 
-	/** The last rows read out of the editor. Passed back to `read` so a Block
-	 * keeps its ord across a save that failed. */
-	let held: readonly BlockRow[] = []
-	/** id → content, **as the Article Agent acknowledged it**. This is what a
-	 * delta is measured against, so a failed save stays in the next one. */
-	let saved = new Map<string, string>()
+	/** Passed back to `read` so a Block keeps its ord across a save that failed. */
+	let lastRead: readonly BlockRow[] = []
+	/** id → content. What a delta is measured against, so a failed save is still
+	 * owed by the next one. */
+	let acknowledged = new Map<string, string>()
 
-	let pause: ReturnType<typeof setTimeout> | null = null
-	let ceiling: ReturnType<typeof setTimeout> | null = null
-	let sending: DraftChange | null = null
-	let dirty = false
+	let pauseTimer: ReturnType<typeof setTimeout> | null = null
+	let ceilingTimer: ReturnType<typeof setTimeout> | null = null
+	let inFlight: DraftChange | null = null
+	let changedWhileSending = false
 	let status: DraftStatus = { state: 'clean', savedAt: null }
 
-	const report = (next: DraftStatus) => {
+	const reportStatus = (next: DraftStatus) => {
 		status = next
 		options.onStatus(next)
 	}
 
-	const clear = () => {
-		if (pause !== null) clearTimeout(pause)
-		if (ceiling !== null) clearTimeout(ceiling)
-		pause = null
-		ceiling = null
+	const clearTimers = () => {
+		if (pauseTimer !== null) clearTimeout(pauseTimer)
+		if (ceilingTimer !== null) clearTimeout(ceilingTimer)
+		pauseTimer = null
+		ceilingTimer = null
 	}
 
-	const settled = (receipt: DraftSaved, sent: DraftChange) => {
-		// The rows that were sent, not the ones on screen — the writer kept
-		// typing while this was in flight, and those changes are still unsaved.
-		for (const block of sent.blocks) saved.set(block.id, JSON.stringify(block.json))
-		for (const id of sent.removed) saved.delete(id)
+	const saveSettled = (receipt: DraftSaved, sent: DraftChange) => {
+		// What was sent, not what is on screen — the writer kept typing while
+		// this was in flight, and those changes are still owed.
+		for (const block of sent.blocks) {
+			acknowledged.set(block.id, JSON.stringify(block.json))
+		}
+		for (const id of sent.removed) acknowledged.delete(id)
 
-		sending = null
-		report({ state: 'clean', savedAt: receipt.savedAt })
+		inFlight = null
+		reportStatus({ state: 'clean', savedAt: receipt.savedAt })
 
-		if (dirty) {
-			dirty = false
-			// `touch` rather than `send`, so a writer in unbroken flow keeps one
+		if (changedWhileSending) {
+			changedWhileSending = false
+			// Scheduled rather than sent, so a writer in unbroken flow keeps one
 			// cadence instead of saving again the moment the wire is free.
-			schedule()
+			scheduleSend()
 		}
 	}
 
-	const failed = (error: unknown, savedAt: number | null) => {
-		// `saved` is deliberately not advanced: those Blocks ride the next save.
-		// Nothing retries on a timer — the typing is the retry, and a loop
+	const saveFailed = (error: unknown, savedAt: number | null) => {
+		// `acknowledged` is deliberately not advanced: those Blocks ride the next
+		// save. Nothing retries on a timer — the typing is the retry, and a loop
 		// against a server that is refusing is a loop.
-		sending = null
-		report({ state: 'failed', savedAt, failure: options.describeFailure(error) })
+		inFlight = null
+		reportStatus({ state: 'failed', savedAt, failure: options.describeFailure(error) })
 	}
 
-	const send = () => {
-		clear()
+	const sendChange = () => {
+		clearTimers()
 
-		if (sending !== null) {
-			dirty = true
+		if (inFlight !== null) {
+			changedWhileSending = true
 			return
 		}
 
-		held = options.read(held)
+		lastRead = options.read(lastRead)
 
-		const blocks = held.filter((row) => saved.get(row.id) !== JSON.stringify(row.json))
-		const live = new Set(held.map((row) => row.id))
-		const removed = [...saved.keys()].filter((id) => !live.has(id))
+		const changed = lastRead.filter(
+			(row) => acknowledged.get(row.id) !== JSON.stringify(row.json),
+		)
+		const liveIds = new Set(lastRead.map((row) => row.id))
+		const removed = [...acknowledged.keys()].filter((id) => !liveIds.has(id))
 
-		if (blocks.length === 0 && removed.length === 0) {
-			report({ state: 'clean', savedAt: status.savedAt })
+		if (changed.length === 0 && removed.length === 0) {
+			reportStatus({ state: 'clean', savedAt: status.savedAt })
 			return
 		}
 
-		const change: DraftChange = { blocks: [...blocks], removed }
+		const change: DraftChange = { blocks: [...changed], removed }
 		const savedAt = status.savedAt
 
-		sending = change
-		report({ state: 'saving', savedAt })
+		inFlight = change
+		reportStatus({ state: 'saving', savedAt })
 		options.save(change).then(
-			(receipt) => settled(receipt, change),
-			(error: unknown) => failed(error, savedAt),
+			(receipt) => saveSettled(receipt, change),
+			(error: unknown) => saveFailed(error, savedAt),
 		)
 	}
 
-	const schedule = () => {
-		if (pause !== null) clearTimeout(pause)
-		pause = setTimeout(send, delay)
+	const scheduleSend = () => {
+		if (pauseTimer !== null) clearTimeout(pauseTimer)
+		pauseTimer = setTimeout(sendChange, delay)
 
 		// Started once and never restarted. A ceiling that resets on a keystroke
 		// is a second debounce, which is the thing it exists to backstop.
-		if (ceiling === null) ceiling = setTimeout(send, maxWait)
+		if (ceilingTimer === null) ceilingTimer = setTimeout(sendChange, maxWait)
 	}
 
 	return {
@@ -150,20 +153,22 @@ export function createDraftWriter(options: DraftWriterOptions): DraftWriter {
 		},
 
 		load(rows) {
-			held = rows
-			saved = new Map(rows.map((row) => [row.id, JSON.stringify(row.json)]))
-			report({ state: 'clean', savedAt: null })
+			lastRead = rows
+			acknowledged = new Map(rows.map((row) => [row.id, JSON.stringify(row.json)]))
+			reportStatus({ state: 'clean', savedAt: null })
 		},
 
 		touch() {
-			if (status.state === 'clean') report({ state: 'pending', savedAt: status.savedAt })
-			schedule()
+			if (status.state === 'clean') {
+				reportStatus({ state: 'pending', savedAt: status.savedAt })
+			}
+			scheduleSend()
 		},
 
-		flush: send,
+		flush: sendChange,
 		dispose() {
-			send()
-			clear()
+			sendChange()
+			clearTimers()
 		},
 	}
 }

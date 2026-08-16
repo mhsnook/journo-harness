@@ -12,7 +12,7 @@ export interface ArticleDraftPanelProps {
 }
 
 export function ArticleDraftPanel({ divider, className }: ArticleDraftPanelProps) {
-	const { blocks, failure, status, attach, touch } = useDraft(useArticle().draft)
+	const { blocks, failure, status, attachEditor, touch } = useDraft(useArticle().draft)
 
 	// The editor is built from the Blocks and reads them once, so it mounts
 	// after they arrive rather than being filled in afterwards. Loading it late
@@ -36,7 +36,7 @@ export function ArticleDraftPanel({ divider, className }: ArticleDraftPanelProps
 			blocks={blocks}
 			className={className}
 			divider={divider}
-			onAttach={attach}
+			onAttach={attachEditor}
 			onChange={touch}
 			status={status}
 		/>

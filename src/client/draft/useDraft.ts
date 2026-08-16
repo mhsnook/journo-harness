@@ -14,8 +14,8 @@ export type DraftConnection = {
 	 * this is set: an empty surface would say the Draft is empty when it is not. */
 	failure: string | null
 	status: DraftStatus
-	/** Hand the editor over once it has mounted, so a save can read it. */
-	attach: (editor: Editor) => void
+	/** Call once it has mounted, so a save has something to read. */
+	attachEditor: (editor: Editor) => void
 	/** The editor changed. */
 	touch: () => void
 }
@@ -32,17 +32,19 @@ export function useDraft(store: DraftStore): DraftConnection {
 	const [failure, setFailure] = useState<string | null>(null)
 	const [status, setStatus] = useState<DraftStatus>({ state: 'clean', savedAt: null })
 
-	const editor = useRef<Editor | null>(null)
+	const editorRef = useRef<Editor | null>(null)
 
-	const held = useRef<ReturnType<typeof createDraftWriter> | null>(null)
-	held.current ??= createDraftWriter({
+	const writerRef = useRef<ReturnType<typeof createDraftWriter> | null>(null)
+	writerRef.current ??= createDraftWriter({
 		read: (previous) =>
-			editor.current === null ? previous : toRows(editor.current.state.doc, previous),
+			editorRef.current === null
+				? previous
+				: toRows(editorRef.current.state.doc, previous),
 		save: (change) => store.saveBlocks(change),
 		onStatus: setStatus,
 		describeFailure: (error) => failureText('The Draft did not save.', error) ?? '',
 	})
-	const writer = held.current
+	const writer = writerRef.current
 
 	useEffect(() => {
 		let live = true
@@ -80,18 +82,18 @@ export function useDraft(store: DraftStore): DraftConnection {
 		return () => window.removeEventListener('beforeunload', ask)
 	}, [status.state, writer])
 
-	const attach = useCallback(
-		(mounted: Editor) => {
-			editor.current = mounted
+	const attachEditor = useCallback(
+		(editor: Editor) => {
+			editorRef.current = editor
 
 			// Seeded from the editor's own document rather than from the rows, so a
 			// Block the editor read back unchanged is never rewritten. Seeding from
 			// the rows would make anything ProseMirror normalised look unsaved, and
 			// the first save would replace the stored copy with the normalised one.
-			writer.load(toRows(mounted.state.doc, blocks ?? []))
+			writer.load(toRows(editor.state.doc, blocks ?? []))
 		},
 		[blocks, writer],
 	)
 
-	return { blocks, failure, status, attach, touch: writer.touch }
+	return { blocks, failure, status, attachEditor, touch: writer.touch }
 }

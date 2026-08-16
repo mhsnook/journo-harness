@@ -85,15 +85,15 @@ export const ProposedBreaks = Extension.create({
 						const proposals = proposalsKey.getState(state) ?? []
 						if (proposals.length === 0) return DecorationSet.empty
 
-						const at = new Map<string, number>()
+						const blockPositions = new Map<string, number>()
 						state.doc.descendants((node, pos) => {
 							const id = node.attrs['block-id'] as string | null | undefined
-							if (id !== undefined && id !== null) at.set(id, pos)
+							if (id !== undefined && id !== null) blockPositions.set(id, pos)
 							return false
 						})
 
 						const widgets = proposals.flatMap((proposal) => {
-							const pos = at.get(proposal.beforeBlockId)
+							const pos = blockPositions.get(proposal.beforeBlockId)
 							if (pos === undefined) return []
 
 							return [

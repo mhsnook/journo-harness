@@ -74,13 +74,13 @@ export function draftChangeTooLarge(bytes: number): Error {
 /** Refuses a change no row store should be asked to write. Shared so the size
  * rule is stated once and the same sentence reaches the writer either way. */
 export function checkChangeSize(change: DraftChange): void {
-	let total = 0
+	let totalBytes = 0
 
 	for (const block of change.blocks) {
-		const bytes = JSON.stringify(block.json).length
-		if (bytes > MAX_BLOCK_BYTES) throw blockTooLarge(block.id, bytes)
-		total += bytes
+		const blockBytes = JSON.stringify(block.json).length
+		if (blockBytes > MAX_BLOCK_BYTES) throw blockTooLarge(block.id, blockBytes)
+		totalBytes += blockBytes
 	}
 
-	if (total > MAX_CHANGE_BYTES) throw draftChangeTooLarge(total)
+	if (totalBytes > MAX_CHANGE_BYTES) throw draftChangeTooLarge(totalBytes)
 }

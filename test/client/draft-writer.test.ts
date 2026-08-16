@@ -18,13 +18,13 @@ function harness(start: BlockRow[] = []) {
 	const sent: DraftChange[] = []
 	const statuses: DraftStatus[] = []
 	/** What the editor holds now. A test moves this and calls `touch`. */
-	let doc: BlockRow[] = [...start]
+	let editorRows: BlockRow[] = [...start]
 	let settle: ((receipt: DraftSaved) => void) | null = null
 	let reject: ((error: unknown) => void) | null = null
 	let savedAt = 1_000
 
 	const writer = createDraftWriter({
-		read: () => doc,
+		read: () => editorRows,
 		save: (change) => {
 			sent.push(change)
 			return new Promise<DraftSaved>((resolve, rejectWith) => {
@@ -43,7 +43,7 @@ function harness(start: BlockRow[] = []) {
 		statuses,
 		/** Replace what the editor holds, and tell the writer. */
 		type(next: BlockRow[]) {
-			doc = next
+			editorRows = next
 			writer.touch()
 		},
 		/** Answer the save in flight. */
