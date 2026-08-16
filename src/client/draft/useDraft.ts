@@ -23,9 +23,8 @@ export type DraftConnection = {
 /**
  * Reads the Draft once and writes it back as the writer types — §3, rule 2.
  *
- * Nothing reloads it. Blocks have one writer, this client, so there is no
- * second author to have moved them, and re-reading would only risk taking the
- * server's copy over what is on screen.
+ * Nothing reloads it: §3 leaves this client as the Blocks' only writer, so a
+ * second read could only replace what is on screen with an older copy of it.
  */
 export function useDraft(store: DraftStore): DraftConnection {
 	const [blocks, setBlocks] = useState<BlockRow[] | null>(null)

@@ -10,11 +10,11 @@ import type { BlockRow, DraftChange, DraftSaved } from '../../shared/draft'
  */
 
 /** How long a pause ends a burst of typing. */
-export const DRAFT_WRITE_DELAY = 800
+export const DRAFT_WRITE_DELAY_MS = 800
 
 /** The longest a writer in flow goes unsaved. Without a ceiling, a debounce
  * that restarts on every keystroke never fires for someone who does not pause. */
-export const DRAFT_MAX_WAIT = 5000
+export const DRAFT_MAX_WAIT_MS = 5000
 
 export type DraftStatus =
 	| { state: 'clean' | 'pending' | 'saving'; savedAt: number | null }
@@ -34,8 +34,8 @@ export type DraftWriterOptions = {
 	onStatus: (status: DraftStatus) => void
 	/** The sentence a failed save shows. */
 	describeFailure: (error: unknown) => string
-	delay?: number
-	maxWait?: number
+	delayMs?: number
+	maxWaitMs?: number
 }
 
 export type DraftWriter = {
@@ -52,8 +52,8 @@ export type DraftWriter = {
 }
 
 export function createDraftWriter(options: DraftWriterOptions): DraftWriter {
-	const delay = options.delay ?? DRAFT_WRITE_DELAY
-	const maxWait = options.maxWait ?? DRAFT_MAX_WAIT
+	const delayMs = options.delayMs ?? DRAFT_WRITE_DELAY_MS
+	const maxWaitMs = options.maxWaitMs ?? DRAFT_MAX_WAIT_MS
 
 	/** Passed back to `read` so a Block keeps its ord across a save that failed. */
 	let lastRead: readonly BlockRow[] = []
@@ -140,11 +140,11 @@ export function createDraftWriter(options: DraftWriterOptions): DraftWriter {
 
 	const scheduleSend = () => {
 		if (pauseTimer !== null) clearTimeout(pauseTimer)
-		pauseTimer = setTimeout(sendChange, delay)
+		pauseTimer = setTimeout(sendChange, delayMs)
 
 		// Started once and never restarted. A ceiling that resets on a keystroke
 		// is a second debounce, which is the thing it exists to backstop.
-		if (ceilingTimer === null) ceilingTimer = setTimeout(sendChange, maxWait)
+		if (ceilingTimer === null) ceilingTimer = setTimeout(sendChange, maxWaitMs)
 	}
 
 	return {

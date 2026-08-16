@@ -19,12 +19,11 @@ export interface DraftPanelProps {
 }
 
 /**
- * The writing surface. The writer owns everything in it — the Guide reads the
- * Draft and offers, and never writes here.
+ * The writing surface. It renders the Blocks it is handed and reports every
+ * change; loading and saving are `ArticleDraftPanel`'s.
  *
- * Structure is the writer's too: they type their own headings and place their
- * own section breaks, and Section Boundaries are inferred from what they wrote
- * rather than imposed on it.
+ * Who may write here, and why the writer places their own headings and section
+ * breaks, is docs/architecture.md §3 and §10.
  */
 export function DraftPanel({
 	blocks,
@@ -64,8 +63,8 @@ export function DraftPanel({
 	)
 }
 
-/** Quiet by design: a writer mid-sentence does not want a counter moving. Only
- * a save that has not landed is worth their attention. */
+/** Only a save in flight or one that failed is worth a writer's attention
+ * mid-sentence. */
 function SaveState({ status }: { status: DraftStatus }) {
 	if (status.state === 'failed') return <span className="text-accent-ink">not saved</span>
 	if (status.state === 'saving') return <>saving…</>

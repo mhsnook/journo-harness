@@ -108,7 +108,7 @@ export function memoryDraftStore(
 	}
 }
 
-function memoryOfferStore(seed: readonly Offer[]): OfferStore {
+export function memoryOfferStore(seed: readonly Offer[]): OfferStore {
 	const rows = seed.map((offer) => ({ ...offer }))
 
 	const find = (id: string): Offer => {

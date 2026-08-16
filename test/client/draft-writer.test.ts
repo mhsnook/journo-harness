@@ -2,8 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
 	createDraftWriter,
-	DRAFT_MAX_WAIT,
-	DRAFT_WRITE_DELAY,
+	DRAFT_MAX_WAIT_MS,
+	DRAFT_WRITE_DELAY_MS,
 	type DraftStatus,
 } from '../../src/client/draft/writer'
 import type { BlockRow, DraftChange, DraftSaved } from '../../src/shared/draft'
@@ -72,7 +72,7 @@ describe('cadence', () => {
 		}
 		expect(draft.sent).toHaveLength(0)
 
-		await vi.advanceTimersByTimeAsync(DRAFT_WRITE_DELAY)
+		await vi.advanceTimersByTimeAsync(DRAFT_WRITE_DELAY_MS)
 		expect(draft.sent).toHaveLength(1)
 	})
 
@@ -93,7 +93,7 @@ describe('cadence', () => {
 		draft.type([block('a', 1, 'x')])
 
 		// Typing every 200ms would push a restarting ceiling out for ever.
-		for (let i = 0; i < Math.floor(DRAFT_MAX_WAIT / 200) - 1; i += 1) {
+		for (let i = 0; i < Math.floor(DRAFT_MAX_WAIT_MS / 200) - 1; i += 1) {
 			await vi.advanceTimersByTimeAsync(200)
 			draft.type([block('a', 1, 'x'.repeat(i + 2))])
 		}
@@ -109,7 +109,7 @@ describe('the delta', () => {
 		const draft = harness([block('a', 1), block('b', 2), block('c', 3)])
 
 		draft.type([block('a', 1), block('b', 2, 'rewritten'), block('c', 3)])
-		await vi.advanceTimersByTimeAsync(DRAFT_WRITE_DELAY)
+		await vi.advanceTimersByTimeAsync(DRAFT_WRITE_DELAY_MS)
 
 		expect(draft.sent[0].blocks.map((row) => row.id)).toEqual(['b'])
 	})
@@ -118,7 +118,7 @@ describe('the delta', () => {
 		const draft = harness([block('a', 1), block('b', 2)])
 
 		draft.type([block('a', 1)])
-		await vi.advanceTimersByTimeAsync(DRAFT_WRITE_DELAY)
+		await vi.advanceTimersByTimeAsync(DRAFT_WRITE_DELAY_MS)
 
 		expect(draft.sent[0].removed).toEqual(['b'])
 	})
@@ -129,7 +129,7 @@ describe('the delta', () => {
 		const draft = harness([block('a', 1)])
 
 		draft.type([block('a', 1, 'edited')])
-		await vi.advanceTimersByTimeAsync(DRAFT_WRITE_DELAY)
+		await vi.advanceTimersByTimeAsync(DRAFT_WRITE_DELAY_MS)
 
 		expect(draft.sent[0].removed).toEqual([])
 	})
@@ -139,7 +139,7 @@ describe('the delta', () => {
 
 		draft.type([block('a', 1, 'One, edited.')])
 		draft.type([block('a', 1, 'One.')])
-		await vi.advanceTimersByTimeAsync(DRAFT_WRITE_DELAY)
+		await vi.advanceTimersByTimeAsync(DRAFT_WRITE_DELAY_MS)
 
 		expect(draft.sent).toHaveLength(0)
 	})
@@ -150,15 +150,15 @@ describe('one save at a time', () => {
 		const draft = harness([block('a', 1)])
 
 		draft.type([block('a', 1, 'first')])
-		await vi.advanceTimersByTimeAsync(DRAFT_WRITE_DELAY)
+		await vi.advanceTimersByTimeAsync(DRAFT_WRITE_DELAY_MS)
 		expect(draft.sent).toHaveLength(1)
 
 		draft.type([block('a', 1, 'second')])
-		await vi.advanceTimersByTimeAsync(DRAFT_WRITE_DELAY * 2)
+		await vi.advanceTimersByTimeAsync(DRAFT_WRITE_DELAY_MS * 2)
 		expect(draft.sent).toHaveLength(1)
 
 		await draft.ok()
-		await vi.advanceTimersByTimeAsync(DRAFT_WRITE_DELAY)
+		await vi.advanceTimersByTimeAsync(DRAFT_WRITE_DELAY_MS)
 		expect(draft.sent).toHaveLength(2)
 	})
 })
@@ -168,12 +168,12 @@ describe('a save that fails', () => {
 		const draft = harness([block('a', 1)])
 
 		draft.type([block('a', 1, 'edited')])
-		await vi.advanceTimersByTimeAsync(DRAFT_WRITE_DELAY)
+		await vi.advanceTimersByTimeAsync(DRAFT_WRITE_DELAY_MS)
 		await draft.fail()
 
 		expect(draft.writer.status.state).toBe('failed')
 
-		await vi.advanceTimersByTimeAsync(DRAFT_MAX_WAIT * 3)
+		await vi.advanceTimersByTimeAsync(DRAFT_MAX_WAIT_MS * 3)
 		expect(draft.sent).toHaveLength(1)
 	})
 
@@ -181,13 +181,13 @@ describe('a save that fails', () => {
 		const draft = harness([block('a', 1), block('b', 2)])
 
 		draft.type([block('a', 1, 'edited'), block('b', 2)])
-		await vi.advanceTimersByTimeAsync(DRAFT_WRITE_DELAY)
+		await vi.advanceTimersByTimeAsync(DRAFT_WRITE_DELAY_MS)
 		await draft.fail()
 
 		// `b` was never dirty, so only `a` is owed — but `a` is still owed,
 		// because the baseline did not move when the save failed.
 		draft.type([block('a', 1, 'edited'), block('b', 2)])
-		await vi.advanceTimersByTimeAsync(DRAFT_WRITE_DELAY)
+		await vi.advanceTimersByTimeAsync(DRAFT_WRITE_DELAY_MS)
 
 		expect(draft.sent[1].blocks.map((row) => row.id)).toEqual(['a'])
 	})
@@ -198,7 +198,7 @@ describe('status', () => {
 		const draft = harness([block('a', 1)])
 
 		draft.type([block('a', 1, 'edited')])
-		await vi.advanceTimersByTimeAsync(DRAFT_WRITE_DELAY)
+		await vi.advanceTimersByTimeAsync(DRAFT_WRITE_DELAY_MS)
 		await draft.ok()
 
 		expect(draft.writer.status).toMatchObject({ state: 'clean', savedAt: 1_001 })
@@ -227,7 +227,7 @@ describe('dispose', () => {
 
 		draft.type([block('a', 1, 'edited')])
 		draft.writer.dispose()
-		await vi.advanceTimersByTimeAsync(DRAFT_MAX_WAIT * 2)
+		await vi.advanceTimersByTimeAsync(DRAFT_MAX_WAIT_MS * 2)
 
 		expect(draft.sent).toHaveLength(1)
 	})
@@ -240,7 +240,7 @@ describe('dispose', () => {
 		await draft.ok()
 
 		draft.writer.touch()
-		await vi.advanceTimersByTimeAsync(DRAFT_WRITE_DELAY)
+		await vi.advanceTimersByTimeAsync(DRAFT_WRITE_DELAY_MS)
 		expect(draft.sent).toHaveLength(1)
 	})
 })

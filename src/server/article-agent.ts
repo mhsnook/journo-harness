@@ -90,9 +90,8 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 	/** Runs on every wake, so every statement here has to be idempotent. A new
 	 * table can join this one. A new column cannot go in bare — SQLite has no
 	 * ADD COLUMN IF NOT EXISTS, so the second wake throws on a duplicate and
-	 * takes the Chat and the Plan down with it. Guard one with
-	 * `SELECT name FROM pragma_table_info('block')` and skip the ALTER when the
-	 * column is already there. */
+	 * takes the Chat and the Plan down with it. `pragma_table_info` is what makes
+	 * a guarded ALTER possible when a column does have to change. */
 	onStart(): void {
 		this.sql`
 			CREATE TABLE IF NOT EXISTS offer (
@@ -320,10 +319,10 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 	 * Block it has already seen, so a second tab's paragraph is not something
 	 * this one can delete.
 	 *
-	 * The content is stored, never inspected. The client is the Draft's only
-	 * writer, the same way it is the Plan's, and reading the document here would
-	 * put the editor's schema in the Worker. What is checked is size, because
-	 * that is the failure the writer cannot see coming.
+	 * The content is stored, not inspected — §3 leaves the client as the Draft's
+	 * only writer, and reading the document here would put the editor's schema in
+	 * the Worker. Size is checked, because that is the failure the writer cannot
+	 * see coming.
 	 */
 	@callable()
 	saveBlocks(change: unknown): DraftSaved {

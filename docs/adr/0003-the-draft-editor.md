@@ -30,8 +30,9 @@ need.
 
 **TipTap over bare ProseMirror**, on cost alone. `StarterKit` carries the marks and
 keymaps, and `UniqueID` reproduces the Block-id contract that otherwise wants a hand-written
-`appendTransaction`, split and merge handling included. Bare ProseMirror stays reachable:
-`ProposedBreaks` in `src/client/draft/annotations.ts` is a raw ProseMirror plugin.
+`appendTransaction`, split and merge handling included. Bare ProseMirror stays reachable
+underneath: the prototype's decoration plugin is a raw ProseMirror one running unchanged
+under TipTap, on `prototype/14-draft-editor`.
 
 ### Why the others lost
 
@@ -90,16 +91,17 @@ easier rather than harder.
 
 ## Consequences
 
-- **The comment mark needs `inclusive: false` and `keepOnSplit: false`.** They guard
+- **A comment mark needs `inclusive: false` and `keepOnSplit: false`.** They guard
   opposite edges. Without both, prose written beside a comment silently joins it. Text typed
   _within_ a marked run does join it, and should: the alternative shatters a comment
   whenever the writer fixes a typo inside it.
 - **A widget decoration needs `stopEvent`.** Otherwise pressing a button on one makes the
   editor recompute the decorations and rebuild the button between mousedown and mouseup, so
   the press never lands. Every affordance drawn over the Draft meets this.
-- **The schema must carry the comment mark before any Block is stored.** Content holding a
-  mark the schema does not know is dropped when it is parsed, so registering it later means
-  the Drafts written in between cannot be read back.
+- **Adding a mark later is safe; changing one is not.** ProseMirror drops content carrying a
+  mark its schema does not know, so a Draft written while a mark exists and read after it is
+  removed loses that content silently. Drafts written before a mark exists carry none of it
+  and read back whole, which is why the comment mark is not in the schema yet.
 - **A Block is a top-level child of the document, whatever kind it is.** `toEntries` reads
   the doc's own children rather than filtering by node type, so a bulleted list or a
   blockquote is one Block. A list of admitted types would drift — both are reachable from an
@@ -111,10 +113,11 @@ easier rather than harder.
   never wrote. `assignOrds` renumbers the whole document when that happens — one save of
   every row, which is the right price for never reordering prose. Base-62 string indices
   would remove the case; `assignOrds` is the only place that would change.
-- **Two comments cannot overlap the same passage.** The mark holds one `commentId`, so a
-  second comment across the same words replaces the first. Lexical's `MarkNode` carries an
-  array and does not have this limit. Either an array attribute or `excludes: ''` lifts it —
-  neither is tested, and it is worth a spike before threads are built rather than after.
+- **A mark holding one id cannot carry overlapping comments.** The one written for the
+  prototype held a single `commentId`, so a second comment across the same words replaced the
+  first. Lexical's `MarkNode` carries an array and has no such limit. Either an array
+  attribute or `excludes: ''` lifts it — neither is tested, and it is worth a spike before
+  threads are built rather than after.
 - **A Block stores the editor's own JSON, not a neutral format.** Both engines read and
   write HTML, and the ids already ride as `data-block-id` and `data-comment-id` attributes,
   so changing engines later is a conversion pass over stored Blocks rather than a rewrite.

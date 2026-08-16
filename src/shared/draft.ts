@@ -4,9 +4,8 @@ import { z } from 'zod'
  * The Draft — context.md. One row per Block, meaning per paragraph, ordered by
  * a fractional index so inserting between two Blocks renumbers neither.
  *
- * Nothing here names the editor. A Block's content is the editor's own document
- * JSON, carried as an opaque object, so `src/shared` stays free of TipTap and a
- * change of editor is a conversion of stored rows rather than a change of shape.
+ * A Block's content is the editor's own JSON, carried as an opaque object —
+ * docs/adr/0003 for why, and for what changing editor would then cost.
  */
 
 /** One Block's content, as the editor serialises it. */

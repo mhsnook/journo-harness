@@ -7,7 +7,7 @@ import { ArticleDraftPanel } from '../../src/client/draft/ArticleDraftPanel'
 import { ArticleProvider, type DraftStore } from '../../src/client/lib/article'
 import type { BlockRow } from '../../src/shared/draft'
 import { ARTICLE_TITLE } from '../mock/content'
-import { memoryDraftStore } from '../mock/MockArticle'
+import { memoryDraftStore, memoryOfferStore } from '../mock/MockArticle'
 
 const meta = {
 	title: 'Panels/Draft',
@@ -38,7 +38,7 @@ function DraftScreen({ store }: { store: DraftStore }) {
 		<ArticleProvider
 			value={{
 				draft: store,
-				offers: null as never,
+				offers: memoryOfferStore([]),
 				plan: { plan: null, edit: () => null, refusal: null, rejected: null },
 			}}
 		>
