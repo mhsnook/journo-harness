@@ -114,4 +114,33 @@
 	.prose-draft p + p {
 		margin-top: 1.1em;
 	}
+
+	/* A list is one Block, so it is one thing on the page: the marker and the
+	   indent are what say so, and the items inside it sit closer than
+	   paragraphs do. */
+	.prose-draft ul,
+	.prose-draft ol {
+		margin-top: 1.1em;
+		padding-left: 1.5em;
+	}
+
+	.prose-draft ul {
+		list-style: disc;
+	}
+
+	.prose-draft ol {
+		list-style: decimal;
+	}
+
+	.prose-draft li p + p,
+	.prose-draft li + li {
+		margin-top: 0.25em;
+	}
+
+	.prose-draft blockquote {
+		margin-top: 1.1em;
+		padding-left: 1em;
+		border-left: 2px solid var(--color-edge);
+		color: var(--color-muted);
+	}
 }

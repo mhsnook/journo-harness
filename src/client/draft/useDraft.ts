@@ -1,0 +1,97 @@
+import type { Editor } from '@tiptap/react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+
+import type { BlockRow } from '../../shared/draft'
+import type { DraftStore } from '../lib/article'
+import { failureText } from '../lib/failure'
+import { toRows } from './blocks'
+import { createDraftWriter, type DraftStatus } from './writer'
+
+export type DraftConnection = {
+	/** The Blocks the Article Agent holds, and null until they arrive. */
+	blocks: BlockRow[] | null
+	/** Why the Draft could not be read. Nothing is rendered to write in when
+	 * this is set: an empty surface would say the Draft is empty when it is not. */
+	failure: string | null
+	status: DraftStatus
+	/** Hand the editor over once it has mounted, so a save can read it. */
+	attach: (editor: Editor) => void
+	/** The editor changed. */
+	touch: () => void
+}
+
+/**
+ * Reads the Draft once and writes it back as the writer types — §3, rule 2.
+ *
+ * Nothing reloads it. Blocks have one writer, this client, so there is no
+ * second author to have moved them, and re-reading would only risk taking the
+ * server's copy over what is on screen.
+ */
+export function useDraft(store: DraftStore): DraftConnection {
+	const [blocks, setBlocks] = useState<BlockRow[] | null>(null)
+	const [failure, setFailure] = useState<string | null>(null)
+	const [status, setStatus] = useState<DraftStatus>({ state: 'clean', savedAt: null })
+
+	const editor = useRef<Editor | null>(null)
+
+	const held = useRef<ReturnType<typeof createDraftWriter> | null>(null)
+	held.current ??= createDraftWriter({
+		read: (previous) =>
+			editor.current === null ? previous : toRows(editor.current.state.doc, previous),
+		save: (change) => store.saveBlocks(change),
+		onStatus: setStatus,
+		describeFailure: (error) => failureText('The Draft did not save.', error) ?? '',
+	})
+	const writer = held.current
+
+	useEffect(() => {
+		let live = true
+
+		store.listBlocks().then(
+			(rows) => {
+				if (live) setBlocks(rows)
+			},
+			(error: unknown) => {
+				if (live) setFailure(failureText('The Draft did not open.', error))
+			},
+		)
+
+		return () => {
+			live = false
+		}
+	}, [store])
+
+	// Hiding the Draft Panel destroys effects, so this runs then as well as on
+	// the way out of the Article. The writer survives it — see `dispose`.
+	useEffect(() => () => writer.dispose(), [writer])
+
+	// The last save is the one most likely to be lost, so leaving with one owed
+	// asks first. Nothing can be sent from here: an RPC frame queued during
+	// unload may never leave the browser.
+	useEffect(() => {
+		if (status.state === 'clean') return
+
+		const ask = (event: BeforeUnloadEvent) => {
+			writer.flush()
+			event.preventDefault()
+		}
+
+		window.addEventListener('beforeunload', ask)
+		return () => window.removeEventListener('beforeunload', ask)
+	}, [status.state, writer])
+
+	const attach = useCallback(
+		(mounted: Editor) => {
+			editor.current = mounted
+
+			// Seeded from the editor's own document rather than from the rows, so a
+			// Block the editor read back unchanged is never rewritten. Seeding from
+			// the rows would make anything ProseMirror normalised look unsaved, and
+			// the first save would replace the stored copy with the normalised one.
+			writer.load(toRows(mounted.state.doc, blocks ?? []))
+		},
+		[blocks, writer],
+	)
+
+	return { blocks, failure, status, attach, touch: writer.touch }
+}

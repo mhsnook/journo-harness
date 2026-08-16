@@ -2,10 +2,12 @@ import { type ReactNode, useMemo, useState } from 'react'
 
 import {
 	ArticleProvider,
+	type DraftStore,
 	type OfferStore,
 	useArticle,
 } from '../../src/client/lib/article'
 import { createPlanWriter } from '../../src/client/plan/writer'
+import type { BlockRow, DraftChange } from '../../src/shared/draft'
 import {
 	missingOffer,
 	notDeclined,
@@ -36,8 +38,10 @@ export function MockArticle({ children }: { children: ReactNode }) {
 		return held
 	}, [])
 
-	// One store per story, since `useOfferLedger` reads rows once per store.
+	// One store per story, since `useOfferLedger` reads rows once per store and
+	// `useDraft` loads once per store.
 	const offers = useMemo(() => memoryOfferStore(seeded), [])
+	const draft = useMemo(() => memoryDraftStore(), [])
 
 	const edit = (next: Parameters<typeof writer.edit>[0]) => {
 		setRefusal(null)
@@ -46,7 +50,9 @@ export function MockArticle({ children }: { children: ReactNode }) {
 	}
 
 	return (
-		<ArticleProvider value={{ offers, plan: { plan, edit, refusal, rejected: null } }}>
+		<ArticleProvider
+			value={{ offers, draft, plan: { plan, edit, refusal, rejected: null } }}
+		>
 			{children}
 		</ArticleProvider>
 	)
@@ -63,6 +69,44 @@ export function useMockPlan(): Plan {
 }
 
 const blank = emptyPlan()
+
+/**
+ * A Draft held in memory. `stall` leaves the load unanswered so a story can
+ * show what the Panel does while it waits; `reject` refuses every save.
+ */
+export function memoryDraftStore(
+	options: {
+		seed?: readonly BlockRow[]
+		stall?: boolean
+		reject?: string
+	} = {},
+): DraftStore & { saves: DraftChange[] } {
+	const rows = new Map((options.seed ?? []).map((row) => [row.id, { ...row }]))
+	const saves: DraftChange[] = []
+
+	return {
+		saves,
+
+		listBlocks: () =>
+			options.stall === true
+				? new Promise<BlockRow[]>(() => {})
+				: Promise.resolve([...rows.values()].sort((a, b) => a.ord - b.ord)),
+
+		saveBlocks: (change: DraftChange) => {
+			saves.push(change)
+			if (options.reject !== undefined) return Promise.reject(new Error(options.reject))
+
+			for (const id of change.removed) rows.delete(id)
+			for (const block of change.blocks) rows.set(block.id, { ...block })
+
+			return Promise.resolve({
+				savedAt: Date.now(),
+				written: change.blocks.length,
+				removed: change.removed.length,
+			})
+		},
+	}
+}
 
 function memoryOfferStore(seed: readonly Offer[]): OfferStore {
 	const rows = seed.map((offer) => ({ ...offer }))

@@ -3,7 +3,7 @@ import { Activity, type ReactNode } from 'react'
 import { ArticleChatPanel } from '../chat/ArticleChatPanel'
 import { Panel, PanelHeader, type PanelProps } from '../components/Panel'
 import { PANELS, type PanelId } from '../components/PanelRail'
-import { DraftPanel } from '../draft/DraftPanel'
+import { ArticleDraftPanel } from '../draft/ArticleDraftPanel'
 import type { ArticleSocket } from '../lib/useArticleAgent'
 import { ArticlePlanPanel } from '../plan/ArticlePlanPanel'
 
@@ -56,7 +56,7 @@ function PanelFor({
 			return <ArticlePlanPanel divider={edge} />
 
 		case 'draft':
-			return <DraftPanel divider={edge} />
+			return <ArticleDraftPanel divider={edge} />
 
 		case 'notes':
 			// Notes is always the narrow one — screen 4(e).

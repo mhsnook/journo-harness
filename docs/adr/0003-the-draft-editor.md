@@ -2,10 +2,10 @@
 
 Status: accepted
 
-The Draft is one continuous text the writer edits for hours, stored as one party-db row per
-Block. Around it the Guide has to show things that are not prose — a note beside a
-paragraph, a section break it suggests, a passage someone commented on. This decides what
-the writing surface is built on, and where each of those things lives.
+The Draft is one continuous text the writer edits for hours, stored as one row per Block.
+Around it the Guide has to show things that are not prose — a note beside a paragraph, a
+section break it suggests, a passage someone commented on. This decides what the writing
+surface is built on, and where each of those things lives.
 
 Resolved on #14, which held ProseMirror and Lexical as working prototypes over the same
 typography. #7 fixed the Block shape, and #6 retired the previous argument for ProseMirror
@@ -100,9 +100,17 @@ easier rather than harder.
 - **The schema must carry the comment mark before any Block is stored.** Content holding a
   mark the schema does not know is dropped when it is parsed, so registering it later means
   the Drafts written in between cannot be read back.
+- **A Block is a top-level child of the document, whatever kind it is.** `toEntries` reads
+  the doc's own children rather than filtering by node type, so a bulleted list or a
+  blockquote is one Block. A list of admitted types would drift — both are reachable from an
+  input rule with no toolbar button — and a type left off it gets no id, so it is dropped on
+  the next save with nothing said. `topLevelTypes` reads the same set off the schema for
+  `UniqueID` to mint against.
 - **`ord` is a float midpoint and exhausts precision after roughly fifty splits in one
-  gap.** A Draft that reaches it needs base-62 string indices. `assignOrds` is the only
-  place that would change.
+  gap**, after which two Blocks share an ord and the Draft comes back in an order the writer
+  never wrote. `assignOrds` renumbers the whole document when that happens — one save of
+  every row, which is the right price for never reordering prose. Base-62 string indices
+  would remove the case; `assignOrds` is the only place that would change.
 - **Two comments cannot overlap the same passage.** The mark holds one `commentId`, so a
   second comment across the same words replaces the first. Lexical's `MarkNode` carries an
   array and does not have this limit. Either an array attribute or `excludes: ''` lifts it —
@@ -112,5 +120,14 @@ easier rather than harder.
   so changing engines later is a conversion pass over stored Blocks rather than a rewrite.
   Native JSON keeps full fidelity now and leaves that pass as the price of a change that may
   never come.
-- **Nothing is persisted yet.** The Panel holds the document in memory, and party-db arrives
-  with phase 2. `toRows` is the shape the sync layer takes, and is tested ahead of it.
+- **A save carries a delta, and a failed one is retried by the next keystroke.** The writer's
+  baseline is what the Article Agent acknowledged, never what it last attempted, so Blocks
+  owed after a failure ride the following save. Nothing retries on a timer: there is no
+  durable queue behind it, and a loop against a server that is refusing is a loop. The status
+  says "not saved" and stays saying it.
+- **Two tabs on one Draft is last-write-wins per Block.** A Block only one tab touched
+  survives, a Block one tab deleted can come back from the other, and ords computed against
+  two different views can interleave in an order neither tab saw. `updated_at` is written and
+  read by nothing, and is there so that case can be reasoned about afterwards.
+- **Nothing mirrors the Draft locally.** A crash loses at most the writing since the last
+  save, which is what the writer's ceiling bounds.
