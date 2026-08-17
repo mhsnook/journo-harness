@@ -18,6 +18,13 @@ Everything narrower still has to work — `usePanels` collapses the four Panels 
 56rem, and the Board View scrolls its columns sideways rather than shrinking them — but a
 design is tuned against 1298px rather than against the narrow end.
 
+Every story is drawn there too. The width is the `target` viewport in
+`.storybook/preview.tsx`, which Storybook applies in the showcase and
+`@storybook/addon-vitest` applies to each story test. Setting it in `vitest.config.ts`
+does not work: the addon resizes the page before every story, so a size set there is
+overwritten before anything is measured. `.storybook/vitest.setup.ts` asserts the width
+each story actually got, because that override is otherwise silent.
+
 ## The UI showcase
 
 We are generally a very "Storybook First" project, so every wireframe and component is

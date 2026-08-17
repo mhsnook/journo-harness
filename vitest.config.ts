@@ -85,9 +85,10 @@ export default defineConfig({
 						headless: true,
 						provider: playwright(),
 						instances: [{ browser: 'chromium' }],
-						// Wider and taller than the largest Frame any screen draws, so no
-						// story is measured against a squeezed viewport.
-						viewport: { width: 1280, height: 1024 },
+						// No `viewport` here. `@storybook/addon-vitest` resizes the page
+						// before each story, so a size set here is overwritten before
+						// anything is measured. The one every story is drawn at is the
+						// `target` viewport in .storybook/preview.tsx.
 					},
 				},
 			},
