@@ -15,6 +15,8 @@ export interface DraftPanelProps {
 	onAttach: (editor: Editor) => void
 	onChange: () => void
 	divider?: PanelProps['divider']
+	/** This Panel's share of the Panel row — `panelShare`. */
+	grow?: PanelProps['grow']
 	className?: string
 }
 
@@ -31,6 +33,7 @@ export function DraftPanel({
 	onAttach,
 	onChange,
 	divider,
+	grow,
 	className,
 }: DraftPanelProps) {
 	const editor = useEditor({
@@ -49,14 +52,19 @@ export function DraftPanel({
 	}, [editor, onAttach])
 
 	return (
-		<Panel className={className} divider={divider} padded={false}>
-			<div className="flex flex-col gap-2.5 p-3.5 pb-2">
+		<Panel className={className} divider={divider} grow={grow} padded={false}>
+			{/* Sticky, so the controls stay in reach however far down the Draft the
+			    writer has scrolled — and so does whether the last save landed. The
+			    Panel is the scroller, which is what this sticks against. */}
+			<div className="sticky top-0 z-10 flex flex-col gap-2.5 border-b border-rule bg-surface px-3.5 pt-3.5 pb-2.5">
 				<PanelHeader meta={<SaveState status={status} />} title="Draft" />
 				<Toolbar editor={editor} />
 				{status.state === 'failed' ? <Notice>{status.failure}</Notice> : null}
 			</div>
 
-			<div className="prose-draft min-w-0 flex-auto px-8 py-4 [&_.ProseMirror]:min-h-full [&_.ProseMirror]:outline-none [&_h2]:mt-6 [&_h2]:text-[1.05rem] [&_h2]:font-semibold [&_h3]:mt-5 [&_h3]:font-semibold [&_hr]:my-6 [&_hr]:border-t [&_hr]:border-edge">
+			{/* Heading, subheading, and section-break styling is `.prose-draft` in
+			    theme.css, so a Draft preview is set the same way as the editor. */}
+			<div className="prose-draft min-w-0 flex-auto px-8 py-4 [&_.ProseMirror]:min-h-full [&_.ProseMirror]:outline-none">
 				<EditorContent editor={editor} />
 			</div>
 		</Panel>
