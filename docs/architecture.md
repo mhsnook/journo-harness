@@ -355,9 +355,9 @@ Review. No routing machinery, no per-call-type model selection is included here.
 **The AI SDK follows from "Cloudflare throughout" (§2) rather than being chosen against
 alternatives.** `@cloudflare/ai-chat` declares `ai` and `@ai-sdk/react` as peer dependencies,
 and `workers-ai-provider` is an AI SDK provider whose `createWorkersAI` returns an `ai`
-`LanguageModel`. So the SDK arrives with `AIChatAgent` and the `env.AI` binding, and dropping
-it would mean dropping both. It stays provider-agnostic, which is what keeps the model swap
-above down to one string.
+`LanguageModel` over the `env.AI` binding. So the SDK arrives with both packages, and dropping
+it would mean dropping `AIChatAgent` and calling the binding by hand. It stays
+provider-agnostic, which is what keeps the model swap above down to one string.
 
 **The swappable boundary is the model instance, not a wrapper API.** AI SDK v7 already
 provides `generateText`, `streamText`, and `generateObject`; a wrapper would duplicate it and
