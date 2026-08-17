@@ -6,26 +6,8 @@ architectural decisions that go in the other doc.
 
 ## The screen we design for
 
-**The target screen is a 1298px-wide window.** That is the width a layout is judged at, and
-the width a screenshot should be taken at. Where two layouts are both defensible, the one
-that reads better at 1298px wins.
-
-The number is `--breakpoint-lg` in `src/client/styles/theme.css`, so a `lg:` utility is one
-the target screen gets and a `md:` utility is one it has had for a while. There are two
-breakpoints and no more: `md` at 768px and `lg` at 1298px. Both are in px because both name
-a window width. A component is free to set its own max-width in rem — `usePanels` collapses
-the Panels to tabs at 56rem — and that is a different question from where the screen turns.
-
-Everything narrower still has to work — `usePanels` collapses the four Panels to tabs under
-56rem, and the Board View scrolls its columns sideways rather than shrinking them — but a
-design is tuned against 1298px rather than against the narrow end.
-
-Every story is drawn there too. The width is the `target` viewport in
-`.storybook/preview.tsx`, which Storybook applies in the showcase and
-`@storybook/addon-vitest` applies to each story test. Setting it in `vitest.config.ts`
-does not work: the addon resizes the page before every story, so a size set there is
-overwritten before anything is measured. `.storybook/vitest.setup.ts` asserts the width
-each story actually got, because that override is otherwise silent.
+Our target screen is 1298px wide. That is the starting value for the `lg` breakpoint, and
+wherever possible we configure Storybook to use this width.
 
 ## The UI showcase
 
