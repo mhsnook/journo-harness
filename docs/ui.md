@@ -12,7 +12,9 @@ that reads better at 1298px wins.
 
 The number is `--breakpoint-lg` in `src/client/styles/theme.css`, so a `lg:` utility is one
 the target screen gets and a `md:` utility is one it has had for a while. There are two
-breakpoints and no more: `md` at 48rem and `lg` at 1298px.
+breakpoints and no more: `md` at 768px and `lg` at 1298px. Both are in px because both name
+a window width. A component is free to set its own max-width in rem — `usePanels` collapses
+the Panels to tabs at 56rem — and that is a different question from where the screen turns.
 
 Everything narrower still has to work — `usePanels` collapses the four Panels to tabs under
 56rem, and the Board View scrolls its columns sideways rather than shrinking them — but a

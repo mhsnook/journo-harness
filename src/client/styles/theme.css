@@ -57,8 +57,10 @@
 
 	--radius-frame: 0.625rem;
 
+	/* Two breakpoints and no more, both in px because both name a window width.
+	   `lg` is the target screen — docs/ui.md. */
 	--breakpoint-*: initial;
-	--breakpoint-md: 48rem; /* 768px */
+	--breakpoint-md: 768px;
 	--breakpoint-lg: 1298px;
 
 	/* One depth, cast in whichever direction the thing lifts: the outermost
