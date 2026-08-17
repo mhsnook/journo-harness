@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import type { Note, NoteDisposition } from '../../src/shared/note'
 import { restoredTo } from '../../src/shared/note'
-import { notesQueue, openNotes, wholeQueue } from '../../src/shared/notes-queue'
+import { notesQueue, wholeQueue } from '../../src/shared/notes-queue'
 
 /** One Note row, with the fields a test does not care about filled in. */
 function makeNote(id: string, disposition: NoteDisposition): Note {
@@ -68,17 +68,9 @@ describe('the Notes queue', () => {
 	})
 
 	it('counts an accepted Note as still owed, and a resolved one as finished', () => {
-		expect(notesQueue(notes).open).toBe(2)
-	})
-})
-
-describe('what a Review is bound by', () => {
-	it('carries the accepted Notes and nothing else', () => {
-		expect(openNotes(notes).map((note) => note.id)).toEqual(['b', 'e'])
-	})
-
-	it('leaves a declined Note out, so a later Review cannot re-argue it', () => {
-		expect(openNotes(notes).map((note) => note.disposition)).not.toContain('declined')
+		// Resolving moves a Note to its own disposition, so the accepted count is
+		// already "still owed" and nothing has to say that twice.
+		expect(notesQueue(notes).counts.accepted).toBe(2)
 	})
 })
 

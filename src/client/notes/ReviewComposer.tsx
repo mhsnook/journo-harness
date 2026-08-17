@@ -22,12 +22,6 @@ export interface ReviewComposerProps {
 	className?: string
 }
 
-/** What the writer reads on each dial setting. */
-const depthLabel: Record<ReviewDepth, string> = {
-	quick: 'quick',
-	thorough: 'thorough',
-}
-
 export function ReviewComposer({ skills, running, onRun }: ReviewComposerProps) {
 	const [prompt, setPrompt] = useState('')
 	// Thorough by default. A quick pass is the one to ask for, not the one to
@@ -85,7 +79,7 @@ export function ReviewComposer({ skills, running, onRun }: ReviewComposerProps) 
 							pressed={depth === one}
 							size="sm"
 						>
-							{depthLabel[one]}
+							{one}
 						</Button>
 					))}
 				</ButtonGroup>

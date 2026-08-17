@@ -640,8 +640,9 @@ Three things follow:
   a field: in-memory state does not survive hibernation.
 - **Settling a Round broadcasts `review_finished`.** Rows have no sync (§3), so this is the
   one thing that tells a waiting client. A client that was away reads the rows when the
-  Panel opens instead, and one that was connected through a dropped socket falls back to a
-  poll while it waits.
+  Panel opens instead, and one whose socket dropped mid-Review falls back to a poll — of
+  the Rounds alone, because re-running the whole read would pull the Draft back every few
+  seconds to answer one question about one row.
 
 **A Note is a type, an anchor, a short label, and a body.** `type` is a free string, because
 `context.md` calls the list illustrative rather than a fixed taxonomy — the suggested set

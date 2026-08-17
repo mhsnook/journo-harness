@@ -1,28 +1,17 @@
 import { MockLanguageModelV3 } from 'ai/test'
-import { env, runInDurableObject } from 'cloudflare:test'
 import { describe, expect, it, vi } from 'vitest'
 
-import type { ArticleAgent } from '../../src/server/article-agent'
 import type { NoteAnchor } from '../../src/shared/note'
 import type { ReviewOutput, Round } from '../../src/shared/review'
 import { makeNode, makePlan } from '../shared/plan-fixtures'
 import { openAgentSocket } from './agent-socket'
+import { inAgent, noUsage, scriptModel, stopped } from './scripted'
 
 /**
- * The Review, end to end inside the Article Agent — `docs/architecture.md` §3
- * and §7.
- *
- * No test calls a model, for the reason `chat-turn.test.ts` gives: Workers AI
- * is a remote-only binding and `vitest.config.ts` keeps remote bindings off.
- * What these drive is `reviewModel()`, replaced with a scripted one, so the
- * boundary under test is what the Article Agent does with a model's answer.
+ * The Review, end to end inside the Article Agent — `docs/architecture.md` §3,
+ * §7, and §12. What these drive is `reviewModel()`, replaced with a scripted
+ * one — `scripted.ts` for why no test calls a real model.
  */
-
-/** Token counts a real provider fills in. Nothing here reads them. */
-const noUsage = {
-	inputTokens: { total: 0, noCache: 0, cacheRead: 0, cacheWrite: 0 },
-	outputTokens: { total: 0, text: 0, reasoning: 0 },
-}
 
 /** A model that answers `generateObject` with this JSON, once per call. A
  * second element is what a refused first answer retries into. */
@@ -32,7 +21,7 @@ function answers(...bodies: string[]) {
 	return new MockLanguageModelV3({
 		doGenerate: async () => ({
 			content: [{ type: 'text' as const, text: bodies[call++] ?? '' }],
-			finishReason: { unified: 'stop' as const, raw: undefined },
+			finishReason: stopped,
 			usage: noUsage,
 			warnings: [],
 		}),
@@ -48,23 +37,9 @@ function fails(why: string) {
 	})
 }
 
-function stub(name: string) {
-	return env.ArticleAgent.get(env.ArticleAgent.idFromName(name))
-}
-
-function inAgent<T>(
-	name: string,
-	run: (agent: ArticleAgent) => T | Promise<T>,
-): Promise<T> {
-	return runInDurableObject(stub(name), run)
-}
-
-/** Put a scripted model behind the Article Agent's Review boundary. */
-function scriptModel(name: string, model: MockLanguageModelV3): Promise<void> {
-	return inAgent(name, (agent) => {
-		agent.reviewModel = () => model
-	})
-}
+/** Put a scripted model behind the Review's model boundary. */
+const scriptReview = (name: string, model: MockLanguageModelV3) =>
+	scriptModel(name, 'reviewModel', model)
 
 /** The Round, once it has stopped running. `startReview` answers as soon as the
  * row exists and the model call carries on under `waitUntil`, so every test
@@ -129,7 +104,7 @@ const ask = {
 describe('running a Review', () => {
 	it('answers with a running Round before the model has said anything', async () => {
 		await openAgentSocket('review-starts')
-		await scriptModel('review-starts', answers(response({ kind: 'article' })))
+		await scriptReview('review-starts', answers(response({ kind: 'article' })))
 
 		const round = await inAgent('review-starts', (agent) => agent.startReview(ask))
 
@@ -140,7 +115,7 @@ describe('running a Review', () => {
 
 	it('writes the response and its Notes as rows', async () => {
 		await openAgentSocket('review-writes')
-		await scriptModel(
+		await scriptReview(
 			'review-writes',
 			answers(response({ kind: 'blocks', blockIds: ['b2'] })),
 		)
@@ -173,7 +148,7 @@ describe('running a Review', () => {
 
 	it('settles an anchor naming a paragraph the Draft does not carry', async () => {
 		await openAgentSocket('review-anchor')
-		await scriptModel(
+		await scriptReview(
 			'review-anchor',
 			answers(response({ kind: 'blocks', blockIds: ['never-existed'] })),
 		)
@@ -192,7 +167,7 @@ describe('running a Review', () => {
 
 	it('settles an anchor against the Plan the Review was shown, not the stored one', async () => {
 		await openAgentSocket('review-newer-plan')
-		await scriptModel(
+		await scriptReview(
 			'review-newer-plan',
 			answers(response({ kind: 'section', nodeId: 'n1' })),
 		)
@@ -210,7 +185,7 @@ describe('running a Review', () => {
 
 	it('records a failure on the Round, where the writer will find it', async () => {
 		await openAgentSocket('review-fails')
-		await scriptModel('review-fails', fails('The model is having a day.'))
+		await scriptReview('review-fails', fails('The model is having a day.'))
 		await inAgent('review-fails', (agent) => agent.startReview(ask))
 
 		const round = await settled('review-fails')
@@ -222,7 +197,7 @@ describe('running a Review', () => {
 
 	it('runs one Review at a time on an Article', async () => {
 		await openAgentSocket('review-one')
-		await scriptModel('review-one', answers(response({ kind: 'article' })))
+		await scriptReview('review-one', answers(response({ kind: 'article' })))
 
 		await expect(
 			inAgent('review-one', (agent) => {
@@ -232,9 +207,44 @@ describe('running a Review', () => {
 		).rejects.toThrow(/still running/)
 	})
 
+	it('carries the accepted Notes into the next Review, and nothing else', async () => {
+		const model = answers(
+			response({ kind: 'article' }),
+			response({ kind: 'article' }),
+			response({ kind: 'article' }),
+		)
+		await openAgentSocket('review-bound')
+		await scriptReview('review-bound', model)
+
+		// Three Rounds, so there is one Note in each disposition to choose from.
+		for (const _ of [1, 2, 3]) {
+			await inAgent('review-bound', (agent) => agent.startReview(ask))
+			await settled('review-bound')
+		}
+
+		const notes = await inAgent('review-bound', (agent) => agent.listNotes())
+		await inAgent('review-bound', (agent) => {
+			agent.setNoteDisposition(notes[0].id, 'accepted')
+			agent.setNoteDisposition(notes[1].id, 'declined')
+			agent.setNoteDisposition(notes[2].id, 'accepted')
+			agent.resolveNote(notes[2].id)
+		})
+
+		await inAgent('review-bound', (agent) => agent.startReview(ask))
+		await settled('review-bound')
+
+		// The pack's Notes message names only the accepted, unresolved one: a
+		// declined Note is the writer saying no, and a resolved one is finished.
+		const asked = model.doGenerateCalls[model.doGenerateCalls.length - 1]
+		const sent = JSON.stringify(asked.prompt)
+
+		expect(sent).toContain('already accepted from earlier Rounds')
+		expect(sent.match(/Cut to a clause/g)).toHaveLength(1)
+	})
+
 	it('says which Round settled, because nothing else would', async () => {
 		const reader = await openAgentSocket('review-frame')
-		await scriptModel('review-frame', answers(response({ kind: 'article' })))
+		await scriptReview('review-frame', answers(response({ kind: 'article' })))
 
 		const round = await inAgent('review-frame', (agent) => agent.startReview(ask))
 
@@ -248,7 +258,7 @@ describe('ruling on a Note', () => {
 	/** One Article with one proposed Note on it. */
 	async function withNote(name: string) {
 		await openAgentSocket(name)
-		await scriptModel(name, answers(response({ kind: 'article' })))
+		await scriptReview(name, answers(response({ kind: 'article' })))
 		await inAgent(name, (agent) => agent.startReview(ask))
 		await settled(name)
 

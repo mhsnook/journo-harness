@@ -2,6 +2,7 @@ import type { Note } from '../../shared/note'
 import { Button } from '../components/Button'
 import { cx } from '../lib/cx'
 import { type AnchorNaming, anchorLabel } from './anchors'
+import type { NoteRulings } from './rulings'
 
 /**
  * One Note, wherever it is read. The written response and the queue both draw
@@ -15,26 +16,14 @@ import { type AnchorNaming, anchorLabel } from './anchors'
 export interface NoteCardProps {
 	note: Note
 	naming: AnchorNaming
+	rulings: NoteRulings
 	/** The queue's running number: "01". The response numbers nothing, because
 	 * the tranche it sits in is the grouping there. */
 	ordinal?: number
-	onAccept: (note: Note) => void
-	onDecline: (note: Note) => void
-	onResolve: (note: Note) => void
-	onRestore: (note: Note) => void
 	className?: string
 }
 
-export function NoteCard({
-	note,
-	naming,
-	ordinal,
-	onAccept,
-	onDecline,
-	onResolve,
-	onRestore,
-	className,
-}: NoteCardProps) {
+export function NoteCard({ note, naming, rulings, ordinal, className }: NoteCardProps) {
 	const anchor = anchorLabel(note.anchor, naming)
 	const settled = note.disposition === 'declined' || note.disposition === 'resolved'
 
@@ -42,9 +31,10 @@ export function NoteCard({
 		ordinal === undefined ? null : String(ordinal).padStart(2, '0'),
 		anchor.text,
 		note.label,
-		note.disposition === 'declined' ? 'declined' : null,
-		note.disposition === 'resolved' ? 'resolved' : null,
-	].filter((part): part is string => part !== null && part !== '')
+		// Only a settled Note says which way it went: proposed is what every card
+		// starts as, and accepted is already the accent wash below.
+		settled ? note.disposition : null,
+	].filter((part) => part !== undefined && part !== null)
 
 	return (
 		<article
@@ -72,13 +62,7 @@ export function NoteCard({
 			</p>
 
 			<div className="mt-0.5 flex flex-wrap gap-1.5">
-				<Actions
-					note={note}
-					onAccept={onAccept}
-					onDecline={onDecline}
-					onResolve={onResolve}
-					onRestore={onRestore}
-				/>
+				<Actions note={note} rulings={rulings} />
 			</div>
 		</article>
 	)
@@ -86,20 +70,14 @@ export function NoteCard({
 
 /** Every disposition offers a way forward and a way back, so no ruling is a
  * dead end the writer has to live with. */
-function Actions({
-	note,
-	onAccept,
-	onDecline,
-	onResolve,
-	onRestore,
-}: Omit<NoteCardProps, 'naming' | 'ordinal' | 'className'>) {
+function Actions({ note, rulings }: { note: Note; rulings: NoteRulings }) {
 	if (note.disposition === 'proposed') {
 		return (
 			<>
-				<Button onClick={() => onAccept(note)} size="sm">
+				<Button onClick={() => rulings.accept(note)} size="sm">
 					accept
 				</Button>
-				<Button onClick={() => onDecline(note)} size="sm" variant="quiet">
+				<Button onClick={() => rulings.decline(note)} size="sm" variant="quiet">
 					decline
 				</Button>
 			</>
@@ -109,10 +87,10 @@ function Actions({
 	if (note.disposition === 'accepted') {
 		return (
 			<>
-				<Button onClick={() => onResolve(note)} size="sm">
+				<Button onClick={() => rulings.resolve(note)} size="sm">
 					resolve
 				</Button>
-				<Button onClick={() => onRestore(note)} size="sm" variant="link">
+				<Button onClick={() => rulings.restore(note)} size="sm" variant="link">
 					undo
 				</Button>
 			</>
@@ -120,7 +98,7 @@ function Actions({
 	}
 
 	return (
-		<Button onClick={() => onRestore(note)} size="sm" variant="link">
+		<Button onClick={() => rulings.restore(note)} size="sm" variant="link">
 			undo
 		</Button>
 	)

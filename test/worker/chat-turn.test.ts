@@ -1,6 +1,6 @@
 import type { ModelMessage, UIMessage } from 'ai'
 import { MockLanguageModelV3, simulateReadableStream } from 'ai/test'
-import { env, runInDurableObject } from 'cloudflare:test'
+import { env } from 'cloudflare:test'
 import { describe, expect, it } from 'vitest'
 
 import { chatTurn } from '../../src/server/llm/chat-turn'
@@ -8,6 +8,7 @@ import { chatPackMessages } from '../../src/server/llm/prompt'
 import type { ProposalInput } from '../../src/shared/plan'
 import { makeNode, makePlan } from '../shared/plan-fixtures'
 import { type Frame, openAgentSocket } from './agent-socket'
+import { calledATool, noUsage, scriptModel, stopped } from './scripted'
 
 /**
  * The server side of a Chat turn — docs/architecture.md §6 and §7.
@@ -27,17 +28,6 @@ import { type Frame, openAgentSocket } from './agent-socket'
 type StreamResult = Awaited<ReturnType<MockLanguageModelV3['doStream']>>
 type StreamPart = StreamResult['stream'] extends ReadableStream<infer Part> ? Part : never
 type GenerateResult = Awaited<ReturnType<MockLanguageModelV3['doGenerate']>>
-
-/** How a turn ended. A provider also reports its own raw reason, and nothing
- * here reads that. */
-const stopped = { unified: 'stop' as const, raw: undefined }
-const calledATool = { unified: 'tool-calls' as const, raw: undefined }
-
-/** Token counts a real provider fills in. Nothing here reads them. */
-const noUsage = {
-	inputTokens: { total: 0, noCache: 0, cacheRead: 0, cacheWrite: 0 },
-	outputTokens: { total: 0, text: 0, reasoning: 0 },
-}
 
 /** One scripted turn read back as a whole answer rather than as a stream, for
  * the calls that do not stream. `repairToolCall` is the one that matters: it
@@ -115,15 +105,11 @@ function proposes(...inputs: string[]) {
 	return scripted(inputs.map(proposalTurn))
 }
 
-/** Put a scripted model behind the Article Agent's model boundary. The model
- * records the calls made against it, so the caller keeps its own reference and
- * reads the prompt pack off `doStreamCalls`. */
-async function scriptModel(name: string, model: MockLanguageModelV3): Promise<void> {
-	const stub = env.ArticleAgent.get(env.ArticleAgent.idFromName(name))
-	await runInDurableObject(stub, (agent) => {
-		agent.chatModel = () => model
-	})
-}
+/** Put a scripted model behind the Chat's model boundary. The model records the
+ * calls made against it, so the caller keeps its own reference and reads the
+ * prompt pack off `doStreamCalls`. */
+const scriptChat = (name: string, model: MockLanguageModelV3) =>
+	scriptModel(name, 'chatModel', model)
 
 const plan = makePlan({
 	title: 'The permit queue',
@@ -144,7 +130,7 @@ const types = (chunks: Frame[]) => chunks.map((chunk) => chunk.type)
 describe('a Chat turn', () => {
 	it('returns a Proposal as a suspended tool call', async () => {
 		const writer = await openAgentSocket('chat-proposal')
-		await scriptModel('chat-proposal', proposes(JSON.stringify({ ops: proposal })))
+		await scriptChat('chat-proposal', proposes(JSON.stringify({ ops: proposal })))
 
 		const chunks = await writer.chat('Give the opening a word count.', { plan })
 
@@ -160,7 +146,7 @@ describe('a Chat turn', () => {
 
 	it('returns prose with no tool call', async () => {
 		const writer = await openAgentSocket('chat-prose')
-		await scriptModel('chat-prose', speaks('Four hundred words fits that opening.'))
+		await scriptChat('chat-prose', speaks('Four hundred words fits that opening.'))
 
 		const chunks = await writer.chat('Is four hundred words right for the opening?', {
 			plan,
@@ -179,7 +165,7 @@ describe('a Chat turn', () => {
 	it('packs the guide rules, then the conversation, then the Plan', async () => {
 		const writer = await openAgentSocket('chat-pack')
 		const model = speaks('Noted.')
-		await scriptModel('chat-pack', model)
+		await scriptChat('chat-pack', model)
 
 		await writer.chat('What is the opening for?', { plan })
 
@@ -254,7 +240,7 @@ describe('a Chat turn', () => {
 	it('offers both tools to the model', async () => {
 		const writer = await openAgentSocket('chat-tools')
 		const model = speaks('Noted.')
-		await scriptModel('chat-tools', model)
+		await scriptChat('chat-tools', model)
 
 		await writer.chat('Anything to say about the outline?', { plan })
 
@@ -275,7 +261,7 @@ describe('a Chat turn', () => {
 		writer.setState(plan)
 		await reader.next('cf_agent_state')
 		const model = speaks('Noted.')
-		await scriptModel('chat-no-body', model)
+		await scriptChat('chat-no-body', model)
 
 		await writer.chat('What is the opening for?')
 
@@ -295,7 +281,7 @@ describe('a Chat turn', () => {
 			],
 		})
 		const model = proposes(withExtraField, JSON.stringify({ ops: proposal }))
-		await scriptModel('chat-retry', model)
+		await scriptChat('chat-retry', model)
 
 		const chunks = await writer.chat('Give the opening a word count.', { plan })
 
@@ -321,7 +307,7 @@ describe('a Chat turn', () => {
 			],
 		})
 		const model = proposes(withExtraField, withExtraField)
-		await scriptModel('chat-retry-exhausted', model)
+		await scriptChat('chat-retry-exhausted', model)
 
 		const chunks = await writer.chat('Give the opening a word count.', { plan })
 
@@ -338,7 +324,7 @@ describe('a Chat turn', () => {
 
 	it('keeps the transcript in the Agents SDK store, and the Plan out of it', async () => {
 		const writer = await openAgentSocket('chat-transcript')
-		await scriptModel('chat-transcript', speaks('Noted.'))
+		await scriptChat('chat-transcript', speaks('Noted.'))
 
 		await writer.chat('What is the opening for?', { plan })
 

@@ -22,16 +22,12 @@ export function ArticleNotesPanel({ divider, grow, className }: ArticleNotesPane
 			grow={grow}
 			loading={screen.loading}
 			naming={screen.naming}
-			onAccept={screen.accept}
-			onDecline={screen.decline}
 			onRead={screen.read}
-			onResolve={screen.resolve}
-			onRestore={screen.restore}
 			onRun={screen.runReview}
 			onView={screen.setView}
 			queue={screen.queue}
 			rounds={screen.rounds}
-			running={screen.running}
+			rulings={screen.rulings}
 			skills={screen.skills.skills}
 			view={screen.view}
 		/>

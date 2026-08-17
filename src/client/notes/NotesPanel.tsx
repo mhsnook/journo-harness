@@ -1,4 +1,3 @@
-import type { Note } from '../../shared/note'
 import type { NotesQueue, QueueView } from '../../shared/notes-queue'
 import type { ReviewDepth, Round } from '../../shared/review'
 import { Chip } from '../components/Chip'
@@ -8,6 +7,7 @@ import { dateAndTime } from '../lib/when'
 import type { AnchorNaming } from './anchors'
 import { NoteCard } from './NoteCard'
 import { ReviewComposer } from './ReviewComposer'
+import type { NoteRulings } from './rulings'
 import type { Skill } from './skills'
 
 /**
@@ -24,19 +24,16 @@ import type { Skill } from './skills'
 
 export interface NotesPanelProps {
 	queue: NotesQueue
+	/** Every Round, oldest first. Which one is running and which was the last to
+	 * finish are read off this rather than passed beside it. */
 	rounds: readonly Round[]
-	/** The Review in flight, and null when none is. */
-	running: Round | null
 	loading: boolean
 	failure: string | null
 	view: QueueView
 	onView: (view: QueueView) => void
 	naming: AnchorNaming
+	rulings: NoteRulings
 	skills: readonly Skill[]
-	onAccept: (note: Note) => void
-	onDecline: (note: Note) => void
-	onResolve: (note: Note) => void
-	onRestore: (note: Note) => void
 	onRun: (prompt: string, depth: ReviewDepth) => void
 	/** Opens one Round's written response, which is where the reasoning is. */
 	onRead: (round: Round) => void
@@ -49,23 +46,20 @@ export interface NotesPanelProps {
 export function NotesPanel({
 	queue,
 	rounds,
-	running,
 	loading,
 	failure,
 	view,
 	onView,
 	naming,
+	rulings,
 	skills,
-	onAccept,
-	onDecline,
-	onResolve,
-	onRestore,
 	onRun,
 	onRead,
 	divider,
 	grow,
 	className,
 }: NotesPanelProps) {
+	const running = rounds.find((round) => round.state === 'running') ?? null
 	const latest = [...rounds].reverse().find((round) => round.state === 'done') ?? null
 
 	return (
@@ -82,7 +76,7 @@ export function NotesPanel({
 					data-scroller=""
 				>
 					<PanelHeader
-						meta={queue.counts.all === 0 ? undefined : `${queue.open} open`}
+						meta={queue.counts.all === 0 ? undefined : `${queue.counts.accepted} open`}
 						title="Notes"
 					/>
 
@@ -127,11 +121,8 @@ export function NotesPanel({
 					<Queue
 						loading={loading}
 						naming={naming}
-						onAccept={onAccept}
-						onDecline={onDecline}
-						onResolve={onResolve}
-						onRestore={onRestore}
 						queue={queue}
+						rulings={rulings}
 						view={view}
 					/>
 				</div>
@@ -149,21 +140,8 @@ function Queue({
 	view,
 	loading,
 	naming,
-	onAccept,
-	onDecline,
-	onResolve,
-	onRestore,
-}: Pick<
-	NotesPanelProps,
-	| 'queue'
-	| 'view'
-	| 'loading'
-	| 'naming'
-	| 'onAccept'
-	| 'onDecline'
-	| 'onResolve'
-	| 'onRestore'
->) {
+	rulings,
+}: Pick<NotesPanelProps, 'queue' | 'view' | 'loading' | 'naming' | 'rulings'>) {
 	if (loading) {
 		return <p className="text-[0.75rem] text-faint">Opening the Notes…</p>
 	}
@@ -194,11 +172,8 @@ function Queue({
 					key={note.id}
 					naming={naming}
 					note={note}
-					onAccept={onAccept}
-					onDecline={onDecline}
-					onResolve={onResolve}
-					onRestore={onRestore}
 					ordinal={index + 1}
+					rulings={rulings}
 				/>
 			))}
 		</div>

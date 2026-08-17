@@ -22,20 +22,14 @@ export const wholeQueue: QueueView = { acceptedOnly: false, showResolved: false 
 export type NotesQueue = {
 	/** What to draw, in the order the Guide wrote them. */
 	visible: readonly Note[]
-	byDisposition: Record<NoteDisposition, Note[]>
-	/** `all` included, so the filter chips read from one place. */
+	/**
+	 * `all` included, so the filter chips read from one place.
+	 *
+	 * `accepted` is also what the writer still owes the piece: resolving moves a
+	 * Note to its own disposition, so the accepted count already means "accepted
+	 * and not yet resolved" and nothing needs to say that twice.
+	 */
 	counts: Record<'all' | NoteDisposition, number>
-	/** Accepted and not yet resolved — what the writer still owes the piece. */
-	open: number
-}
-
-/**
- * What a Review is bound by: the Notes the writer has taken on and not yet
- * resolved. A declined Note is the writer saying no, so re-offering it is the
- * one thing a later Review should not do, and a resolved one is finished.
- */
-export function openNotes(notes: readonly Note[]): Note[] {
-	return notes.filter((note) => note.disposition === 'accepted')
 }
 
 /** Derived on read. The rows arrive whole from their store, so a second copy
@@ -44,26 +38,16 @@ export function notesQueue(
 	notes: readonly Note[],
 	view: QueueView = wholeQueue,
 ): NotesQueue {
-	const byDisposition: Record<NoteDisposition, Note[]> = {
-		proposed: [],
-		accepted: [],
-		declined: [],
-		resolved: [],
+	const counts: Record<'all' | NoteDisposition, number> = {
+		all: notes.length,
+		proposed: 0,
+		accepted: 0,
+		declined: 0,
+		resolved: 0,
 	}
-	for (const note of notes) byDisposition[note.disposition].push(note)
+	for (const note of notes) counts[note.disposition] += 1
 
-	return {
-		visible: notes.filter((note) => shows(note.disposition, view)),
-		byDisposition,
-		counts: {
-			all: notes.length,
-			proposed: byDisposition.proposed.length,
-			accepted: byDisposition.accepted.length,
-			declined: byDisposition.declined.length,
-			resolved: byDisposition.resolved.length,
-		},
-		open: byDisposition.accepted.length,
-	}
+	return { visible: notes.filter((note) => shows(note.disposition, view)), counts }
 }
 
 /** Mock 8(c), stated once: a resolved Note waits to be asked for, and a

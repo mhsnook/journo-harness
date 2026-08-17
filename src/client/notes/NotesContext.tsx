@@ -41,6 +41,9 @@ export function NotesProvider({
 
 	const reading = notes.rounds.find((round) => round.id === readingId) ?? null
 
+	// Not memoised. `useNotes` hands back a fresh object each render, so a memo
+	// here would never hit — and the allocations worth avoiding are the ones over
+	// every Note and every Block, which `useNotes` memoises itself.
 	return (
 		<NotesContext.Provider
 			value={{

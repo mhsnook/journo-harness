@@ -2,13 +2,19 @@ import { useAgent } from 'agents/react'
 import { useMemo, useRef } from 'react'
 
 import type { BlockRow, DraftChange, DraftSaved } from '../../shared/draft'
+import { isFrame } from '../../shared/frame'
 import type { Note, NoteRuling } from '../../shared/note'
 import type { Offer, Ruling } from '../../shared/offer'
 import type { Plan } from '../../shared/plan'
-import { isReviewFinished, type ReviewRequest, type Round } from '../../shared/review'
+import {
+	type ReviewFinished,
+	reviewFinishedFrame,
+	type ReviewRequest,
+	type Round,
+} from '../../shared/review'
 import { usePlanChannel } from '../plan/usePlan'
 import type { Article, DraftStore, NoteStore, OfferStore } from './article'
-import { listeners, parseFrame } from './frames'
+import { parseFrame } from './frames'
 
 /**
  * Opens one Article Agent and hands out the three things that ride its one
@@ -41,19 +47,24 @@ export function useArticleAgent(articleId: string): ArticleConnection {
 	const socket = useRef<ArticleSocket | null>(null)
 	const channel = usePlanChannel(() => socket.current)
 
-	// Built once and kept for the socket's life, so a Notes Panel that mounts and
-	// unmounts adds and removes a listener rather than replacing the registry.
-	const reviews = useMemo(() => listeners<string>(), [])
+	// Kept for the socket's life, so a Notes Panel that mounts and unmounts adds
+	// and removes a listener rather than replacing the set.
+	const waiting = useMemo(() => new Set<(roundId: string) => void>(), [])
 
 	const agent = useAgent<Plan>({
 		agent: 'article-agent',
 		name: articleId,
 		onStateUpdate: channel.onStateUpdate,
+		// Parsed once and offered to both readers. A streamed Chat reply is
+		// hundreds of frames, and each reader parsing for itself would double that
+		// work for every one of them.
 		onMessage: (event: MessageEvent) => {
-			channel.onMessage(event)
-
 			const frame = parseFrame(event.data)
-			if (isReviewFinished(frame)) reviews.send(frame.roundId)
+
+			channel.onFrame(frame)
+			if (isFrame<ReviewFinished>(frame, reviewFinishedFrame)) {
+				waiting.forEach((listen) => listen(frame.roundId))
+			}
 		},
 	})
 
@@ -98,9 +109,13 @@ export function useArticleAgent(articleId: string): ArticleConnection {
 				call<Note>(socket, 'setNoteDisposition', [id, ruling]),
 			resolveNote: (id: string) => call<Note>(socket, 'resolveNote', [id]),
 			restoreNote: (id: string) => call<Note>(socket, 'restoreNote', [id]),
-			onReviewFinished: reviews.add,
+			onReviewFinished: (listen) => {
+				waiting.add(listen)
+
+				return () => waiting.delete(listen)
+			},
 		}),
-		[reviews],
+		[waiting],
 	)
 
 	return { article: { offers, draft, notes, plan: channel.connection }, agent }

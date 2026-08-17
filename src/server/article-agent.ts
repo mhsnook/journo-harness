@@ -12,6 +12,7 @@ import {
 	draftChangeSchema,
 	type DraftSaved,
 } from '../shared/draft'
+import { reasonFor } from '../shared/failure'
 import {
 	alreadyRuled,
 	missingNote,
@@ -26,7 +27,6 @@ import {
 	restoredTo,
 	settleAnchor,
 } from '../shared/note'
-import { openNotes } from '../shared/notes-queue'
 import {
 	type Disposition,
 	missingOffer,
@@ -39,13 +39,13 @@ import {
 } from '../shared/offer'
 import {
 	emptyPlan,
-	type OutlineNode,
 	type Plan,
 	type PlanRefused,
 	planSchema,
 	type ReferenceContent,
 	referenceContentSchema,
 	type ReferenceType,
+	sectionIds,
 	type Source,
 } from '../shared/plan'
 import {
@@ -157,21 +157,6 @@ function toNote(row: NoteDbRow): Note {
 		createdAt: row.created_at,
 		decidedAt: row.decided_at,
 	}
-}
-
-/** Every Section id a Plan carries, for settling a Note's anchor. */
-function planNodeIds(plan: Plan): Set<string> {
-	const ids = new Set<string>()
-
-	const walk = (nodes: readonly OutlineNode[]) => {
-		for (const node of nodes) {
-			ids.add(node.id)
-			walk(node.children)
-		}
-	}
-	walk(plan.outline)
-
-	return ids
 }
 
 /** `duplicate` means the row was already there and nothing was written. */
@@ -586,7 +571,7 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 			// and state where the client sent none.
 			plan: asked.plan ?? this.state,
 			blocks: this.listBlocks(),
-			notes: openNotes(this.listNotes()),
+			notes: this.openNotes(),
 			prompt: asked.prompt,
 		}
 
@@ -599,8 +584,7 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 
 			this.writeReview(round, output, pack)
 		} catch (error) {
-			const reason = error instanceof Error ? error.message : String(error)
-			this.settleRound(round.id, 'failed', [], reason)
+			this.failRound(round.id, reasonFor(error))
 		}
 
 		// Rows have no sync (§3), so this is the only thing that tells a waiting
@@ -617,12 +601,12 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 	 */
 	private writeReview(round: Round, output: ReviewOutput, pack: ReviewPack): void {
 		const known = {
-			nodeIds: planNodeIds(pack.plan),
+			nodeIds: sectionIds(pack.plan),
 			blockIds: new Set(pack.blocks.map((block) => block.id)),
 		}
 
 		const parts = output.parts.map((part): RoundPart => {
-			const noteIds = part.notes.map((note) => this.createNote(round.id, note, known).id)
+			const noteIds = part.notes.map((note) => this.createNote(round.id, note, known))
 
 			return {
 				prose: part.prose,
@@ -634,17 +618,25 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 		this.settleRound(round.id, 'done', parts, null)
 	}
 
-	/** Starts proposed. Not `@callable`: the Guide writes the Notes and the
-	 * writer never authors one (§3, rule 4). */
+	/**
+	 * One Note row, and the id the part names it by. Starts proposed.
+	 *
+	 * Not `@callable`: the Guide writes the Notes and the writer never authors one
+	 * (§3, rule 4). It answers with the id rather than the Note, because the id is
+	 * all a part carries and reading the row back would parse the anchor this just
+	 * wrote.
+	 */
 	private createNote(
 		roundId: string,
 		content: NoteContent,
 		known: { nodeIds: ReadonlySet<string>; blockIds: ReadonlySet<string> },
-	): Note {
-		const rows = this.sql<NoteDbRow>`
+	): string {
+		const id = crypto.randomUUID()
+
+		this.sql`
 			INSERT INTO note (id, round_id, type, anchor, label, body, disposition, created_at, decided_at)
 			VALUES (
-				${crypto.randomUUID()},
+				${id},
 				${roundId},
 				${content.type},
 				${JSON.stringify(settleAnchor(content.anchor, known))},
@@ -654,10 +646,23 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 				${Date.now()},
 				NULL
 			)
-			RETURNING *
 		`
 
-		return toNote(rows[0])
+		return id
+	}
+
+	/**
+	 * What the next Review is bound by — the Notes the writer accepted and has not
+	 * resolved.
+	 *
+	 * Filtered in SQL rather than by reading every Note and dropping most of them:
+	 * an Article ten Rounds in holds hundreds of rows, and each one read costs a
+	 * `JSON.parse` of its anchor to produce a handful the pack will use.
+	 */
+	private openNotes(): Note[] {
+		return this.sql<NoteDbRow>`
+			SELECT * FROM note WHERE disposition = 'accepted' ORDER BY seq
+		`.map(toNote)
 	}
 
 	private settleRound(
@@ -674,6 +679,12 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 				finished_at = ${Date.now()}
 			WHERE id = ${id}
 		`
+	}
+
+	/** A Review that threw. The reason goes on the row because the writer may
+	 * have left, and a thrown call has nowhere to land — §12. */
+	private failRound(id: string, failure: string): void {
+		this.settleRound(id, 'failed', [], failure)
 	}
 
 	/** The writer's ruling on one proposed Note. */

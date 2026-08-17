@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import type { Plan, Refusal } from '../../shared/plan'
 import { isPlanRefused } from '../../shared/plan'
-import { parseFrame } from '../lib/frames'
 import { createPlanWriter, type PlanEdit } from './writer'
 
 /**
@@ -30,7 +29,9 @@ export type PlanChannel = {
 	connection: PlanConnection
 	/** The two `useAgent` handlers the Plan needs. */
 	onStateUpdate: (state: Plan, source: 'server' | 'client') => void
-	onMessage: (event: MessageEvent) => void
+	/** One frame off the socket, already parsed by `useArticleAgent` — the Plan
+	 * reads the ones it recognises and ignores the rest. */
+	onFrame: (frame: unknown) => void
 }
 
 /** `socket` is a getter, because `useAgent` has none to give on the first render
@@ -66,10 +67,9 @@ export function usePlanChannel(socket: () => PlanSocket | null): PlanChannel {
 		if (source === 'server') writer.receive(state)
 	}
 
-	const onMessage = (event: MessageEvent) => {
-		const frame = parseFrame(event.data)
+	const onFrame = (frame: unknown) => {
 		if (isPlanRefused(frame)) setRejected(frame.error)
 	}
 
-	return { connection: { plan, edit, refusal, rejected }, onStateUpdate, onMessage }
+	return { connection: { plan, edit, refusal, rejected }, onStateUpdate, onFrame }
 }

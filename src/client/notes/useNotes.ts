@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import type { BlockRow } from '../../shared/draft'
 import type { Note } from '../../shared/note'
@@ -12,6 +12,7 @@ import type { ReviewDepth, Round } from '../../shared/review'
 import { useArticle } from '../lib/article'
 import { failureText } from '../lib/failure'
 import { type AnchorNaming, anchorNaming } from './anchors'
+import type { NoteRulings } from './rulings'
 
 /**
  * The Notes Panel's half of one Article Agent — the Rounds, the Notes, and the
@@ -38,10 +39,9 @@ export type NotesHandle = {
 	setView: (view: QueueView) => void
 	/** How an anchor is turned into "¶3" or "§2". */
 	naming: AnchorNaming
-	accept: (note: Note) => void
-	decline: (note: Note) => void
-	resolve: (note: Note) => void
-	restore: (note: Note) => void
+	/** The four ways one Note moves, in one object because every surface that
+	 * draws a Note passes all four through. */
+	rulings: NoteRulings
 	runReview: (prompt: string, depth: ReviewDepth) => void
 }
 
@@ -49,6 +49,10 @@ export type NotesHandle = {
  * The broadcast is the signal; this covers a socket that dropped while the
  * Review ran, which would otherwise leave "reviewing…" on screen for good. */
 const WAITING_POLL = 5_000
+
+/** The backstop's own failures are not worth a sentence: the writer is already
+ * being told the Review is running, and the next tick tries again. */
+const ignore = () => {}
 
 export function useNotes(): NotesHandle {
 	const { notes: store, draft, plan: connection } = useArticle()
@@ -92,27 +96,77 @@ export function useNotes(): NotesHandle {
 	useEffect(() => store.onReviewFinished(reload), [store, reload])
 
 	const running = (rounds ?? []).find((round) => round.state === 'running') ?? null
+	const waitingOn = running === null ? null : running.id
 
+	// The backstop, for a socket that dropped while a Review ran and so never
+	// carried the frame. It reads the Rounds and nothing else: the full load
+	// would pull the whole Draft back every five seconds to answer one question
+	// about one row, and it is the Rounds that say whether the answer changed.
 	useEffect(() => {
-		if (running === null) return
+		if (waitingOn === null) return
 
-		const timer = setInterval(reload, WAITING_POLL)
+		let live = true
 
-		return () => clearInterval(timer)
-	}, [running, reload])
+		const check = () => {
+			store.listRounds().then((listed) => {
+				if (!live) return
 
-	/** In place: a ruling does not change the order the Guide wrote them in. */
-	function replace(ruled: Note) {
-		setNotes((held) => (held ?? []).map((note) => (note.id === ruled.id ? ruled : note)))
-	}
+				setRounds(listed)
+				// Settled, so the Notes it wrote are worth reading now.
+				const still = listed.find((round) => round.id === waitingOn)
+				if (still?.state !== 'running') reload()
+			}, ignore)
+		}
 
-	function rule(what: string, write: () => Promise<Note>) {
-		setFailure(null)
-		write().then(replace, (error: unknown) => setFailure(failureText(what, error)))
-	}
+		const timer = setInterval(check, WAITING_POLL)
+
+		return () => {
+			live = false
+			clearInterval(timer)
+		}
+	}, [store, waitingOn, reload])
+
+	// Built once per store, so the four callbacks keep their identity and the
+	// surfaces below them can be compared by it.
+	const rulings = useMemo<NoteRulings>(() => {
+		/** In place: a ruling does not change the order the Guide wrote them in. */
+		const replace = (ruled: Note) =>
+			setNotes((held) =>
+				(held ?? []).map((note) => (note.id === ruled.id ? ruled : note)),
+			)
+
+		const rule = (what: string, write: () => Promise<Note>) => {
+			setFailure(null)
+			write().then(replace, (error: unknown) => setFailure(failureText(what, error)))
+		}
+
+		return {
+			accept: (note) =>
+				rule('This Note was not accepted.', () =>
+					store.setNoteDisposition(note.id, 'accepted'),
+				),
+			decline: (note) =>
+				rule('This Note was not declined.', () =>
+					store.setNoteDisposition(note.id, 'declined'),
+				),
+			resolve: (note) =>
+				rule('This Note was not resolved.', () => store.resolveNote(note.id)),
+			restore: (note) =>
+				rule('This Note was not restored.', () => store.restoreNote(note.id)),
+		}
+	}, [store])
+
+	// Both memoised: the Article screen re-renders on every keystroke the writer
+	// makes in the Plan, and each of these allocates over every Note or every
+	// Block in the piece.
+	const queue = useMemo(() => notesQueue(notes ?? [], view), [notes, view])
+	const naming = useMemo(
+		() => anchorNaming(connection.plan, blocks),
+		[connection.plan, blocks],
+	)
 
 	return {
-		queue: notesQueue(notes ?? [], view),
+		queue,
 		notes: notes ?? [],
 		rounds: rounds ?? [],
 		running,
@@ -120,20 +174,8 @@ export function useNotes(): NotesHandle {
 		failure,
 		view,
 		setView,
-		naming: anchorNaming(connection.plan, blocks),
-
-		accept: (note) =>
-			rule('This Note was not accepted.', () =>
-				store.setNoteDisposition(note.id, 'accepted'),
-			),
-		decline: (note) =>
-			rule('This Note was not declined.', () =>
-				store.setNoteDisposition(note.id, 'declined'),
-			),
-		resolve: (note) =>
-			rule('This Note was not resolved.', () => store.resolveNote(note.id)),
-		restore: (note) =>
-			rule('This Note was not restored.', () => store.restoreNote(note.id)),
+		naming,
+		rulings,
 
 		runReview: (prompt, depth) => {
 			setFailure(null)

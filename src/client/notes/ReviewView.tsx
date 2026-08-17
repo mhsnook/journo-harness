@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 
 import type { Note } from '../../shared/note'
 import type { Round, RoundPart } from '../../shared/review'
@@ -10,6 +10,7 @@ import { Panel } from '../components/Panel'
 import { dateAndTime } from '../lib/when'
 import type { AnchorNaming } from './anchors'
 import { NoteCard } from './NoteCard'
+import type { NoteRulings } from './rulings'
 
 /**
  * One Review, read whole — mock 8(b). It takes the window rather than sitting
@@ -30,10 +31,7 @@ export interface ReviewViewProps {
 	/** For the history picker. */
 	rounds: readonly Round[]
 	naming: AnchorNaming
-	onAccept: (note: Note) => void
-	onDecline: (note: Note) => void
-	onResolve: (note: Note) => void
-	onRestore: (note: Note) => void
+	rulings: NoteRulings
 	onOpenRound: (round: Round) => void
 	onBack: () => void
 	onSaveSkill: (name: string) => void
@@ -45,17 +43,13 @@ export function ReviewView({
 	notes,
 	rounds,
 	naming,
-	onAccept,
-	onDecline,
-	onResolve,
-	onRestore,
+	rulings,
 	onOpenRound,
 	onBack,
 	onSaveSkill,
 	className,
 }: ReviewViewProps) {
-	const byId = new Map(notes.map((note) => [note.id, note]))
-	const rule = { onAccept, onDecline, onResolve, onRestore }
+	const byId = useMemo(() => new Map(notes.map((note) => [note.id, note])), [notes])
 
 	return (
 		<Panel className={className} padded={false}>
@@ -106,7 +100,7 @@ export function ReviewView({
 				) : null}
 
 				{round.parts.map((part, index) => (
-					<Part key={index} byId={byId} naming={naming} part={part} {...rule} />
+					<Part byId={byId} key={index} naming={naming} part={part} rulings={rulings} />
 				))}
 
 				{round.state === 'done' ? (
@@ -122,7 +116,18 @@ export function ReviewView({
 /** What the writer asked for, echoed so the response reads as an answer, and
  * the one control that keeps the prompt for next time. */
 function TheAsk({ round, onSave }: { round: Round; onSave: (name: string) => void }) {
+	// Null is "not naming it", and a string is the name being typed. The one
+	// place that tells them apart is `naming` below.
 	const [name, setName] = useState<string | null>(null)
+	const naming = name !== null
+
+	const save = () => {
+		const named = name?.trim() ?? ''
+		if (named === '') return
+
+		onSave(named)
+		setName(null)
+	}
 
 	return (
 		<div className="flex flex-col gap-2 rounded-lg border border-edge bg-sunk p-3">
@@ -131,40 +136,30 @@ function TheAsk({ round, onSave }: { round: Round; onSave: (name: string) => voi
 				{round.prompt}
 			</p>
 
-			{name === null ? (
-				<Button className="self-start" onClick={() => setName('')} size="sm">
-					save as review skill
-				</Button>
-			) : (
+			{naming ? (
 				<div className="flex items-center gap-2">
 					<TextField
 						className="flex-1"
 						hiddenLabel="What to call this Skill"
 						onChange={setName}
 						onKeyDown={(event) => {
-							if (event.key !== 'Enter' || name.trim() === '') return
-
-							onSave(name.trim())
-							setName(null)
+							if (event.key === 'Enter') save()
 						}}
 						placeholder="name it — repetition, verify sources…"
 						size="sm"
-						value={name}
+						value={name ?? ''}
 					/>
-					<Button
-						disabled={name.trim() === ''}
-						onClick={() => {
-							onSave(name.trim())
-							setName(null)
-						}}
-						size="sm"
-					>
+					<Button disabled={name?.trim() === ''} onClick={save} size="sm">
 						save
 					</Button>
 					<Button onClick={() => setName(null)} size="sm" variant="quiet">
 						cancel
 					</Button>
 				</div>
+			) : (
+				<Button className="self-start" onClick={() => setName('')} size="sm">
+					save as review skill
+				</Button>
 			)}
 		</div>
 	)
@@ -176,18 +171,12 @@ function Part({
 	part,
 	byId,
 	naming,
-	onAccept,
-	onDecline,
-	onResolve,
-	onRestore,
+	rulings,
 }: {
 	part: RoundPart
 	byId: ReadonlyMap<string, Note>
 	naming: AnchorNaming
-	onAccept: (note: Note) => void
-	onDecline: (note: Note) => void
-	onResolve: (note: Note) => void
-	onRestore: (note: Note) => void
+	rulings: NoteRulings
 }) {
 	// A row the response names and the store does not have is dropped rather than
 	// drawn empty. It means a read raced a write, and the next read fixes it.
@@ -213,14 +202,14 @@ function Part({
 						{proposed.length === 0 ? null : (
 							<div className="ml-auto flex items-center gap-1.5">
 								<Button
-									onClick={() => proposed.forEach(onAccept)}
+									onClick={() => proposed.forEach(rulings.accept)}
 									size="sm"
 									variant="link"
 								>
 									accept all
 								</Button>
 								<Button
-									onClick={() => proposed.forEach(onDecline)}
+									onClick={() => proposed.forEach(rulings.decline)}
 									size="sm"
 									variant="link"
 								>
@@ -231,15 +220,7 @@ function Part({
 					</div>
 
 					{notes.map((note) => (
-						<NoteCard
-							key={note.id}
-							naming={naming}
-							note={note}
-							onAccept={onAccept}
-							onDecline={onDecline}
-							onResolve={onResolve}
-							onRestore={onRestore}
-						/>
+						<NoteCard key={note.id} naming={naming} note={note} rulings={rulings} />
 					))}
 				</div>
 			)}

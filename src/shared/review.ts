@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import { type Note, noteContentSchema } from './note'
+import { noteContentSchema } from './note'
 import { planSchema } from './plan'
 
 /**
@@ -55,7 +55,6 @@ export const reviewPartSchema = z.strictObject({
 	label: z.string().min(1).optional(),
 	notes: z.array(noteContentSchema),
 })
-export type ReviewPart = z.infer<typeof reviewPartSchema>
 
 /** What the model answers with, whole. */
 export const reviewOutputSchema = z.strictObject({
@@ -106,12 +105,6 @@ export type Round = {
 	finishedAt: number | null
 }
 
-/** A Round and the Notes it wrote, in the order the response puts them. */
-export type ReviewResponse = {
-	round: Round
-	notes: readonly Note[]
-}
-
 /**
  * One Review at a time per Article.
  *
@@ -122,10 +115,6 @@ export type ReviewResponse = {
  */
 export function reviewAlreadyRunning(round: Round): Error {
 	return new Error(`Round ${round.ordinal} is still running on this Article.`)
-}
-
-export function missingRound(id: string): Error {
-	return new Error(`No Round carries the id ${id}.`)
 }
 
 /**
@@ -141,11 +130,4 @@ export type ReviewFinished = {
 	roundId: string
 }
 
-/** Pick it out of everything else on the multiplexed socket. */
-export function isReviewFinished(frame: unknown): frame is ReviewFinished {
-	return (
-		typeof frame === 'object' &&
-		frame !== null &&
-		(frame as { type?: unknown }).type === 'review_finished'
-	)
-}
+export const reviewFinishedFrame = 'review_finished'

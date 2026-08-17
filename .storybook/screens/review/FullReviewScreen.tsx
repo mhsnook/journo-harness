@@ -45,15 +45,12 @@ function TheReview() {
 		<ReviewView
 			naming={screen.naming}
 			notes={screen.notes}
-			onAccept={screen.accept}
 			onBack={screen.close}
-			onDecline={screen.decline}
 			onOpenRound={screen.read}
-			onResolve={screen.resolve}
-			onRestore={screen.restore}
 			onSaveSkill={(name) => screen.skills.save({ name, prompt: reviewRound.prompt })}
 			round={screen.reading}
 			rounds={screen.rounds}
+			rulings={screen.rulings}
 		/>
 	)
 }

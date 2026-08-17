@@ -140,7 +140,7 @@ function notesMessage(notes: readonly Note[]): ModelMessage {
 export type ReviewPack = {
 	plan: Plan
 	blocks: readonly BlockRow[]
-	/** Accepted and unresolved — `openNotes`. */
+	/** The Notes still in play — accepted and not yet resolved. */
 	notes: readonly Note[]
 	/** What the writer typed. */
 	prompt: string

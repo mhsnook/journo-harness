@@ -15,17 +15,34 @@ import { outlineEntries, sectionLabel } from '../plan/outline'
  */
 
 export type AnchorNaming = {
-	/** Null until the Plan arrives, which only costs a Section anchor its number. */
-	plan: Plan | null
+	/** Whether the Plan has arrived. A Section anchor can only be numbered once
+	 * it has, and "not yet" is not the same answer as "gone" — §8. */
+	planned: boolean
+	/** Section id → what the Outline numbers it, "2" or "2.1". */
+	sections: ReadonlyMap<string, string>
 	/** Where each Block sits, from the Draft as it was last saved. */
 	ordinals: ReadonlyMap<string, number>
 }
 
+/**
+ * Built once per Plan and Draft, not once per card.
+ *
+ * Both lookups are maps rather than searches because every Note on screen asks
+ * one of these questions on every render, and the writer types beside them —
+ * walking the Outline per card would walk it a hundred times a keystroke.
+ */
 export function anchorNaming(
 	plan: Plan | null,
 	blocks: readonly BlockRow[],
 ): AnchorNaming {
-	return { plan, ordinals: blockOrdinals(blocks) }
+	const sections = new Map<string, string>()
+	if (plan !== null) {
+		for (const entry of outlineEntries(plan.outline)) {
+			sections.set(entry.node.id, entry.ordinal)
+		}
+	}
+
+	return { planned: plan !== null, sections, ordinals: blockOrdinals(blocks) }
 }
 
 /**
@@ -47,15 +64,13 @@ export function anchorLabel(anchor: NoteAnchor, naming: AnchorNaming): AnchorLab
 		// A Plan that has not arrived is not a Section that is gone — §8. The
 		// number is what is missing, so the card says which kind of thing it points
 		// at and fills the number in when the Plan lands.
-		if (naming.plan === null) return { text: 'a Section', orphaned: false }
+		if (!naming.planned) return { text: 'a Section', orphaned: false }
 
-		const entry = outlineEntries(naming.plan.outline).find(
-			(one) => one.node.id === anchor.nodeId,
-		)
+		const ordinal = naming.sections.get(anchor.nodeId)
 
-		return entry === undefined
+		return ordinal === undefined
 			? { text: 'a Section that is gone', orphaned: true }
-			: { text: sectionLabel(entry), orphaned: false }
+			: { text: sectionLabel({ ordinal }), orphaned: false }
 	}
 
 	// A run is the span from its first paragraph to its last, so the two ends are

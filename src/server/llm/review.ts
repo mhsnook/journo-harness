@@ -1,5 +1,6 @@
 import { generateObject, type LanguageModel, type ModelMessage } from 'ai'
 
+import { reasonFor } from '../../shared/failure'
 import {
 	type ReviewDepth,
 	type ReviewOutput,
@@ -66,12 +67,10 @@ export async function reviewTurn({
 /** What the model is told about its own refused answer. `generateObject` throws
  * on both a schema mismatch and unparseable JSON, and the message names which. */
 function correction(error: unknown): ModelMessage {
-	const reason = error instanceof Error ? error.message : String(error)
-
 	return {
 		role: 'user',
 		content: [
-			`That response was refused: ${reason}`,
+			`That response was refused: ${reasonFor(error)}`,
 			'Answer again in the shape asked for, correcting only what the error names.',
 		].join('\n'),
 	}
