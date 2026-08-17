@@ -4,6 +4,20 @@ This document is a sibling to [`architecture.md`](./architecture.md), a place to
 decisions we make about the UI and design, as opposed to technical, cross-module
 architectural decisions that go in the other doc.
 
+## The screen we design for
+
+**The target screen is a 1298px-wide window.** That is the width a layout is judged at, and
+the width a screenshot should be taken at. Where two layouts are both defensible, the one
+that reads better at 1298px wins.
+
+The number is `--breakpoint-lg` in `src/client/styles/theme.css`, so a `lg:` utility is one
+the target screen gets and a `md:` utility is one it has had for a while. There are two
+breakpoints and no more: `md` at 48rem and `lg` at 1298px.
+
+Everything narrower still has to work — `usePanels` collapses the four Panels to tabs under
+56rem, and the Board View scrolls its columns sideways rather than shrinking them — but a
+design is tuned against 1298px rather than against the narrow end.
+
 ## The UI showcase
 
 We are generally a very "Storybook First" project, so every wireframe and component is
