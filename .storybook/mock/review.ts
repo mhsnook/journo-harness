@@ -84,7 +84,7 @@ export const reviewRound: Round = {
 	failure: null,
 	startedAt: at,
 	finishedAt: at + 40_000,
-	parts: [
+	passages: [
 		{
 			prose: [
 				'Two supporting points do most of the work in this section: that the two chairs were not shown the figure, and that no end-of-pilot decision was ever written down. The first is made three times, the second twice.',
@@ -117,7 +117,7 @@ export const earlierRound: Round = {
 	failure: null,
 	startedAt: Date.UTC(2026, 7, 11, 9, 40),
 	finishedAt: Date.UTC(2026, 7, 11, 9, 41),
-	parts: [
+	passages: [
 		{
 			prose:
 				'The middle holds. The human cost still arrives later than the Plan puts it, but the reporting either side of it has tightened enough that the delay reads as pacing rather than as an omission.',

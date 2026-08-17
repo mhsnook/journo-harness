@@ -1,29 +1,21 @@
 import type { Note } from '../../shared/note'
 import { Button } from '../components/Button'
 import { cx } from '../lib/cx'
+import type { NoteActions } from './actions'
 import { type AnchorNaming, anchorLabel } from './anchors'
-import type { NoteRulings } from './rulings'
 
-/**
- * One Note, wherever it is read. The written response and the queue both draw
- * this, so a Note cannot look like two different things or be ruled on two
- * different ways depending on which surface the writer is looking at.
- *
- * The body is short by design — the Round's prose carries the argument, and the
- * Note is the marker that pins it to a place in the piece.
- */
+/** One Note, drawn the same way in the queue and in a Review's response. */
 
 export interface NoteCardProps {
 	note: Note
 	naming: AnchorNaming
-	rulings: NoteRulings
-	/** The queue's running number: "01". The response numbers nothing, because
-	 * the tranche it sits in is the grouping there. */
+	actions: NoteActions
+	/** The queue's running number: "01". A response numbers nothing. */
 	ordinal?: number
 	className?: string
 }
 
-export function NoteCard({ note, naming, rulings, ordinal, className }: NoteCardProps) {
+export function NoteCard({ note, naming, actions, ordinal, className }: NoteCardProps) {
 	const anchor = anchorLabel(note.anchor, naming)
 	const settled = note.disposition === 'declined' || note.disposition === 'resolved'
 
@@ -31,8 +23,6 @@ export function NoteCard({ note, naming, rulings, ordinal, className }: NoteCard
 		ordinal === undefined ? null : String(ordinal).padStart(2, '0'),
 		anchor.text,
 		note.label,
-		// Only a settled Note says which way it went: proposed is what every card
-		// starts as, and accepted is already the accent wash below.
 		settled ? note.disposition : null,
 	].filter((part) => part !== undefined && part !== null)
 
@@ -62,22 +52,21 @@ export function NoteCard({ note, naming, rulings, ordinal, className }: NoteCard
 			</p>
 
 			<div className="mt-0.5 flex flex-wrap gap-1.5">
-				<Actions note={note} rulings={rulings} />
+				<Controls actions={actions} note={note} />
 			</div>
 		</article>
 	)
 }
 
-/** Every disposition offers a way forward and a way back, so no ruling is a
- * dead end the writer has to live with. */
-function Actions({ note, rulings }: { note: Note; rulings: NoteRulings }) {
+/** Every disposition offers a way forward and a way back. */
+function Controls({ note, actions }: { note: Note; actions: NoteActions }) {
 	if (note.disposition === 'proposed') {
 		return (
 			<>
-				<Button onClick={() => rulings.accept(note)} size="sm">
+				<Button onClick={() => actions.accept(note)} size="sm">
 					accept
 				</Button>
-				<Button onClick={() => rulings.decline(note)} size="sm" variant="quiet">
+				<Button onClick={() => actions.decline(note)} size="sm" variant="quiet">
 					decline
 				</Button>
 			</>
@@ -87,10 +76,10 @@ function Actions({ note, rulings }: { note: Note; rulings: NoteRulings }) {
 	if (note.disposition === 'accepted') {
 		return (
 			<>
-				<Button onClick={() => rulings.resolve(note)} size="sm">
+				<Button onClick={() => actions.resolve(note)} size="sm">
 					resolve
 				</Button>
-				<Button onClick={() => rulings.restore(note)} size="sm" variant="link">
+				<Button onClick={() => actions.restore(note)} size="sm" variant="link">
 					undo
 				</Button>
 			</>
@@ -98,7 +87,7 @@ function Actions({ note, rulings }: { note: Note; rulings: NoteRulings }) {
 	}
 
 	return (
-		<Button onClick={() => rulings.restore(note)} size="sm" variant="link">
+		<Button onClick={() => actions.restore(note)} size="sm" variant="link">
 			undo
 		</Button>
 	)

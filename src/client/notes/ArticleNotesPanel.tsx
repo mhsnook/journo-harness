@@ -1,8 +1,13 @@
-import type { PanelProps } from '../components/Panel'
-import { useNotesScreen } from './NotesContext'
-import { NotesPanel } from './NotesPanel'
+import { useState } from 'react'
 
-/** Drives `NotesPanel` from the rows the `NotesProvider` holds. */
+import type { PanelProps } from '../components/Panel'
+import { NotesPanel } from './NotesPanel'
+import { ReviewPanel } from './ReviewPanel'
+import { useSkills } from './skills'
+import { useNotes } from './useNotes'
+
+/** Drives the Notes Panel from the Article Agent, the same split as
+ * `ArticlePlanPanel` and `ArticleDraftPanel`. */
 
 export interface ArticleNotesPanelProps {
 	divider?: PanelProps['divider']
@@ -12,24 +17,46 @@ export interface ArticleNotesPanelProps {
 }
 
 export function ArticleNotesPanel({ divider, grow, className }: ArticleNotesPanelProps) {
-	const screen = useNotesScreen()
+	const notes = useNotes()
+	const skills = useSkills()
+
+	// The id rather than the Round, because the rows reload whenever a Review
+	// settles.
+	const [readingId, setReadingId] = useState<string | null>(null)
+	const reading = notes.rounds.find((round) => round.id === readingId) ?? null
+
+	const frame = { className, divider, grow }
+
+	if (reading !== null) {
+		return (
+			<ReviewPanel
+				{...frame}
+				naming={notes.naming}
+				notes={notes.notes}
+				onBack={() => setReadingId(null)}
+				onOpenRound={(round) => setReadingId(round.id)}
+				onSaveSkill={(name) => skills.save({ name, prompt: reading.prompt })}
+				round={reading}
+				rounds={notes.rounds}
+				actions={notes.actions}
+			/>
+		)
+	}
 
 	return (
 		<NotesPanel
-			className={className}
-			divider={divider}
-			failure={screen.failure}
-			grow={grow}
-			loading={screen.loading}
-			naming={screen.naming}
-			onRead={screen.read}
-			onRun={screen.runReview}
-			onView={screen.setView}
-			queue={screen.queue}
-			rounds={screen.rounds}
-			rulings={screen.rulings}
-			skills={screen.skills.skills}
-			view={screen.view}
+			{...frame}
+			actions={notes.actions}
+			failure={notes.failure}
+			loading={notes.loading}
+			naming={notes.naming}
+			onRead={(round) => setReadingId(round.id)}
+			onRun={notes.runReview}
+			onView={notes.setView}
+			queue={notes.queue}
+			rounds={notes.rounds}
+			skills={skills.skills}
+			view={notes.view}
 		/>
 	)
 }

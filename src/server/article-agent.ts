@@ -55,7 +55,7 @@ import {
 	type ReviewRequest,
 	reviewRequestSchema,
 	type Round,
-	type RoundPart,
+	type RoundPassage,
 	type RoundState,
 } from '../shared/review'
 import { chatTurn } from './llm/chat-turn'
@@ -111,7 +111,7 @@ type RoundDbRow = {
 	state: RoundState
 	prompt: string
 	depth: Round['depth']
-	parts: string
+	passages: string
 	failure: string | null
 	started_at: number
 	finished_at: number | null
@@ -124,7 +124,7 @@ function toRound(row: RoundDbRow): Round {
 		state: row.state,
 		prompt: row.prompt,
 		depth: row.depth,
-		parts: JSON.parse(row.parts) as RoundPart[],
+		passages: JSON.parse(row.passages) as RoundPassage[],
 		failure: row.failure,
 		startedAt: row.started_at,
 		finishedAt: row.finished_at,
@@ -217,7 +217,7 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 				state TEXT NOT NULL,
 				prompt TEXT NOT NULL,
 				depth TEXT NOT NULL,
-				parts TEXT NOT NULL,
+				passages TEXT NOT NULL,
 				failure TEXT,
 				started_at INTEGER NOT NULL,
 				finished_at INTEGER
@@ -259,10 +259,8 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 		return model(this.env)
 	}
 
-	/** The model a Review runs on. One model serves every call today (§7), so
-	 * this reads the same boundary — it is separate so a workerd test can script
-	 * a Review without scripting the Chat, and so the day a Review wants its own
-	 * model is a one-line change here. */
+	/** The model a Review runs on — the same one, read separately so a test can
+	 * script a Review without scripting the Chat. */
 	reviewModel(): LanguageModel {
 		return model(this.env)
 	}
@@ -536,7 +534,7 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 
 	private createRound(asked: ReviewRequest): Round {
 		const rows = this.sql<RoundDbRow>`
-			INSERT INTO round (id, state, prompt, depth, parts, failure, started_at, finished_at)
+			INSERT INTO round (id, state, prompt, depth, passages, failure, started_at, finished_at)
 			VALUES (
 				${crypto.randomUUID()},
 				'running',
@@ -605,17 +603,17 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 			blockIds: new Set(pack.blocks.map((block) => block.id)),
 		}
 
-		const parts = output.parts.map((part): RoundPart => {
-			const noteIds = part.notes.map((note) => this.createNote(round.id, note, known))
+		const passages = output.passages.map((passage): RoundPassage => {
+			const noteIds = passage.notes.map((note) => this.createNote(round.id, note, known))
 
 			return {
-				prose: part.prose,
-				...(part.label === undefined ? {} : { label: part.label }),
+				prose: passage.prose,
+				...(passage.label === undefined ? {} : { label: passage.label }),
 				noteIds,
 			}
 		})
 
-		this.settleRound(round.id, 'done', parts, null)
+		this.settleRound(round.id, 'done', passages, null)
 	}
 
 	/**
@@ -668,13 +666,13 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 	private settleRound(
 		id: string,
 		state: RoundState,
-		parts: RoundPart[],
+		passages: RoundPassage[],
 		failure: string | null,
 	): void {
 		this.sql`
 			UPDATE round
 			SET state = ${state},
-				parts = ${JSON.stringify(parts)},
+				passages = ${JSON.stringify(passages)},
 				failure = ${failure},
 				finished_at = ${Date.now()}
 			WHERE id = ${id}

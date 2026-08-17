@@ -11,47 +11,34 @@ import {
 import type { ReviewDepth, Round } from '../../shared/review'
 import { useArticle } from '../lib/article'
 import { failureText } from '../lib/failure'
+import type { NoteActions } from './actions'
 import { type AnchorNaming, anchorNaming } from './anchors'
-import type { NoteRulings } from './rulings'
 
-/**
- * The Notes Panel's half of one Article Agent — the Rounds, the Notes, and the
- * one action that makes more of both.
- *
- * Rows come down once, since nothing announces a row changing (§3). The two
- * things that change them behind this client's back are a Review it started,
- * which announces itself, and a second tab, which does not.
- */
+/** The Notes Panel's half of one Article Agent. Rows come down once, since
+ * nothing announces a row changing (§3). */
 
 export type NotesHandle = {
 	queue: NotesQueue
-	/** Every Note, unfiltered. The written response draws the Notes it named
-	 * whatever the queue is currently showing. */
+	/** Every Note, unfiltered — a Round's response draws the ones it named
+	 * whatever the queue is showing. */
 	notes: readonly Note[]
-	/** Every Round, oldest first. */
 	rounds: readonly Round[]
-	/** The Review in flight, and null when none is. */
 	running: Round | null
-	/** Until the first read answers. */
 	loading: boolean
 	failure: string | null
 	view: QueueView
 	setView: (view: QueueView) => void
-	/** How an anchor is turned into "¶3" or "§2". */
 	naming: AnchorNaming
-	/** The four ways one Note moves, in one object because every surface that
-	 * draws a Note passes all four through. */
-	rulings: NoteRulings
+	actions: NoteActions
 	runReview: (prompt: string, depth: ReviewDepth) => void
 }
 
-/** How often a waiting client checks a Review it has heard nothing about.
- * The broadcast is the signal; this covers a socket that dropped while the
- * Review ran, which would otherwise leave "reviewing…" on screen for good. */
+/** The broadcast is the signal a Review settled; this only covers a socket that
+ * dropped while one ran. */
 const WAITING_POLL = 5_000
 
-/** The backstop's own failures are not worth a sentence: the writer is already
- * being told the Review is running, and the next tick tries again. */
+/** The next tick tries again, and the writer is already told a Review is
+ * running. */
 const ignore = () => {}
 
 export function useNotes(): NotesHandle {
@@ -66,10 +53,9 @@ export function useNotes(): NotesHandle {
 
 	const reload = useCallback(() => setReads((count) => count + 1), [])
 
-	// The Blocks ride along because a Note's anchor is read against them. They
-	// are the Draft as the Article Agent last had it, which is the same copy the
-	// Review itself read — so the numbers on a Note match the paragraphs the
-	// model was looking at, even when the writer has typed since.
+	// The Blocks ride along because a Note's anchor is read against them, and
+	// this is the Draft as the Review itself read it — so "¶3" on a card is the
+	// paragraph the model was looking at, even if the writer has typed since.
 	useEffect(() => {
 		let live = true
 
@@ -91,17 +77,13 @@ export function useNotes(): NotesHandle {
 		}
 	}, [store, draft, reads])
 
-	// The Article Agent says when a Review settles, because the writer is waiting
-	// on that one and nothing else would tell them.
 	useEffect(() => store.onReviewFinished(reload), [store, reload])
 
 	const running = (rounds ?? []).find((round) => round.state === 'running') ?? null
 	const waitingOn = running === null ? null : running.id
 
-	// The backstop, for a socket that dropped while a Review ran and so never
-	// carried the frame. It reads the Rounds and nothing else: the full load
-	// would pull the whole Draft back every five seconds to answer one question
-	// about one row, and it is the Rounds that say whether the answer changed.
+	// Reads the Rounds alone: the full load would pull the whole Draft back on
+	// every tick to answer one question about one row.
 	useEffect(() => {
 		if (waitingOn === null) return
 
@@ -112,7 +94,6 @@ export function useNotes(): NotesHandle {
 				if (!live) return
 
 				setRounds(listed)
-				// Settled, so the Notes it wrote are worth reading now.
 				const still = listed.find((round) => round.id === waitingOn)
 				if (still?.state !== 'running') reload()
 			}, ignore)
@@ -126,9 +107,7 @@ export function useNotes(): NotesHandle {
 		}
 	}, [store, waitingOn, reload])
 
-	// Built once per store, so the four callbacks keep their identity and the
-	// surfaces below them can be compared by it.
-	const rulings = useMemo<NoteRulings>(() => {
+	const actions = useMemo<NoteActions>(() => {
 		/** In place: a ruling does not change the order the Guide wrote them in. */
 		const replace = (ruled: Note) =>
 			setNotes((held) =>
@@ -156,9 +135,8 @@ export function useNotes(): NotesHandle {
 		}
 	}, [store])
 
-	// Both memoised: the Article screen re-renders on every keystroke the writer
-	// makes in the Plan, and each of these allocates over every Note or every
-	// Block in the piece.
+	// Memoised: the Article screen re-renders on every keystroke in the Plan, and
+	// both of these allocate over every Note or every Block in the piece.
 	const queue = useMemo(() => notesQueue(notes ?? [], view), [notes, view])
 	const naming = useMemo(
 		() => anchorNaming(connection.plan, blocks),
@@ -175,7 +153,7 @@ export function useNotes(): NotesHandle {
 		view,
 		setView,
 		naming,
-		rulings,
+		actions,
 
 		runReview: (prompt, depth) => {
 			setFailure(null)
@@ -187,9 +165,7 @@ export function useNotes(): NotesHandle {
 				.startReview({
 					prompt: asked,
 					depth,
-					// The Plan the writer is looking at, which may be newer than the one
-					// the Article Agent has stored — the same reason a Chat turn sends
-					// it (§6).
+					// May be newer than the Plan the Article Agent has stored — §6.
 					...(connection.plan === null ? {} : { plan: connection.plan }),
 				})
 				.then(

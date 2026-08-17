@@ -5,55 +5,42 @@ import type { Plan } from '../../shared/plan'
 import { outlineEntries, sectionLabel } from '../plan/outline'
 
 /**
- * What a Note's anchor reads as. The stored anchor names ids, which survive the
- * prose moving; the writer reads positions, which do not. This is the one place
- * that turns the first into the second.
- *
- * The paragraph numbers come from `blockOrdinals`, the same function that
- * numbers the Draft in the Review's prompt pack, so "¶3" means one paragraph
- * whichever side of the socket says it.
+ * A stored anchor names ids; the writer reads positions. This turns the first
+ * into the second — `docs/reviews.md`.
  */
 
 export type AnchorNaming = {
-	/** Whether the Plan has arrived. A Section anchor can only be numbered once
-	 * it has, and "not yet" is not the same answer as "gone" — §8. */
-	planned: boolean
-	/** Section id → what the Outline numbers it, "2" or "2.1". */
-	sections: ReadonlyMap<string, string>
-	/** Where each Block sits, from the Draft as it was last saved. */
-	ordinals: ReadonlyMap<string, number>
+	/** False until the Plan arrives, which is not the same answer as "gone". */
+	planHasArrived: boolean
+	/** Section id → the Outline's number for it, "2" or "2.1". */
+	sectionOrdinals: ReadonlyMap<string, string>
+	/** Block id → where it sits in the Draft, counted from 1. */
+	paragraphOrdinals: ReadonlyMap<string, number>
 }
 
-/**
- * Built once per Plan and Draft, not once per card.
- *
- * Both lookups are maps rather than searches because every Note on screen asks
- * one of these questions on every render, and the writer types beside them —
- * walking the Outline per card would walk it a hundred times a keystroke.
- */
+/** Built once per Plan and Draft. Every Note on screen asks one of these
+ * questions on every render. */
 export function anchorNaming(
 	plan: Plan | null,
 	blocks: readonly BlockRow[],
 ): AnchorNaming {
-	const sections = new Map<string, string>()
+	const sectionOrdinals = new Map<string, string>()
 	if (plan !== null) {
 		for (const entry of outlineEntries(plan.outline)) {
-			sections.set(entry.node.id, entry.ordinal)
+			sectionOrdinals.set(entry.node.id, entry.ordinal)
 		}
 	}
 
-	return { planned: plan !== null, sections, ordinals: blockOrdinals(blocks) }
+	return {
+		planHasArrived: plan !== null,
+		sectionOrdinals,
+		paragraphOrdinals: blockOrdinals(blocks),
+	}
 }
 
-/**
- * The anchor as a phrase, and whether what it named is still there.
- *
- * An orphaned anchor is said plainly rather than hidden. The Note is still the
- * writer's to resolve, and "the paragraph this was about is gone" is the most
- * useful thing the card can tell them about it.
- */
 export type AnchorLabel = {
 	text: string
+	/** What it named is gone from the Draft or the Plan. */
 	orphaned: boolean
 }
 
@@ -61,23 +48,18 @@ export function anchorLabel(anchor: NoteAnchor, naming: AnchorNaming): AnchorLab
 	if (anchor.kind === 'article') return { text: 'whole piece', orphaned: false }
 
 	if (anchor.kind === 'section') {
-		// A Plan that has not arrived is not a Section that is gone — §8. The
-		// number is what is missing, so the card says which kind of thing it points
-		// at and fills the number in when the Plan lands.
-		if (!naming.planned) return { text: 'a Section', orphaned: false }
+		if (!naming.planHasArrived) return { text: 'a Section', orphaned: false }
 
-		const ordinal = naming.sections.get(anchor.nodeId)
+		const ordinal = naming.sectionOrdinals.get(anchor.nodeId)
 
 		return ordinal === undefined
 			? { text: 'a Section that is gone', orphaned: true }
 			: { text: sectionLabel({ ordinal }), orphaned: false }
 	}
 
-	// A run is the span from its first paragraph to its last, so the two ends are
-	// what the writer reads — the paragraphs between them belong to it whether or
-	// not the model named them.
+	// A run is read as the span from its first paragraph to its last.
 	const numbers = anchor.blockIds
-		.map((id) => naming.ordinals.get(id))
+		.map((id) => naming.paragraphOrdinals.get(id))
 		.filter((one): one is number => one !== undefined)
 		.sort((a, b) => a - b)
 

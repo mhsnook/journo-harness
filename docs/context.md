@@ -155,16 +155,12 @@ The disposition of an Offer the writer has not ruled on. The starting state.
 _Avoid_: pending, new, unread
 
 **Accepted**:
-The disposition of a record the writer has taken on — an Offer copied into the Plan, a
-Proposal applied to it, a Note they mean to act on. **One verb across all three**, because
-the writer is doing one thing.
+The disposition of an Offer, a Proposal, or a Note the writer has taken on.
 _Avoid_: kept, approved, selected, promoted
 
 **Declined**:
-The disposition of a record the writer has ruled out — an Offer, a Proposal, or a Note.
-Restorable in every case; nothing is deleted. **One verb across all three**, for the same
-reason Accepted is one: three words for one act would make the reader work out whether
-declining a Note differs from declining an Offer, and it does not.
+The disposition of an Offer, a Proposal, or a Note the writer has ruled out. Restorable —
+nothing is deleted.
 _Avoid_: cut (the writer cuts their own prose), rejected, dismissed, discarded, ignored
 
 **Provenance** (or a reference's provenance):
@@ -208,40 +204,30 @@ _Avoid_: coach, assistant, agent (an Agent is a Durable Object class)
 
 **Note** (or review note):
 One observation from the Guide — a type, an anchor to a Section or a paragraph range,
-and a body of one or two sentences. The unit that fills the Notes Panel. The body stays
-short because a Note **captures** a point the Review argued in prose rather than making it
-again.
+and a body of one or two sentences. The unit that fills the Notes Panel.
 _Avoid_: finding, suggestion, comment, tip, feedback
 
 **Proposed** (or proposed note):
-The disposition of a Note the writer has not ruled on. The starting state.
-
-It is the one place a Note and an Offer take different words, and the reason is that the
-word says where the record came from rather than what the writer did: the Guide **proposed**
-a Note, and research turned an Offer up, leaving it **Undecided**. The rulings that follow —
-Accepted, Declined — are the same words for both.
-_Avoid_: undecided (that is an Offer's starting state), pending, new, unread
+The disposition of a Note the writer has not ruled on. The starting state, where an Offer's
+is Undecided. Whether the two should be one word is open — issue #79.
+_Avoid_: pending, new, unread
 
 **Resolved** (or resolved note):
 Describes an accepted Note the writer has dealt with. It leaves the queue and is reachable
-again by asking for it. An accepted Note is what the writer still owes the piece; a
-resolved one is finished.
+again by asking for it.
 _Avoid_: done (a Done Article is a different thing), closed, fixed, complete
 
 **Anchor** (or note anchor):
-Where a Note points — the whole piece, one Section, or a run of Blocks. A run means the
-span from its first Block to its last. Stored as ids, which survive the prose moving, and
-read as positions, which do not: the writer sees "§2" and "¶3–¶5".
+Where a Note points — the whole piece, one Section, or a run of Blocks. Stored as ids and
+read as positions: the writer sees "§2" and "¶3–¶5".
 _Avoid_: target, location, range, selection
 
 **Orphaned** (or orphaned note):
-Describes a Note whose anchor names a Block or a Section that is gone. Still the writer's
-to resolve, and the card says so rather than hiding it.
+Describes a Note whose anchor names a Block or a Section that is gone.
 _Avoid_: stale (a stale Proposal is a different thing), broken, dangling, lost
 
 **Depth** (or review depth):
-How hard one Review works — quick or thorough. The coarse dial in front of the writer's own
-prompt, which still does the finer steering.
+How hard one Review works — quick or thorough.
 _Avoid_: effort, mode, level, thoroughness
 
 **Type**:
@@ -262,20 +248,12 @@ _Avoid_: audit, check, pass, analysis
 
 **Round**:
 One numbered Review of an Article, and the written response it produced. Rounds accumulate,
-so the writer can see what a Review said before the last set of changes. Its body is an
-ordered run of **parts**, each a passage of prose and the Notes that passage produced.
+so the writer can see what a Review said before the last set of changes.
 _Avoid_: run, iteration, version
-
-**Part** (or review part):
-One passage of a Round's prose, and the Notes it produced. The unit the response is read
-in, so the reasoning stays beside the Notes it made.
-_Avoid_: section (a Section is part of the Article), tranche, block (a Block is part of the
-Draft), chunk
 
 **Skill** (or review skill):
 An editorial routine the writer authors in the app as natural-language instructions, saved
-by name and picked from the Notes Panel. It belongs in the House; until 1b it is kept on the
-machine the writer saved it on.
+by name and picked from the Notes Panel. Held in the House.
 _Avoid_: command, macro, prompt (a prompt is what the writer types; a Skill is one they
 kept), action
 

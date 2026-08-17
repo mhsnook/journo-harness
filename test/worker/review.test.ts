@@ -76,7 +76,7 @@ const blocks = [
 /** One response: prose, then the Notes it produced. */
 function response(anchor: NoteAnchor): string {
 	const output: ReviewOutput = {
-		parts: [
+		passages: [
 			{
 				prose: 'Two supporting points do most of the work in this section.',
 				label: 'on the first point',
@@ -128,13 +128,13 @@ describe('running a Review', () => {
 		const notes = await inAgent('review-writes', (agent) => agent.listNotes())
 
 		expect(round.state).toBe('done')
-		expect(round.parts).toHaveLength(2)
+		expect(round.passages).toHaveLength(2)
 		expect(round.failure).toBeNull()
 
 		// The part names its Notes by id, so the response and the queue are two
 		// readings of one set of rows.
-		expect(round.parts[0].noteIds).toEqual([notes[0].id])
-		expect(round.parts[1].noteIds).toEqual([])
+		expect(round.passages[0].noteIds).toEqual([notes[0].id])
+		expect(round.passages[1].noteIds).toEqual([])
 
 		expect(notes).toHaveLength(1)
 		expect(notes[0]).toMatchObject({
@@ -192,7 +192,7 @@ describe('running a Review', () => {
 
 		expect(round.state).toBe('failed')
 		expect(round.failure).toContain('The model is having a day.')
-		expect(round.parts).toEqual([])
+		expect(round.passages).toEqual([])
 	})
 
 	it('runs one Review at a time on an Article', async () => {

@@ -9,18 +9,14 @@ import {
 import { reviewPackMessages, type ReviewPack, reviewSystemPrompt } from './review-pack'
 
 /**
- * One Review, composed away from the Durable Object that hosts it.
+ * One Review, composed away from the Durable Object that hosts it. Pure over
+ * what it is handed, so a test drives it with a scripted model and no Article
+ * Agent — the same shape as `llm/chat-turn.ts`.
  *
- * Everything here is a pure function of what it is handed, so a test drives it
- * with a scripted model and no Article Agent — the same shape as
- * `llm/chat-turn.ts`. The Article Agent supplies the model, the Plan, the
- * Draft, and the open Notes, because it is the only thing that holds them.
- *
- * Structured output rather than prose the app parses, with **one retry that
- * carries the validation error** — `docs/architecture.md` §7 and issue #16. If
- * glm-5.2's structured output disappoints, #16's answer is to swap the model
- * string in `llm/model.ts` to `@cf/moonshotai/kimi-k2.6` rather than to loosen
- * the schema.
+ * The answer is **prose inside a structure**: the model writes the passages the
+ * writer reads, and the schema is what carries each one's Notes and their
+ * anchors. Nothing here parses prose to find them. One retry carries the
+ * validation error back — `docs/architecture.md` §7.
  */
 
 export type ReviewTurn = {

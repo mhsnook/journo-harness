@@ -43,44 +43,6 @@ should look for and may save that prompt as a **Skill**, which is the lens. What
 deferred is a Skill that rewrites text: nothing in 1a, 1b, or phase 2 has the model writing
 prose, so a routine that edits the Draft has nothing to act on.
 
-## Streaming a Review
-
-`docs/architecture.md` §10 says a Review is the thing that should stream, and §12 says why
-it does not yet: `@callable` is request and response. The streaming version is
-`streamObject` over the Agent's `onRequest`, with the client reading the parts as they
-arrive and the Round still written to rows at the end.
-
-The reason it is not urgent: the Round is durable, so the wait is a row saying what is
-happening rather than a call being held open. The reason it is still wanted: a thorough
-Review is prose the writer asked for and is sitting in front of, which is exactly the case
-#9 named when it ruled streaming out for ambient notes.
-
-## Scoping a Review to one Section
-
-Every Review reads the whole piece. The mocks draw "§2 only" and "run again on §3", which
-would let the writer point a pass at one Section and its neighbours — the pack §7 already
-describes. It needs a Scope control beside the composer and a pack that respects it.
-
-## Grouping the Notes queue by Section
-
-The Notes Panel sorts in the order the Guide wrote them. Grouping by Section needs a Block
-anchor mapped to a Section, which is Boundary inference — issue #54's, and blocked on the
-same question as everything else that attributes prose to the Outline.
-
-## Notes beside the prose
-
-An accepted Note lives in the queue and has to be resolved. Drawing it in the Draft's
-margin, anchored to the paragraph it names, is the decoration and mark work in
-`docs/adr/0003`. Issue #54 carries the one trap already found: `[data-block-id]` also
-matches paragraphs nested inside a list item, so a margin note measured against the wrong
-element sits at the wrong height.
-
-## Flushing the Draft before a Review
-
-A Review reads the last saved Draft, and the Draft's flush lives inside the Draft Panel, so
-a Review run mid-keystroke can miss the last sentence. Lifting that flush into the Article
-context would close the gap.
-
 ## The Beat
 
 A subject a writer covers over time, holding the research they build up on it. An Article

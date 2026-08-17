@@ -133,7 +133,7 @@ export function memoryNoteStore(
 	options: {
 		rounds?: readonly Round[]
 		notes?: readonly Note[]
-		answer?: { parts: Round['parts']; notes: readonly Note[] }
+		answer?: { passages: Round['passages']; notes: readonly Note[] }
 		/** How long a Review takes to come back. */
 		takes?: number
 	} = {},
@@ -171,7 +171,7 @@ export function memoryNoteStore(
 				state: 'running',
 				prompt: request.prompt,
 				depth: request.depth,
-				parts: [],
+				passages: [],
 				failure: null,
 				startedAt: Date.now(),
 				finishedAt: null,
@@ -185,7 +185,7 @@ export function memoryNoteStore(
 					rounds.splice(rounds.indexOf(round), 1, {
 						...round,
 						state: 'done',
-						parts: answer.parts,
+						passages: answer.passages,
 						finishedAt: Date.now(),
 					})
 					listening.forEach((listen) => listen(round.id))

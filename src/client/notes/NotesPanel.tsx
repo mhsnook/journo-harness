@@ -4,10 +4,10 @@ import { Chip } from '../components/Chip'
 import { Notice } from '../components/Notice'
 import { Panel, PanelHeader, type PanelProps } from '../components/Panel'
 import { dateAndTime } from '../lib/when'
+import type { NoteActions } from './actions'
 import type { AnchorNaming } from './anchors'
 import { NoteCard } from './NoteCard'
 import { ReviewComposer } from './ReviewComposer'
-import type { NoteRulings } from './rulings'
 import type { Skill } from './skills'
 
 /**
@@ -32,7 +32,7 @@ export interface NotesPanelProps {
 	view: QueueView
 	onView: (view: QueueView) => void
 	naming: AnchorNaming
-	rulings: NoteRulings
+	actions: NoteActions
 	skills: readonly Skill[]
 	onRun: (prompt: string, depth: ReviewDepth) => void
 	/** Opens one Round's written response, which is where the reasoning is. */
@@ -51,7 +51,7 @@ export function NotesPanel({
 	view,
 	onView,
 	naming,
-	rulings,
+	actions,
 	skills,
 	onRun,
 	onRead,
@@ -122,7 +122,7 @@ export function NotesPanel({
 						loading={loading}
 						naming={naming}
 						queue={queue}
-						rulings={rulings}
+						actions={actions}
 						view={view}
 					/>
 				</div>
@@ -140,8 +140,8 @@ function Queue({
 	view,
 	loading,
 	naming,
-	rulings,
-}: Pick<NotesPanelProps, 'queue' | 'view' | 'loading' | 'naming' | 'rulings'>) {
+	actions,
+}: Pick<NotesPanelProps, 'queue' | 'view' | 'loading' | 'naming' | 'actions'>) {
 	if (loading) {
 		return <p className="text-[0.75rem] text-faint">Opening the Notes…</p>
 	}
@@ -173,7 +173,7 @@ function Queue({
 					naming={naming}
 					note={note}
 					ordinal={index + 1}
-					rulings={rulings}
+					actions={actions}
 				/>
 			))}
 		</div>

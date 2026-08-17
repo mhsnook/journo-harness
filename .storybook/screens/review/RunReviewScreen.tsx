@@ -15,7 +15,7 @@ import { MockNotes } from './FullReviewScreen'
  */
 export function RunReviewScreen() {
 	return (
-		<MockNotes answer={{ parts: reviewRound.parts, notes: reviewNotes }} notes={[]}>
+		<MockNotes answer={{ passages: reviewRound.passages, notes: reviewNotes }} notes={[]}>
 			<Frame width={760}>
 				<ArticleBar open={['draft', 'notes']} status="drafting" title={ARTICLE_TITLE} />
 				<FrameBody className="h-[26rem]" row>

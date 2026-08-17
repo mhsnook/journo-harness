@@ -615,22 +615,13 @@ Settings and known defects. None is a decision to make; all are things to get ri
 
 ## 12. Notes and the Review
 
-The Notes Panel is one ask and one answer. A **Review** reads the Draft against the Plan
-and writes a **Round**; the Round carries **Notes**, which are what survives it. Nothing
-accumulates between Reviews: each one is handed the Draft, the Plan with its References,
-the writer's prompt, and the Notes accepted from earlier Rounds.
-
-**A Round is a written response, not a list.** Its body is an ordered run of parts, each a
-passage of the Guide's prose and then the Notes that passage produced. The prose carries
-the argument, so a Note can be one or two sentences: the writer has just read the case for
-it. The Notes Panel shows the same rows flattened into a queue, and **ruling in either
-place is one write**, because both draw the same rows.
+What the feature is and how it behaves is [`reviews.md`](./reviews.md). Four rules here,
+because each one binds more than one module.
 
 **The Article Agent runs the Review, and the client does not.** A Review is long-running
 and produces a batch, so a client-run one is lost the moment the writer closes the tab —
 issue #11. `startReview` writes a Round row, answers with it, and carries on under
-`waitUntil`. The writer can start a thorough pass, leave, and come back to the findings.
-Three things follow:
+`waitUntil`. Three things follow:
 
 - **`state` is a column.** `running` has to survive the writer leaving, and a Review that
   fails with nobody connected has to leave its reason on the row rather than on a call.
@@ -640,51 +631,23 @@ Three things follow:
   a field: in-memory state does not survive hibernation.
 - **Settling a Round broadcasts `review_finished`.** Rows have no sync (§3), so this is the
   one thing that tells a waiting client. A client that was away reads the rows when the
-  Panel opens instead, and one whose socket dropped mid-Review falls back to a poll — of
-  the Rounds alone, because re-running the whole read would pull the Draft back every few
-  seconds to answer one question about one row.
+  Panel opens instead, and one whose socket dropped mid-Review polls the Rounds.
 
-**A Note is a type, an anchor, a short label, and a body.** `type` is a free string, because
-`context.md` calls the list illustrative rather than a fixed taxonomy — the suggested set
-lives in the model's instructions, where adding one costs a prompt edit. The anchor is the
-whole piece, one Section, or a run of Blocks, and a run means **the span from its first
-Block to its last**, per `docs/adr/0003`.
+**A Note's anchor is settled once, at write time, against the Plan and Draft the model was
+shown.** An anchor the client cannot resolve reads as the whole piece and breaks nothing,
+so the write is taken and the anchor settled rather than the Note refused — issue #42's
+line, applied where nothing is load-bearing. What happens to an anchor afterwards is
+`reviews.md`.
 
-**An anchor is settled once, when the Note is written, and never again.** The model names
-ids it read in the pack and can still name one that is gone. An anchor the client cannot
-resolve reads as the whole piece and breaks nothing, so the write is taken and the anchor
-settled rather than the Note refused — issue #42's line, applied where nothing is
-load-bearing. A Block that dies **later** leaves the anchor alone and the Note reads as
-orphaned, because the writer may undo the deletion.
+**Accept and Decline are the same two words for a Note, an Offer, and a Proposal**, because
+the writer rules on all three the same way. The three records still differ in shape — an
+Offer starts `undecided`, a Note starts `proposed`, a Proposal stores no disposition at all
+and dies with its turn — and whether that is worth reconciling is issue #79.
 
-**Four dispositions and one way back from each.** `proposed` is what the Guide wrote;
-`accepted` and `declined` are the writer's ruling; `resolved` is an accepted Note they have
-dealt with. Restoring undoes the last move, and each settled disposition has exactly one
-place it came from, so undoing needs no history.
-
-**Accept and Decline are the same two words for a Note, an Offer, and a Proposal.** The
-writer rules on all three the same way, so one verb covers the act — one word per meaning,
-product-wide. Only the starting state differs, and it differs on purpose: a Note is
-`proposed`, because the Guide proposed it, where an Offer is `undecided`, because research
-turned it up and nobody has looked yet.
-
-**The Review reads the accepted Notes and not the declined ones.** An accepted Note is
-something the writer is already working on, so raising it again is noise; a declined one is
-the writer saying no, and sending it back would invite the model to argue.
-
-**A Review does not stream yet, and §10 says it should.** `@callable` is request and
-response, so the streaming version is `streamObject` over the Agent's `onRequest`. The cost
-of not having it is smaller than it looks, because the Round is durable: the wait is a row
-that says what is happening rather than a call being held open.
-
-**The Draft a Review reads is the last saved one.** The Draft's flush lives inside the Draft
-Panel, so a Review run mid-keystroke can miss the last sentence. The Notes Panel numbers its
-anchors off the same read, so "¶3" on a card is the paragraph the model was looking at.
-
-**A Skill is a saved review prompt, and it lives in `localStorage` until 1b.** It is House
-material — one editorial routine used across every Article — so per-Article rows would be
-the wrong shape to migrate from. The cost is stated rather than hidden: a Skill saved on one
-machine is not on the other until the House lands.
+**A Review does not stream, and §10 says it should.** `@callable` is request and response,
+so the streaming version is `streamObject` over the Agent's `onRequest` — issue #77. The
+cost is smaller than it looks, because the Round is durable: the wait is a row rather than
+a call being held open.
 
 ## 13. Out of scope
 

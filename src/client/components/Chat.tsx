@@ -1,14 +1,8 @@
-import {
-	type KeyboardEvent,
-	type ReactNode,
-	useEffect,
-	useLayoutEffect,
-	useRef,
-	useState,
-} from 'react'
+import { type KeyboardEvent, type ReactNode, useEffect, useState } from 'react'
 
 import { cx } from '../lib/cx'
 import { Button } from './Button'
+import { GrowingField } from './GrowingField'
 import { Notice } from './Notice'
 
 export interface ChatMessageProps {
@@ -62,25 +56,6 @@ export interface ChatComposerProps {
 	className?: string
 }
 
-/** Height of the content, clamped by the field's own `max-h`. The `auto` is
- * load-bearing: `scrollHeight` reads back the height the field already has, so
- * without the reset the field could grow but never shrink.
- *
- * The composer's box is held across the reset, because `auto` collapses the
- * field to its one `rows` line and the transcript above it grows into the gap.
- * The browser clamps a grown scroller's `scrollTop` and does not restore it,
- * and both writes land in one block, so the ResizeObserver that re-pins the
- * transcript sees no net change and never fires. */
-function grow(field: HTMLTextAreaElement) {
-	const composer = field.closest<HTMLElement>('[data-composer]')
-	if (composer !== null) composer.style.height = `${composer.offsetHeight}px`
-
-	field.style.height = 'auto'
-	field.style.height = `${field.scrollHeight}px`
-
-	if (composer !== null) composer.style.height = ''
-}
-
 /** A chat message input that grows as you type; Enter adds a new line and
  * control-Enter sends. */
 export function ChatComposer({
@@ -93,15 +68,9 @@ export function ChatComposer({
 	className,
 }: ChatComposerProps) {
 	const [said, setSaid] = useState('')
-	const field = useRef<HTMLTextAreaElement>(null)
 	const stopping = busy && onStop !== undefined
 	const cannotSend =
 		blocked !== null || busy || onSend === undefined || said.trim() === ''
-
-	// An `onChange` would miss the first paint & the clear after sending
-	useLayoutEffect(() => {
-		if (field.current !== null) grow(field.current)
-	}, [said])
 
 	const send = () => {
 		if (cannotSend || onSend === undefined) return
@@ -123,18 +92,12 @@ export function ChatComposer({
 			<div className="flex items-end gap-2">
 				{leading}
 				<div className="flex flex-1 items-center rounded-md border border-edge bg-surface px-2.5 py-1.5">
-					{/* Eight lines, picked against `MidChatScreen`'s 26rem Chat Panel,
-					    where a full-height field takes under half. A shorter Panel gives
-					    the same eight lines a larger share. */}
-					<textarea
-						ref={field}
-						aria-label="Message the guide"
-						className="max-h-[8lh] min-w-0 flex-1 resize-none overflow-y-auto bg-transparent text-[0.8125rem] leading-relaxed text-ink outline-none placeholder:text-faint"
+					<GrowingField
 						disabled={onSend === undefined}
-						onChange={(event) => setSaid(event.target.value)}
+						label="Message the guide"
+						onChange={setSaid}
 						onKeyDown={onKeyDown}
 						placeholder={placeholder}
-						rows={1}
 						value={said}
 					/>
 				</div>

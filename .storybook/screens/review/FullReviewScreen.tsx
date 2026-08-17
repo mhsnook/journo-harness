@@ -1,11 +1,13 @@
-import { type ReactNode, useMemo } from 'react'
+import { type ReactNode, useMemo, useState } from 'react'
 
 import { ArticleBar } from '../../../src/client/components/ArticleBar'
 import { Frame, FrameBody } from '../../../src/client/components/Frame'
 import { ArticleProvider } from '../../../src/client/lib/article'
-import { NotesProvider, useNotesScreen } from '../../../src/client/notes/NotesContext'
-import { ReviewView } from '../../../src/client/notes/ReviewView'
+import type { NoteActions } from '../../../src/client/notes/actions'
+import { anchorNaming } from '../../../src/client/notes/anchors'
+import { ReviewPanel } from '../../../src/client/notes/ReviewPanel'
 import type { Note } from '../../../src/shared/note'
+import { restoredTo } from '../../../src/shared/note'
 import type { Round } from '../../../src/shared/review'
 import { ARTICLE_TITLE, plan } from '../../mock/content'
 import {
@@ -16,42 +18,40 @@ import {
 import { reviewNotes, reviewRound, reviewRounds } from '../../mock/review'
 
 /**
- * 4(a) — One Review, read whole. This is the only pass that takes the whole
- * window: the writer asked for it, so it gets their attention once.
- *
- * The prose is the review and the Notes are what survive it. Ruling here and
- * ruling in the Notes Panel are the same act, because both draw the same rows.
+ * 4(a) — One Review, read whole. The Notes Panel drawing a Round's response
+ * instead of the queue: same column, wider because the other Panels are closed.
  */
 export function FullReviewScreen() {
-	return (
-		<MockNotes opensOn={reviewRound.id} rounds={reviewRounds}>
-			<Frame width={760}>
-				<ArticleBar open={['notes']} status="round 3" title={ARTICLE_TITLE} />
-				<FrameBody className="h-[32rem]" row>
-					<TheReview />
-				</FrameBody>
-			</Frame>
-		</MockNotes>
-	)
-}
+	const [notes, setNotes] = useState<Note[]>(reviewNotes)
 
-/** The real surface, driven by the real hook over rows held in memory — the
- * same wiring `ArticleBody` does in the app. */
-function TheReview() {
-	const screen = useNotesScreen()
-	if (screen.reading === null) return null
+	const move = (note: Note, disposition: Note['disposition']) =>
+		setNotes((held) =>
+			held.map((one) => (one.id === note.id ? { ...one, disposition } : one)),
+		)
+
+	const actions: NoteActions = {
+		accept: (note) => move(note, 'accepted'),
+		decline: (note) => move(note, 'declined'),
+		resolve: (note) => move(note, 'resolved'),
+		restore: (note) => move(note, restoredTo(note.disposition) ?? 'proposed'),
+	}
 
 	return (
-		<ReviewView
-			naming={screen.naming}
-			notes={screen.notes}
-			onBack={screen.close}
-			onOpenRound={screen.read}
-			onSaveSkill={(name) => screen.skills.save({ name, prompt: reviewRound.prompt })}
-			round={screen.reading}
-			rounds={screen.rounds}
-			rulings={screen.rulings}
-		/>
+		<Frame width={760}>
+			<ArticleBar open={['notes']} status="round 3" title={ARTICLE_TITLE} />
+			<FrameBody className="h-[32rem]" row>
+				<ReviewPanel
+					actions={actions}
+					naming={anchorNaming(plan, draft)}
+					notes={notes}
+					onBack={() => {}}
+					onOpenRound={() => {}}
+					onSaveSkill={() => {}}
+					round={reviewRound}
+					rounds={reviewRounds}
+				/>
+			</FrameBody>
+		</Frame>
 	)
 }
 
@@ -60,8 +60,7 @@ export interface MockNotesProps {
 	rounds?: readonly Round[]
 	notes?: readonly Note[]
 	/** What a Review comes back with, for a screen that runs one. */
-	answer?: { parts: Round['parts']; notes: readonly Note[] }
-	opensOn?: string | null
+	answer?: { passages: Round['passages']; notes: readonly Note[] }
 }
 
 /**
@@ -77,7 +76,6 @@ export function MockNotes({
 	rounds = [],
 	notes = reviewNotes,
 	answer,
-	opensOn = null,
 }: MockNotesProps) {
 	const article = useMemo(
 		() => ({
@@ -92,11 +90,7 @@ export function MockNotes({
 		[],
 	)
 
-	return (
-		<ArticleProvider value={article}>
-			<NotesProvider opensOn={opensOn}>{children}</NotesProvider>
-		</ArticleProvider>
-	)
+	return <ArticleProvider value={article}>{children}</ArticleProvider>
 }
 
 /** Enough Blocks that the anchored Notes number themselves. */
