@@ -31,11 +31,29 @@ const withRouter: Decorator = (Story) => {
 	return <RouterProvider router={router} />
 }
 
+/**
+ * The target screen — docs/ui.md. Every story is drawn and measured here, so
+ * `lg:` utilities are the ones under test.
+ *
+ * It has to be a Storybook viewport rather than `browser.viewport` in
+ * vitest.config.ts: `@storybook/addon-vitest` resizes the page before each
+ * story, so whatever Vitest was configured with is overwritten by the addon's
+ * own 1200×900 default. Naming one here is what makes the two agree.
+ */
+export const TARGET_SCREEN_WIDTH = 1298
+
+const targetScreen = {
+	name: 'Target screen',
+	styles: { width: `${TARGET_SCREEN_WIDTH}px`, height: '1024px' },
+	type: 'desktop' as const,
+}
+
 const preview: Preview = {
 	decorators: [withRouter],
 	parameters: {
 		layout: 'centered',
 		controls: { expanded: true },
+		viewport: { options: { target: targetScreen } },
 		backgrounds: {
 			options: {
 				paper: { name: 'Paper', value: '#fbecdb' },
@@ -63,6 +81,7 @@ const preview: Preview = {
 	},
 	initialGlobals: {
 		backgrounds: { value: 'paper' },
+		viewport: { value: 'target' },
 	},
 	tags: ['autodocs'],
 }

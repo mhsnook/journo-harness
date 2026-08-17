@@ -115,14 +115,22 @@ describe('Offers in the Article Agent', () => {
 	// Durable Object, so the set is worth naming — `createOffer` is absent
 	// because only the Chat records an Offer. It also proves the decorator
 	// survived the build: oxc does not lower one, and `agents/vite` does.
-	it('marks the three writer-facing Offer methods callable', async () => {
+	it('marks every writer-facing method callable, and nothing else', async () => {
 		const stub = env.ArticleAgent.get(env.ArticleAgent.idFromName('callable-set'))
 
 		const methods = await runInDurableObject(stub, (agent) => [
 			...agent.getCallableMethods().keys(),
 		])
 
-		expect(methods.sort()).toEqual(['listOffers', 'restoreOffer', 'setOfferDisposition'])
+		// Exact, so reaching the browser is a decision rather than a side effect
+		// of adding a method: `recordOffers` and `createOffer` stay off it.
+		expect(methods.sort()).toEqual([
+			'listBlocks',
+			'listOffers',
+			'restoreOffer',
+			'saveBlocks',
+			'setOfferDisposition',
+		])
 	})
 
 	it('records an Offer as Undecided and lists it', async () => {

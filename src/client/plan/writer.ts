@@ -15,7 +15,7 @@ import { applyProposal } from '../../shared/plan'
  */
 
 /** How long a pause ends a burst of typing. */
-export const WRITE_DELAY = 400
+export const WRITE_DELAY_MS = 400
 
 /** The ops a keystroke produces. A burst of these is one write, and every other
  * op goes at once: an Adjective is committed with a key rather than typed into
@@ -29,7 +29,7 @@ export type PlanWriterOptions = {
 	onPlan: (plan: Plan) => void
 	/** Why an edit did not land. The applier writes the sentence. */
 	onRefusal?: (refusal: Refusal) => void
-	delay?: number
+	delayMs?: number
 }
 
 /**
@@ -57,7 +57,7 @@ export type PlanWriter = {
 }
 
 export function createPlanWriter(options: PlanWriterOptions): PlanWriter {
-	const delay = options.delay ?? WRITE_DELAY
+	const delayMs = options.delayMs ?? WRITE_DELAY_MS
 
 	let plan: Plan | null = null
 	let timer: ReturnType<typeof setTimeout> | null = null
@@ -103,7 +103,7 @@ export function createPlanWriter(options: PlanWriterOptions): PlanWriter {
 
 			if (ops.every((op) => typedOps.has(op.op))) {
 				clear()
-				timer = setTimeout(flush, delay)
+				timer = setTimeout(flush, delayMs)
 			} else {
 				flush()
 			}

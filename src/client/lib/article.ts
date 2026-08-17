@@ -1,11 +1,12 @@
 import { createContext, useContext } from 'react'
 
+import type { BlockRow, DraftChange, DraftSaved } from '../../shared/draft'
 import type { Offer, Ruling } from '../../shared/offer'
 import type { PlanConnection } from '../plan/usePlan'
 
 /**
- * The seam one Article Agent arrives through, in two stores because the server
- * holds the Plan and the Offers apart — §3, rules 1 and 2. `useArticleAgent`
+ * The seam one Article Agent arrives through, in stores because the server
+ * holds the Plan and its rows apart — §3, rules 1 and 2. `useArticleAgent`
  * builds it; the Panels read it.
  */
 
@@ -16,8 +17,14 @@ export type OfferStore = {
 	restoreOffer(id: string): Promise<Offer>
 }
 
+export type DraftStore = {
+	listBlocks(): Promise<BlockRow[]>
+	saveBlocks(change: DraftChange): Promise<DraftSaved>
+}
+
 export type Article = {
 	offers: OfferStore
+	draft: DraftStore
 	plan: PlanConnection
 }
 

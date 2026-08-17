@@ -44,6 +44,8 @@ export interface ChatPanelProps {
 	failure?: string | null
 	/** The rule between this Panel and its neighbour. */
 	divider?: PanelProps['divider']
+	/** This Panel's share of the Panel row — `panelShare`. */
+	grow?: PanelProps['grow']
 	placeholder?: string
 	/** Left of send — the Offer ledger toggle. */
 	leading?: ReactNode
@@ -68,6 +70,7 @@ export function ChatPanel({
 	onDeclineOffer,
 	failure = null,
 	divider,
+	grow,
 	placeholder,
 	leading,
 	drawer,
@@ -77,7 +80,7 @@ export function ChatPanel({
 	const transcript = useFootOfTranscript()
 
 	return (
-		<Panel className={className} divider={divider} padded={false}>
+		<Panel className={className} divider={divider} grow={grow} padded={false}>
 			{/* The transcript and the drawer share this box, so the drawer covers
 			    what the writer is reading and stops at the composer. `overflow-hidden`
 			    is what makes the drawer slide out of sight behind it. */}
