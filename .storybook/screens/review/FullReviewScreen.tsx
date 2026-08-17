@@ -1,107 +1,113 @@
+import { type ReactNode, useMemo } from 'react'
+
 import { ArticleBar } from '../../../src/client/components/ArticleBar'
-import { Button } from '../../../src/client/components/Button'
-import { Check } from '../../../src/client/components/Check'
 import { Frame, FrameBody } from '../../../src/client/components/Frame'
-import { MetaLabel } from '../../../src/client/components/MetaLabel'
-import { Panel, PanelHeader } from '../../../src/client/components/Panel'
-import { ARTICLE_TITLE } from '../../mock/content'
-
-interface Note {
-	id: string
-	text: string
-	anchor: string
-	accepted?: boolean
-}
-
-const structure: Note[] = [
-	{
-		id: 'f1',
-		text: 'The crane-index image carries §1 and then carries §4 again. The second use costs you the ending.',
-		anchor: '§1 ↔ §4',
-	},
-	{
-		id: 'f2',
-		text: 'The human cost arrives 600 words later than the plan puts it.',
-		anchor: '§3',
-		accepted: true,
-	},
-]
-
-const other: Note[] = [
-	{
-		id: 'f3',
-		text: '§3 drifts into Newsletter aside — three asides in four paragraphs, where the piece is marked Reported feature.',
-		anchor: 'tone drift',
-	},
-	{
-		id: 'f4',
-		text: 'Two of five planned quotes are unused, both in §3.',
-		anchor: 'citations',
-	},
-]
-
-function NoteRow({ note }: { note: Note }) {
-	return (
-		<li className="flex items-start gap-2.5">
-			<Check checked={note.accepted} label={`Accept: ${note.text}`} />
-			<div className="flex min-w-0 flex-1 flex-col gap-0.5">
-				<p className="text-[0.8125rem] leading-relaxed text-ink">{note.text}</p>
-				<p className="text-[0.6875rem] text-faint">
-					{note.anchor}
-					{note.accepted ? ' · accepted' : ''}
-				</p>
-			</div>
-		</li>
-	)
-}
+import { ArticleProvider } from '../../../src/client/lib/article'
+import { NotesProvider, useNotesScreen } from '../../../src/client/notes/NotesContext'
+import { ReviewView } from '../../../src/client/notes/ReviewView'
+import type { Note } from '../../../src/shared/note'
+import type { Round } from '../../../src/shared/review'
+import { ARTICLE_TITLE, plan } from '../../mock/content'
+import {
+	memoryDraftStore,
+	memoryNoteStore,
+	memoryOfferStore,
+} from '../../mock/MockArticle'
+import { reviewNotes, reviewRound, reviewRounds } from '../../mock/review'
 
 /**
- * 4(a) — The in-depth review, full screen. This is the only pass that takes
- * the whole window: you asked for it, so it gets your attention once. What you
- * accept then lives in the notes rail while you write.
+ * 4(a) — One Review, read whole. This is the only pass that takes the whole
+ * window: the writer asked for it, so it gets their attention once.
+ *
+ * The prose is the review and the Notes are what survive it. Ruling here and
+ * ruling in the Notes Panel are the same act, because both draw the same rows.
  */
 export function FullReviewScreen() {
 	return (
-		<Frame width={720}>
-			<ArticleBar title={ARTICLE_TITLE} open={['notes']} status="round 2" />
-			<FrameBody>
-				<Panel className="gap-4 p-5">
-					<PanelHeader title="Review of draft 2" meta="2,610 words · 6 notes" />
-
-					<div className="flex flex-col gap-1.5">
-						<MetaLabel>The shape of it</MetaLabel>
-						<p className="text-[0.8125rem] leading-relaxed text-muted">
-							The reporting is doing its job and the middle is the strongest it has been.
-							The piece is 210 words over target and the overrun is entirely in §3, which
-							is also where the plan says the argument should be tightest.
-						</p>
-					</div>
-
-					<div className="grid grid-cols-2 gap-5">
-						<section className="flex flex-col gap-2.5">
-							<MetaLabel count={2}>Structure</MetaLabel>
-							<ul className="flex flex-col gap-2.5">
-								{structure.map((note) => (
-									<NoteRow key={note.id} note={note} />
-								))}
-							</ul>
-						</section>
-						<section className="flex flex-col gap-2.5">
-							<MetaLabel>Tone drift · 1 · Citations · 3</MetaLabel>
-							<ul className="flex flex-col gap-2.5">
-								{other.map((note) => (
-									<NoteRow key={note.id} note={note} />
-								))}
-							</ul>
-						</section>
-					</div>
-
-					<div className="flex items-center gap-2.5 border-t border-edge pt-3.5">
-						<Button variant="accent">keep 3, back to the draft →</Button>
-						<Button>send notes to chat</Button>
-					</div>
-				</Panel>
-			</FrameBody>
-		</Frame>
+		<MockNotes opensOn={reviewRound.id} rounds={reviewRounds}>
+			<Frame width={760}>
+				<ArticleBar open={['notes']} status="round 3" title={ARTICLE_TITLE} />
+				<FrameBody className="h-[32rem]" row>
+					<TheReview />
+				</FrameBody>
+			</Frame>
+		</MockNotes>
 	)
 }
+
+/** The real surface, driven by the real hook over rows held in memory — the
+ * same wiring `ArticleBody` does in the app. */
+function TheReview() {
+	const screen = useNotesScreen()
+	if (screen.reading === null) return null
+
+	return (
+		<ReviewView
+			naming={screen.naming}
+			notes={screen.notes}
+			onAccept={screen.accept}
+			onBack={screen.close}
+			onDismiss={screen.dismiss}
+			onOpenRound={screen.read}
+			onResolve={screen.resolve}
+			onRestore={screen.restore}
+			onSaveSkill={(name) => screen.skills.save({ name, prompt: reviewRound.prompt })}
+			round={screen.reading}
+			rounds={screen.rounds}
+		/>
+	)
+}
+
+export interface MockNotesProps {
+	children: ReactNode
+	rounds?: readonly Round[]
+	notes?: readonly Note[]
+	/** What a Review comes back with, for a screen that runs one. */
+	answer?: { parts: Round['parts']; notes: readonly Note[] }
+	opensOn?: string | null
+}
+
+/**
+ * The Article seam a Review reads: the Plan for its Section numbers, the Draft
+ * for its paragraph numbers, and the rows themselves.
+ *
+ * The stores are built once per screen, because the hooks over them read once
+ * per store — rebuilding on every render would reload the rows and throw away
+ * every ruling the story had made.
+ */
+export function MockNotes({
+	children,
+	rounds = [],
+	notes = reviewNotes,
+	answer,
+	opensOn = null,
+}: MockNotesProps) {
+	const article = useMemo(
+		() => ({
+			draft: memoryDraftStore({ seed: draft }),
+			offers: memoryOfferStore([]),
+			notes: memoryNoteStore({ rounds, notes, answer }),
+			plan: { plan, edit: () => null, refusal: null, rejected: null },
+		}),
+		// One seam per story. The seeds are module constants, so nothing here
+		// changes after the first render.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[],
+	)
+
+	return (
+		<ArticleProvider value={article}>
+			<NotesProvider opensOn={opensOn}>{children}</NotesProvider>
+		</ArticleProvider>
+	)
+}
+
+/** Enough Blocks that the anchored Notes number themselves. */
+const draft = Array.from({ length: 8 }, (_, index) => ({
+	id: `b${index + 1}`,
+	ord: index + 1,
+	json: {
+		type: 'paragraph',
+		content: [{ type: 'text', text: `Paragraph ${index + 1}.` }],
+	},
+}))

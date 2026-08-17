@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
+import { expect, userEvent, waitFor, within } from 'storybook/test'
 
 import { Annotation } from '../../../src/client/components/Annotation'
 import { FullReviewScreen } from './FullReviewScreen'
@@ -7,6 +8,7 @@ import { PanelCombosScreen } from './PanelCombosScreen'
 import { PanelsRecapScreen } from './PanelsRecapScreen'
 import { PhoneNotesScreen } from './PhoneNotesScreen'
 import { ReviewRailScreen } from './ReviewRailScreen'
+import { RunReviewScreen } from './RunReviewScreen'
 
 const meta = {
 	title: 'Screens/4 Reviews',
@@ -17,21 +19,97 @@ export default meta
 type Story = StoryObj<typeof meta>
 
 export const A_FullReview: Story = {
-	name: '4(a) In-depth review',
+	name: '4(a) One Review, read whole',
 	render: () => (
 		<div className="flex flex-col">
 			<FullReviewScreen />
 			<Annotation>
-				Only this pass is full screen — you asked for it, so it gets the window once.
-				Accepted notes then live in the Notes rail while you write.
+				Only this pass takes the window — you asked for it. The prose is the review and
+				the Notes are what survive it, which is why a Note can be one line: you have just
+				read the argument above it.
 			</Annotation>
 		</div>
 	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement)
+
+		// The reasoning and the Notes it produced sit together, in order.
+		await expect(
+			canvas.getByText(/Two supporting points do most of the work/),
+		).toBeVisible()
+		await expect(canvas.getByText(/Cut to a clause/)).toBeVisible()
+
+		// A tranche counts itself rather than the model stating a number.
+		await expect(canvas.getByText(/on the first point/)).toHaveTextContent('3')
+
+		// Ruling one Note here is the same write the Notes Panel makes.
+		const note = canvas.getByText(/Strongest version/).closest('article') as HTMLElement
+		await userEvent.click(within(note).getByRole('button', { name: 'accept' }))
+
+		await waitFor(() =>
+			expect(within(note).getByRole('button', { name: 'resolve' })).toBeVisible(),
+		)
+	},
 }
 
 export const B_ReviewRail: Story = {
-	name: '4(b) Notes in the rail',
-	render: () => <ReviewRailScreen />,
+	name: '4(b) The Notes queue beside the Draft',
+	render: () => (
+		<div className="flex flex-col">
+			<ReviewRailScreen />
+			<Annotation>
+				The written response, flattened. Every Round's Notes sit in one list, because a
+				Note accepted three Rounds ago is still owed.
+			</Annotation>
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement)
+
+		// A resolved Note waits to be asked for; a dismissed one stays, struck
+		// through, because undoing it is the only way back — mock 8(c).
+		await waitFor(() => expect(canvas.getByText(/Strongest version/)).toBeVisible())
+		await expect(canvas.queryByText(/£4,100 figure/)).toBeNull()
+		await expect(canvas.getByText(/Always the plan/)).toBeVisible()
+
+		await userEvent.click(canvas.getByRole('button', { name: 'show resolved' }))
+		await waitFor(() => expect(canvas.getByText(/£4,100 figure/)).toBeVisible())
+
+		// An anchor is read as a position, and the record holds an id.
+		await expect(canvas.getAllByText(/¶2/).length).toBeGreaterThan(0)
+	},
+}
+
+export const G_RunReview: Story = {
+	name: '4(g) Asking for a Review',
+	render: () => (
+		<div className="flex flex-col">
+			<RunReviewScreen />
+			<Annotation>
+				The Article Agent runs the Review, so the wait is a row rather than a call you are
+				holding open. Close the tab and the findings are here when you come back.
+			</Annotation>
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement)
+
+		await waitFor(() => expect(canvas.getByText(/No Reviews yet/)).toBeVisible())
+
+		await userEvent.type(
+			canvas.getByRole('textbox', { name: /What this Review should look for/ }),
+			'Review for repetition of the supporting logic.',
+		)
+		await userEvent.click(canvas.getByRole('button', { name: 'run review' }))
+
+		// The wait says what is happening and that leaving is safe.
+		await waitFor(() => expect(canvas.getByText(/is reading the Draft/)).toBeVisible())
+
+		// And the Notes arrive without the writer asking again.
+		await waitFor(() => expect(canvas.getByText(/Strongest version/)).toBeVisible(), {
+			timeout: 5_000,
+		})
+	},
 }
 
 export const C_NotesToChat: Story = {
@@ -40,10 +118,8 @@ export const C_NotesToChat: Story = {
 		<div className="flex flex-col">
 			<NotesToChatScreen />
 			<Annotation>
-				The loop: draft → review → accept notes → notes go to chat → the plan changes →
-				draft again. Counts are restated against the new plan, so "3 of 5 quotes used"
-				becomes "3 of 4" instead of standing as a permanent failure against a plan you
-				have already moved on from.
+				Not built, and kept as a sketch. The loop it draws: draft → review → accept notes
+				→ notes go to chat → the plan changes → draft again.
 			</Annotation>
 		</div>
 	),

@@ -7,6 +7,19 @@ import type { Plan } from '../../shared/plan'
  * in roughly that order. See Architecture §7.
  */
 
+/**
+ * What the guide may judge by, stated once and read by both packs. The Chat is
+ * asked to review from time to time and the Review does nothing else, so a
+ * second wording here would be two products' worth of taste rather than one.
+ */
+export const judgeAgainstThePlan = [
+	'Judge the writing only against the Plan, its intent notes, and the Lexicon.',
+	'Your own taste is borrowed and does not count: a Section that meets its',
+	'stated intent in a register you would not have chosen is correct for what the writer is trying',
+	'to express, and your job is to say so. Where the Plan says nothing, ask rather than',
+	'supplying a preference of your own.',
+].join('\n')
+
 /** The product's own instructions to the guide, identical on every turn of
  * every Article, so they sit at the very front of the cached prefix. Not the
  * **standing rules**, which `context.md` reserves for House material the
@@ -22,11 +35,8 @@ const guideRules = [
 	'The writer Accepts or Declines each Offer and Proposal. A turn that answers a question,',
 	'or asks one, or just yaps with the writer, carries no tool call at all.',
 	'',
-	'When asked to review the Article Draft, judge the writing only against the Plan, its intent',
-	'notes, and the Lexicon. Your own taste is borrowed and does not count: a Section that meets its',
-	'stated intent in a register you would not have chosen is correct for what the writer is trying',
-	'to express, and your job would be to say so. Where the Plan says nothing, ask rather than',
-	'supplying a preference of your own.',
+	'When asked to review the Article Draft, these rules apply:',
+	judgeAgainstThePlan,
 	'',
 	'One Voice applies at a time and the nearest Scope wins outright, so switching a Voice replaces',
 	'it. Adjectives compose instead, accumulating from the Article down to the Section. They arrive',
@@ -66,8 +76,11 @@ export function chatSystemPrompt(): string {
  *
  * The `user` role rather than `system`, because a system message after the
  * first is not portable across providers.
+ *
+ * Exported for the Review pack, which puts the same Plan in front of the Draft.
+ * Two spellings of "here is the Plan" would be two things to keep in step.
  */
-function planMessage(plan: Plan): ModelMessage {
+export function planMessage(plan: Plan): ModelMessage {
 	return {
 		role: 'user',
 		content: [

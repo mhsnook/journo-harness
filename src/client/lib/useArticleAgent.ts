@@ -2,10 +2,13 @@ import { useAgent } from 'agents/react'
 import { useMemo, useRef } from 'react'
 
 import type { BlockRow, DraftChange, DraftSaved } from '../../shared/draft'
+import type { Note, NoteRuling } from '../../shared/note'
 import type { Offer, Ruling } from '../../shared/offer'
 import type { Plan } from '../../shared/plan'
+import { isReviewFinished, type ReviewRequest, type Round } from '../../shared/review'
 import { usePlanChannel } from '../plan/usePlan'
-import type { Article, DraftStore, OfferStore } from './article'
+import type { Article, DraftStore, NoteStore, OfferStore } from './article'
+import { listeners, parseFrame } from './frames'
 
 /**
  * Opens one Article Agent and hands out the three things that ride its one
@@ -38,11 +41,20 @@ export function useArticleAgent(articleId: string): ArticleConnection {
 	const socket = useRef<ArticleSocket | null>(null)
 	const channel = usePlanChannel(() => socket.current)
 
+	// Built once and kept for the socket's life, so a Notes Panel that mounts and
+	// unmounts adds and removes a listener rather than replacing the registry.
+	const reviews = useMemo(() => listeners<string>(), [])
+
 	const agent = useAgent<Plan>({
 		agent: 'article-agent',
 		name: articleId,
 		onStateUpdate: channel.onStateUpdate,
-		onMessage: channel.onMessage,
+		onMessage: (event: MessageEvent) => {
+			channel.onMessage(event)
+
+			const frame = parseFrame(event.data)
+			if (isReviewFinished(frame)) reviews.send(frame.roundId)
+		},
 	})
 
 	// In render, not an effect: React runs a child's effects first, so the Panels
@@ -73,7 +85,25 @@ export function useArticleAgent(articleId: string): ArticleConnection {
 		[],
 	)
 
-	return { article: { offers, draft, plan: channel.connection }, agent }
+	const notes = useMemo<NoteStore>(
+		() => ({
+			listRounds: () => call<Round[]>(socket, 'listRounds'),
+			listNotes: () => call<Note[]>(socket, 'listNotes'),
+			// Answers when the row exists, not when the Review finishes — the model
+			// call carries on inside the Article Agent, so this is a short call
+			// even for a thorough pass.
+			startReview: (request: ReviewRequest) =>
+				call<Round>(socket, 'startReview', [request]),
+			setNoteDisposition: (id: string, ruling: NoteRuling) =>
+				call<Note>(socket, 'setNoteDisposition', [id, ruling]),
+			resolveNote: (id: string) => call<Note>(socket, 'resolveNote', [id]),
+			restoreNote: (id: string) => call<Note>(socket, 'restoreNote', [id]),
+			onReviewFinished: reviews.add,
+		}),
+		[reviews],
+	)
+
+	return { article: { offers, draft, notes, plan: channel.connection }, agent }
 }
 
 /** How long a save may be in flight before it is called failed. */

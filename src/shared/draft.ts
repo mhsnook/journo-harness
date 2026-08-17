@@ -52,6 +52,38 @@ export const draftChangeSchema = z.strictObject({
 	removed: z.array(z.string().min(1)),
 })
 
+/**
+ * What one Block reads as, with the formatting dropped.
+ *
+ * The content is the editor's own JSON and stays opaque everywhere else, but a
+ * Review has to put the prose in a prompt and the Worker has no editor to ask.
+ * This walks what every ProseMirror-shaped document guarantees — a node holds
+ * `content`, and a leaf holds `text` — so it does not need to know which node
+ * types exist. A Block with no text, a section break for instance, reads as an
+ * empty string, and the caller decides what to do with that.
+ */
+export function blockText(json: BlockJson): string {
+	const node = json as { text?: unknown; content?: unknown }
+
+	if (typeof node.text === 'string') return node.text
+	if (!Array.isArray(node.content)) return ''
+
+	return node.content.map((child) => blockText(child as BlockJson)).join('')
+}
+
+/**
+ * Where each Block sits, numbered from 1. Takes the Blocks already in reading
+ * order, which is what `listBlocks` answers with.
+ *
+ * This is what "¶3" means, and it is derived rather than stored: `ord` is a
+ * fractional index that says what follows what and nothing about position. The
+ * server numbers the prose it sends the model here, and the client numbers a
+ * Note's anchor here, so the two cannot disagree about which paragraph ¶3 is.
+ */
+export function blockOrdinals(blocks: readonly BlockRow[]): Map<string, number> {
+	return new Map(blocks.map((block, index) => [block.id, index + 1]))
+}
+
 /** A Durable Object caps a row at 2 MB, and one pasted data-url reaches it. The
  * client cannot see this failure, so the Article Agent is where it is caught. */
 export const MAX_BLOCK_BYTES = 64 * 1024

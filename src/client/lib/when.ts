@@ -15,3 +15,11 @@ export function shortDate(at: number, now: number = Date.now()): string {
 
 	return format.format(date).toLowerCase()
 }
+
+const clock = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit' })
+
+/** "12 aug, 14:02" — for a Round, where two Reviews in one afternoon have to be
+ * told apart and the date alone cannot do it. */
+export function dateAndTime(at: number, now: number = Date.now()): string {
+	return `${shortDate(at, now)}, ${clock.format(new Date(at))}`
+}

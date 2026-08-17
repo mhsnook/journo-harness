@@ -123,13 +123,20 @@ describe('Offers in the Article Agent', () => {
 		])
 
 		// Exact, so reaching the browser is a decision rather than a side effect
-		// of adding a method: `recordOffers` and `createOffer` stay off it.
+		// of adding a method: `recordOffers`, `createOffer`, and `createNote` stay
+		// off it, because the Guide writes those and the writer never authors one.
 		expect(methods.sort()).toEqual([
 			'listBlocks',
+			'listNotes',
 			'listOffers',
+			'listRounds',
+			'resolveNote',
+			'restoreNote',
 			'restoreOffer',
 			'saveBlocks',
+			'setNoteDisposition',
 			'setOfferDisposition',
+			'startReview',
 		])
 	})
 

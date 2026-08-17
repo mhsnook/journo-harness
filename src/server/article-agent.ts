@@ -13,6 +13,21 @@ import {
 	type DraftSaved,
 } from '../shared/draft'
 import {
+	alreadyRuled,
+	missingNote,
+	type Note,
+	type NoteAnchor,
+	type NoteContent,
+	type NoteDisposition,
+	type NoteRuling,
+	noteRulingSchema,
+	notAccepted,
+	notRestorable,
+	restoredTo,
+	settleAnchor,
+} from '../shared/note'
+import { openNotes } from '../shared/notes-queue'
+import {
 	type Disposition,
 	missingOffer,
 	notDeclined,
@@ -24,6 +39,7 @@ import {
 } from '../shared/offer'
 import {
 	emptyPlan,
+	type OutlineNode,
 	type Plan,
 	type PlanRefused,
 	planSchema,
@@ -32,8 +48,20 @@ import {
 	type ReferenceType,
 	type Source,
 } from '../shared/plan'
+import {
+	type ReviewFinished,
+	type ReviewOutput,
+	reviewAlreadyRunning,
+	type ReviewRequest,
+	reviewRequestSchema,
+	type Round,
+	type RoundPart,
+	type RoundState,
+} from '../shared/review'
 import { chatTurn } from './llm/chat-turn'
 import { model } from './llm/model'
+import { reviewTurn } from './llm/review'
+import type { ReviewPack } from './llm/review-pack'
 
 /** One Offer row as SQLite returns it. `this.sql` asserts the row type rather
  * than checking it, and this class is the table's only writer, so the columns
@@ -73,6 +101,77 @@ type BlockDbRow = {
 
 function toBlock(row: BlockDbRow): BlockRow {
 	return { id: row.id, ord: row.ord, json: JSON.parse(row.json) as BlockJson }
+}
+
+/** One Round row, read the same way `OfferRow` is. `parts` is the response
+ * body as JSON, holding note ids rather than note contents. */
+type RoundDbRow = {
+	seq: number
+	id: string
+	state: RoundState
+	prompt: string
+	depth: Round['depth']
+	parts: string
+	failure: string | null
+	started_at: number
+	finished_at: number | null
+}
+
+function toRound(row: RoundDbRow): Round {
+	return {
+		id: row.id,
+		ordinal: row.seq,
+		state: row.state,
+		prompt: row.prompt,
+		depth: row.depth,
+		parts: JSON.parse(row.parts) as RoundPart[],
+		failure: row.failure,
+		startedAt: row.started_at,
+		finishedAt: row.finished_at,
+	}
+}
+
+/** One Note row. */
+type NoteDbRow = {
+	seq: number
+	id: string
+	round_id: string
+	type: string
+	anchor: string
+	label: string | null
+	body: string
+	disposition: NoteDisposition
+	created_at: number
+	decided_at: number | null
+}
+
+function toNote(row: NoteDbRow): Note {
+	return {
+		id: row.id,
+		roundId: row.round_id,
+		type: row.type,
+		anchor: JSON.parse(row.anchor) as NoteAnchor,
+		...(row.label === null ? {} : { label: row.label }),
+		body: row.body,
+		disposition: row.disposition,
+		createdAt: row.created_at,
+		decidedAt: row.decided_at,
+	}
+}
+
+/** Every Section id a Plan carries, for settling a Note's anchor. */
+function planNodeIds(plan: Plan): Set<string> {
+	const ids = new Set<string>()
+
+	const walk = (nodes: readonly OutlineNode[]) => {
+		for (const node of nodes) {
+			ids.add(node.id)
+			walk(node.children)
+		}
+	}
+	walk(plan.outline)
+
+	return ids
 }
 
 /** `duplicate` means the row was already there and nothing was written. */
@@ -120,6 +219,44 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 			)
 		`
 		this.sql`CREATE INDEX IF NOT EXISTS block_by_ord ON block (ord)`
+
+		// One row per Review. `seq` is what the writer reads as "Round 3", and
+		// `state` is why the row exists at all: the Article Agent runs the Review,
+		// so a writer can start one and close the tab, and both "still running" and
+		// "failed while nobody was watching" have to survive them leaving (§3,
+		// rule 4).
+		this.sql`
+			CREATE TABLE IF NOT EXISTS round (
+				seq INTEGER PRIMARY KEY AUTOINCREMENT,
+				id TEXT NOT NULL UNIQUE,
+				state TEXT NOT NULL,
+				prompt TEXT NOT NULL,
+				depth TEXT NOT NULL,
+				parts TEXT NOT NULL,
+				failure TEXT,
+				started_at INTEGER NOT NULL,
+				finished_at INTEGER
+			)
+		`
+
+		// One row per Note. `anchor` is JSON because it is a union of three shapes
+		// and only the client reads inside it — columns would make a Section anchor
+		// and a Block run share a table of nulls.
+		this.sql`
+			CREATE TABLE IF NOT EXISTS note (
+				seq INTEGER PRIMARY KEY AUTOINCREMENT,
+				id TEXT NOT NULL UNIQUE,
+				round_id TEXT NOT NULL,
+				type TEXT NOT NULL,
+				anchor TEXT NOT NULL,
+				label TEXT,
+				body TEXT NOT NULL,
+				disposition TEXT NOT NULL,
+				created_at INTEGER NOT NULL,
+				decided_at INTEGER
+			)
+		`
+		this.sql`CREATE INDEX IF NOT EXISTS note_by_round ON note (round_id)`
 	}
 
 	async onRequest(_request: Request): Promise<Response> {
@@ -134,6 +271,14 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 	 * `llm/model.ts` is the boundary; this reads it so a workerd test, which has
 	 * no Workers AI binding to reach, can put a scripted model behind it. */
 	chatModel(): LanguageModel {
+		return model(this.env)
+	}
+
+	/** The model a Review runs on. One model serves every call today (§7), so
+	 * this reads the same boundary — it is separate so a workerd test can script
+	 * a Review without scripting the Chat, and so the day a Review wants its own
+	 * model is a one-line change here. */
+	reviewModel(): LanguageModel {
 		return model(this.env)
 	}
 
@@ -351,5 +496,236 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 		}
 
 		return { savedAt, written: blocks.length, removed: removed.length }
+	}
+
+	/** Every Round on this Article, oldest first. `seq` orders it and numbers it,
+	 * for the reason `listOffers` gives: a Worker's clock barely moves across
+	 * local writes. */
+	@callable()
+	listRounds(): Round[] {
+		return this.sql<RoundDbRow>`SELECT * FROM round ORDER BY seq`.map(toRound)
+	}
+
+	/** Every Note on this Article, in the order the Guide wrote them. */
+	@callable()
+	listNotes(): Note[] {
+		return this.sql<NoteDbRow>`SELECT * FROM note ORDER BY seq`.map(toNote)
+	}
+
+	/**
+	 * Start one Review, and answer with the Round it will land in.
+	 *
+	 * **The Article Agent runs it, not the client** — issue #11. A Review is
+	 * long-running and produces a batch, so a client-run one would be lost the
+	 * moment the writer closed the tab. This returns as soon as the row exists,
+	 * the model call carries on under `waitUntil`, and the writer can leave and
+	 * come back to the findings.
+	 *
+	 * One at a time per Article. Two calls interleave whenever the writer
+	 * double-clicks or has the Article open twice, and `await` inside a Durable
+	 * Object lets the second start before the first finishes (#9). The guard is
+	 * the running row rather than a field, because in-memory state does not
+	 * survive hibernation.
+	 */
+	@callable()
+	startReview(request: unknown): Round {
+		const asked = reviewRequestSchema.parse(request)
+
+		const running = this.runningRound()
+		if (running !== null) throw reviewAlreadyRunning(running)
+
+		const round = this.createRound(asked)
+		this.ctx.waitUntil(this.finishReview(round, asked))
+
+		return round
+	}
+
+	/** The Review in flight, and null when none is. */
+	private runningRound(): Round | null {
+		const rows = this.sql<RoundDbRow>`
+			SELECT * FROM round WHERE state = 'running' ORDER BY seq LIMIT 1
+		`
+
+		return rows.length === 0 ? null : toRound(rows[0])
+	}
+
+	private createRound(asked: ReviewRequest): Round {
+		const rows = this.sql<RoundDbRow>`
+			INSERT INTO round (id, state, prompt, depth, parts, failure, started_at, finished_at)
+			VALUES (
+				${crypto.randomUUID()},
+				'running',
+				${asked.prompt},
+				${asked.depth},
+				'[]',
+				NULL,
+				${Date.now()},
+				NULL
+			)
+			RETURNING *
+		`
+
+		return toRound(rows[0])
+	}
+
+	/**
+	 * The Review itself, off the caller's thread.
+	 *
+	 * Nothing here throws. The writer may be gone by now, so a failure has to
+	 * land on the row where they will find it rather than on a call nobody is
+	 * holding — which is the same argument that put the Round in the Article
+	 * Agent in the first place.
+	 */
+	private async finishReview(round: Round, asked: ReviewRequest): Promise<void> {
+		// Read once and used twice — for the pack, and for settling the anchors the
+		// model answers with. Reading again afterwards would check the ids against
+		// a different Plan from the one the model was shown, so a Section the
+		// client had just added would lose its anchor.
+		const pack = {
+			// The Plan the writer is looking at, for the reason `planForTurn` gives,
+			// and state where the client sent none.
+			plan: asked.plan ?? this.state,
+			blocks: this.listBlocks(),
+			notes: openNotes(this.listNotes()),
+			prompt: asked.prompt,
+		}
+
+		try {
+			const output = await reviewTurn({
+				model: this.reviewModel(),
+				depth: asked.depth,
+				pack,
+			})
+
+			this.writeReview(round, output, pack)
+		} catch (error) {
+			const reason = error instanceof Error ? error.message : String(error)
+			this.settleRound(round.id, 'failed', [], reason)
+		}
+
+		// Rows have no sync (§3), so this is the only thing that tells a waiting
+		// client the Round it started has settled. A client that was away reads
+		// the rows when the Panel opens instead.
+		const finished: ReviewFinished = { type: 'review_finished', roundId: round.id }
+		this.broadcast(JSON.stringify(finished))
+	}
+
+	/**
+	 * The response, as rows. Each Note becomes a row and the part keeps its id,
+	 * so the written response and the Notes queue are two readings of one set of
+	 * records and a ruling made on either is made on both.
+	 */
+	private writeReview(round: Round, output: ReviewOutput, pack: ReviewPack): void {
+		const known = {
+			nodeIds: planNodeIds(pack.plan),
+			blockIds: new Set(pack.blocks.map((block) => block.id)),
+		}
+
+		const parts = output.parts.map((part): RoundPart => {
+			const noteIds = part.notes.map((note) => this.createNote(round.id, note, known).id)
+
+			return {
+				prose: part.prose,
+				...(part.label === undefined ? {} : { label: part.label }),
+				noteIds,
+			}
+		})
+
+		this.settleRound(round.id, 'done', parts, null)
+	}
+
+	/** Starts proposed. Not `@callable`: the Guide writes the Notes and the
+	 * writer never authors one (§3, rule 4). */
+	private createNote(
+		roundId: string,
+		content: NoteContent,
+		known: { nodeIds: ReadonlySet<string>; blockIds: ReadonlySet<string> },
+	): Note {
+		const rows = this.sql<NoteDbRow>`
+			INSERT INTO note (id, round_id, type, anchor, label, body, disposition, created_at, decided_at)
+			VALUES (
+				${crypto.randomUUID()},
+				${roundId},
+				${content.type},
+				${JSON.stringify(settleAnchor(content.anchor, known))},
+				${content.label ?? null},
+				${content.body},
+				'proposed',
+				${Date.now()},
+				NULL
+			)
+			RETURNING *
+		`
+
+		return toNote(rows[0])
+	}
+
+	private settleRound(
+		id: string,
+		state: RoundState,
+		parts: RoundPart[],
+		failure: string | null,
+	): void {
+		this.sql`
+			UPDATE round
+			SET state = ${state},
+				parts = ${JSON.stringify(parts)},
+				failure = ${failure},
+				finished_at = ${Date.now()}
+			WHERE id = ${id}
+		`
+	}
+
+	/** The writer's ruling on one proposed Note. */
+	@callable()
+	setNoteDisposition(id: string, ruling: NoteRuling): Note {
+		const ruled = noteRulingSchema.parse(ruling)
+
+		// Read first, so a Note that has already been ruled on and one that does
+		// not exist are told apart — the same reason `restoreOffer` reads first.
+		const note = this.readNote(id)
+		if (note.disposition !== 'proposed') throw alreadyRuled(note)
+
+		return this.moveNote(id, ruled)
+	}
+
+	/** The writer has dealt with an accepted Note. */
+	@callable()
+	resolveNote(id: string): Note {
+		const note = this.readNote(id)
+		if (note.disposition !== 'accepted') throw notAccepted(note)
+
+		return this.moveNote(id, 'resolved')
+	}
+
+	/** Undo the last move: a dismissed Note goes back to proposed, and a resolved
+	 * one back to accepted. */
+	@callable()
+	restoreNote(id: string): Note {
+		const note = this.readNote(id)
+		const back = restoredTo(note.disposition)
+		if (back === null) throw notRestorable(note)
+
+		return this.moveNote(id, back)
+	}
+
+	/** `decided_at` is the moment the Note stopped being the Guide's and became
+	 * the writer's, so restoring to proposed clears it. */
+	private moveNote(id: string, disposition: NoteDisposition): Note {
+		const rows = this.sql<NoteDbRow>`
+			UPDATE note
+			SET disposition = ${disposition},
+				decided_at = ${disposition === 'proposed' ? null : Date.now()}
+			WHERE id = ${id} RETURNING *
+		`
+
+		return toNote(rows[0])
+	}
+
+	private readNote(id: string): Note {
+		const rows = this.sql<NoteDbRow>`SELECT * FROM note WHERE id = ${id}`
+		if (rows.length === 0) throw missingNote(id)
+
+		return toNote(rows[0])
 	}
 }

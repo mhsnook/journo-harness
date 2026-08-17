@@ -11,6 +11,7 @@ import { ArticleBar } from '../components/ArticleBar'
 import { Button } from '../components/Button'
 import { Screen } from '../components/Frame'
 import { Notice } from '../components/Notice'
+import type { PanelId } from '../components/PanelRail'
 import { Skeleton } from '../components/Skeleton'
 import { BackLink } from '../components/TitleBar'
 import { ArticleProvider, useArticle } from '../lib/article'
@@ -19,6 +20,8 @@ import {
 	useArticleAgent,
 	wakeArticleAgent,
 } from '../lib/useArticleAgent'
+import { NotesProvider, useNotesScreen } from '../notes/NotesContext'
+import { ReviewView } from '../notes/ReviewView'
 
 /** The connection is opened above the Panels: a Panel opening its own would be a
  * second writer against a blob designed for one (architecture.md §3 rule 1). */
@@ -41,7 +44,9 @@ function ArticleRoute() {
 		<ArticleProvider value={article}>
 			{/* Keyed, so moving to another Article starts its hooks clean rather
 			    than carrying the last one's debounced title into them. */}
-			<ArticleWindow agent={agent} articleId={articleId} key={articleId} />
+			<NotesProvider key={articleId}>
+				<ArticleWindow agent={agent} articleId={articleId} />
+			</NotesProvider>
 		</ArticleProvider>
 	)
 }
@@ -102,7 +107,38 @@ function ArticleWindow({
 					<Notice>{failure}</Notice>
 				</div>
 			)}
-			<ArticlePanels agent={agent} open={panels.open} />
+			<ArticleBody agent={agent} open={panels.open} />
 		</Screen>
+	)
+}
+
+/**
+ * The Panel row, or one Review read whole.
+ *
+ * A Review takes the window rather than a column: the writer asked for it, and
+ * it is prose to read rather than material to work beside. Everything else on
+ * the screen stays — the bar, the title, the Panel rail — so going back is one
+ * control and not a navigation.
+ */
+function ArticleBody({ agent, open }: { agent: ArticleSocket; open: PanelId[] }) {
+	const screen = useNotesScreen()
+	const round = screen.reading
+
+	if (round === null) return <ArticlePanels agent={agent} open={open} />
+
+	return (
+		<ReviewView
+			naming={screen.naming}
+			notes={screen.notes}
+			onAccept={screen.accept}
+			onBack={screen.close}
+			onDismiss={screen.dismiss}
+			onOpenRound={screen.read}
+			onResolve={screen.resolve}
+			onRestore={screen.restore}
+			onSaveSkill={(name) => screen.skills.save({ name, prompt: round.prompt })}
+			round={round}
+			rounds={screen.rounds}
+		/>
 	)
 }

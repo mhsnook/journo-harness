@@ -554,9 +554,9 @@ Guide, the Notes Panel, and everything that reads the prose are not.
   arrives with the House at 1b, and the Draft can move onto it later without changing shape.
   Until then two tabs on one Draft is last-write-wins per Block, which is what §1's "only one
   editor at a time" costs. Findings #7 and #18 stand and are not load-bearing yet.
-- **Notes is the fourth Panel.** A **Review** is an intentional pass producing a batch of
-  Guidance notes at once, accumulating in numbered **Rounds**, grouped by **type**, which the
-  writer selects among and hands back to the Chat.
+- **Notes is the fourth Panel**, and it is built — §12. What is still phase 2's is the
+  ambient half: notes that arrive while the writer works, and anything drawn beside the
+  prose.
 - **The guide loop is client-initiated. There is no server-side timer anywhere in v1.** The
   client knows when typing stopped; the server cannot tell "still thinking" from "left the
   room." An alarm earns its place only when work must happen while nobody is connected, and
@@ -613,7 +613,74 @@ Settings and known defects. None is a decision to make; all are things to get ri
   Article with a Plan and a transcript already in it, so a screen can be opened rather than
   built up by hand every time.
 
-## 12. Out of scope
+## 12. Notes and the Review
+
+The Notes Panel is one ask and one answer. A **Review** reads the Draft against the Plan
+and writes a **Round**; the Round carries **Notes**, which are what survives it. Nothing
+accumulates between Reviews: each one is handed the Draft, the Plan with its References,
+the writer's prompt, and the Notes accepted from earlier Rounds.
+
+**A Round is a written response, not a list.** Its body is an ordered run of parts, each a
+passage of the Guide's prose and then the Notes that passage produced. The prose carries
+the argument, so a Note can be one or two sentences: the writer has just read the case for
+it. The Notes Panel shows the same rows flattened into a queue, and **ruling in either
+place is one write**, because both draw the same rows.
+
+**The Article Agent runs the Review, and the client does not.** A Review is long-running
+and produces a batch, so a client-run one is lost the moment the writer closes the tab —
+issue #11. `startReview` writes a Round row, answers with it, and carries on under
+`waitUntil`. The writer can start a thorough pass, leave, and come back to the findings.
+Three things follow:
+
+- **`state` is a column.** `running` has to survive the writer leaving, and a Review that
+  fails with nobody connected has to leave its reason on the row rather than on a call.
+- **One Review at a time per Article**, guarded by the running row. Two calls interleave
+  whenever the writer double-clicks or has the Article open twice, and `await` inside a
+  Durable Object lets the second start before the first finishes (#9). The guard cannot be
+  a field: in-memory state does not survive hibernation.
+- **Settling a Round broadcasts `review_finished`.** Rows have no sync (§3), so this is the
+  one thing that tells a waiting client. A client that was away reads the rows when the
+  Panel opens instead, and one that was connected through a dropped socket falls back to a
+  poll while it waits.
+
+**A Note is a type, an anchor, a short label, and a body.** `type` is a free string, because
+`context.md` calls the list illustrative rather than a fixed taxonomy — the suggested set
+lives in the model's instructions, where adding one costs a prompt edit. The anchor is the
+whole piece, one Section, or a run of Blocks, and a run means **the span from its first
+Block to its last**, per `docs/adr/0003`.
+
+**An anchor is settled once, when the Note is written, and never again.** The model names
+ids it read in the pack and can still name one that is gone. An anchor the client cannot
+resolve reads as the whole piece and breaks nothing, so the write is taken and the anchor
+settled rather than the Note refused — issue #42's line, applied where nothing is
+load-bearing. A Block that dies **later** leaves the anchor alone and the Note reads as
+orphaned, because the writer may undo the deletion.
+
+**Four dispositions and one way back from each.** `proposed` is what the Guide wrote;
+`accepted` and `dismissed` are the writer's ruling; `resolved` is an accepted Note they have
+dealt with. Restoring undoes the last move, and each settled disposition has exactly one
+place it came from, so undoing needs no history. The verb is **dismiss** and not decline,
+which `context.md` reserves for an Offer.
+
+**The Review reads the accepted Notes and not the dismissed ones.** An accepted Note is
+something the writer is already working on, so raising it again is noise; a dismissed one is
+the writer saying no, and sending it back would invite the model to argue.
+
+**A Review does not stream yet, and §10 says it should.** `@callable` is request and
+response, so the streaming version is `streamObject` over the Agent's `onRequest`. The cost
+of not having it is smaller than it looks, because the Round is durable: the wait is a row
+that says what is happening rather than a call being held open.
+
+**The Draft a Review reads is the last saved one.** The Draft's flush lives inside the Draft
+Panel, so a Review run mid-keystroke can miss the last sentence. The Notes Panel numbers its
+anchors off the same read, so "¶3" on a card is the paragraph the model was looking at.
+
+**A Skill is a saved review prompt, and it lives in `localStorage` until 1b.** It is House
+material — one editorial routine used across every Article — so per-Article rows would be
+the wrong shape to migrate from. The cost is stated rather than hidden: a Skill saved on one
+machine is not on the other until the House lands.
+
+## 13. Out of scope
 
 - **The tracking model** — affirmed Boundaries and text-relocating operations, which would
   make Section membership a fact the app operates on rather than something the Guide infers.

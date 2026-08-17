@@ -160,8 +160,7 @@ _Avoid_: kept, approved, selected, promoted
 
 **Declined** (or declined offer):
 The disposition of an Offer the writer has ruled out. Restorable — nothing is deleted.
-_Avoid_: cut (the writer cuts their own prose), rejected, dismissed (a Guidance note is
-dismissed), discarded
+_Avoid_: cut (the writer cuts their own prose), rejected, dismissed (a Note is dismissed), discarded
 
 **Provenance** (or a reference's provenance):
 Where a record came from. An Accepted Offer is **copied** into the Plan as a new,
@@ -204,8 +203,43 @@ _Avoid_: coach, assistant, agent (an Agent is a Durable Object class)
 
 **Note** (or review note):
 One observation from the Guide — a type, an anchor to a Section or a paragraph range,
-and a body of one or two sentences. The unit that fills the Notes Panel.
+and a body of one or two sentences. The unit that fills the Notes Panel. The body stays
+short because a Note **captures** a point the Review argued in prose rather than making it
+again.
 _Avoid_: finding, suggestion, comment, tip, feedback
+
+**Proposed** (or proposed note):
+The disposition of a Note the writer has not ruled on. The starting state, and the Note
+equivalent of an Undecided Offer — a different word because a Note is proposed by the
+Guide rather than turned up by it.
+_Avoid_: undecided (that is an Offer), pending, new, unread
+
+**Dismissed** (or dismissed note):
+The disposition of a Note the writer has ruled out. Restorable — nothing is deleted. The
+verb is **dismiss**, never decline, which belongs to an Offer.
+_Avoid_: declined (that is an Offer), rejected, ignored, cut
+
+**Resolved** (or resolved note):
+Describes an accepted Note the writer has dealt with. It leaves the queue and is reachable
+again by asking for it. An accepted Note is what the writer still owes the piece; a
+resolved one is finished.
+_Avoid_: done (a Done Article is a different thing), closed, fixed, complete
+
+**Anchor** (or note anchor):
+Where a Note points — the whole piece, one Section, or a run of Blocks. A run means the
+span from its first Block to its last. Stored as ids, which survive the prose moving, and
+read as positions, which do not: the writer sees "§2" and "¶3–¶5".
+_Avoid_: target, location, range, selection
+
+**Orphaned** (or orphaned note):
+Describes a Note whose anchor names a Block or a Section that is gone. Still the writer's
+to resolve, and the card says so rather than hiding it.
+_Avoid_: stale (a stale Proposal is a different thing), broken, dangling, lost
+
+**Depth** (or review depth):
+How hard one Review works — quick or thorough. The coarse dial in front of the writer's own
+prompt, which still does the finer steering.
+_Avoid_: effort, mode, level, thoroughness
 
 **Type**:
 What sort of thing a record is, named after the record it belongs to — an Offer type, a
@@ -224,15 +258,23 @@ writer works.
 _Avoid_: audit, check, pass, analysis
 
 **Round**:
-One numbered Review of an Article. Rounds accumulate, so the writer can see what a
-Review said before the last set of changes.
+One numbered Review of an Article, and the written response it produced. Rounds accumulate,
+so the writer can see what a Review said before the last set of changes. Its body is an
+ordered run of **parts**, each a passage of prose and the Notes that passage produced.
 _Avoid_: run, iteration, version
 
-**Skill**:
-An editorial routine the writer authors in the app as natural-language instructions,
-invoked by name from the Chat composer. Held in the House, and its output is Guidance
-notes like any other.
-_Avoid_: command, macro, prompt, action
+**Part** (or review part):
+One passage of a Round's prose, and the Notes it produced. The unit the response is read
+in, so the reasoning stays beside the Notes it made.
+_Avoid_: section (a Section is part of the Article), tranche, block (a Block is part of the
+Draft), chunk
+
+**Skill** (or review skill):
+An editorial routine the writer authors in the app as natural-language instructions, saved
+by name and picked from the Notes Panel. It belongs in the House; until 1b it is kept on the
+machine the writer saved it on.
+_Avoid_: command, macro, prompt (a prompt is what the writer types; a Skill is one they
+kept), action
 
 **Proposal**:
 A change to the Plan that the Chat offers and the writer Accepts or Declines. The writer

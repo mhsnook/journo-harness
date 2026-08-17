@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import type { Plan, Refusal } from '../../shared/plan'
 import { isPlanRefused } from '../../shared/plan'
+import { parseFrame } from '../lib/frames'
 import { createPlanWriter, type PlanEdit } from './writer'
 
 /**
@@ -66,21 +67,9 @@ export function usePlanChannel(socket: () => PlanSocket | null): PlanChannel {
 	}
 
 	const onMessage = (event: MessageEvent) => {
-		const frame = parse(event.data)
+		const frame = parseFrame(event.data)
 		if (isPlanRefused(frame)) setRejected(frame.error)
 	}
 
 	return { connection: { plan, edit, refusal, rejected }, onStateUpdate, onMessage }
-}
-
-/** The socket carries frames this Panel does not read, and a binary one is not
- * JSON at all. */
-function parse(data: unknown): unknown {
-	if (typeof data !== 'string') return null
-
-	try {
-		return JSON.parse(data)
-	} catch {
-		return null
-	}
 }
