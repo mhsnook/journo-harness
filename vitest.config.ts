@@ -1,6 +1,8 @@
 import { cloudflareTest, readD1Migrations } from '@cloudflare/vitest-pool-workers'
+import babel from '@rolldown/plugin-babel'
 import { storybookTest } from '@storybook/addon-vitest/vitest-plugin'
 import tailwindcss from '@tailwindcss/vite'
+import { reactCompilerPreset } from '@vitejs/plugin-react'
 import { playwright } from '@vitest/browser-playwright'
 import agents from 'agents/vite'
 import { defineConfig } from 'vitest/config'
@@ -73,6 +75,10 @@ export default defineConfig({
 					// is inert and a height a screen asked for is never applied — which
 					// is exactly the layout the assertions below are here to catch.
 					tailwindcss(),
+					// And React Compiler for the same reason. Without it these stories
+					// mount components the build does not ship, so a story could pass
+					// against source the compiler rewrote differently.
+					babel({ presets: [reactCompilerPreset()] }),
 					storybookPlugins,
 				],
 				test: {
