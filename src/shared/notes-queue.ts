@@ -31,7 +31,7 @@ export type NotesQueue = {
 
 /**
  * What a Review is bound by: the Notes the writer has taken on and not yet
- * resolved. A dismissed Note is the writer saying no, so re-offering it is the
+ * resolved. A declined Note is the writer saying no, so re-offering it is the
  * one thing a later Review should not do, and a resolved one is finished.
  */
 export function openNotes(notes: readonly Note[]): Note[] {
@@ -47,7 +47,7 @@ export function notesQueue(
 	const byDisposition: Record<NoteDisposition, Note[]> = {
 		proposed: [],
 		accepted: [],
-		dismissed: [],
+		declined: [],
 		resolved: [],
 	}
 	for (const note of notes) byDisposition[note.disposition].push(note)
@@ -59,7 +59,7 @@ export function notesQueue(
 			all: notes.length,
 			proposed: byDisposition.proposed.length,
 			accepted: byDisposition.accepted.length,
-			dismissed: byDisposition.dismissed.length,
+			declined: byDisposition.declined.length,
 			resolved: byDisposition.resolved.length,
 		},
 		open: byDisposition.accepted.length,
@@ -67,7 +67,7 @@ export function notesQueue(
 }
 
 /** Mock 8(c), stated once: a resolved Note waits to be asked for, and a
- * dismissed one stays on the queue struck through, because undoing it is the
+ * declined one stays on the queue struck through, because undoing it is the
  * only way back. */
 function shows(disposition: NoteDisposition, view: QueueView): boolean {
 	if (disposition === 'resolved') return view.showResolved

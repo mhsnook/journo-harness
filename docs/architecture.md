@@ -657,13 +657,18 @@ load-bearing. A Block that dies **later** leaves the anchor alone and the Note r
 orphaned, because the writer may undo the deletion.
 
 **Four dispositions and one way back from each.** `proposed` is what the Guide wrote;
-`accepted` and `dismissed` are the writer's ruling; `resolved` is an accepted Note they have
+`accepted` and `declined` are the writer's ruling; `resolved` is an accepted Note they have
 dealt with. Restoring undoes the last move, and each settled disposition has exactly one
-place it came from, so undoing needs no history. The verb is **dismiss** and not decline,
-which `context.md` reserves for an Offer.
+place it came from, so undoing needs no history.
 
-**The Review reads the accepted Notes and not the dismissed ones.** An accepted Note is
-something the writer is already working on, so raising it again is noise; a dismissed one is
+**Accept and Decline are the same two words for a Note, an Offer, and a Proposal.** The
+writer rules on all three the same way, so one verb covers the act — one word per meaning,
+product-wide. Only the starting state differs, and it differs on purpose: a Note is
+`proposed`, because the Guide proposed it, where an Offer is `undecided`, because research
+turned it up and nobody has looked yet.
+
+**The Review reads the accepted Notes and not the declined ones.** An accepted Note is
+something the writer is already working on, so raising it again is noise; a declined one is
 the writer saying no, and sending it back would invite the model to argue.
 
 **A Review does not stream yet, and §10 says it should.** `@callable` is request and

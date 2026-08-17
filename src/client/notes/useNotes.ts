@@ -39,7 +39,7 @@ export type NotesHandle = {
 	/** How an anchor is turned into "¶3" or "§2". */
 	naming: AnchorNaming
 	accept: (note: Note) => void
-	dismiss: (note: Note) => void
+	decline: (note: Note) => void
 	resolve: (note: Note) => void
 	restore: (note: Note) => void
 	runReview: (prompt: string, depth: ReviewDepth) => void
@@ -126,9 +126,9 @@ export function useNotes(): NotesHandle {
 			rule('This Note was not accepted.', () =>
 				store.setNoteDisposition(note.id, 'accepted'),
 			),
-		dismiss: (note) =>
-			rule('This Note was not dismissed.', () =>
-				store.setNoteDisposition(note.id, 'dismissed'),
+		decline: (note) =>
+			rule('This Note was not declined.', () =>
+				store.setNoteDisposition(note.id, 'declined'),
 			),
 		resolve: (note) =>
 			rule('This Note was not resolved.', () => store.resolveNote(note.id)),

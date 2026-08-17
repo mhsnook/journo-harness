@@ -116,7 +116,7 @@ const noDraft: ModelMessage = {
  * The Notes still in play — accepted and unresolved.
  *
  * The Review reads them so it does not hand back an observation the writer is
- * already working on. A dismissed Note is left out on purpose: the writer said
+ * already working on. A declined Note is left out on purpose: the writer said
  * no to it, and sending it back would invite the model to argue.
  */
 function notesMessage(notes: readonly Note[]): ModelMessage {

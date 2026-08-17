@@ -66,7 +66,7 @@ export const B_ReviewRail: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement)
 
-		// A resolved Note waits to be asked for; a dismissed one stays, struck
+		// A resolved Note waits to be asked for; a declined one stays, struck
 		// through, because undoing it is the only way back — mock 8(c).
 		await waitFor(() => expect(canvas.getByText(/Strongest version/)).toBeVisible())
 		await expect(canvas.queryByText(/£4,100 figure/)).toBeNull()

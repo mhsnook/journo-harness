@@ -698,7 +698,7 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 		return this.moveNote(id, 'resolved')
 	}
 
-	/** Undo the last move: a dismissed Note goes back to proposed, and a resolved
+	/** Undo the last move: a declined Note goes back to proposed, and a resolved
 	 * one back to accepted. */
 	@callable()
 	restoreNote(id: string): Note {

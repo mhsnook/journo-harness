@@ -154,13 +154,18 @@ queue, history
 The disposition of an Offer the writer has not ruled on. The starting state.
 _Avoid_: pending, new, unread
 
-**Accepted** (or accepted offer):
-The disposition of an Offer the writer has taken into the Plan.
+**Accepted**:
+The disposition of a record the writer has taken on — an Offer copied into the Plan, a
+Proposal applied to it, a Note they mean to act on. **One verb across all three**, because
+the writer is doing one thing.
 _Avoid_: kept, approved, selected, promoted
 
-**Declined** (or declined offer):
-The disposition of an Offer the writer has ruled out. Restorable — nothing is deleted.
-_Avoid_: cut (the writer cuts their own prose), rejected, dismissed (a Note is dismissed), discarded
+**Declined**:
+The disposition of a record the writer has ruled out — an Offer, a Proposal, or a Note.
+Restorable in every case; nothing is deleted. **One verb across all three**, for the same
+reason Accepted is one: three words for one act would make the reader work out whether
+declining a Note differs from declining an Offer, and it does not.
+_Avoid_: cut (the writer cuts their own prose), rejected, dismissed, discarded, ignored
 
 **Provenance** (or a reference's provenance):
 Where a record came from. An Accepted Offer is **copied** into the Plan as a new,
@@ -209,15 +214,13 @@ again.
 _Avoid_: finding, suggestion, comment, tip, feedback
 
 **Proposed** (or proposed note):
-The disposition of a Note the writer has not ruled on. The starting state, and the Note
-equivalent of an Undecided Offer — a different word because a Note is proposed by the
-Guide rather than turned up by it.
-_Avoid_: undecided (that is an Offer), pending, new, unread
+The disposition of a Note the writer has not ruled on. The starting state.
 
-**Dismissed** (or dismissed note):
-The disposition of a Note the writer has ruled out. Restorable — nothing is deleted. The
-verb is **dismiss**, never decline, which belongs to an Offer.
-_Avoid_: declined (that is an Offer), rejected, ignored, cut
+It is the one place a Note and an Offer take different words, and the reason is that the
+word says where the record came from rather than what the writer did: the Guide **proposed**
+a Note, and research turned an Offer up, leaving it **Undecided**. The rulings that follow —
+Accepted, Declined — are the same words for both.
+_Avoid_: undecided (that is an Offer's starting state), pending, new, unread
 
 **Resolved** (or resolved note):
 Describes an accepted Note the writer has dealt with. It leaves the queue and is reachable

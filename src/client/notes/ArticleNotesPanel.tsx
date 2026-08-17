@@ -23,7 +23,7 @@ export function ArticleNotesPanel({ divider, grow, className }: ArticleNotesPane
 			loading={screen.loading}
 			naming={screen.naming}
 			onAccept={screen.accept}
-			onDismiss={screen.dismiss}
+			onDecline={screen.decline}
 			onRead={screen.read}
 			onResolve={screen.resolve}
 			onRestore={screen.restore}

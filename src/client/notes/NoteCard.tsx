@@ -19,7 +19,7 @@ export interface NoteCardProps {
 	 * the tranche it sits in is the grouping there. */
 	ordinal?: number
 	onAccept: (note: Note) => void
-	onDismiss: (note: Note) => void
+	onDecline: (note: Note) => void
 	onResolve: (note: Note) => void
 	onRestore: (note: Note) => void
 	className?: string
@@ -30,19 +30,19 @@ export function NoteCard({
 	naming,
 	ordinal,
 	onAccept,
-	onDismiss,
+	onDecline,
 	onResolve,
 	onRestore,
 	className,
 }: NoteCardProps) {
 	const anchor = anchorLabel(note.anchor, naming)
-	const settled = note.disposition === 'dismissed' || note.disposition === 'resolved'
+	const settled = note.disposition === 'declined' || note.disposition === 'resolved'
 
 	const meta = [
 		ordinal === undefined ? null : String(ordinal).padStart(2, '0'),
 		anchor.text,
 		note.label,
-		note.disposition === 'dismissed' ? 'dismissed' : null,
+		note.disposition === 'declined' ? 'declined' : null,
 		note.disposition === 'resolved' ? 'resolved' : null,
 	].filter((part): part is string => part !== null && part !== '')
 
@@ -65,7 +65,7 @@ export function NoteCard({
 			<p
 				className={cx(
 					'text-[0.8125rem] leading-relaxed text-ink',
-					note.disposition === 'dismissed' && 'line-through',
+					note.disposition === 'declined' && 'line-through',
 				)}
 			>
 				{note.body}
@@ -75,7 +75,7 @@ export function NoteCard({
 				<Actions
 					note={note}
 					onAccept={onAccept}
-					onDismiss={onDismiss}
+					onDecline={onDecline}
 					onResolve={onResolve}
 					onRestore={onRestore}
 				/>
@@ -89,7 +89,7 @@ export function NoteCard({
 function Actions({
 	note,
 	onAccept,
-	onDismiss,
+	onDecline,
 	onResolve,
 	onRestore,
 }: Omit<NoteCardProps, 'naming' | 'ordinal' | 'className'>) {
@@ -99,8 +99,8 @@ function Actions({
 				<Button onClick={() => onAccept(note)} size="sm">
 					accept
 				</Button>
-				<Button onClick={() => onDismiss(note)} size="sm" variant="quiet">
-					dismiss
+				<Button onClick={() => onDecline(note)} size="sm" variant="quiet">
+					decline
 				</Button>
 			</>
 		)

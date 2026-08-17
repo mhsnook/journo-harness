@@ -31,7 +31,7 @@ export interface ReviewViewProps {
 	rounds: readonly Round[]
 	naming: AnchorNaming
 	onAccept: (note: Note) => void
-	onDismiss: (note: Note) => void
+	onDecline: (note: Note) => void
 	onResolve: (note: Note) => void
 	onRestore: (note: Note) => void
 	onOpenRound: (round: Round) => void
@@ -46,7 +46,7 @@ export function ReviewView({
 	rounds,
 	naming,
 	onAccept,
-	onDismiss,
+	onDecline,
 	onResolve,
 	onRestore,
 	onOpenRound,
@@ -55,7 +55,7 @@ export function ReviewView({
 	className,
 }: ReviewViewProps) {
 	const byId = new Map(notes.map((note) => [note.id, note]))
-	const rule = { onAccept, onDismiss, onResolve, onRestore }
+	const rule = { onAccept, onDecline, onResolve, onRestore }
 
 	return (
 		<Panel className={className} padded={false}>
@@ -177,7 +177,7 @@ function Part({
 	byId,
 	naming,
 	onAccept,
-	onDismiss,
+	onDecline,
 	onResolve,
 	onRestore,
 }: {
@@ -185,7 +185,7 @@ function Part({
 	byId: ReadonlyMap<string, Note>
 	naming: AnchorNaming
 	onAccept: (note: Note) => void
-	onDismiss: (note: Note) => void
+	onDecline: (note: Note) => void
 	onResolve: (note: Note) => void
 	onRestore: (note: Note) => void
 }) {
@@ -220,11 +220,11 @@ function Part({
 									accept all
 								</Button>
 								<Button
-									onClick={() => proposed.forEach(onDismiss)}
+									onClick={() => proposed.forEach(onDecline)}
 									size="sm"
 									variant="link"
 								>
-									dismiss all
+									decline all
 								</Button>
 							</div>
 						)}
@@ -236,7 +236,7 @@ function Part({
 							naming={naming}
 							note={note}
 							onAccept={onAccept}
-							onDismiss={onDismiss}
+							onDecline={onDecline}
 							onResolve={onResolve}
 							onRestore={onRestore}
 						/>

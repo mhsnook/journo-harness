@@ -21,7 +21,7 @@ function makeNote(id: string, disposition: NoteDisposition): Note {
 const notes = [
 	makeNote('a', 'proposed'),
 	makeNote('b', 'accepted'),
-	makeNote('c', 'dismissed'),
+	makeNote('c', 'declined'),
 	makeNote('d', 'resolved'),
 	makeNote('e', 'accepted'),
 ]
@@ -34,7 +34,7 @@ describe('the Notes queue', () => {
 			all: 5,
 			proposed: 1,
 			accepted: 2,
-			dismissed: 1,
+			declined: 1,
 			resolved: 1,
 		})
 	})
@@ -49,9 +49,9 @@ describe('the Notes queue', () => {
 		).toEqual(['a', 'b', 'c', 'd', 'e'])
 	})
 
-	it('keeps a dismissed Note on the queue, because undoing it is the way back', () => {
+	it('keeps a declined Note on the queue, because undoing it is the way back', () => {
 		expect(notesQueue(notes).visible.map((note) => note.disposition)).toContain(
-			'dismissed',
+			'declined',
 		)
 	})
 
@@ -77,15 +77,15 @@ describe('what a Review is bound by', () => {
 		expect(openNotes(notes).map((note) => note.id)).toEqual(['b', 'e'])
 	})
 
-	it('leaves a dismissed Note out, so a later Review cannot re-argue it', () => {
-		expect(openNotes(notes).map((note) => note.disposition)).not.toContain('dismissed')
+	it('leaves a declined Note out, so a later Review cannot re-argue it', () => {
+		expect(openNotes(notes).map((note) => note.disposition)).not.toContain('declined')
 	})
 })
 
 describe('restoring a Note', () => {
 	it('puts a ruled Note back where it came from', () => {
 		expect(restoredTo('accepted')).toBe('proposed')
-		expect(restoredTo('dismissed')).toBe('proposed')
+		expect(restoredTo('declined')).toBe('proposed')
 		expect(restoredTo('resolved')).toBe('accepted')
 	})
 

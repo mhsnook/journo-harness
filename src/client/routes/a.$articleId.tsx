@@ -132,7 +132,7 @@ function ArticleBody({ agent, open }: { agent: ArticleSocket; open: PanelId[] })
 			notes={screen.notes}
 			onAccept={screen.accept}
 			onBack={screen.close}
-			onDismiss={screen.dismiss}
+			onDecline={screen.decline}
 			onOpenRound={screen.read}
 			onResolve={screen.resolve}
 			onRestore={screen.restore}

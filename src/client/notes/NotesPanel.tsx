@@ -34,7 +34,7 @@ export interface NotesPanelProps {
 	naming: AnchorNaming
 	skills: readonly Skill[]
 	onAccept: (note: Note) => void
-	onDismiss: (note: Note) => void
+	onDecline: (note: Note) => void
 	onResolve: (note: Note) => void
 	onRestore: (note: Note) => void
 	onRun: (prompt: string, depth: ReviewDepth) => void
@@ -57,7 +57,7 @@ export function NotesPanel({
 	naming,
 	skills,
 	onAccept,
-	onDismiss,
+	onDecline,
 	onResolve,
 	onRestore,
 	onRun,
@@ -128,7 +128,7 @@ export function NotesPanel({
 						loading={loading}
 						naming={naming}
 						onAccept={onAccept}
-						onDismiss={onDismiss}
+						onDecline={onDecline}
 						onResolve={onResolve}
 						onRestore={onRestore}
 						queue={queue}
@@ -150,7 +150,7 @@ function Queue({
 	loading,
 	naming,
 	onAccept,
-	onDismiss,
+	onDecline,
 	onResolve,
 	onRestore,
 }: Pick<
@@ -160,7 +160,7 @@ function Queue({
 	| 'loading'
 	| 'naming'
 	| 'onAccept'
-	| 'onDismiss'
+	| 'onDecline'
 	| 'onResolve'
 	| 'onRestore'
 >) {
@@ -195,7 +195,7 @@ function Queue({
 					naming={naming}
 					note={note}
 					onAccept={onAccept}
-					onDismiss={onDismiss}
+					onDecline={onDecline}
 					onResolve={onResolve}
 					onRestore={onRestore}
 					ordinal={index + 1}

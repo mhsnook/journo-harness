@@ -17,20 +17,22 @@ import { idSchema } from './plan/schema'
  * How far the writer has got with one Note.
  *
  * Two moves, not four states in a line. `proposed` is what the Guide wrote;
- * `accepted` and `dismissed` are the writer's ruling on it; `resolved` is an
+ * `accepted` and `declined` are the writer's ruling on it; `resolved` is an
  * accepted Note they have since dealt with. Restoring undoes the last move,
- * which is why `dismissed` and `resolved` each have exactly one place to go
- * back to.
+ * which is why each settled disposition has exactly one place to go back to.
  *
- * The verb is **dismiss** rather than decline, which `context.md` reserves for
- * an Offer.
+ * **The verb is `decline`, the same word an Offer and a Proposal take.** The
+ * writer rules on all three the same way, so one verb covers the act — one word
+ * per meaning, product-wide. `proposed` differs from an Offer's `undecided`
+ * because it says where the record came from rather than what the writer did:
+ * the Guide proposed it, and research turned an Offer up.
  */
-export const noteDispositions = ['proposed', 'accepted', 'dismissed', 'resolved'] as const
+export const noteDispositions = ['proposed', 'accepted', 'declined', 'resolved'] as const
 export type NoteDisposition = (typeof noteDispositions)[number]
 
 /** What the writer may rule directly. `resolved` is not here: it is reached by
  * resolving an accepted Note, never by ruling a proposed one. */
-export const noteRulingSchema = z.enum(['accepted', 'dismissed'])
+export const noteRulingSchema = z.enum(['accepted', 'declined'])
 export type NoteRuling = z.infer<typeof noteRulingSchema>
 
 /**
@@ -77,7 +79,7 @@ export const noteContentSchema = z.strictObject({
 export type NoteContent = z.infer<typeof noteContentSchema>
 
 /** One Note row. `decidedAt` is null while the Note is proposed, and returns to
- * null when a dismissed one is restored. */
+ * null when a declined one is restored. */
 export type Note = NoteContent & {
 	id: string
 	/** The Round that wrote it. */
@@ -142,12 +144,12 @@ export function notAccepted(note: Note): Error {
  * Where restoring puts a Note back.
  *
  * Each settled disposition has exactly one place it came from, so undoing needs
- * no history: an accepted or dismissed Note was proposed, and a resolved one
+ * no history: an accepted or declined Note was proposed, and a resolved one
  * was accepted. Null means there is nothing to undo, which is only true of a
  * Note nobody has ruled on.
  */
 export function restoredTo(disposition: NoteDisposition): NoteDisposition | null {
-	if (disposition === 'accepted' || disposition === 'dismissed') return 'proposed'
+	if (disposition === 'accepted' || disposition === 'declined') return 'proposed'
 	if (disposition === 'resolved') return 'accepted'
 
 	return null

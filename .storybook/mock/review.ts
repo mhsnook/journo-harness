@@ -45,7 +45,7 @@ const written: (NoteContent & { id: string; disposition: Note['disposition'] })[
 	},
 	{
 		id: 'note-4',
-		disposition: 'dismissed',
+		disposition: 'declined',
 		type: 'tone drift',
 		anchor: { kind: 'section', nodeId: second },
 		label: 'editorialising',

@@ -273,11 +273,11 @@ describe('ruling on a Note', () => {
 		).resolves.toMatchObject({ disposition: 'accepted' })
 	})
 
-	it('undoes a dismissal back to proposed, and clears when it was decided', async () => {
-		const id = await withNote('note-dismiss')
+	it('undoes a Decline back to proposed, and clears when it was decided', async () => {
+		const id = await withNote('note-decline')
 
-		await inAgent('note-dismiss', (agent) => agent.setNoteDisposition(id, 'dismissed'))
-		const restored = await inAgent('note-dismiss', (agent) => agent.restoreNote(id))
+		await inAgent('note-decline', (agent) => agent.setNoteDisposition(id, 'declined'))
+		const restored = await inAgent('note-decline', (agent) => agent.restoreNote(id))
 
 		expect(restored).toMatchObject({ disposition: 'proposed', decidedAt: null })
 	})
@@ -288,7 +288,7 @@ describe('ruling on a Note', () => {
 		await inAgent('note-twice', (agent) => agent.setNoteDisposition(id, 'accepted'))
 
 		await expect(
-			inAgent('note-twice', (agent) => agent.setNoteDisposition(id, 'dismissed')),
+			inAgent('note-twice', (agent) => agent.setNoteDisposition(id, 'declined')),
 		).rejects.toThrow(/only a proposed Note is ruled/)
 	})
 
