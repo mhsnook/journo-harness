@@ -19,6 +19,7 @@ import { setProjectAnnotations } from '@storybook/react-vite'
 import { beforeAll, expect } from 'vitest'
 
 import * as previewAnnotations from './preview'
+import { TARGET_SCREEN_WIDTH } from './preview'
 
 /** Subpixel layout rounding, in px. */
 const TOLERANCE = 1
@@ -50,6 +51,15 @@ function describe(element: Element): string {
 }
 
 function checkLayout(canvasElement: HTMLElement) {
+	// The width every screen is designed against — docs/ui.md. It is set as a
+	// Storybook viewport, which `@storybook/addon-vitest` applies per story and
+	// which overrides anything vitest.config.ts asks for. That override is silent,
+	// so it is asserted rather than assumed: a story measured at some other width
+	// is a story measured against the wrong `lg:` utilities.
+	expect
+		.soft(window.innerWidth, 'Story drawn at the wrong screen width')
+		.toBe(TARGET_SCREEN_WIDTH)
+
 	for (const frame of canvasElement.querySelectorAll('[data-frame]')) {
 		// A collapsed Frame is a screen with nothing on it, which has never been
 		// what a story meant to show.

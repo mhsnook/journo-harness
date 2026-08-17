@@ -58,7 +58,7 @@
 	--radius-frame: 0.625rem;
 
 	--breakpoint-*: initial;
-	--breakpoint-md: 48rem; /* 768px */
+	--breakpoint-md: 768px;
 	--breakpoint-lg: 1298px;
 
 	/* One depth, cast in whichever direction the thing lifts: the outermost
@@ -113,6 +113,48 @@
 
 	.prose-draft p + p {
 		margin-top: 1.1em;
+	}
+
+	/* A heading is a different voice from the prose, not a louder one. Bold
+	   serif reads as a stressed sentence, so the sans face carries the headings
+	   instead: the reader sees the structure before they read the words. */
+	.prose-draft :is(h1, h2, h3, h4) {
+		font-family: var(--font-sans);
+		font-weight: 600;
+		line-height: 1.3;
+		/* Closer to what it opens than to what it closes, so a heading reads as
+		   the top of the passage under it. */
+		margin-bottom: 0.4em;
+		color: var(--color-ink);
+	}
+
+	.prose-draft h2 {
+		margin-top: 1.75em;
+		font-size: 1.0625rem;
+		letter-spacing: -0.01em;
+	}
+
+	/* Smaller than the prose rather than larger, and spaced out: a subheading
+	   ranks under its heading, and the sans face still separates it from the
+	   sentences around it. */
+	.prose-draft h3 {
+		margin-top: 1.5em;
+		font-size: 0.9375rem;
+		letter-spacing: 0.02em;
+	}
+
+	/* A heading opening the Draft sits against the top of the surface, not a
+	   line and a half below it. The editor puts its own wrapper between the two,
+	   so the rule has to reach through it. */
+	.prose-draft > :first-child,
+	.prose-draft .ProseMirror > :first-child {
+		margin-top: 0;
+	}
+
+	/* The section break the writer places — §10. */
+	.prose-draft hr {
+		margin: 1.75em 0;
+		border-top: 1px solid var(--color-edge);
 	}
 
 	/* A list is one Block, so it is one thing on the page: the marker and the

@@ -16,6 +16,8 @@ export interface ArticleChatPanelProps {
 	agent: ArticleSocket
 	placeholder?: string
 	divider?: ChatPanelProps['divider']
+	/** This Panel's share of the Panel row — `panelShare`. */
+	grow?: ChatPanelProps['grow']
 	className?: string
 }
 
@@ -23,6 +25,7 @@ export function ArticleChatPanel({
 	agent,
 	placeholder,
 	divider,
+	grow,
 	className,
 }: ArticleChatPanelProps) {
 	const { plan } = useArticle().plan
@@ -35,7 +38,7 @@ export function ArticleChatPanel({
 	// until one arrives.
 	if (plan === null) {
 		return (
-			<Panel className={className} divider={divider}>
+			<Panel className={className} divider={divider} grow={grow}>
 				<p className="text-[0.75rem] text-faint">Opening the Chat…</p>
 			</Panel>
 		)
@@ -53,6 +56,7 @@ export function ArticleChatPanel({
 			divider={divider}
 			drawer={<OfferLedgerDrawer ledger={ledger} onClose={close} open={showLedger} />}
 			failure={chat.failure ?? ledger.failure}
+			grow={grow}
 			leading={
 				<LedgerToggle
 					onToggle={() => (showLedger ? close() : setShowLedger(true))}

@@ -4,6 +4,11 @@ This document is a sibling to [`architecture.md`](./architecture.md), a place to
 decisions we make about the UI and design, as opposed to technical, cross-module
 architectural decisions that go in the other doc.
 
+## The screen we design for
+
+Our target screen is 1298px wide. That is the starting value for the `lg` breakpoint, and
+wherever possible we configure Storybook to use this width.
+
 ## The UI showcase
 
 We are generally a very "Storybook First" project, so every wireframe and component is

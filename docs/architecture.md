@@ -352,6 +352,13 @@ their expectations, which may lead us down that road in the long run.
 **Currently, one model serves every call** — the Chat, the ambient Guidance notes, the
 Review. No routing machinery, no per-call-type model selection is included here.
 
+**The AI SDK follows from "Cloudflare throughout" (§2) rather than being chosen against
+alternatives.** `@cloudflare/ai-chat` declares `ai` and `@ai-sdk/react` as peer dependencies,
+and `workers-ai-provider` is an AI SDK provider whose `createWorkersAI` returns an `ai`
+`LanguageModel` over the `env.AI` binding. So the SDK arrives with both packages, and dropping
+it would mean dropping `AIChatAgent` and calling the binding by hand. It stays
+provider-agnostic, which is what keeps the model swap above down to one string.
+
 **The swappable boundary is the model instance, not a wrapper API.** AI SDK v7 already
 provides `generateText`, `streamText`, and `generateObject`; a wrapper would duplicate it and
 break the `execute`-less tool machinery.
@@ -435,7 +442,9 @@ already reactive through Article Agent state and, at 1b, party-db's TanStack DB 
 **The Article screen has four Panels** — Chat, Plan, Draft, Notes — which become tabs on a
 narrow screen, and which are all more or less their own little interfaces, with very specific
 and explicit, user-gated interactions between them. `usePanels` holds which are open, keeps
-them in the one order, drawn by a `Rail` component in the navbar.
+them in the one order, drawn by a `Rail` component in the navbar. It also sets how wide each
+one gets: Notes takes a fixed slice as the margin rail, and the Draft takes twice what a
+supporting Panel does out of what is left, so the prose keeps the room whatever is beside it.
 
 **Use Loading states instead of drawing empty values.** An empty title, a zero count and four
 empty columns are answers, and a screen that puts one on the page before it has read anything
