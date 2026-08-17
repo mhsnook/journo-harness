@@ -58,20 +58,21 @@ const canSearchRules = [
 const cannotSearchRules =
 	'You cannot browse, so every Offer you record comes from your prior knowledge.'
 
+// Both whole prompts, at module load. Nothing in either varies with the
+// Article, so there is nothing for a turn to build.
+const searchingPrompt = [guideRules, '', canSearchRules, '', fromMemoryRules].join('\n')
+const recallingPrompt = [guideRules, '', cannotSearchRules, '', fromMemoryRules].join(
+	'\n',
+)
+
 /**
- * The stable prefix of one Chat turn, built once per deployment rather than
- * per turn — nothing in it varies with the Article.
+ * The stable prefix of one Chat turn.
  *
  * Two things join the guide rules here, and both arrive with the House at 1b:
  * the Lexicon entries in play, and the writer's own standing rules. Nothing
  * goes in either slot until then. The Plan does not belong here — see the
  * ordering note above.
  */
-const searchingPrompt = [guideRules, '', canSearchRules, '', fromMemoryRules].join('\n')
-const recallingPrompt = [guideRules, '', cannotSearchRules, '', fromMemoryRules].join(
-	'\n',
-)
-
 export function chatSystemPrompt(canSearch: boolean): string {
 	return canSearch ? searchingPrompt : recallingPrompt
 }

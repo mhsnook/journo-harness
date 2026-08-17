@@ -1,15 +1,43 @@
 import { z } from 'zod'
 
-import {
-	type WebSearchInput,
-	type WebSearchOutput,
-	type WebSearchResult,
-} from '../../shared/chat'
-
 /**
  * Web search, over Exa's `POST /search` — `docs/architecture.md` §7. The only
  * place a search provider is named.
+ *
+ * The tool's schemas live here rather than in `src/shared`: the Chat Panel
+ * matches on the tool's name and reads nothing else, so these are the
+ * model-facing half and belong beside the thing that answers them.
  */
+
+/** What the model fills in to search. Strict like the Proposal's input, so an
+ * invented field is refused and retried rather than stripped — §6. */
+export const webSearchInput = z.strictObject({
+	query: z.string().min(1),
+	/** Published on or after this date, as YYYY-MM-DD. */
+	since: z.iso.date().optional(),
+})
+export type WebSearchInput = z.infer<typeof webSearchInput>
+
+/** One result, in the shape an Offer is written from — a source and, for a
+ * Quote, a passage off the page. */
+const webSearchResult = z.object({
+	url: z.url(),
+	title: z.string().min(1).optional(),
+	author: z.string().min(1).optional(),
+	/** YYYY-MM-DD, estimated by the provider from the page. */
+	published: z.string().min(1).optional(),
+	/** The passage the provider pulled for this query. */
+	excerpt: z.string().min(1).optional(),
+})
+export type WebSearchResult = z.infer<typeof webSearchResult>
+
+/** `ok` with no results is a search that found nothing; `unavailable` is a
+ * search that did not happen. */
+export const webSearchOutput = z.discriminatedUnion('status', [
+	z.object({ status: z.literal('ok'), results: z.array(webSearchResult) }),
+	z.object({ status: z.literal('unavailable'), reason: z.string() }),
+])
+export type WebSearchOutput = z.infer<typeof webSearchOutput>
 
 const endpoint = 'https://api.exa.ai/search'
 const resultCount = 6
@@ -27,9 +55,8 @@ export type WebSearch = (
 	abortSignal?: AbortSignal,
 ) => Promise<WebSearchOutput>
 
-/** Undefined where no key is set, which `chatTools` reads to leave the search
- * tool out of the registry and `chatSystemPrompt` reads to tell the guide it
- * cannot browse. */
+/** Undefined where no key is set, which is what gives a deployment with no key
+ * no search tool rather than one that always fails — §7. */
 export function webSearch(env: Env): WebSearch | undefined {
 	const key = env.EXA_API_KEY
 	if (!key) return undefined
@@ -99,12 +126,9 @@ const providerResult = z.object({
 const providerResponse = z.object({ results: z.array(z.unknown()).nullish() })
 
 function readResults(body: unknown): WebSearchResult[] {
-	const answered = providerResponse.safeParse(body)
-	if (!answered.success) return []
-
 	// Parsed per result, so one malformed entry costs its own row rather than
 	// the whole search.
-	return (answered.data.results ?? []).flatMap((entry) => {
+	return (providerResponse.safeParse(body).data?.results ?? []).flatMap((entry) => {
 		const parsed = providerResult.safeParse(entry)
 
 		return parsed.success ? [toResult(parsed.data)] : []

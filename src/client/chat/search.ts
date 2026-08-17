@@ -13,13 +13,15 @@ export type SearchCall = {
 	outcome: SearchOutcome
 }
 
-/** The Panel needs the status and a count, so results are counted rather than
- * validated. `webSearchOutput` is the contract the tool and the model hold, and
- * re-checking every url on every render buys the Panel nothing. */
-const answered = z.discriminatedUnion('status', [
-	z.object({ status: z.literal('ok'), results: z.array(z.unknown()) }),
-	z.object({ status: z.literal('unavailable') }),
-])
+/** A search that worked. The Panel needs the status and a count, so results are
+ * counted rather than validated — the tool's own schema is
+ * `src/server/llm/search.ts`, and re-checking every url on every render buys
+ * the Panel nothing. An unavailable search fails this parse, which is the
+ * answer the Panel wants for it anyway. */
+const answered = z.object({
+	status: z.literal('ok'),
+	results: z.array(z.unknown()),
+})
 
 /**
  * The caller matches the tool name, so this takes any part it hands over.
@@ -37,11 +39,8 @@ export function readWebSearch(part: ToolUIPart | DynamicToolUIPart): SearchCall 
 	// The tool never throws, so a failed search arrives as an ordinary output
 	// saying so rather than as `output-error`.
 	const answer = answered.safeParse(part.output)
-	if (!answer.success || answer.data.status === 'unavailable') {
-		return { query, outcome: 'failed' }
-	}
 
-	return { query, outcome: answer.data.results.length }
+	return { query, outcome: answer.success ? answer.data.results.length : 'failed' }
 }
 
 /** A failure stays short here: the guide relays the provider's own reason in

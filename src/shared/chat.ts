@@ -36,38 +36,10 @@ export type ProposePlanChangeInput = z.infer<typeof proposePlanChangeInput>
 export const recordOffersTool = 'recordOffers'
 
 /** The name the search tool is registered and matched under. The client
- * answers nothing, and reads the call to say what the guide looked up. */
+ * answers nothing, and reads the call to say what the guide looked up. Only
+ * the name is shared: the Panel does not parse the tool's input or output, so
+ * both schemas live in `src/server/llm/search.ts`. */
 export const webSearchTool = 'webSearch'
-
-/** What the model fills in to search. Strict like the Proposal's input, so an
- * invented field is refused and retried rather than stripped — §6. */
-export const webSearchInput = z.strictObject({
-	query: z.string().min(1),
-	/** Published on or after this date, as YYYY-MM-DD. */
-	since: z.iso.date().optional(),
-})
-export type WebSearchInput = z.infer<typeof webSearchInput>
-
-/** One result, in the shape an Offer is written from — a `source` and, for a
- * Quote, a passage off the page. */
-export const webSearchResult = z.object({
-	url: z.url(),
-	title: z.string().optional(),
-	author: z.string().optional(),
-	/** YYYY-MM-DD, estimated by the provider from the page. */
-	published: z.string().optional(),
-	/** The passage the provider pulled for this query. */
-	excerpt: z.string().optional(),
-})
-export type WebSearchResult = z.infer<typeof webSearchResult>
-
-/** `ok` with no results is a search that found nothing; `unavailable` is a
- * search that did not happen. */
-export const webSearchOutput = z.discriminatedUnion('status', [
-	z.object({ status: z.literal('ok'), results: z.array(webSearchResult) }),
-	z.object({ status: z.literal('unavailable'), reason: z.string() }),
-])
-export type WebSearchOutput = z.infer<typeof webSearchOutput>
 
 /** What `recordOffers` hands back: enough for the model to refer to what it
  * turned up, and the ids the Chat Panel looks the rows up by. */

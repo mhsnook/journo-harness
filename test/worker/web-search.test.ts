@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { webSearch } from '../../src/server/llm/search'
-import type { WebSearchInput } from '../../src/shared/chat'
+import { webSearch, type WebSearchInput } from '../../src/server/llm/search'
 
 /**
  * The search boundary — `docs/architecture.md` §7. No test reaches the

@@ -7,18 +7,18 @@ import {
 	proposePlanChangeTool,
 	recordedOffersOutput,
 	recordOffersTool,
-	webSearchInput,
-	webSearchOutput,
 	webSearchTool,
 } from '../../shared/chat'
 import { offerBatchSchema } from '../../shared/offer'
 import type { ArticleAgent } from '../article-agent'
-import type { WebSearch } from './search'
+import { type WebSearch, webSearchInput, webSearchOutput } from './search'
 
 /**
  * The tools a Chat turn is given, and the descriptions that teach a model to
- * use them. The name and the input schema are `src/shared/chat.ts`, because
- * the Chat Panel matches on both.
+ * use them. A tool's name is `src/shared/chat.ts`, because the Chat Panel
+ * matches on it. Its schemas go there only where the Panel parses them too —
+ * the Proposal's input and the Offer tool's output. The search tool's are in
+ * `llm/search.ts`, because nothing on the client reads them.
  *
  * The Proposal tool is **`execute`-less**: a tool with no `execute` suspends
  * for the client, and that suspension is the Proposal the writer rules on —
@@ -131,9 +131,8 @@ function searchTool(search: WebSearch) {
 }
 
 /**
- * The registry one turn is given. A function rather than a const, because a
- * deployment with no search key gets no search tool — and `llm/prompt.ts`
- * switches the guide rules off the same value.
+ * The registry one turn is given. A function rather than a const, because what
+ * it holds varies with what the deployment can reach.
  *
  * Typed as the whole `ToolSet` rather than inferred: the Proposal tool has no
  * `execute` and so no return type to infer, and the wide type is what lets the
