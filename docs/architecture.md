@@ -13,6 +13,8 @@ of how we're doing things now, so as not to over-specify and constrain future in
 - UI decisions and patterns go in [`ui.md`](./ui.md) or the Storybook stories it includes
   by reference.
 - Certain key architecture decisions are recorded in the [`adr`](./adr/) folder.
+- What a feature is and how it behaves goes in its own file — [`reviews.md`](./reviews.md).
+- What has to be set outside the repository is [`deploy.md`](./deploy.md).
 - Use [`later.md`](./later.md) sparingly.
 
 ## 1. Build order
@@ -225,6 +227,10 @@ of one. `referenceForOffer` answers with the first match on the strength of it, 
 answer is what makes a retried Accept build no op — so a second copy would turn every retry
 into another copy.
 
+**A retrieved Offer is the same row as a recalled one.** `provenance` is `writer` or `offer`
+and says nothing about whether the Chat looked the source up or remembered it (§7). How to
+mark that on an Offer and on the Reference it becomes is open, and waits on #40.
+
 **Proposals are not Offers.** See below.
 
 ## 6. Chat and Proposals
@@ -343,11 +349,8 @@ on we may want to come up with heuristics that allow us to be a bit more forgivi
 ## 7. Inference
 
 **Currently using `@cf/zai-org/glm-5.2` on Workers AI**, over the `env.AI` binding. 262k
-context, tool calling and streaming supported, Workers Paid plan required. **If its tool
-calling or structured output disappoints, swap the string to `@cf/moonshotai/kimi-k2.6`
-and move on.** We are not (currently) planning a bunch of automated benchmarking or anything
-like that, but we do have plans to let the writer evaluate how well the Review tool matches
-their expectations, which may lead us down that road in the long run.
+context, tool calling and streaming supported, Workers Paid plan required. Swapping it is one
+string, and #16 names the fallback and why it is a swap rather than a spike.
 
 **Currently, one model serves every call** — the Chat, the ambient Guidance notes, the
 Review. No routing machinery, no per-call-type model selection is included here.
@@ -370,23 +373,18 @@ export const model = (env: Env) =>
   createWorkersAI({ binding: env.AI })('@cf/zai-org/glm-5.2')
 ```
 
-**AI Gateway attaches** to those calls for logging. Inference runs on Cloudflare, so there is
-no external provider and no key to manage. **Gateway response caching stays off for guide
-passes**, or near-identical requests against different Drafts return stale Notes.
+**Search is Exa**, in `src/server/llm/search.ts` — the one place a provider is named, as
+`llm/model.ts` is for the model. **No key means no search tool**, and the guide is told to
+answer from memory instead: the registry and the guide rules read one value, so they cannot
+disagree about what the turn can reach. **A search that fails answers rather than throws**,
+because a rejected `execute` ends a turn that still owes the writer a reply.
 
-**The Gateway is named by the `AI_GATEWAY_ID` var, set from the CLI rather than checked in.**
-It is deployment configuration rather than repo content, and a var declared in
-`wrangler.jsonc` overwrites the deployed value on every `wrangler deploy`, so declaring it
-there even as a placeholder would wipe it. Unset attaches no Gateway. Its type is in
-`src/server/env.d.ts` and `llm/model.ts` is the only thing that reads it.
+**Model output is validated, never parsed out of prose.** A Proposal is a tool call and a
+Review is `generateObject` against a zod schema — both checked in the Article Agent, with one
+retry carrying the validation error. A Review's prose lives _inside_ that schema rather than
+being scanned for structure.
 
-**The binding path needs no Gateway token.** `GatewayOptions` carries an id and cache
-settings and has nowhere to put one, because a Workers AI binding call is same-account and
-authenticates itself. So an authenticated Gateway is the one setting to leave off — turn it
-on and these calls have no way to present the header it wants.
-
-**Structured outputs rather than parsed prose.** `generateObject` with a zod schema,
-validated in the Article Agent, with one retry that includes the validation error.
+The Gateway and the keys are deployment configuration — [`deploy.md`](./deploy.md).
 
 **Prompt packs put the stable part first** — system prompt, then Lexicon entries in play,
 then the standing rules, then everything that changes. The Plan and the Draft change all the
@@ -402,14 +400,10 @@ tool result rather than the writer. A tool result answers the assistant message 
 and the Plan is a user message, so slotting it in front would split that pair — which the AI
 SDK refuses outright with `MissingToolResultsError`, before the model is called at all. The
 Plan goes last in that case, and there is no writer message to keep last anyway.
-`chatPackMessages` and `planSlot` in `src/server/llm/prompt.ts` are the whole of it, and
-`test/worker/chat-turn.test.ts` holds both cases plus the empty transcript.
+`chatPackMessages` and `planSlot` in `src/server/llm/prompt.ts` are the whole of it.
 
-Note: Whether that ordering saves time or money on Workers AI is unverified. Prefix caching is
-what would make it pay, priced elsewhere at $0.26 per million cached against $1.40 uncached —
-and the `env.AI` binding bills in neurons, so those are not its numbers and nothing here has
-measured it. The ordering stands on the structural argument above either way, and the saving
-is a claim to check on the first real turn rather than one to design around.
+Whether the stable-first ordering saves anything on Workers AI is unmeasured — the argument
+for it is structural, and the arithmetic is in #16.
 
 Each row below reads in pack order, stable to volatile.
 
@@ -423,8 +417,7 @@ Each row below reads in pack order, stable to volatile.
 Research reaches a Review only by being Accepted into the Plan. The Ledger is the bridge, and
 curation is forced rather than assumed.
 
-**Cost is not a constraint.** A guide pass of roughly 8k input and 500 output costs about a
-tenth of a cent; a two-hour session is well under a dollar.
+**Cost does not constrain the design** — #16 priced a guide pass at about a tenth of a cent.
 
 ## 8. Frontend
 

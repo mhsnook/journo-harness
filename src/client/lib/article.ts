@@ -29,9 +29,7 @@ export type DraftStore = {
  *
  * `startReview` answers as soon as the Round row exists and the model call
  * carries on inside the Article Agent, so what comes back is a Round in flight
- * rather than a finished one. `onReviewFinished` is how the waiting client
- * hears that it settled — rows have no sync, and this is the one place that
- * matters (§3).
+ * rather than a finished one.
  */
 export type NoteStore = {
 	listRounds(): Promise<Round[]>
@@ -40,14 +38,18 @@ export type NoteStore = {
 	setNoteDisposition(id: string, ruling: NoteRuling): Promise<Note>
 	resolveNote(id: string): Promise<Note>
 	restoreNote(id: string): Promise<Note>
-	/** Hands back the way to stop listening. */
-	onReviewFinished(listen: (roundId: string) => void): () => void
 }
 
 export type Article = {
 	offers: OfferStore
 	draft: DraftStore
 	notes: NoteStore
+	/** The Round a `review_finished` frame last named, and null until one does.
+	 * Rows have no sync, so this is what tells a waiting client to read again.
+	 *
+	 * Beside the stores rather than on `NoteStore`, because a store's identity is
+	 * what "read once per store" is keyed on and this changes. */
+	reviewFinished: string | null
 	plan: PlanConnection
 }
 

@@ -43,15 +43,37 @@ const guideRules = [
 	'widest first, so the nearest ones weigh most: where a Section and the Article pull against each',
 	"other, the Section's term is the one to write to.",
 	'',
-	'You cannot browse, so every Offer you record comes from your prior knowledge. Offer a source',
-	'only where you are confident it',
+	'You do not use marketing-speak, or make claims you have not verified.',
+].join('\n')
+
+/** Recording an Offer the guide did not look up. In both prompts below: a
+ * search that comes back unavailable puts the guide back on this path. */
+const fromMemoryRules = [
+	'Offer a source only where you are confident it',
 	'exists and you have the attribution roughly correct. Give a url only where you are confident',
 	'of the url itself, and leave it out otherwise — a source with an author and a publication',
 	"and no url is useful, and an invented url wastes the writer's time. Where you are working",
 	"from memory rather than certainty, say so in the Offer's note.",
-	'',
-	'You do not use marketing-speak, or make claims you have not verified.',
 ].join('\n')
+
+/** One of these two, decided by whether the same turn was given the search
+ * tool — `chatTools` in `llm/tools.ts`. */
+const canSearchRules = [
+	'You can search the web with the webSearch tool, and a source you looked up beats one you',
+	'remember. Search before you offer a link or a quote, and offer only urls a search returned.',
+	'Where a search comes back unavailable, tell the writer, and record that Offer by the rules',
+	'that follow instead.',
+].join('\n')
+
+const cannotSearchRules =
+	'You cannot browse, so every Offer you record comes from your prior knowledge.'
+
+// Both whole prompts, at module load. Nothing in either varies with the
+// Article, so there is nothing for a turn to build.
+const searchingPrompt = [guideRules, '', canSearchRules, '', fromMemoryRules].join('\n')
+const recallingPrompt = [guideRules, '', cannotSearchRules, '', fromMemoryRules].join(
+	'\n',
+)
 
 /**
  * The stable prefix of one Chat turn.
@@ -61,8 +83,8 @@ const guideRules = [
  * goes in either slot until then. The Plan does not belong here — see the
  * ordering note above.
  */
-export function chatSystemPrompt(): string {
-	return guideRules
+export function chatSystemPrompt(canSearch: boolean): string {
+	return canSearch ? searchingPrompt : recallingPrompt
 }
 
 /**

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import type { BlockRow } from '../../shared/draft'
 import type { Note } from '../../shared/note'
@@ -42,7 +42,7 @@ const WAITING_POLL = 5_000
 const ignore = () => {}
 
 export function useNotes(): NotesHandle {
-	const { notes: store, draft, plan: connection } = useArticle()
+	const { notes: store, draft, reviewFinished, plan: connection } = useArticle()
 
 	const [notes, setNotes] = useState<Note[] | null>(null)
 	const [rounds, setRounds] = useState<Round[] | null>(null)
@@ -75,9 +75,10 @@ export function useNotes(): NotesHandle {
 		return () => {
 			live = false
 		}
-	}, [store, draft, reads])
-
-	useEffect(() => store.onReviewFinished(reload), [store, reload])
+		// `reviewFinished` is a dependency rather than its own effect: a Review
+		// settling is another reason to read, not a reason to set state that then
+		// causes one.
+	}, [store, draft, reads, reviewFinished])
 
 	const running = (rounds ?? []).find((round) => round.state === 'running') ?? null
 	const waitingOn = running === null ? null : running.id
@@ -107,7 +108,7 @@ export function useNotes(): NotesHandle {
 		}
 	}, [store, waitingOn, reload])
 
-	const actions = useMemo<NoteActions>(() => {
+	const actions: NoteActions = (() => {
 		/** In place: a ruling does not change the order the Guide wrote them in. */
 		const replace = (ruled: Note) =>
 			setNotes((held) =>
@@ -133,15 +134,10 @@ export function useNotes(): NotesHandle {
 			restore: (note) =>
 				rule('This Note was not restored.', () => store.restoreNote(note.id)),
 		}
-	}, [store])
+	})()
 
-	// Memoised: the Article screen re-renders on every keystroke in the Plan, and
-	// both of these allocate over every Note or every Block in the piece.
-	const queue = useMemo(() => notesQueue(notes ?? [], view), [notes, view])
-	const naming = useMemo(
-		() => anchorNaming(connection.plan, blocks),
-		[connection.plan, blocks],
-	)
+	const queue = notesQueue(notes ?? [], view)
+	const naming = anchorNaming(connection.plan, blocks)
 
 	return {
 		queue,

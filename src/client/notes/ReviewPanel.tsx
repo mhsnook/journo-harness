@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 
 import type { Note } from '../../shared/note'
 import type { Round, RoundPassage } from '../../shared/review'
@@ -50,7 +50,7 @@ export function ReviewPanel({
 	grow,
 	className,
 }: ReviewPanelProps) {
-	const byId = useMemo(() => new Map(notes.map((note) => [note.id, note])), [notes])
+	const byId = new Map(notes.map((note) => [note.id, note]))
 
 	return (
 		<Panel className={className} divider={divider} grow={grow} variant="sunk">

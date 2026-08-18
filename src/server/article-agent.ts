@@ -62,6 +62,7 @@ import { chatTurn } from './llm/chat-turn'
 import { model } from './llm/model'
 import { reviewTurn } from './llm/review'
 import type { ReviewPack } from './llm/review-pack'
+import { webSearch, type WebSearch } from './llm/search'
 
 /** One Offer row as SQLite returns it. `this.sql` asserts the row type rather
  * than checking it, and this class is the table's only writer, so the columns
@@ -259,6 +260,13 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 		return model(this.env)
 	}
 
+	/** The search a Chat turn runs on, undefined where no key is set.
+	 * `llm/search.ts` is the boundary; this reads it so a test can replace it,
+	 * as `chatModel` does for the model. */
+	chatSearch(): WebSearch | undefined {
+		return webSearch(this.env)
+	}
+
 	/** The model a Review runs on — the same one, read separately so a test can
 	 * script a Review without scripting the Chat. */
 	reviewModel(): LanguageModel {
@@ -276,6 +284,7 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 	): Promise<Response> {
 		return chatTurn({
 			model: this.chatModel(),
+			search: this.chatSearch(),
 			plan: this.planForTurn(options?.body),
 			messages: this.messages,
 			abortSignal: options?.abortSignal,

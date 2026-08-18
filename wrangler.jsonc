@@ -60,6 +60,10 @@
   // `wrangler deploy` — so declaring it even as an empty placeholder would wipe
   // the one set from the CLI. Its type is in src/server/env.d.ts, and
   // llm/model.ts is the only thing that reads it.
+  //
+  // EXA_API_KEY is absent for the same reason, and is a secret rather than a
+  // var: `wrangler secret put EXA_API_KEY`, or .dev.vars for `pnpm dev`. Unset
+  // gives the Chat no search tool. llm/search.ts is the only reader.
 
   "observability": {
     "enabled": true,

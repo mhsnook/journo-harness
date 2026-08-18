@@ -1,6 +1,7 @@
 import { env, runInDurableObject } from 'cloudflare:test'
 
 import type { ArticleAgent } from '../../src/server/article-agent'
+import type { WebSearch } from '../../src/server/llm/search'
 
 /**
  * What every scripted model answer carries, and how a test reaches inside one
@@ -51,5 +52,12 @@ export function scriptModel(
 ): Promise<void> {
 	return inAgent(name, (agent) => {
 		agent[method] = () => model
+	})
+}
+
+/** The same for the Chat's search seam, which is undefined until a key is set. */
+export function scriptSearch(name: string, search: WebSearch): Promise<void> {
+	return inAgent(name, (agent) => {
+		agent.chatSearch = () => search
 	})
 }

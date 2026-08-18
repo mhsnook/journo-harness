@@ -1,5 +1,5 @@
 import { useAgent } from 'agents/react'
-import { useMemo, useRef } from 'react'
+import { useMemo, useRef, useState } from 'react'
 
 import type { BlockRow, DraftChange, DraftSaved } from '../../shared/draft'
 import { isFrame } from '../../shared/frame'
@@ -47,9 +47,9 @@ export function useArticleAgent(articleId: string): ArticleConnection {
 	const socket = useRef<ArticleSocket | null>(null)
 	const channel = usePlanChannel(() => socket.current)
 
-	// Kept for the socket's life, so a Notes Panel that mounts and unmounts adds
-	// and removes a listener rather than replacing the set.
-	const waiting = useMemo(() => new Set<(roundId: string) => void>(), [])
+	// The Round a `review_finished` frame last named. State rather than a
+	// listener registry, so nothing holds a mutable set across renders.
+	const [reviewFinished, setReviewFinished] = useState<string | null>(null)
 
 	const agent = useAgent<Plan>({
 		agent: 'article-agent',
@@ -63,7 +63,7 @@ export function useArticleAgent(articleId: string): ArticleConnection {
 
 			channel.onFrame(frame)
 			if (isFrame<ReviewFinished>(frame, reviewFinishedFrame)) {
-				waiting.forEach((listen) => listen(frame.roundId))
+				setReviewFinished(frame.roundId)
 			}
 		},
 	})
@@ -109,16 +109,14 @@ export function useArticleAgent(articleId: string): ArticleConnection {
 				call<Note>(socket, 'setNoteDisposition', [id, ruling]),
 			resolveNote: (id: string) => call<Note>(socket, 'resolveNote', [id]),
 			restoreNote: (id: string) => call<Note>(socket, 'restoreNote', [id]),
-			onReviewFinished: (listen) => {
-				waiting.add(listen)
-
-				return () => waiting.delete(listen)
-			},
 		}),
-		[waiting],
+		[],
 	)
 
-	return { article: { offers, draft, notes, plan: channel.connection }, agent }
+	return {
+		article: { offers, draft, notes, reviewFinished, plan: channel.connection },
+		agent,
+	}
 }
 
 /** How long a save may be in flight before it is called failed. */

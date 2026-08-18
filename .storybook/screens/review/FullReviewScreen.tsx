@@ -1,4 +1,4 @@
-import { type ReactNode, useMemo, useState } from 'react'
+import { type ReactNode, useState } from 'react'
 
 import { ArticleBar } from '../../../src/client/components/ArticleBar'
 import { Frame, FrameBody } from '../../../src/client/components/Frame'
@@ -77,20 +77,28 @@ export function MockNotes({
 	notes = reviewNotes,
 	answer,
 }: MockNotesProps) {
-	const article = useMemo(
-		() => ({
-			draft: memoryDraftStore({ seed: draft }),
-			offers: memoryOfferStore([]),
-			notes: memoryNoteStore({ rounds, notes, answer }),
-			plan: { plan, edit: () => null, refusal: null, rejected: null },
-		}),
-		// One seam per story. The seeds are module constants, so nothing here
-		// changes after the first render.
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[],
-	)
+	// Stands in for the socket frame the Article Agent broadcasts.
+	const [reviewFinished, setReviewFinished] = useState<string | null>(null)
 
-	return <ArticleProvider value={article}>{children}</ArticleProvider>
+	// One seam per story, built lazily so each keeps its own rows: the hooks over
+	// it read once per store.
+	const [stores] = useState(() => ({
+		draft: memoryDraftStore({ seed: draft }),
+		offers: memoryOfferStore([]),
+		notes: memoryNoteStore({ rounds, notes, answer, onFinished: setReviewFinished }),
+	}))
+
+	return (
+		<ArticleProvider
+			value={{
+				...stores,
+				reviewFinished,
+				plan: { plan, edit: () => null, refusal: null, rejected: null },
+			}}
+		>
+			{children}
+		</ArticleProvider>
+	)
 }
 
 /** Enough Blocks that the anchored Notes number themselves. */

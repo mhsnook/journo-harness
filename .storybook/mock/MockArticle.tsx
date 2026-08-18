@@ -63,7 +63,13 @@ export function MockArticle({ children }: { children: ReactNode }) {
 
 	return (
 		<ArticleProvider
-			value={{ offers, draft, notes, plan: { plan, edit, refusal, rejected: null } }}
+			value={{
+				offers,
+				draft,
+				notes,
+				reviewFinished: null,
+				plan: { plan, edit, refusal, rejected: null },
+			}}
 		>
 			{children}
 		</ArticleProvider>
@@ -136,11 +142,12 @@ export function memoryNoteStore(
 		answer?: { passages: Round['passages']; notes: readonly Note[] }
 		/** How long a Review takes to come back. */
 		takes?: number
+		/** Called with the Round id when one settles, as the socket frame does. */
+		onFinished?: (roundId: string) => void
 	} = {},
 ): NoteStore {
 	const rounds = (options.rounds ?? []).map((round) => ({ ...round }))
 	const rows = (options.notes ?? []).map((note) => ({ ...note }))
-	const listening = new Set<(roundId: string) => void>()
 
 	const find = (id: string): Note => {
 		const note = rows.find((held) => held.id === id)
@@ -188,7 +195,7 @@ export function memoryNoteStore(
 						passages: answer.passages,
 						finishedAt: Date.now(),
 					})
-					listening.forEach((listen) => listen(round.id))
+					options.onFinished?.(round.id)
 				}, options.takes ?? 600)
 			}
 
@@ -215,12 +222,6 @@ export function memoryNoteStore(
 			if (back === null) return Promise.reject(notRestorable(note))
 
 			return move(note, back)
-		},
-
-		onReviewFinished: (listen) => {
-			listening.add(listen)
-
-			return () => listening.delete(listen)
 		},
 	}
 }
