@@ -2,7 +2,7 @@ import { getToolName, isTextUIPart, isToolUIPart, type UIMessage } from 'ai'
 import { ChevronDown } from 'lucide-react'
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 
-import { proposePlanChangeTool, recordOffersTool } from '../../shared/chat'
+import { proposePlanChangeTool, recordOffersTool, webSearchTool } from '../../shared/chat'
 import type { Offer } from '../../shared/offer'
 import type { Plan } from '../../shared/plan'
 import { Button } from '../components/Button'
@@ -14,6 +14,7 @@ import { readRecordedOffers } from './offers'
 import { ProposalCard } from './ProposalCard'
 import { readProposal, type ProposalCall, type Refusals } from './proposals'
 import { RuledProposal } from './RuledProposal'
+import { readWebSearch, searchNote } from './search'
 
 /**
  * The Chat Panel takes a transcript & rulings; `ArticleChatPanel` drives it from
@@ -278,7 +279,9 @@ function Turn({
 
 				if (!isToolUIPart(part)) return null
 
-				if (getToolName(part) === proposePlanChangeTool) {
+				const called = getToolName(part)
+
+				if (called === proposePlanChangeTool) {
 					switch (part.state) {
 						case 'input-streaming':
 							return <ChatNote key={key}>Writing a Proposal…</ChatNote>
@@ -319,7 +322,7 @@ function Turn({
 					}
 				}
 
-				if (getToolName(part) === recordOffersTool) {
+				if (called === recordOffersTool) {
 					const recorded = readRecordedOffers(part)
 					if (recorded === null) return <ChatNote key={key}>Looking things up…</ChatNote>
 
@@ -345,6 +348,10 @@ function Turn({
 							) : null}
 						</div>
 					)
+				}
+
+				if (called === webSearchTool) {
+					return <ChatNote key={key}>{searchNote(readWebSearch(part))}</ChatNote>
 				}
 
 				return null

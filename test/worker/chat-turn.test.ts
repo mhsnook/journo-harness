@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest'
 
 import { chatTurn } from '../../src/server/llm/chat-turn'
 import { chatPackMessages } from '../../src/server/llm/prompt'
+import type { WebSearch } from '../../src/server/llm/search'
 import type { ProposalInput } from '../../src/shared/plan'
 import { makeNode, makePlan } from '../shared/plan-fixtures'
 import { type Frame, openAgentSocket } from './agent-socket'
@@ -78,17 +79,35 @@ function scripted(turns: StreamPart[][]) {
 	})
 }
 
-/** A model that answers in prose, the way a turn that discusses the Plan does. */
-function speaks(text: string) {
-	const turn: StreamPart[] = [
+/** One turn of prose, the way a turn that discusses the Plan answers. */
+function proseTurn(text: string): StreamPart[] {
+	return [
 		{ type: 'stream-start', warnings: [] },
 		{ type: 'text-start', id: 't1' },
 		{ type: 'text-delta', id: 't1', delta: text },
 		{ type: 'text-end', id: 't1' },
 		{ type: 'finish', finishReason: stopped, usage: noUsage },
 	]
+}
 
-	return scripted([turn])
+/** A model that answers in prose and stops. */
+function speaks(text: string) {
+	return scripted([proseTurn(text)])
+}
+
+/** One turn calling the search tool. It carries an `execute`, so the call
+ * resolves on the server and the model reads the result in the step after. */
+function searchTurn(query: string): StreamPart[] {
+	const input = JSON.stringify({ query })
+
+	return [
+		{ type: 'stream-start', warnings: [] },
+		{ type: 'tool-input-start', id: 'call-s', toolName: 'webSearch' },
+		{ type: 'tool-input-delta', id: 'call-s', delta: input },
+		{ type: 'tool-input-end', id: 'call-s' },
+		{ type: 'tool-call', toolCallId: 'call-s', toolName: 'webSearch', input },
+		{ type: 'finish', finishReason: calledATool, usage: noUsage },
+	]
 }
 
 /** One turn calling the Proposal tool. The tool has no `execute`, so the call
@@ -115,15 +134,35 @@ function proposes(...inputs: string[]) {
 	return scripted(inputs.map(proposalTurn))
 }
 
-/** Put a scripted model behind the Article Agent's model boundary. The model
- * records the calls made against it, so the caller keeps its own reference and
- * reads the prompt pack off `doStreamCalls`. */
-async function scriptModel(name: string, model: MockLanguageModelV3): Promise<void> {
+/** Put a scripted model, and optionally a scripted search, behind the Article
+ * Agent's boundaries. The model records the calls made against it, so the
+ * caller keeps its own reference and reads the prompt pack off
+ * `doStreamCalls`. */
+async function scriptModel(
+	name: string,
+	model: MockLanguageModelV3,
+	search?: WebSearch,
+): Promise<void> {
 	const stub = env.ArticleAgent.get(env.ArticleAgent.idFromName(name))
 	await runInDurableObject(stub, (agent) => {
 		agent.chatModel = () => model
+		if (search !== undefined) agent.chatSearch = () => search
 	})
 }
+
+/** A search that finds one thing, so a turn has something to read back. */
+const findsOne: WebSearch = async () => ({
+	status: 'ok',
+	results: [
+		{ url: 'https://example.test/permits', excerpt: 'The backlog stood at 4,100.' },
+	],
+})
+
+/** The guide rules one turn was given. */
+const systemPrompt = (model: MockLanguageModelV3) =>
+	String(
+		model.doStreamCalls[0]?.prompt.find((message) => message.role === 'system')?.content,
+	)
 
 const plan = makePlan({
 	title: 'The permit queue',
@@ -251,7 +290,8 @@ describe('a Chat turn', () => {
 		expect(call.prompt.at(-2)?.role).toBe('tool')
 	})
 
-	it('offers both tools to the model', async () => {
+	// No search key in the test env, so `chatSearch()` hands back nothing.
+	it('offers the tools the deployment can reach', async () => {
 		const writer = await openAgentSocket('chat-tools')
 		const model = speaks('Noted.')
 		await scriptModel('chat-tools', model)
@@ -263,6 +303,70 @@ describe('a Chat turn', () => {
 			'proposePlanChange',
 			'recordOffers',
 		])
+	})
+
+	/** The rules and the tools are one decision — `llm/prompt.ts`. The rules for
+	 * offering a source from memory are in both, because an unavailable search
+	 * puts the guide back on that path. */
+	it('tells the guide it cannot browse when no search is wired', async () => {
+		const writer = await openAgentSocket('chat-no-search')
+		const model = speaks('Noted.')
+		await scriptModel('chat-no-search', model)
+
+		await writer.chat('Find me something recent on permits.', { plan })
+
+		const system = systemPrompt(model)
+
+		expect(system).toContain('You cannot browse')
+		expect(system).not.toContain('webSearch tool')
+		expect(system).toContain('an invented url wastes')
+	})
+
+	it('offers the search tool and the rules to match when a search is wired', async () => {
+		const writer = await openAgentSocket('chat-search')
+		const model = speaks('Noted.')
+		await scriptModel('chat-search', model, findsOne)
+
+		await writer.chat('Find me something recent on permits.', { plan })
+
+		const [call] = model.doStreamCalls
+		expect(call.tools?.map((tool) => tool.name)).toEqual([
+			'proposePlanChange',
+			'recordOffers',
+			'webSearch',
+		])
+
+		const system = systemPrompt(model)
+		expect(system).toContain('webSearch tool')
+		expect(system).not.toContain('You cannot browse')
+		expect(system).toContain('an invented url wastes')
+	})
+
+	/**
+	 * The search tool carries an `execute`, so its result comes back inside the
+	 * turn — and a turn that stops at the tool call throws the search away. The
+	 * model has to be called again with the result in the transcript, or it can
+	 * neither quote an excerpt nor fill in a source.
+	 */
+	it('runs the turn on past a search, so the model reads what it found', async () => {
+		const writer = await openAgentSocket('chat-search-steps')
+		const model = scripted([
+			searchTurn('permit backlog'),
+			proseTurn('The backlog stood at 4,100.'),
+		])
+		await scriptModel('chat-search-steps', model, findsOne)
+
+		const chunks = await writer.chat('What is the permit backlog?', { plan })
+
+		// Twice: once to make the call, once to read the result.
+		expect(model.doStreamCalls).toHaveLength(2)
+
+		// And the second call carries the search back to the model.
+		const [, resumed] = model.doStreamCalls
+		expect(JSON.stringify(resumed.prompt)).toContain('The backlog stood at 4,100.')
+
+		expect(types(chunks)).toContain('tool-output-available')
+		expect(types(chunks)).toContain('text-delta')
 	})
 
 	it('falls back to the Plan in state when the turn carries no body', async () => {

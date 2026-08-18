@@ -35,6 +35,12 @@ export type ProposePlanChangeInput = z.infer<typeof proposePlanChangeInput>
  * answers nothing, but reads the result to show what the turn recorded. */
 export const recordOffersTool = 'recordOffers'
 
+/** The name the search tool is registered and matched under. The client
+ * answers nothing, and reads the call to say what the guide looked up. Only
+ * the name is shared: the Panel does not parse the tool's input or output, so
+ * both schemas live in `src/server/llm/search.ts`. */
+export const webSearchTool = 'webSearch'
+
 /** What `recordOffers` hands back: enough for the model to refer to what it
  * turned up, and the ids the Chat Panel looks the rows up by. */
 export const recordedOffersOutput = z.array(

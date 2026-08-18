@@ -225,6 +225,10 @@ of one. `referenceForOffer` answers with the first match on the strength of it, 
 answer is what makes a retried Accept build no op — so a second copy would turn every retry
 into another copy.
 
+**A retrieved Offer is the same row as a recalled one.** `provenance` is `writer` or `offer`
+and says nothing about whether the Chat looked the source up or remembered it (§7). How to
+mark that on an Offer and on the Reference it becomes is open, and waits on #40.
+
 **Proposals are not Offers.** See below.
 
 ## 6. Chat and Proposals
@@ -384,6 +388,18 @@ there even as a placeholder would wipe it. Unset attaches no Gateway. Its type i
 settings and has nowhere to put one, because a Workers AI binding call is same-account and
 authenticates itself. So an authenticated Gateway is the one setting to leave off — turn it
 on and these calls have no way to present the header it wants.
+
+**Search is Exa**, in `src/server/llm/search.ts` — the one place a provider is named, as
+`llm/model.ts` is for the model. It does not route through the AI Gateway, which proxies
+inference rather than an arbitrary API, so `EXA_API_KEY` is a Worker secret and the rule above
+about leaving the Gateway unauthenticated is unaffected.
+
+**No key means no search tool**, and the guide is told to answer from memory instead. The
+registry and the guide rules read one value, so they cannot disagree about what the turn can
+reach.
+
+**A search that fails answers rather than throws**, because a rejected `execute` ends a turn
+that still owes the writer a reply.
 
 **Structured outputs rather than parsed prose.** `generateObject` with a zod schema,
 validated in the Article Agent, with one retry that includes the validation error.
