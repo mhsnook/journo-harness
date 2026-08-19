@@ -172,9 +172,11 @@ export function memoryNoteStore(
 		listNotes: () => Promise.resolve(rows.map((note) => ({ ...note }))),
 
 		startReview: (request: ReviewRequest) => {
+			// Minted, not counted off the length: a story seeds Rounds whose ids and
+			// ordinals start past 1.
 			const round: Round = {
-				id: `round-${rounds.length + 1}`,
-				ordinal: rounds.length + 1,
+				id: crypto.randomUUID(),
+				ordinal: rounds.reduce((highest, held) => Math.max(highest, held.ordinal), 0) + 1,
 				state: 'running',
 				prompt: request.prompt,
 				depth: request.depth,
