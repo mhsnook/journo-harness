@@ -1,7 +1,10 @@
+import { useState } from 'react'
+
 import type { NotesQueue, QueueView } from '../../shared/notes-queue'
 import type { ReviewDepth, Round } from '../../shared/review'
 import { Button } from '../components/Button'
 import { Chip } from '../components/Chip'
+import { MetaLabel } from '../components/MetaLabel'
 import { Notice } from '../components/Notice'
 import { Panel, PanelHeader, type PanelProps } from '../components/Panel'
 import { dateAndTime } from '../lib/when'
@@ -68,6 +71,13 @@ export function NotesPanel({
 	const last = rounds.length === 0 ? null : rounds[rounds.length - 1]
 	const failed = last !== null && last.state === 'failed' ? last : null
 
+	// The Round whose ask is still in play — running, or failed and unanswered.
+	// At most one exists: a re-run puts a running Round after the failed one.
+	const current = running ?? failed
+
+	// The composer's field, held here so "edit the ask" below can fill it.
+	const [ask, setAsk] = useState('')
+
 	return (
 		<Panel
 			className={className}
@@ -117,6 +127,21 @@ export function NotesPanel({
 
 					{failure === null ? null : <Notice>{failure}</Notice>}
 
+					{current === null ? null : (
+						<div className="flex flex-col gap-1.5 rounded-md border border-edge bg-surface p-2.5">
+							<MetaLabel>you asked · {current.depth}</MetaLabel>
+							<p className="text-[0.75rem] leading-relaxed whitespace-pre-wrap text-ink">
+								{current.prompt}
+							</p>
+							{running === null ? null : (
+								<p className="text-[0.75rem] leading-relaxed text-faint">
+									Round {running.ordinal} is reading the Draft. It carries on if you close
+									this — come back and the findings will be here.
+								</p>
+							)}
+						</div>
+					)}
+
 					{failed === null ? null : (
 						<Notice>
 							<span className="flex flex-col items-start gap-2">
@@ -124,18 +149,16 @@ export function NotesPanel({
 									Round {failed.ordinal} did not finish.{' '}
 									{failed.failure ?? 'No reason was recorded.'}
 								</span>
-								<Button onClick={() => onRun(failed.prompt, failed.depth)} size="sm">
-									run again
-								</Button>
+								<span className="flex items-center gap-1.5">
+									<Button onClick={() => onRun(failed.prompt, failed.depth)} size="sm">
+										run again
+									</Button>
+									<Button onClick={() => setAsk(failed.prompt)} size="sm">
+										edit the ask
+									</Button>
+								</span>
 							</span>
 						</Notice>
-					)}
-
-					{running === null ? null : (
-						<p className="text-[0.75rem] leading-relaxed text-faint">
-							Round {running.ordinal} is reading the Draft. It carries on if you close
-							this — come back and the findings will be here.
-						</p>
 					)}
 
 					<Queue
@@ -148,7 +171,13 @@ export function NotesPanel({
 					/>
 				</div>
 
-				<ReviewComposer onRun={onRun} running={running !== null} skills={skills} />
+				<ReviewComposer
+					onPrompt={setAsk}
+					onRun={onRun}
+					prompt={ask}
+					running={running !== null}
+					skills={skills}
+				/>
 			</div>
 		</Panel>
 	)

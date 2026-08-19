@@ -12,12 +12,21 @@ export interface ReviewComposerProps {
 	skills: readonly Skill[]
 	/** A Review is in flight, so a second ask would be refused. */
 	running: boolean
+	/** Held by the Panel rather than here, so "edit the ask" on a failed Round
+	 * can put that Round's prompt back in the field. */
+	prompt: string
+	onPrompt: (prompt: string) => void
 	onRun: (prompt: string, depth: ReviewDepth) => void
 	className?: string
 }
 
-export function ReviewComposer({ skills, running, onRun }: ReviewComposerProps) {
-	const [prompt, setPrompt] = useState('')
+export function ReviewComposer({
+	skills,
+	running,
+	prompt,
+	onPrompt,
+	onRun,
+}: ReviewComposerProps) {
 	// Thorough by default. A quick pass is the one to ask for, not the one to
 	// get by accident.
 	const [depth, setDepth] = useState<ReviewDepth>('thorough')
@@ -26,7 +35,7 @@ export function ReviewComposer({ skills, running, onRun }: ReviewComposerProps) 
 		if (running || prompt.trim() === '') return
 
 		onRun(prompt, depth)
-		setPrompt('')
+		onPrompt('')
 	}
 
 	return (
@@ -39,7 +48,7 @@ export function ReviewComposer({ skills, running, onRun }: ReviewComposerProps) 
 					<span className="label-meta shrink-0 text-muted">review skill</span>
 					<select
 						className="min-w-0 flex-1 rounded-md border border-edge bg-surface px-2 py-1 text-[0.75rem] text-ink"
-						onChange={(event) => setPrompt(event.target.value)}
+						onChange={(event) => onPrompt(event.target.value)}
 						value=""
 					>
 						<option value="">pick a saved prompt…</option>
@@ -55,7 +64,7 @@ export function ReviewComposer({ skills, running, onRun }: ReviewComposerProps) 
 			<div className="flex items-center rounded-md border border-edge bg-surface px-2.5 py-1.5">
 				<GrowingField
 					label="What this Review should look for"
-					onChange={setPrompt}
+					onChange={onPrompt}
 					onKeyDown={(event) => {
 						// Ctrl+Enter runs, as in the Chat composer. Enter is a paragraph,
 						// because a review prompt runs long.

@@ -102,8 +102,12 @@ export const G_RunReview: Story = {
 		)
 		await userEvent.click(canvas.getByRole('button', { name: 'run review' }))
 
-		// The wait says what is happening and that leaving is safe.
+		// The wait says what is happening and that leaving is safe — and the ask
+		// stays on screen, so the writer can still read what they sent.
 		await waitFor(() => expect(canvas.getByText(/is reading the Draft/)).toBeVisible())
+		await expect(
+			canvas.getByText('Review for repetition of the supporting logic.'),
+		).toBeVisible()
 
 		// And the Notes arrive without the writer asking again.
 		await waitFor(() => expect(canvas.getByText(/Strongest version/)).toBeVisible(), {

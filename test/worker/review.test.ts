@@ -1,4 +1,4 @@
-import { MockLanguageModelV3 } from 'ai/test'
+import { MockLanguageModelV3, simulateReadableStream } from 'ai/test'
 import { describe, expect, it, vi } from 'vitest'
 
 import type { NoteAnchor } from '../../src/shared/note'
@@ -13,17 +13,24 @@ import { inAgent, noUsage, scriptModel, stopped } from './scripted'
  * one — `scripted.ts` for why no test calls a real model.
  */
 
-/** A model that answers `generateObject` with this JSON, once per call. A
- * second element is what a refused first answer retries into. */
+/** A model that streams this JSON as the Review's answer, once per call. A
+ * second element is what a refused first answer retries into. The counter is
+ * ours for the reason `chat-turn.test.ts` gives: `MockLanguageModelV3`'s own
+ * array handling answers the first call with the second element. */
 function answers(...bodies: string[]) {
 	let call = 0
 
 	return new MockLanguageModelV3({
-		doGenerate: async () => ({
-			content: [{ type: 'text' as const, text: bodies[call++] ?? '' }],
-			finishReason: stopped,
-			usage: noUsage,
-			warnings: [],
+		doStream: async () => ({
+			stream: simulateReadableStream({
+				chunks: [
+					{ type: 'stream-start' as const, warnings: [] },
+					{ type: 'text-start' as const, id: 't1' },
+					{ type: 'text-delta' as const, id: 't1', delta: bodies[call++] ?? '' },
+					{ type: 'text-end' as const, id: 't1' },
+					{ type: 'finish' as const, finishReason: stopped, usage: noUsage },
+				],
+			}),
 		}),
 	})
 }
@@ -31,7 +38,7 @@ function answers(...bodies: string[]) {
 /** A model that fails the way a provider outage does. */
 function fails(why: string) {
 	return new MockLanguageModelV3({
-		doGenerate: async () => {
+		doStream: async () => {
 			throw new Error(why)
 		},
 	})
@@ -48,7 +55,7 @@ function stalls() {
 	return {
 		release,
 		model: new MockLanguageModelV3({
-			doGenerate: async () => {
+			doStream: async () => {
 				await gate
 
 				throw new Error('The stalled call was released.')
@@ -224,8 +231,8 @@ describe('running a Review', () => {
 		const round = await settled('review-retry')
 
 		expect(round.state).toBe('done')
-		expect(model.doGenerateCalls).toHaveLength(2)
-		expect(JSON.stringify(model.doGenerateCalls[1].prompt)).toContain(
+		expect(model.doStreamCalls).toHaveLength(2)
+		expect(JSON.stringify(model.doStreamCalls[1].prompt)).toContain(
 			'That response was refused',
 		)
 	})
@@ -239,7 +246,7 @@ describe('running a Review', () => {
 		const round = await settled('review-outage')
 
 		expect(round.state).toBe('failed')
-		expect(model.doGenerateCalls).toHaveLength(1)
+		expect(model.doStreamCalls).toHaveLength(1)
 	})
 
 	it('fails a Round a restart cut off, instead of blocking every later Review', async () => {
@@ -306,7 +313,7 @@ describe('running a Review', () => {
 
 		// The pack's Notes message names only the accepted, unresolved one: a
 		// declined Note is the writer saying no, and a resolved one is finished.
-		const asked = model.doGenerateCalls[model.doGenerateCalls.length - 1]
+		const asked = model.doStreamCalls[model.doStreamCalls.length - 1]
 		const sent = JSON.stringify(asked.prompt)
 
 		expect(sent).toContain('already accepted from earlier Rounds')

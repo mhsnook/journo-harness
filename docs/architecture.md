@@ -380,7 +380,7 @@ disagree about what the turn can reach. **A search that fails answers rather tha
 because a rejected `execute` ends a turn that still owes the writer a reply.
 
 **Model output is validated, never parsed out of prose.** A Proposal is a tool call and a
-Review is `generateObject` against a zod schema — both checked in the Article Agent, with one
+Review is `streamObject` against a zod schema — both checked in the Article Agent, with one
 retry carrying the validation error. A Review's prose lives _inside_ that schema rather than
 being scanned for structure.
 
@@ -639,10 +639,13 @@ the writer rules on all three the same way. The three records still differ in sh
 Offer starts `undecided`, a Note starts `proposed`, a Proposal stores no disposition at all
 and dies with its turn — and whether that is worth reconciling is issue #79.
 
-**A Review does not stream, and §10 says it should.** `@callable` is request and response,
-so the streaming version is `streamObject` over the Agent's `onRequest` — issue #77. The
-cost is smaller than it looks, because the Round is durable: the wait is a row rather than
-a call being held open.
+**The Review's model call streams; the Review the writer sees does not, and §10 says it
+should.** Workers AI cuts off a non-streaming call that generates for longer than its
+request timeout, so `reviewTurn` runs `streamObject` and drains the stream inside the
+Agent — the Round still lands whole, as rows. Streaming the writer can watch is a
+different thing: `@callable` is request and response, so that version is `streamObject`
+over the Agent's `onRequest` — issue #77. Its cost is smaller than it looks, because the
+Round is durable: the wait is a row rather than a call being held open.
 
 ## 13. Out of scope
 
