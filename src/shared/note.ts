@@ -7,8 +7,8 @@ import { idSchema } from './plan/schema'
 export const noteDispositions = ['proposed', 'accepted', 'declined', 'resolved'] as const
 export type NoteDisposition = (typeof noteDispositions)[number]
 
-/** What the writer may rule directly. `resolved` is reached by resolving an
- * accepted Note, never by ruling a proposed one. */
+/** What the writer may rule directly. The enum omits `resolved`, which is
+ * reached by resolving an accepted Note instead. */
 export const noteRulingSchema = z.enum(['accepted', 'declined'])
 export type NoteRuling = z.infer<typeof noteRulingSchema>
 

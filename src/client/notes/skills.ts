@@ -2,17 +2,9 @@ import { useCallback, useState } from 'react'
 
 /**
  * Saved review prompts — context.md's **Skill**, at the smallest size that is
- * useful.
- *
- * A Skill is House material: the writer authors one editorial routine and uses
- * it on every Article. The House arrives at 1b, so until then these live in
- * `localStorage`, which is the only store this app has that is already
- * cross-Article. Rows in the Article Agent would follow the writer to their
- * other machine and would be the wrong shape to migrate from — a Skill saved
- * while reviewing one Article would not exist on the next.
- *
- * The cost is stated rather than hidden: a Skill saved on the laptop is not on
- * the desktop until the House lands.
+ * useful. House material; until the House lands at 1b they live in
+ * `localStorage`, so a Skill saved on one machine is not on the other —
+ * `docs/reviews.md` §Skills.
  */
 
 export type Skill = {

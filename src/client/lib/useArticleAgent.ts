@@ -100,9 +100,7 @@ export function useArticleAgent(articleId: string): ArticleConnection {
 		() => ({
 			listRounds: () => call<Round[]>(socket, 'listRounds'),
 			listNotes: () => call<Note[]>(socket, 'listNotes'),
-			// Answers when the row exists, not when the Review finishes — the model
-			// call carries on inside the Article Agent, so this is a short call
-			// even for a thorough pass.
+			// A short call even for a thorough pass — `NoteStore.startReview`.
 			startReview: (request: ReviewRequest) =>
 				call<Round>(socket, 'startReview', [request]),
 			setNoteDisposition: (id: string, ruling: NoteRuling) =>

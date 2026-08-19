@@ -12,9 +12,9 @@ top to bottom. Each Round carries **Notes**: short markers pinned to a place in
 the piece. The writer accepts or declines each one, and resolves an accepted one
 once they have dealt with it.
 
-Nothing accumulates between Reviews. Each is handed the Draft, the Plan with its
-References, the writer's prompt, and the Notes accepted from earlier Rounds. The
-Notes Panel is one ask and one answer, not a conversation.
+No transcript accumulates between Reviews. Each is handed only the Draft, the
+Plan with its References, the writer's prompt, and the Notes accepted from
+earlier Rounds. The Notes Panel is one ask and one answer, not a conversation.
 
 ## A Round is a written response
 

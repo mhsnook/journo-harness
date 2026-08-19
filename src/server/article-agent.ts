@@ -261,13 +261,10 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 		return Response.json({ agent: 'ArticleAgent', name: this.name })
 	}
 
-	/** The model a Chat turn runs on. Named for the Chat even though one model
-	 * currently serves every call (§7): "model" alone does not say which of the
-	 * app's several meanings is meant, and a Review or a Guide pass choosing its
-	 * own model later is a likely enough change to leave room for.
-	 *
-	 * `llm/model.ts` is the boundary; this reads it so a workerd test, which has
-	 * no Workers AI binding to reach, can put a scripted model behind it. */
+	/** The model a Chat turn runs on — one model currently serves every call
+	 * (§7). `llm/model.ts` is the boundary; this reads it so a workerd test,
+	 * which has no Workers AI binding to reach, can put a scripted model behind
+	 * it. */
 	chatModel(): LanguageModel {
 		return model(this.env)
 	}
@@ -519,17 +516,9 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 	/**
 	 * Start one Review, and answer with the Round it will land in.
 	 *
-	 * **The Article Agent runs it, not the client** — issue #11. A Review is
-	 * long-running and produces a batch, so a client-run one would be lost the
-	 * moment the writer closed the tab. This returns as soon as the row exists,
-	 * the model call carries on under `waitUntil`, and the writer can leave and
-	 * come back to the findings.
-	 *
-	 * One at a time per Article. Two calls interleave whenever the writer
-	 * double-clicks or has the Article open twice, and `await` inside a Durable
-	 * Object lets the second start before the first finishes (#9). The guard is
-	 * the running row rather than a field, because in-memory state does not
-	 * survive hibernation.
+	 * The Article Agent runs it, not the client: this returns as soon as the
+	 * row exists, the model call carries on under `waitUntil`, and one Review
+	 * runs at a time, guarded by the running row — §12 for the full argument.
 	 */
 	@callable()
 	startReview(request: unknown): Round {
@@ -577,8 +566,7 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 	 *
 	 * Nothing here throws. The writer may be gone by now, so a failure has to
 	 * land on the row where they will find it rather than on a call nobody is
-	 * holding — which is the same argument that put the Round in the Article
-	 * Agent in the first place.
+	 * holding.
 	 */
 	private async finishReview(round: Round, asked: ReviewRequest): Promise<void> {
 		// Read once and used twice — for the pack, and for settling the anchors the
@@ -640,8 +628,8 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 	/**
 	 * One Note row, and the id the part names it by. Starts proposed.
 	 *
-	 * Not `@callable`: the Guide writes the Notes and the writer never authors one
-	 * (§3, rule 4). It answers with the id rather than the Note, because the id is
+	 * Not `@callable`: the Guide writes the Notes, and the client has no path
+	 * that authors one (§3, rule 4). It answers with the id rather than the Note, because the id is
 	 * all a part carries and reading the row back would parse the anchor this just
 	 * wrote.
 	 */
