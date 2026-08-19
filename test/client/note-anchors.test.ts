@@ -46,6 +46,15 @@ describe('what a Note anchor reads as', () => {
 		)
 	})
 
+	it('narrows a run to the paragraphs that survive a deletion', () => {
+		const fewer = anchorNaming(plan, blocks.slice(0, 3))
+
+		expect(anchorLabel({ kind: 'blocks', blockIds: ['b2', 'b3', 'b4'] }, fewer)).toEqual({
+			text: '¶2–¶3',
+			orphaned: false,
+		})
+	})
+
 	it('says so when the paragraph a Note was about is gone', () => {
 		expect(anchorLabel({ kind: 'blocks', blockIds: ['cut'] }, naming)).toEqual({
 			text: 'a paragraph that is gone',

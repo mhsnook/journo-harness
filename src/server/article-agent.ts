@@ -621,7 +621,7 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 	private writeReview(round: Round, output: ReviewOutput, pack: ReviewPack): void {
 		const known = {
 			nodeIds: sectionIds(pack.plan),
-			blockIds: new Set(pack.blocks.map((block) => block.id)),
+			blockIds: pack.blocks.map((block) => block.id),
 		}
 
 		const passages = output.passages.map((passage): RoundPassage => {
@@ -648,7 +648,7 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 	private createNote(
 		roundId: string,
 		content: NoteContent,
-		known: { nodeIds: ReadonlySet<string>; blockIds: ReadonlySet<string> },
+		known: { nodeIds: ReadonlySet<string>; blockIds: readonly string[] },
 	): string {
 		const id = crypto.randomUUID()
 

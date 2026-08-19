@@ -5,7 +5,7 @@ import { type NoteAnchor, noteContentSchema, settleAnchor } from '../../src/shar
 
 const known = {
 	nodeIds: new Set(['n1', 'n2']),
-	blockIds: new Set(['b1', 'b2', 'b3']),
+	blockIds: ['b1', 'b2', 'b3'],
 }
 
 describe('settling a Note anchor', () => {
@@ -21,12 +21,26 @@ describe('settling a Note anchor', () => {
 		})
 	})
 
-	it('keeps the ends of a run that are real', () => {
+	it('expands a run to every Block in its span', () => {
 		expect(
 			settleAnchor({ kind: 'blocks', blockIds: ['b1', 'gone', 'b3'] }, known),
 		).toEqual({
 			kind: 'blocks',
-			blockIds: ['b1', 'b3'],
+			blockIds: ['b1', 'b2', 'b3'],
+		})
+	})
+
+	it('reads the span off the Draft order, not the order the ends were named in', () => {
+		expect(settleAnchor({ kind: 'blocks', blockIds: ['b3', 'b1'] }, known)).toEqual({
+			kind: 'blocks',
+			blockIds: ['b1', 'b2', 'b3'],
+		})
+	})
+
+	it('keeps a single paragraph single', () => {
+		expect(settleAnchor({ kind: 'blocks', blockIds: ['b2'] }, known)).toEqual({
+			kind: 'blocks',
+			blockIds: ['b2'],
 		})
 	})
 

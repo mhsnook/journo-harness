@@ -35,16 +35,18 @@ steering.
 ## Anchors
 
 A Note points at the whole piece, one Section, or a run of Blocks. A run means
-the span from its first Block to its last.
+the span from its first Block to its last; the Guide names the ends, and the
+stored anchor carries every Block in the span.
 
 Anchors are **stored as ids and read as positions**: the record holds a Block id,
 and the card shows "¶3". The ids survive the prose moving; the positions do not.
 
 An anchor is settled once, when the Note is written, against the Plan and Draft
 the model was shown. One naming something that was never there falls back to the
-whole piece. A Block that dies **later** leaves the anchor alone, and the Note
-reads as orphaned — the writer may undo the deletion, and the Note is still
-theirs to resolve.
+whole piece. A Block deleted later drops out of the run and the rest still hold,
+so a Note on ¶3–¶5 reads as ¶3–¶4 once ¶5 goes. A Note whose every Block is
+gone, or whose Section is, reads as orphaned — the writer may undo the deletion,
+and the Note is still theirs to resolve.
 
 ## Dispositions
 

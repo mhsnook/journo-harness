@@ -53,13 +53,16 @@ export type Note = NoteContent & {
 
 /**
  * The anchor as it will be stored, given what the Article and the Draft carry.
+ * `blockIds` is the Draft in reading order, since a run is settled by position.
  *
- * Runs once, when the Note is written. A Block that dies **later** leaves the
- * anchor as it is and the Note reads as orphaned — `docs/reviews.md`.
+ * Runs once, when the Note is written. A run is stored as every Block in its
+ * span rather than the ends the model named, so a Block deleted later drops
+ * out and the rest still hold — ¶3–¶5 loses ¶5 and reads as ¶3–¶4. What
+ * happens to an anchor afterwards is `docs/reviews.md`.
  */
 export function settleAnchor(
 	anchor: NoteAnchor,
-	known: { nodeIds: ReadonlySet<string>; blockIds: ReadonlySet<string> },
+	known: { nodeIds: ReadonlySet<string>; blockIds: readonly string[] },
 ): NoteAnchor {
 	if (anchor.kind === 'article') return anchor
 
@@ -67,9 +70,17 @@ export function settleAnchor(
 		return known.nodeIds.has(anchor.nodeId) ? anchor : wholePiece
 	}
 
-	const blockIds = anchor.blockIds.filter((id) => known.blockIds.has(id))
+	const at = new Map(known.blockIds.map((id, index) => [id, index]))
+	const indices = anchor.blockIds
+		.map((id) => at.get(id))
+		.filter((index): index is number => index !== undefined)
 
-	return blockIds.length === 0 ? wholePiece : { kind: 'blocks', blockIds }
+	if (indices.length === 0) return wholePiece
+
+	const first = Math.min(...indices)
+	const last = Math.max(...indices)
+
+	return { kind: 'blocks', blockIds: known.blockIds.slice(first, last + 1) }
 }
 
 /** Shared, so the Agent and any in-memory store word these the same. */
