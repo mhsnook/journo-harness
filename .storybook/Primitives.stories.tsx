@@ -197,7 +197,7 @@ export const Notes: Story = {
 							accept
 						</Chip>
 						<Chip variant="muted" interactive>
-							dismiss
+							decline
 						</Chip>
 					</>
 				}

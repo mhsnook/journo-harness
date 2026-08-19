@@ -154,14 +154,14 @@ queue, history
 The disposition of an Offer the writer has not ruled on. The starting state.
 _Avoid_: pending, new, unread
 
-**Accepted** (or accepted offer):
-The disposition of an Offer the writer has taken into the Plan.
+**Accepted**:
+The disposition of an Offer, a Proposal, or a Note the writer has taken on.
 _Avoid_: kept, approved, selected, promoted
 
-**Declined** (or declined offer):
-The disposition of an Offer the writer has ruled out. Restorable — nothing is deleted.
-_Avoid_: cut (the writer cuts their own prose), rejected, dismissed (a Guidance note is
-dismissed), discarded
+**Declined**:
+The disposition of an Offer, a Proposal, or a Note the writer has ruled out. Restorable —
+nothing is deleted.
+_Avoid_: cut (the writer cuts their own prose), rejected, dismissed, discarded, ignored
 
 **Provenance** (or a reference's provenance):
 Where a record came from. An Accepted Offer is **copied** into the Plan as a new,
@@ -207,6 +207,29 @@ One observation from the Guide — a type, an anchor to a Section or a paragraph
 and a body of one or two sentences. The unit that fills the Notes Panel.
 _Avoid_: finding, suggestion, comment, tip, feedback
 
+**Proposed** (or proposed note):
+The disposition of a Note the writer has not ruled on. The starting state, where an Offer's
+is Undecided. Whether the two should be one word is open — issue #79.
+_Avoid_: pending, new, unread
+
+**Resolved** (or resolved note):
+Describes an accepted Note the writer has dealt with. It leaves the queue and is reachable
+again by asking for it.
+_Avoid_: done (a Done Article is a different thing), closed, fixed, complete
+
+**Anchor** (or note anchor):
+Where a Note points — the whole piece, one Section, or a run of Blocks. Stored as ids and
+read as positions: the writer sees "§2" and "¶3–¶5".
+_Avoid_: target, location, range, selection
+
+**Orphaned** (or orphaned note):
+Describes a Note whose anchor names a Block or a Section that is gone.
+_Avoid_: stale (a stale Proposal is a different thing), broken, dangling, lost
+
+**Depth** (or review depth):
+How hard one Review works — quick or thorough.
+_Avoid_: effort, mode, level, thoroughness
+
 **Type**:
 What sort of thing a record is, named after the record it belongs to — an Offer type, a
 note type, a refusal type. For a Guidance note: structure, tone drift, citations,
@@ -224,15 +247,15 @@ writer works.
 _Avoid_: audit, check, pass, analysis
 
 **Round**:
-One numbered Review of an Article. Rounds accumulate, so the writer can see what a
-Review said before the last set of changes.
+One numbered Review of an Article, and the written response it produced. Rounds accumulate,
+so the writer can see what a Review said before the last set of changes.
 _Avoid_: run, iteration, version
 
-**Skill**:
-An editorial routine the writer authors in the app as natural-language instructions,
-invoked by name from the Chat composer. Held in the House, and its output is Guidance
-notes like any other.
-_Avoid_: command, macro, prompt, action
+**Skill** (or review skill):
+An editorial routine the writer authors in the app as natural-language instructions, saved
+by name and picked from the Notes Panel. Held in the House.
+_Avoid_: command, macro, prompt (a prompt is what the writer types; a Skill is one they
+kept), action
 
 **Proposal**:
 A change to the Plan that the Chat offers and the writer Accepts or Declines. The writer

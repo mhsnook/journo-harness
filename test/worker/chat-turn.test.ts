@@ -1,6 +1,6 @@
 import type { ModelMessage, UIMessage } from 'ai'
 import { MockLanguageModelV3, simulateReadableStream } from 'ai/test'
-import { env, runInDurableObject } from 'cloudflare:test'
+import { env } from 'cloudflare:test'
 import { describe, expect, it } from 'vitest'
 
 import { chatTurn } from '../../src/server/llm/chat-turn'
@@ -9,6 +9,7 @@ import type { WebSearch } from '../../src/server/llm/search'
 import type { ProposalInput } from '../../src/shared/plan'
 import { makeNode, makePlan } from '../shared/plan-fixtures'
 import { type Frame, openAgentSocket } from './agent-socket'
+import { calledATool, noUsage, scriptModel, scriptSearch, stopped } from './scripted'
 
 /**
  * The server side of a Chat turn — docs/architecture.md §6 and §7.
@@ -28,17 +29,6 @@ import { type Frame, openAgentSocket } from './agent-socket'
 type StreamResult = Awaited<ReturnType<MockLanguageModelV3['doStream']>>
 type StreamPart = StreamResult['stream'] extends ReadableStream<infer Part> ? Part : never
 type GenerateResult = Awaited<ReturnType<MockLanguageModelV3['doGenerate']>>
-
-/** How a turn ended. A provider also reports its own raw reason, and nothing
- * here reads that. */
-const stopped = { unified: 'stop' as const, raw: undefined }
-const calledATool = { unified: 'tool-calls' as const, raw: undefined }
-
-/** Token counts a real provider fills in. Nothing here reads them. */
-const noUsage = {
-	inputTokens: { total: 0, noCache: 0, cacheRead: 0, cacheWrite: 0 },
-	outputTokens: { total: 0, text: 0, reasoning: 0 },
-}
 
 /** One scripted turn read back as a whole answer rather than as a stream, for
  * the calls that do not stream. `repairToolCall` is the one that matters: it
@@ -134,20 +124,16 @@ function proposes(...inputs: string[]) {
 	return scripted(inputs.map(proposalTurn))
 }
 
-/** Put a scripted model, and optionally a scripted search, behind the Article
- * Agent's boundaries. The model records the calls made against it, so the
- * caller keeps its own reference and reads the prompt pack off
- * `doStreamCalls`. */
-async function scriptModel(
+/** Put a scripted model, and optionally a scripted search, behind the Chat's
+ * boundaries. The model records the calls made against it, so the caller keeps
+ * its own reference and reads the prompt pack off `doStreamCalls`. */
+async function scriptChat(
 	name: string,
 	model: MockLanguageModelV3,
 	search?: WebSearch,
 ): Promise<void> {
-	const stub = env.ArticleAgent.get(env.ArticleAgent.idFromName(name))
-	await runInDurableObject(stub, (agent) => {
-		agent.chatModel = () => model
-		if (search !== undefined) agent.chatSearch = () => search
-	})
+	await scriptModel(name, 'chatModel', model)
+	if (search !== undefined) await scriptSearch(name, search)
 }
 
 /** A search that finds one thing, so a turn has something to read back. */
@@ -183,7 +169,7 @@ const types = (chunks: Frame[]) => chunks.map((chunk) => chunk.type)
 describe('a Chat turn', () => {
 	it('returns a Proposal as a suspended tool call', async () => {
 		const writer = await openAgentSocket('chat-proposal')
-		await scriptModel('chat-proposal', proposes(JSON.stringify({ ops: proposal })))
+		await scriptChat('chat-proposal', proposes(JSON.stringify({ ops: proposal })))
 
 		const chunks = await writer.chat('Give the opening a word count.', { plan })
 
@@ -199,7 +185,7 @@ describe('a Chat turn', () => {
 
 	it('returns prose with no tool call', async () => {
 		const writer = await openAgentSocket('chat-prose')
-		await scriptModel('chat-prose', speaks('Four hundred words fits that opening.'))
+		await scriptChat('chat-prose', speaks('Four hundred words fits that opening.'))
 
 		const chunks = await writer.chat('Is four hundred words right for the opening?', {
 			plan,
@@ -218,7 +204,7 @@ describe('a Chat turn', () => {
 	it('packs the guide rules, then the conversation, then the Plan', async () => {
 		const writer = await openAgentSocket('chat-pack')
 		const model = speaks('Noted.')
-		await scriptModel('chat-pack', model)
+		await scriptChat('chat-pack', model)
 
 		await writer.chat('What is the opening for?', { plan })
 
@@ -294,7 +280,7 @@ describe('a Chat turn', () => {
 	it('offers the tools the deployment can reach', async () => {
 		const writer = await openAgentSocket('chat-tools')
 		const model = speaks('Noted.')
-		await scriptModel('chat-tools', model)
+		await scriptChat('chat-tools', model)
 
 		await writer.chat('Anything to say about the outline?', { plan })
 
@@ -311,7 +297,7 @@ describe('a Chat turn', () => {
 	it('tells the guide it cannot browse when no search is wired', async () => {
 		const writer = await openAgentSocket('chat-no-search')
 		const model = speaks('Noted.')
-		await scriptModel('chat-no-search', model)
+		await scriptChat('chat-no-search', model)
 
 		await writer.chat('Find me something recent on permits.', { plan })
 
@@ -325,7 +311,7 @@ describe('a Chat turn', () => {
 	it('offers the search tool and the rules to match when a search is wired', async () => {
 		const writer = await openAgentSocket('chat-search')
 		const model = speaks('Noted.')
-		await scriptModel('chat-search', model, findsOne)
+		await scriptChat('chat-search', model, findsOne)
 
 		await writer.chat('Find me something recent on permits.', { plan })
 
@@ -354,7 +340,7 @@ describe('a Chat turn', () => {
 			searchTurn('permit backlog'),
 			proseTurn('The backlog stood at 4,100.'),
 		])
-		await scriptModel('chat-search-steps', model, findsOne)
+		await scriptChat('chat-search-steps', model, findsOne)
 
 		const chunks = await writer.chat('What is the permit backlog?', { plan })
 
@@ -379,7 +365,7 @@ describe('a Chat turn', () => {
 		writer.setState(plan)
 		await reader.next('cf_agent_state')
 		const model = speaks('Noted.')
-		await scriptModel('chat-no-body', model)
+		await scriptChat('chat-no-body', model)
 
 		await writer.chat('What is the opening for?')
 
@@ -399,7 +385,7 @@ describe('a Chat turn', () => {
 			],
 		})
 		const model = proposes(withExtraField, JSON.stringify({ ops: proposal }))
-		await scriptModel('chat-retry', model)
+		await scriptChat('chat-retry', model)
 
 		const chunks = await writer.chat('Give the opening a word count.', { plan })
 
@@ -425,7 +411,7 @@ describe('a Chat turn', () => {
 			],
 		})
 		const model = proposes(withExtraField, withExtraField)
-		await scriptModel('chat-retry-exhausted', model)
+		await scriptChat('chat-retry-exhausted', model)
 
 		const chunks = await writer.chat('Give the opening a word count.', { plan })
 
@@ -442,7 +428,7 @@ describe('a Chat turn', () => {
 
 	it('keeps the transcript in the Agents SDK store, and the Plan out of it', async () => {
 		const writer = await openAgentSocket('chat-transcript')
-		await scriptModel('chat-transcript', speaks('Noted.'))
+		await scriptChat('chat-transcript', speaks('Noted.'))
 
 		await writer.chat('What is the opening for?', { plan })
 

@@ -48,10 +48,10 @@ export function ProposalCard({
 
 			<div className="flex items-center gap-1.5">
 				<Button size="sm" disabled={call.ops === null} onClick={onAccept}>
-					Accept
+					accept
 				</Button>
 				<Button size="sm" variant="quiet" onClick={onDecline}>
-					Decline
+					decline
 				</Button>
 			</div>
 		</article>

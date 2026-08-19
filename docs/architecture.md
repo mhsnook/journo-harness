@@ -13,6 +13,8 @@ of how we're doing things now, so as not to over-specify and constrain future in
 - UI decisions and patterns go in [`ui.md`](./ui.md) or the Storybook stories it includes
   by reference.
 - Certain key architecture decisions are recorded in the [`adr`](./adr/) folder.
+- What a feature is and how it behaves goes in its own file — [`reviews.md`](./reviews.md).
+- What has to be set outside the repository is [`deploy.md`](./deploy.md).
 - Use [`later.md`](./later.md) sparingly.
 
 ## 1. Build order
@@ -347,11 +349,8 @@ on we may want to come up with heuristics that allow us to be a bit more forgivi
 ## 7. Inference
 
 **Currently using `@cf/zai-org/glm-5.2` on Workers AI**, over the `env.AI` binding. 262k
-context, tool calling and streaming supported, Workers Paid plan required. **If its tool
-calling or structured output disappoints, swap the string to `@cf/moonshotai/kimi-k2.6`
-and move on.** We are not (currently) planning a bunch of automated benchmarking or anything
-like that, but we do have plans to let the writer evaluate how well the Review tool matches
-their expectations, which may lead us down that road in the long run.
+context, tool calling and streaming supported, Workers Paid plan required. Swapping it is one
+string, and #16 names the fallback and why it is a swap rather than a spike.
 
 **Currently, one model serves every call** — the Chat, the ambient Guidance notes, the
 Review. No routing machinery, no per-call-type model selection is included here.
@@ -374,35 +373,18 @@ export const model = (env: Env) =>
   createWorkersAI({ binding: env.AI })('@cf/zai-org/glm-5.2')
 ```
 
-**AI Gateway attaches** to those calls for logging. Inference runs on Cloudflare, so there is
-no external provider and no key to manage. **Gateway response caching stays off for guide
-passes**, or near-identical requests against different Drafts return stale Notes.
-
-**The Gateway is named by the `AI_GATEWAY_ID` var, set from the CLI rather than checked in.**
-It is deployment configuration rather than repo content, and a var declared in
-`wrangler.jsonc` overwrites the deployed value on every `wrangler deploy`, so declaring it
-there even as a placeholder would wipe it. Unset attaches no Gateway. Its type is in
-`src/server/env.d.ts` and `llm/model.ts` is the only thing that reads it.
-
-**The binding path needs no Gateway token.** `GatewayOptions` carries an id and cache
-settings and has nowhere to put one, because a Workers AI binding call is same-account and
-authenticates itself. So an authenticated Gateway is the one setting to leave off — turn it
-on and these calls have no way to present the header it wants.
-
 **Search is Exa**, in `src/server/llm/search.ts` — the one place a provider is named, as
-`llm/model.ts` is for the model. It does not route through the AI Gateway, which proxies
-inference rather than an arbitrary API, so `EXA_API_KEY` is a Worker secret and the rule above
-about leaving the Gateway unauthenticated is unaffected.
+`llm/model.ts` is for the model. **No key means no search tool**, and the guide is told to
+answer from memory instead: the registry and the guide rules read one value, so they cannot
+disagree about what the turn can reach. **A search that fails answers rather than throws**,
+because a rejected `execute` ends a turn that still owes the writer a reply.
 
-**No key means no search tool**, and the guide is told to answer from memory instead. The
-registry and the guide rules read one value, so they cannot disagree about what the turn can
-reach.
+**Model output is validated, never parsed out of prose.** A Proposal is a tool call and a
+Review is `generateObject` against a zod schema — both checked in the Article Agent, with one
+retry carrying the validation error. A Review's prose lives _inside_ that schema rather than
+being scanned for structure.
 
-**A search that fails answers rather than throws**, because a rejected `execute` ends a turn
-that still owes the writer a reply.
-
-**Structured outputs rather than parsed prose.** `generateObject` with a zod schema,
-validated in the Article Agent, with one retry that includes the validation error.
+The Gateway and the keys are deployment configuration — [`deploy.md`](./deploy.md).
 
 **Prompt packs put the stable part first** — system prompt, then Lexicon entries in play,
 then the standing rules, then everything that changes. The Plan and the Draft change all the
@@ -418,14 +400,10 @@ tool result rather than the writer. A tool result answers the assistant message 
 and the Plan is a user message, so slotting it in front would split that pair — which the AI
 SDK refuses outright with `MissingToolResultsError`, before the model is called at all. The
 Plan goes last in that case, and there is no writer message to keep last anyway.
-`chatPackMessages` and `planSlot` in `src/server/llm/prompt.ts` are the whole of it, and
-`test/worker/chat-turn.test.ts` holds both cases plus the empty transcript.
+`chatPackMessages` and `planSlot` in `src/server/llm/prompt.ts` are the whole of it.
 
-Note: Whether that ordering saves time or money on Workers AI is unverified. Prefix caching is
-what would make it pay, priced elsewhere at $0.26 per million cached against $1.40 uncached —
-and the `env.AI` binding bills in neurons, so those are not its numbers and nothing here has
-measured it. The ordering stands on the structural argument above either way, and the saving
-is a claim to check on the first real turn rather than one to design around.
+Whether the stable-first ordering saves anything on Workers AI is unmeasured — the argument
+for it is structural, and the arithmetic is in #16.
 
 Each row below reads in pack order, stable to volatile.
 
@@ -439,8 +417,7 @@ Each row below reads in pack order, stable to volatile.
 Research reaches a Review only by being Accepted into the Plan. The Ledger is the bridge, and
 curation is forced rather than assumed.
 
-**Cost is not a constraint.** A guide pass of roughly 8k input and 500 output costs about a
-tenth of a cent; a two-hour session is well under a dollar.
+**Cost does not constrain the design** — #16 priced a guide pass at about a tenth of a cent.
 
 ## 8. Frontend
 
@@ -570,9 +547,9 @@ Guide, the Notes Panel, and everything that reads the prose are not.
   arrives with the House at 1b, and the Draft can move onto it later without changing shape.
   Until then two tabs on one Draft is last-write-wins per Block, which is what §1's "only one
   editor at a time" costs. Findings #7 and #18 stand and are not load-bearing yet.
-- **Notes is the fourth Panel.** A **Review** is an intentional pass producing a batch of
-  Guidance notes at once, accumulating in numbered **Rounds**, grouped by **type**, which the
-  writer selects among and hands back to the Chat.
+- **Notes is the fourth Panel**, and it is built — §12. What is still phase 2's is the
+  ambient half: notes that arrive while the writer works, and anything drawn beside the
+  prose.
 - **The guide loop is client-initiated. There is no server-side timer anywhere in v1.** The
   client knows when typing stopped; the server cannot tell "still thinking" from "left the
   room." An alarm earns its place only when work must happen while nobody is connected, and
@@ -629,7 +606,45 @@ Settings and known defects. None is a decision to make; all are things to get ri
   Article with a Plan and a transcript already in it, so a screen can be opened rather than
   built up by hand every time.
 
-## 12. Out of scope
+## 12. Notes and the Review
+
+What the feature is and how it behaves is [`reviews.md`](./reviews.md). Four rules here,
+because each one binds more than one module.
+
+**The Article Agent runs the Review, and the client does not.** A Review is long-running
+and produces a batch, so a client-run one is lost the moment the writer closes the tab —
+issue #11. `startReview` writes a Round row, answers with it, and carries on under
+`waitUntil`. Three things follow:
+
+- **`state` is a column.** `running` has to survive the writer leaving, and a Review that
+  fails with nobody connected has to leave its reason on the row rather than on a call.
+  A `running` row seen at wake is one a restart cut off — the Review itself holds the
+  Agent awake — so `onStart` fails it, freeing the guard below.
+- **One Review at a time per Article**, guarded by the running row. Two calls interleave
+  whenever the writer double-clicks or has the Article open twice, and `await` inside a
+  Durable Object lets the second start before the first finishes (#9). The guard cannot be
+  a field: in-memory state does not survive hibernation.
+- **Settling a Round broadcasts `review_finished`.** Rows have no sync (§3), so this is the
+  one thing that tells a waiting client. A client that was away reads the rows when the
+  Panel opens instead, and one whose socket dropped mid-Review polls the Rounds.
+
+**A Note's anchor is settled once, at write time, against the Plan and Draft the model was
+shown.** An anchor the client cannot resolve reads as the whole piece and breaks nothing,
+so the write is taken and the anchor settled rather than the Note refused — issue #42's
+line, applied where nothing is load-bearing. What happens to an anchor afterwards is
+`reviews.md`.
+
+**Accept and Decline are the same two words for a Note, an Offer, and a Proposal**, because
+the writer rules on all three the same way. The three records still differ in shape — an
+Offer starts `undecided`, a Note starts `proposed`, a Proposal stores no disposition at all
+and dies with its turn — and whether that is worth reconciling is issue #79.
+
+**A Review does not stream, and §10 says it should.** `@callable` is request and response,
+so the streaming version is `streamObject` over the Agent's `onRequest` — issue #77. The
+cost is smaller than it looks, because the Round is durable: the wait is a row rather than
+a call being held open.
+
+## 13. Out of scope
 
 - **The tracking model** — affirmed Boundaries and text-relocating operations, which would
   make Section membership a fact the app operates on rather than something the Guide infers.

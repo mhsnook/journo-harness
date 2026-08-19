@@ -26,9 +26,10 @@ export default defineConfig({
 					autoCodeSplitting: true,
 				}),
 		react(),
-		// React Compiler memoises components and hooks at build time, so the app
-		// does not hand-write `memo`, `useMemo`, and `useCallback` to stop a
-		// streaming Chat turn re-rendering the whole transcript per chunk.
+		// React Compiler memoises components and hooks at build time, which covers
+		// most of what the app would otherwise hand-write `memo`, `useMemo`, and
+		// `useCallback` for. Write one where it measurably helps; it is the
+		// routine ones that are now redundant.
 		//
 		// It only compiles what it can prove follows the Rules of React and
 		// silently skips the rest, so the `react/react-compiler` oxlint rule is the
