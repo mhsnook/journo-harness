@@ -37,6 +37,26 @@ function fails(why: string) {
 	})
 }
 
+/** A model that answers nothing until `release` is called — a Review a restart
+ * would catch in flight. */
+function stalls() {
+	let release = () => {}
+	const gate = new Promise<void>((resolve) => {
+		release = resolve
+	})
+
+	return {
+		release,
+		model: new MockLanguageModelV3({
+			doGenerate: async () => {
+				await gate
+
+				throw new Error('The stalled call was released.')
+			},
+		}),
+	}
+}
+
 /** Put a scripted model behind the Review's model boundary. */
 const scriptReview = (name: string, model: MockLanguageModelV3) =>
 	scriptModel(name, 'reviewModel', model)
@@ -193,6 +213,57 @@ describe('running a Review', () => {
 		expect(round.state).toBe('failed')
 		expect(round.failure).toContain('The model is having a day.')
 		expect(round.passages).toEqual([])
+	})
+
+	it('retries a refused answer once, with the error in front of the model', async () => {
+		const model = answers('not the shape asked for', response({ kind: 'article' }))
+		await openAgentSocket('review-retry')
+		await scriptReview('review-retry', model)
+		await inAgent('review-retry', (agent) => agent.startReview(ask))
+
+		const round = await settled('review-retry')
+
+		expect(round.state).toBe('done')
+		expect(model.doGenerateCalls).toHaveLength(2)
+		expect(JSON.stringify(model.doGenerateCalls[1].prompt)).toContain(
+			'That response was refused',
+		)
+	})
+
+	it('does not re-send the pack when the model call itself fails', async () => {
+		const model = fails('The model is having a day.')
+		await openAgentSocket('review-outage')
+		await scriptReview('review-outage', model)
+		await inAgent('review-outage', (agent) => agent.startReview(ask))
+
+		const round = await settled('review-outage')
+
+		expect(round.state).toBe('failed')
+		expect(model.doGenerateCalls).toHaveLength(1)
+	})
+
+	it('fails a Round a restart cut off, instead of blocking every later Review', async () => {
+		const stalled = stalls()
+		await openAgentSocket('review-reap')
+		await scriptReview('review-reap', stalled.model)
+		await inAgent('review-reap', (agent) => agent.startReview(ask))
+
+		// The next wake finds the row still running with no call behind it.
+		await inAgent('review-reap', (agent) => agent.onStart())
+
+		const round = await settled('review-reap')
+
+		expect(round).toMatchObject({ state: 'failed', ordinal: 1 })
+		expect(round.failure).toContain('cut off by a restart')
+
+		// And the one-at-a-time guard is free again.
+		await scriptReview('review-reap', answers(response({ kind: 'article' })))
+		const next = await inAgent('review-reap', (agent) => agent.startReview(ask))
+
+		expect(next).toMatchObject({ state: 'running', ordinal: 2 })
+
+		stalled.release()
+		await settled('review-reap')
 	})
 
 	it('runs one Review at a time on an Article', async () => {

@@ -1,5 +1,6 @@
 import type { NotesQueue, QueueView } from '../../shared/notes-queue'
 import type { ReviewDepth, Round } from '../../shared/review'
+import { Button } from '../components/Button'
 import { Chip } from '../components/Chip'
 import { Notice } from '../components/Notice'
 import { Panel, PanelHeader, type PanelProps } from '../components/Panel'
@@ -62,6 +63,11 @@ export function NotesPanel({
 	const running = rounds.find((round) => round.state === 'running') ?? null
 	const latest = [...rounds].reverse().find((round) => round.state === 'done') ?? null
 
+	// Only the last Round can still be failed-and-unanswered: running one again
+	// is the way past a failure, and that puts a newer Round after it.
+	const last = rounds.length === 0 ? null : rounds[rounds.length - 1]
+	const failed = last !== null && last.state === 'failed' ? last : null
+
 	return (
 		<Panel
 			className={className}
@@ -111,6 +117,20 @@ export function NotesPanel({
 
 					{failure === null ? null : <Notice>{failure}</Notice>}
 
+					{failed === null ? null : (
+						<Notice>
+							<span className="flex flex-col items-start gap-2">
+								<span>
+									Round {failed.ordinal} did not finish.{' '}
+									{failed.failure ?? 'No reason was recorded.'}
+								</span>
+								<Button onClick={() => onRun(failed.prompt, failed.depth)} size="sm">
+									run again
+								</Button>
+							</span>
+						</Notice>
+					)}
+
 					{running === null ? null : (
 						<p className="text-[0.75rem] leading-relaxed text-faint">
 							Round {running.ordinal} is reading the Draft. It carries on if you close
@@ -122,6 +142,7 @@ export function NotesPanel({
 						loading={loading}
 						naming={naming}
 						queue={queue}
+						rounds={rounds}
 						actions={actions}
 						view={view}
 					/>
@@ -141,16 +162,31 @@ function Queue({
 	loading,
 	naming,
 	actions,
-}: Pick<NotesPanelProps, 'queue' | 'view' | 'loading' | 'naming' | 'actions'>) {
+	rounds,
+}: Pick<
+	NotesPanelProps,
+	'queue' | 'view' | 'loading' | 'naming' | 'actions' | 'rounds'
+>) {
 	if (loading) {
 		return <p className="text-[0.75rem] text-faint">Opening the Notes…</p>
 	}
 
 	if (queue.counts.all === 0) {
+		if (rounds.length === 0) {
+			return (
+				<p className="text-[0.75rem] leading-relaxed text-faint">
+					No Reviews yet. Say what this one should look for, and the Guide reads the Draft
+					against the Plan.
+				</p>
+			)
+		}
+
+		// A running or failed Round says its own piece above the queue.
+		if (!rounds.some((round) => round.state === 'done')) return null
+
 		return (
 			<p className="text-[0.75rem] leading-relaxed text-faint">
-				No Reviews yet. Say what this one should look for, and the Guide reads the Draft
-				against the Plan.
+				No Notes from these Reviews. The reasoning is in the written response.
 			</p>
 		)
 	}

@@ -23,7 +23,6 @@ export type NotesHandle = {
 	 * whatever the queue is showing. */
 	notes: readonly Note[]
 	rounds: readonly Round[]
-	running: Round | null
 	loading: boolean
 	failure: string | null
 	view: QueueView
@@ -80,6 +79,8 @@ export function useNotes(): NotesHandle {
 		// causes one.
 	}, [store, draft, reads, reviewFinished])
 
+	// The Panel derives the running Round for itself off `rounds`; this one is
+	// for the poll below.
 	const running = (rounds ?? []).find((round) => round.state === 'running') ?? null
 	const waitingOn = running === null ? null : running.id
 
@@ -143,7 +144,6 @@ export function useNotes(): NotesHandle {
 		queue,
 		notes: notes ?? [],
 		rounds: rounds ?? [],
-		running,
 		loading: notes === null,
 		failure,
 		view,

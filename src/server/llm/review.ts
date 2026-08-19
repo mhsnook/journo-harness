@@ -1,4 +1,9 @@
-import { generateObject, type LanguageModel, type ModelMessage } from 'ai'
+import {
+	generateObject,
+	type LanguageModel,
+	type ModelMessage,
+	NoObjectGeneratedError,
+} from 'ai'
 
 import { reasonFor } from '../../shared/failure'
 import {
@@ -49,10 +54,14 @@ export async function reviewTurn({
 
 		return object
 	} catch (error) {
-		// One retry, and only one: a model that gets the shape wrong the same way
-		// twice will get it wrong a third time, and the writer is waiting. The
-		// second failure is what the Round records as its reason.
+		// One retry, and only for an answer in the wrong shape: a model that gets
+		// the shape wrong the same way twice will get it wrong a third time, and
+		// the writer is waiting. Anything else — an outage, a timeout — has had
+		// `generateObject`'s own transport retries already, and a correction
+		// message would tell the model it refused an answer it was not the source
+		// of. The rethrow is what the Round records as its reason.
 		if (abortSignal?.aborted === true) throw error
+		if (!NoObjectGeneratedError.isInstance(error)) throw error
 
 		const { object } = await ask([...messages, correction(error)])
 

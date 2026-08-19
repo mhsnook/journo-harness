@@ -618,6 +618,8 @@ issue #11. `startReview` writes a Round row, answers with it, and carries on und
 
 - **`state` is a column.** `running` has to survive the writer leaving, and a Review that
   fails with nobody connected has to leave its reason on the row rather than on a call.
+  A `running` row seen at wake is one a restart cut off — the Review itself holds the
+  Agent awake — so `onStart` fails it, freeing the guard below.
 - **One Review at a time per Article**, guarded by the running row. Two calls interleave
   whenever the writer double-clicks or has the Article open twice, and `await` inside a
   Durable Object lets the second start before the first finishes (#9). The guard cannot be

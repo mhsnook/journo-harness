@@ -243,6 +243,18 @@ export class ArticleAgent extends AIChatAgent<Env, Plan> {
 			)
 		`
 		this.sql`CREATE INDEX IF NOT EXISTS note_by_round ON note (round_id)`
+
+		// A Review runs under `waitUntil`, which holds this Agent awake until it
+		// settles — so a `running` row seen at wake is one a crash or deploy cut
+		// off. Failing it here frees the one-at-a-time guard and puts the reason
+		// where the writer looks.
+		this.sql`
+			UPDATE round
+			SET state = 'failed',
+				failure = 'The Review was cut off by a restart.',
+				finished_at = ${Date.now()}
+			WHERE state = 'running'
+		`
 	}
 
 	async onRequest(_request: Request): Promise<Response> {
