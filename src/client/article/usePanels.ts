@@ -25,6 +25,15 @@ export function usePanels(): PanelState {
 		if (narrow) setOpen((held) => (held.length > 1 ? [held[0]] : held))
 	}, [narrow])
 
+	// theme.css reads this count into the root font-size: fewer open Panels
+	// leave more room, so the type and the spacing grow.
+	useEffect(() => {
+		document.documentElement.dataset.panels = String(open.length)
+		return () => {
+			delete document.documentElement.dataset.panels
+		}
+	}, [open.length])
+
 	return {
 		open,
 		narrow,

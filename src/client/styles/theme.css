@@ -68,10 +68,44 @@
 		0 -1px 2px rgb(43 34 41 / 0.05), 0 -8px 24px -16px rgb(43 34 41 / 0.25);
 }
 
+/*
+ * The type scale. One knob: the html rule below feeds it into the root
+ * font-size, so every rem in the app — the type and the Tailwind spacing
+ * utilities together — grows and shrinks in the same proportion.
+ *
+ * The Article screen stamps the number of open Panels on <html> (usePanels).
+ * Fewer Panels leave more room, so the type grows: one Panel is generous, two
+ * is a step down, three or four keep the compact scale. A page without the
+ * Panel row — the Articles index — reads as two.
+ */
+:root {
+	--type-scale: 112.5%; /* 18px */
+}
+
+:root[data-panels='1'] {
+	--type-scale: 125%; /* 20px */
+}
+
+:root[data-panels='3'],
+:root[data-panels='4'] {
+	--type-scale: 100%; /* 16px */
+}
+
+/* A narrow window shows one Panel out of necessity, not room, so it keeps the
+   compact scale. 56rem matches `narrowQuery` in usePanels.ts; in a media query
+   the rem is the browser default, so the html font-size cannot move it. */
+@media (max-width: 56rem) {
+	:root,
+	:root[data-panels] {
+		--type-scale: 100%;
+	}
+}
+
 @layer base {
 	html {
 		-webkit-font-smoothing: antialiased;
 		text-rendering: optimizeLegibility;
+		font-size: var(--type-scale);
 	}
 
 	body {
