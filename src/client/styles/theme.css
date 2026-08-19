@@ -77,18 +77,27 @@
  * Fewer Panels leave more room, so the type grows: one Panel is generous, two
  * is a step down, three or four keep the compact scale. A page without the
  * Panel row — the Articles index — reads as two.
+ *
+ * `--spacing` is Tailwind's spacing unit, and it stacks a second step on top:
+ * the rem bump already grows the margins in proportion to the type, and the
+ * spacing bump grows them beyond it. At one Panel each spacing utility is
+ * 1.25 × 1.25 ≈ 1.56 times its compact size, so the whitespace is the most
+ * generous thing on the screen.
  */
 :root {
 	--type-scale: 112.5%; /* 18px */
+	--spacing: 0.28125rem; /* the 0.25rem default × 1.125 */
 }
 
 :root[data-panels='1'] {
 	--type-scale: 125%; /* 20px */
+	--spacing: 0.3125rem; /* × 1.25 */
 }
 
 :root[data-panels='3'],
 :root[data-panels='4'] {
 	--type-scale: 100%; /* 16px */
+	--spacing: 0.25rem; /* the Tailwind default */
 }
 
 /* A narrow window shows one Panel out of necessity, not room, so it keeps the
@@ -98,6 +107,7 @@
 	:root,
 	:root[data-panels] {
 		--type-scale: 100%;
+		--spacing: 0.25rem;
 	}
 }
 
