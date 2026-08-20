@@ -26,13 +26,15 @@ export function usePanels(): PanelState {
 	}, [narrow])
 
 	// theme.css reads this count into the root font-size: fewer open Panels
-	// leave more room, so the type and the spacing grow.
+	// leave more room, so the type and the spacing grow. A narrow window is
+	// stamped 'narrow' rather than a count — it shows one Panel out of
+	// necessity, not room, and must not read as the generous one-Panel scale.
 	useEffect(() => {
-		document.documentElement.dataset.panels = String(open.length)
+		document.documentElement.dataset.panels = narrow ? 'narrow' : String(open.length)
 		return () => {
 			delete document.documentElement.dataset.panels
 		}
-	}, [open.length])
+	}, [narrow, open.length])
 
 	return {
 		open,

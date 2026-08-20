@@ -94,21 +94,14 @@
 	--spacing: 0.3125rem; /* × 1.25 */
 }
 
+/* 'narrow' is a window under `narrowQuery` (usePanels.ts): it shows one Panel
+   out of necessity, not room, so it keeps the compact scale. The threshold
+   itself lives only there — this file never measures the window. */
 :root[data-panels='3'],
-:root[data-panels='4'] {
+:root[data-panels='4'],
+:root[data-panels='narrow'] {
 	--type-scale: 100%; /* 16px */
 	--spacing: 0.25rem; /* the Tailwind default */
-}
-
-/* A narrow window shows one Panel out of necessity, not room, so it keeps the
-   compact scale. 56rem matches `narrowQuery` in usePanels.ts; in a media query
-   the rem is the browser default, so the html font-size cannot move it. */
-@media (max-width: 56rem) {
-	:root,
-	:root[data-panels] {
-		--type-scale: 100%;
-		--spacing: 0.25rem;
-	}
 }
 
 @layer base {
