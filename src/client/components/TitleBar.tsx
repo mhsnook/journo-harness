@@ -28,11 +28,11 @@ export function TitleBar({ back, title, subtitle, actions, className }: TitleBar
 			)}
 		>
 			{back}
-			<h2 className="truncate text-[0.9375rem] leading-tight font-medium text-ink">
+			<h2 className="truncate text-(length:--text-15) leading-tight font-medium text-ink">
 				{title}
 			</h2>
 			{subtitle ? (
-				<span className="truncate text-[0.8125rem] text-faint">{subtitle}</span>
+				<span className="truncate text-(length:--text-13) text-faint">{subtitle}</span>
 			) : null}
 			<div className="ml-auto flex shrink-0 items-center gap-2">{actions}</div>
 		</header>
@@ -40,7 +40,7 @@ export function TitleBar({ back, title, subtitle, actions, className }: TitleBar
 }
 
 const backClass =
-	'-ml-1 flex shrink-0 items-center gap-1.5 rounded px-1 py-0.5 text-[0.8125rem] text-muted transition-colors hover:text-ink'
+	'-ml-1 flex shrink-0 items-center gap-1.5 rounded px-1 py-0.5 text-(length:--text-13) text-muted transition-colors hover:text-ink'
 
 function BackArrow({ children }: { children: ReactNode }) {
 	return (

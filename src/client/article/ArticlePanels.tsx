@@ -1,4 +1,4 @@
-import { Activity, type ReactNode } from 'react'
+import { Activity, type CSSProperties, type ReactNode } from 'react'
 
 import { ArticleChatPanel } from '../chat/ArticleChatPanel'
 import { Panel, PanelHeader, type PanelProps } from '../components/Panel'
@@ -21,11 +21,16 @@ export interface ArticlePanelsProps {
 	agent: ArticleSocket
 	/** Already in chat → plan → draft → notes order; `usePanels` keeps it there. */
 	open: readonly PanelId[]
+	/** The row's type-and-spacing scale — `panelScale` in usePanels. */
+	scale: number
 }
 
-export function ArticlePanels({ agent, open }: ArticlePanelsProps) {
+export function ArticlePanels({ agent, open, scale }: ArticlePanelsProps) {
 	return (
-		<div className="flex min-h-0 flex-auto">
+		<div
+			className="panel-scale flex min-h-0 flex-auto"
+			style={{ '--panel-scale': scale } as CSSProperties}
+		>
 			{PANELS.map((panel) => {
 				// `open` is in rail order, so anything past the first has a Panel on
 				// its left to draw a rule against.
@@ -93,7 +98,7 @@ function EmptyPanel({
 	return (
 		<Panel divider={divider} grow={grow} variant="sunk">
 			<PanelHeader title={title} />
-			<p className="text-[0.75rem] leading-relaxed text-faint">{children}</p>
+			<p className="text-(length:--text-12) leading-relaxed text-faint">{children}</p>
 		</Panel>
 	)
 }

@@ -32,10 +32,10 @@ export function ExampleBlock({
 				className,
 			)}
 		>
-			<blockquote className="text-[0.75rem] leading-relaxed text-ink">
+			<blockquote className="text-(length:--text-12) leading-relaxed text-ink">
 				“{text}”
 			</blockquote>
-			<figcaption className="flex flex-wrap items-center gap-x-1.5 text-[0.6875rem] text-faint">
+			<figcaption className="flex flex-wrap items-center gap-x-1.5 text-(length:--text-meta) text-faint">
 				{source ? <cite className="not-italic">{source}</cite> : null}
 				{source && reason ? <span aria-hidden>·</span> : null}
 				{reason ? <span>{reason}</span> : null}

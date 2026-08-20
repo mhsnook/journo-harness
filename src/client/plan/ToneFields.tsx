@@ -86,7 +86,7 @@ export function ToneFields({
 						</Chip>
 					))}
 					<InlineInput
-						className="w-24 text-[0.6875rem]"
+						className="w-24 text-(length:--text-meta)"
 						label={`Add an Adjective to ${scopeName}`}
 						onChange={setAdding}
 						onKeyDown={(event) => {

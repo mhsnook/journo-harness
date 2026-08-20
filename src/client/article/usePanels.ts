@@ -14,6 +14,8 @@ export type PanelState = {
 	open: PanelId[]
 	/** The rail is a set of tabs rather than a set of toggles. */
 	narrow: boolean
+	/** The Panel row's type-and-spacing scale — `panelScale`. */
+	scale: number
 	toggle: (panel: PanelId) => void
 }
 
@@ -27,22 +29,22 @@ export function usePanels(): PanelState {
 		if (narrow) setOpen((held) => (held.length > 1 ? [held[0]] : held))
 	}, [narrow])
 
-	// theme.css reads this count into the root font-size: fewer open Panels
-	// leave more room, so the type and the spacing grow. A narrow window is
-	// stamped 'narrow' rather than a count — it shows one Panel out of
-	// necessity, not room, and must not read as the generous one-Panel scale.
-	useEffect(() => {
-		document.documentElement.dataset.panels = narrow ? 'narrow' : String(open.length)
-		return () => {
-			delete document.documentElement.dataset.panels
-		}
-	}, [narrow, open.length])
-
 	return {
 		open,
 		narrow,
+		scale: panelScale(open, narrow),
 		toggle: (panel) => setOpen((held) => nextOpenPanels(held, panel, narrow)),
 	}
+}
+
+/** How the Panel row's type and spacing scale with room — the `.panel-scale`
+ * class in theme.css reads this as `--panel-scale`. Fewer open Panels leave
+ * more room: one Panel is generous, two a step down, three or four compact. A
+ * narrow window shows one Panel out of necessity, not room, so it stays
+ * compact. */
+export function panelScale(open: readonly PanelId[], narrow: boolean): number {
+	if (narrow || open.length > 2) return 1
+	return open.length === 1 ? 1.25 : 1.125
 }
 
 /** Narrow selects; wide toggles, never down to nothing, and always back into the

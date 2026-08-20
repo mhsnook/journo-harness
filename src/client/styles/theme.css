@@ -69,46 +69,28 @@
 }
 
 /*
- * The type scale. One knob: the html rule below feeds it into the root
- * font-size, so every rem in the app — the type and the Tailwind spacing
- * utilities together — grows and shrinks in the same proportion.
- *
- * The Article screen stamps the number of open Panels on <html> (usePanels).
- * Fewer Panels leave more room, so the type grows: one Panel is generous, two
- * is a step down, three or four keep the compact scale. A page without the
- * Panel row — the Articles index — reads as two.
- *
- * `--spacing` is Tailwind's spacing unit, and it stacks a second step on top:
- * the rem bump already grows the margins in proportion to the type, and the
- * spacing bump grows them beyond it. At one Panel each spacing utility is
- * 1.25 × 1.25 ≈ 1.56 times its compact size, so the whitespace is the most
- * generous thing on the screen.
+ * The type ladder. Components never write a font-size in rem — they reference
+ * one of these steps (`text-(length:--text-13)`), named by their px height at
+ * the base scale. `.panel-scale` below redeclares every step multiplied by
+ * `--panel-scale`, so the same class renders larger inside a scaled Panel row
+ * and at the base size everywhere else. `--text-meta`, the sixth step, lives
+ * in @theme because `.label-meta` also reads it.
  */
 :root {
-	--type-scale: 112.5%; /* 18px */
-	--spacing: 0.28125rem; /* the 0.25rem default × 1.125 */
-}
-
-:root[data-panels='1'] {
-	--type-scale: 125%; /* 20px */
-	--spacing: 0.3125rem; /* × 1.25 */
-}
-
-/* 'narrow' is a window under `narrowQuery` (usePanels.ts): it shows one Panel
-   out of necessity, not room, so it keeps the compact scale. The threshold
-   itself lives only there — this file never measures the window. */
-:root[data-panels='3'],
-:root[data-panels='4'],
-:root[data-panels='narrow'] {
-	--type-scale: 100%; /* 16px */
-	--spacing: 0.25rem; /* the Tailwind default */
+	--text-10: 0.625rem;
+	--text-12: 0.75rem;
+	--text-13: 0.8125rem;
+	--text-14: 0.875rem;
+	--text-15: 0.9375rem;
 }
 
 @layer base {
 	html {
 		-webkit-font-smoothing: antialiased;
 		text-rendering: optimizeLegibility;
-		font-size: var(--type-scale);
+		/* The base bump: the whole app reads at 18px, chrome included. Room-
+		   dependent scaling is `.panel-scale`, not this. */
+		font-size: 112.5%;
 	}
 
 	body {
@@ -127,6 +109,26 @@
 }
 
 @layer components {
+	/* The Panel row. ArticlePanels sets `--panel-scale` on it from how many
+	   Panels are open: one Panel is generous (1.25), two a step down (1.125),
+	   three or four compact (1). Everything below re-evaluates against the
+	   inherited scale, so the row's type, type ladder, and spacing utilities
+	   all grow together — and nothing outside the row moves.
+
+	   The ladder steps repeat the :root values above on purpose: a custom
+	   property computes where it is declared, so only a declaration here, where
+	   `--panel-scale` is set, can pick the scale up. Keep the two lists equal. */
+	.panel-scale {
+		font-size: calc(1rem * var(--panel-scale, 1));
+		--spacing: calc(0.25rem * var(--panel-scale, 1));
+		--text-10: calc(0.625rem * var(--panel-scale, 1));
+		--text-12: calc(0.75rem * var(--panel-scale, 1));
+		--text-13: calc(0.8125rem * var(--panel-scale, 1));
+		--text-14: calc(0.875rem * var(--panel-scale, 1));
+		--text-15: calc(0.9375rem * var(--panel-scale, 1));
+		--text-meta: calc(0.6875rem * var(--panel-scale, 1));
+	}
+
 	/* The small mono label. Used often enough to earn a class, and it labels
      every field in the app as well as every list.
 
@@ -140,10 +142,11 @@
 		color: var(--color-faint);
 	}
 
-	/* Prose in the writing surface and the draft previews. */
+	/* Prose in the writing surface and the draft previews. Sized in em, so it
+	   follows the Panel row's base when the Draft has room. */
 	.prose-draft {
 		font-family: var(--font-serif);
-		font-size: 1rem;
+		font-size: 1em;
 		line-height: 1.75;
 		color: var(--color-ink);
 	}
@@ -167,7 +170,7 @@
 
 	.prose-draft h2 {
 		margin-top: 1.75em;
-		font-size: 1.0625rem;
+		font-size: 1.0625em;
 		letter-spacing: -0.01em;
 	}
 
@@ -176,7 +179,7 @@
 	   sentences around it. */
 	.prose-draft h3 {
 		margin-top: 1.5em;
-		font-size: 0.9375rem;
+		font-size: 0.9375em;
 		letter-spacing: 0.02em;
 	}
 
