@@ -1,5 +1,5 @@
 import type { Editor } from '@tiptap/react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react'
 
 import type { BlockRow } from '../../shared/draft'
 import type { DraftStore } from '../lib/article'
@@ -33,17 +33,24 @@ export function useDraft(store: DraftStore): DraftConnection {
 
 	const editorRef = useRef<Editor | null>(null)
 
-	const writerRef = useRef<ReturnType<typeof createDraftWriter> | null>(null)
-	writerRef.current ??= createDraftWriter({
-		read: (previous) =>
-			editorRef.current === null
-				? previous
-				: toRows(editorRef.current.state.doc, previous),
-		save: (change) => store.saveBlocks(change),
-		onStatus: setStatus,
-		describeFailure: (error) => failureText('The Draft did not save.', error) ?? '',
-	})
-	const writer = writerRef.current
+	// An Effect Event, because the writer reads the editor when it saves and the
+	// editor is only there from `attachEditor` onwards. This keeps one identity
+	// for the writer to hold and still reads the ref outside render.
+	const read = useEffectEvent((previous: readonly BlockRow[]) =>
+		editorRef.current === null ? previous : toRows(editorRef.current.state.doc, previous),
+	)
+
+	// Lazy `useState` rather than a ref filled in on first render: the writer has
+	// to be one per mount, and this is the form that says so without reading a
+	// ref while rendering.
+	const [writer] = useState(() =>
+		createDraftWriter({
+			read,
+			save: (change) => store.saveBlocks(change),
+			onStatus: setStatus,
+			describeFailure: (error) => failureText('The Draft did not save.', error) ?? '',
+		}),
+	)
 
 	useEffect(() => {
 		let live = true

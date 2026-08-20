@@ -19,14 +19,14 @@ export function usePanels(): PanelState {
 	const narrow = useNarrow(narrowQuery)
 	const [open, setOpen] = useState<PanelId[]>(['chat', 'plan'])
 
-	// The first is the one furthest left, and the one the writer was reading when
-	// the window shrank under them.
-	useEffect(() => {
-		if (narrow) setOpen((held) => (held.length > 1 ? [held[0]] : held))
-	}, [narrow])
+	// Narrowed down to one here rather than in an effect that trims `open`. The
+	// one it keeps is the same one — the furthest left, which is what the writer
+	// was reading when the window shrank under them — but `open` still holds the
+	// rest, so widening again gives them back rather than leaving the one.
+	const shown = narrow && open.length > 1 ? [open[0]] : open
 
 	return {
-		open,
+		open: shown,
 		narrow,
 		toggle: (panel) => setOpen((held) => nextOpenPanels(held, panel, narrow)),
 	}

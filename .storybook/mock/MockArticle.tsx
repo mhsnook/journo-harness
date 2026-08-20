@@ -1,4 +1,4 @@
-import { type ReactNode, useMemo, useState } from 'react'
+import { type ReactNode, useState } from 'react'
 
 import {
 	ArticleProvider,
@@ -38,7 +38,7 @@ export function MockArticle({ children }: { children: ReactNode }) {
 	const [refusal, setRefusal] = useState<Refusal | null>(null)
 
 	// `send` goes nowhere, so the debounce is the only part that idles.
-	const writer = useMemo(() => {
+	const [writer] = useState(() => {
 		const held = createPlanWriter({
 			send: () => {},
 			onPlan: setPlan,
@@ -47,13 +47,15 @@ export function MockArticle({ children }: { children: ReactNode }) {
 		held.receive(seededPlan)
 
 		return held
-	}, [])
+	})
 
-	// One store per story, since `useOfferLedger` reads rows once per store and
-	// `useDraft` loads once per store.
-	const offers = useMemo(() => memoryOfferStore(seeded), [])
-	const draft = useMemo(() => memoryDraftStore(), [])
-	const notes = useMemo(() => memoryNoteStore(), [])
+	// One store per story, since `useOfferLedger` reads rows once per store,
+	// `useDraft` loads once per store, and `useNotes` reads once per store.
+	// Lazy `useState` and not `useMemo`, for the reason `useArticleAgent` gives:
+	// the identity is the contract, and `useMemo` does not promise one.
+	const [offers] = useState(() => memoryOfferStore(seeded))
+	const [draft] = useState(() => memoryDraftStore())
+	const [notes] = useState(() => memoryNoteStore())
 
 	const edit = (next: Parameters<typeof writer.edit>[0]) => {
 		setRefusal(null)
