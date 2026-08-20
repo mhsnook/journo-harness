@@ -71,7 +71,7 @@ export function PanelsRecapScreen() {
 									<span className="text-center text-[0.5625rem] leading-tight text-faint">
 										{arrows[i - 1]}
 									</span>
-									<span aria-hidden className="text-(length:--text-12) text-faint">
+									<span aria-hidden className="text-12 text-faint">
 										→
 									</span>
 								</div>
@@ -85,12 +85,8 @@ export function PanelsRecapScreen() {
 								)}
 							>
 								<MetaLabel>Panel {panel.n}</MetaLabel>
-								<h3 className="text-(length:--text-14) font-semibold text-ink">
-									{panel.name}
-								</h3>
-								<p className="text-(length:--text-meta) leading-relaxed text-muted">
-									{panel.body}
-								</p>
+								<h3 className="text-14 font-semibold text-ink">{panel.name}</h3>
+								<p className="text-11 leading-relaxed text-muted">{panel.body}</p>
 							</div>
 						</div>
 					))}
@@ -112,7 +108,7 @@ export function PanelsRecapScreen() {
 									/>
 								))}
 							</div>
-							<span className="text-(length:--text-12) text-muted">{state.label}</span>
+							<span className="text-12 text-muted">{state.label}</span>
 						</div>
 					))}
 				</div>
@@ -121,7 +117,7 @@ export function PanelsRecapScreen() {
 					<Chip variant="outline">Outline</Chip>
 					<Chip variant="outline">Tone</Chip>
 					<Chip variant="outline">References</Chip>
-					<span className="text-(length:--text-meta) text-faint">
+					<span className="text-11 text-faint">
 						everything the Guide knows about this piece lives in Panel 2 — which is why
 						editing it by hand changes the advice
 					</span>

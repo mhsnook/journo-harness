@@ -50,7 +50,21 @@
 		'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, ui-serif, serif;
 	--font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
-	/* Meta label: the small mono labels used all over the design */
+	/* The type ladder: every size the app sets, named by its px height at the
+	   base scale, used as plain utilities (`text-13`). Components never write a
+	   font-size in rem — `.panel-scale` redeclares each step multiplied by
+	   `--panel-scale`, so the same class renders larger inside a scaled Panel
+	   row and at the base size everywhere else. */
+	--text-10: 0.625rem;
+	--text-11: 0.6875rem;
+	--text-12: 0.75rem;
+	--text-13: 0.8125rem;
+	--text-14: 0.875rem;
+	--text-15: 0.9375rem;
+
+	/* Meta label: the small mono labels used all over the design. The size is
+	   the 11px step; the token stays separate because it also carries the
+	   label's line-height and tracking (`.label-meta`). */
 	--text-meta: 0.6875rem;
 	--text-meta--line-height: 1.4;
 	--text-meta--letter-spacing: 0.02em;
@@ -66,22 +80,6 @@
 	--shadow-frame: 0 1px 2px rgb(43 34 41 / 0.05), 0 8px 24px -16px rgb(43 34 41 / 0.25);
 	--shadow-drawer:
 		0 -1px 2px rgb(43 34 41 / 0.05), 0 -8px 24px -16px rgb(43 34 41 / 0.25);
-}
-
-/*
- * The type ladder. Components never write a font-size in rem — they reference
- * one of these steps (`text-(length:--text-13)`), named by their px height at
- * the base scale. `.panel-scale` below redeclares every step multiplied by
- * `--panel-scale`, so the same class renders larger inside a scaled Panel row
- * and at the base size everywhere else. `--text-meta`, the sixth step, lives
- * in @theme because `.label-meta` also reads it.
- */
-:root {
-	--text-10: 0.625rem;
-	--text-12: 0.75rem;
-	--text-13: 0.8125rem;
-	--text-14: 0.875rem;
-	--text-15: 0.9375rem;
 }
 
 @layer base {
@@ -115,13 +113,14 @@
 	   inherited scale, so the row's type, type ladder, and spacing utilities
 	   all grow together — and nothing outside the row moves.
 
-	   The ladder steps repeat the :root values above on purpose: a custom
-	   property computes where it is declared, so only a declaration here, where
+	   The ladder steps repeat the @theme values on purpose: a custom property
+	   computes where it is declared, so only a declaration here, where
 	   `--panel-scale` is set, can pick the scale up. Keep the two lists equal. */
 	.panel-scale {
 		font-size: calc(1rem * var(--panel-scale, 1));
 		--spacing: calc(0.25rem * var(--panel-scale, 1));
 		--text-10: calc(0.625rem * var(--panel-scale, 1));
+		--text-11: calc(0.6875rem * var(--panel-scale, 1));
 		--text-12: calc(0.75rem * var(--panel-scale, 1));
 		--text-13: calc(0.8125rem * var(--panel-scale, 1));
 		--text-14: calc(0.875rem * var(--panel-scale, 1));

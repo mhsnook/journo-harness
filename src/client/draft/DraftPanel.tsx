@@ -145,7 +145,7 @@ function Control({
 	return (
 		<button
 			aria-pressed={active}
-			className={`rounded-md border px-2 py-0.5 text-(length:--text-12) ${
+			className={`rounded-md border px-2 py-0.5 text-12 ${
 				active
 					? 'border-accent-edge bg-accent-soft text-accent-ink'
 					: 'border-edge text-muted'

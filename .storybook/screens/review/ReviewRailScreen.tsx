@@ -20,19 +20,19 @@ export function ReviewRailScreen() {
 				<DraftSurface paragraphs={draftParagraphs.slice(0, 3)} measure="narrow" dimmed />
 
 				<aside className="flex w-[14rem] shrink-0 flex-col gap-3.5 border-l border-edge bg-sunk p-3.5">
-					<h3 className="text-(length:--text-14) font-semibold text-ink">Full review</h3>
+					<h3 className="text-14 font-semibold text-ink">Full review</h3>
 
 					<section className="flex flex-col gap-2">
 						<MetaLabel count={2}>Structure</MetaLabel>
 						<div className="flex items-start gap-2">
 							<Check />
-							<p className="text-(length:--text-12) leading-snug text-ink">
+							<p className="text-12 leading-snug text-ink">
 								The crane index carries §1 and §4 both
 							</p>
 						</div>
 						<div className="flex items-start gap-2 opacity-55">
 							<Check checked />
-							<p className="text-(length:--text-12) leading-snug text-ink line-through">
+							<p className="text-12 leading-snug text-ink line-through">
 								Human cost arrives too late
 							</p>
 						</div>
@@ -42,7 +42,7 @@ export function ReviewRailScreen() {
 						<MetaLabel count={1}>Voice</MetaLabel>
 						<div className="flex items-start gap-2">
 							<Check />
-							<p className="text-(length:--text-12) leading-snug text-ink">
+							<p className="text-12 leading-snug text-ink">
 								§3 drifts into Newsletter aside
 							</p>
 						</div>
@@ -52,14 +52,14 @@ export function ReviewRailScreen() {
 						<MetaLabel count={3}>Citations</MetaLabel>
 						<div className="flex items-start gap-2">
 							<Check />
-							<p className="text-(length:--text-12) leading-snug text-ink">
+							<p className="text-12 leading-snug text-ink">
 								£4,100 figure needs attribution
 							</p>
 						</div>
 						<div className="flex items-start gap-2">
 							<Check />
 							<div className="flex min-w-0 flex-1 flex-col gap-1.5">
-								<p className="text-(length:--text-12) leading-snug text-ink">
+								<p className="text-12 leading-snug text-ink">
 									2 of 5 planned quotes unused
 								</p>
 								<div className="flex flex-wrap gap-1.5">

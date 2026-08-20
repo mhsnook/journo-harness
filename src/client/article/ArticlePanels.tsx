@@ -98,7 +98,7 @@ function EmptyPanel({
 	return (
 		<Panel divider={divider} grow={grow} variant="sunk">
 			<PanelHeader title={title} />
-			<p className="text-(length:--text-12) leading-relaxed text-faint">{children}</p>
+			<p className="text-12 leading-relaxed text-faint">{children}</p>
 		</Panel>
 	)
 }

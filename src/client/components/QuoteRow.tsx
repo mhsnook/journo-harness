@@ -44,11 +44,9 @@ export function QuoteRow({
 					used ? 'border-accent-edge' : 'border-rule',
 				)}
 			>
-				<p className="text-(length:--text-13) leading-relaxed text-ink">
-					{referenceName(reference)}
-				</p>
+				<p className="text-13 leading-relaxed text-ink">{referenceName(reference)}</p>
 				{cite === '' && !showUsage ? null : (
-					<footer className="mt-1 flex items-center gap-2 text-(length:--text-meta) text-faint">
+					<footer className="mt-1 flex items-center gap-2 text-11 text-faint">
 						{cite === '' ? null : <cite className="not-italic">{cite}</cite>}
 						{showUsage ? (
 							<span className={used ? 'text-accent-ink' : undefined}>

@@ -47,9 +47,7 @@ export function TargetField({
 			onKeyDown={onKeyDown}
 			placeholder={placeholder}
 			size={size}
-			suffix={
-				<span className="shrink-0 text-(length:--text-meta) text-faint">words</span>
-			}
+			suffix={<span className="shrink-0 text-11 text-faint">words</span>}
 			value={target === null ? '' : String(target)}
 		/>
 	)

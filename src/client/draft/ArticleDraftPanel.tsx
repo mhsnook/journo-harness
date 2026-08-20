@@ -25,7 +25,7 @@ export function ArticleDraftPanel({ divider, grow, className }: ArticleDraftPane
 			<Panel className={className} divider={divider} grow={grow}>
 				<PanelHeader title="Draft" />
 				{failure === null ? (
-					<p className="text-(length:--text-12) text-faint">Opening the Draft…</p>
+					<p className="text-12 text-faint">Opening the Draft…</p>
 				) : (
 					<Notice>{failure}</Notice>
 				)}

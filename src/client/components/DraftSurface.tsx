@@ -44,7 +44,7 @@ export function DraftSurface({
 				<p
 					key={i}
 					className={cx(
-						'text-(length:--text-15)',
+						'text-15',
 						i > 0 && 'mt-4',
 						i === anchoredIndex && '-ml-3 border-l-2 border-accent-edge pl-3',
 					)}

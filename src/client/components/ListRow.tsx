@@ -27,12 +27,8 @@ export function ListRow({
 				className,
 			)}
 		>
-			<span className="min-w-0 truncate text-(length:--text-13) text-ink">{title}</span>
-			{note ? (
-				<span className="min-w-0 truncate text-(length:--text-12) text-faint">
-					{note}
-				</span>
-			) : null}
+			<span className="min-w-0 truncate text-13 text-ink">{title}</span>
+			{note ? <span className="min-w-0 truncate text-12 text-faint">{note}</span> : null}
 			<span className="ml-auto flex shrink-0 items-baseline gap-3">{trailing}</span>
 		</div>
 	)

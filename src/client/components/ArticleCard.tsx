@@ -45,7 +45,7 @@ export function ArticleCard({ article, variant = 'card', className }: ArticleCar
 			<h3
 				className={cx(
 					'leading-snug break-words',
-					compact ? 'text-(length:--text-13)' : 'line-clamp-3 text-(length:--text-15)',
+					compact ? 'text-13' : 'line-clamp-3 text-15',
 					isUntitled(article.title) ? 'text-faint' : 'font-semibold text-ink',
 				)}
 			>
@@ -61,9 +61,7 @@ export function ArticleCard({ article, variant = 'card', className }: ArticleCar
 
 			<div className="flex flex-wrap items-center gap-x-2 gap-y-1">
 				{compact ? null : <Chip variant="outline">{statusLabel[article.status]}</Chip>}
-				<span className="text-(length:--text-meta) text-faint">
-					started {shortDate(article.createdAt)}
-				</span>
+				<span className="text-11 text-faint">started {shortDate(article.createdAt)}</span>
 			</div>
 		</Link>
 	)

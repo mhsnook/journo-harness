@@ -153,7 +153,7 @@ function ArticleRow({
 			>
 				<span
 					className={cx(
-						'block truncate text-(length:--text-14)',
+						'block truncate text-14',
 						isUntitled(article.title) ? 'text-faint' : 'text-ink',
 					)}
 				>
@@ -162,7 +162,7 @@ function ArticleRow({
 			</Link>
 			<Chip variant="outline">{statusLabel[article.status]}</Chip>
 			{/* Fixed width, so dates of different lengths leave the chips in line. */}
-			<span className="w-12 shrink-0 text-right text-(length:--text-meta) text-faint">
+			<span className="w-12 shrink-0 text-right text-11 text-faint">
 				{shortDate(when)}
 			</span>
 			{action ? <span className="relative shrink-0">{action}</span> : null}

@@ -39,7 +39,7 @@ export function ArticleChatPanel({
 	if (plan === null) {
 		return (
 			<Panel className={className} divider={divider} grow={grow}>
-				<p className="text-(length:--text-12) text-faint">Opening the Chat…</p>
+				<p className="text-12 text-faint">Opening the Chat…</p>
 			</Panel>
 		)
 	}

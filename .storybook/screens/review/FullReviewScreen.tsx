@@ -45,8 +45,8 @@ function NoteRow({ note }: { note: Note }) {
 		<li className="flex items-start gap-2.5">
 			<Check checked={note.accepted} label={`Accept: ${note.text}`} />
 			<div className="flex min-w-0 flex-1 flex-col gap-0.5">
-				<p className="text-(length:--text-13) leading-relaxed text-ink">{note.text}</p>
-				<p className="text-(length:--text-meta) text-faint">
+				<p className="text-13 leading-relaxed text-ink">{note.text}</p>
+				<p className="text-11 text-faint">
 					{note.anchor}
 					{note.accepted ? ' · accepted' : ''}
 				</p>
@@ -70,7 +70,7 @@ export function FullReviewScreen() {
 
 					<div className="flex flex-col gap-1.5">
 						<MetaLabel>The shape of it</MetaLabel>
-						<p className="text-(length:--text-13) leading-relaxed text-muted">
+						<p className="text-13 leading-relaxed text-muted">
 							The reporting is doing its job and the middle is the strongest it has been.
 							The piece is 210 words over target and the overrun is entirely in §3, which
 							is also where the plan says the argument should be tightest.

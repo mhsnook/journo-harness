@@ -19,7 +19,7 @@ export function ArticlePlanPanel({ divider, grow, className }: ArticlePlanPanelP
 	if (plan === null) {
 		return (
 			<Panel className={className} divider={divider} grow={grow} variant="sunk">
-				<p className="text-(length:--text-12) text-faint">Opening the Plan…</p>
+				<p className="text-12 text-faint">Opening the Plan…</p>
 			</Panel>
 		)
 	}
