@@ -4,8 +4,10 @@ import { PANELS, type PanelId } from '../components/PanelRail'
 
 /** Which Panels the Article screen shows, and the tabs a narrow one gets — §8. */
 
-/** Two Panels of any use need about this much. Below it, one at a time. */
-const narrowQuery = '(max-width: 56rem)'
+/** Below the md breakpoint the rail shows one Panel at a time. The px value is
+ * `--breakpoint-md` (theme.css), and the query is the complement of `md:` —
+ * what Tailwind's `max-md:` variant compiles to. */
+const narrowQuery = '(width < 768px)'
 
 export type PanelState = {
 	/** Which Panels are visible. All four stay mounted. */
