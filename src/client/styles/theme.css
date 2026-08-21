@@ -51,11 +51,9 @@
 		'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, ui-serif, serif;
 	--font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
-	/* The type ladder: every size the app sets, named by its px height at the
-	   base scale, used as plain utilities (`text-13`). Components never write a
-	   font-size in rem — `.panel-scale` redeclares each step multiplied by
-	   `--panel-scale`, so the same class renders larger inside a scaled Panel
-	   row and at the base size everywhere else. */
+	/* The type ladder, named by px height at the base scale (`text-13`).
+	   Never write a font-size in rem — use a step, so the text follows
+	   `.panel-scale` when a scaled container holds it. */
 	--text-10: 0.625rem;
 	--text-11: 0.6875rem;
 	--text-12: 0.75rem;
@@ -63,9 +61,9 @@
 	--text-14: 0.875rem;
 	--text-15: 0.9375rem;
 
-	/* Meta label: the small mono labels used all over the design. The size is
-	   the 11px step; the token stays separate because it also carries the
-	   label's line-height and tracking (`.label-meta`). */
+	/* Meta label: the small mono labels used all over the design. Separate
+	   from `--text-11` because it also carries the label's line-height and
+	   tracking (`.label-meta`). */
 	--text-meta: 0.6875rem;
 	--text-meta--line-height: 1.4;
 	--text-meta--letter-spacing: 0.02em;
@@ -87,8 +85,8 @@
 	html {
 		-webkit-font-smoothing: antialiased;
 		text-rendering: optimizeLegibility;
-		/* The base bump: the whole app reads at 18px, chrome included. Room-
-		   dependent scaling is `.panel-scale`, not this. */
+		/* 18px everywhere, chrome included. Panel-count scaling is
+		   `.panel-scale`, not this. */
 		font-size: 112.5%;
 	}
 
@@ -108,15 +106,13 @@
 }
 
 @layer components {
-	/* The Panel row. ArticlePanels sets `--panel-scale` on it from how many
-	   Panels are open: one Panel is generous (1.25), two a step down (1.125),
-	   three or four compact (1). Everything below re-evaluates against the
-	   inherited scale, so the row's type, type ladder, and spacing utilities
-	   all grow together — and nothing outside the row moves.
+	/* The Panel row. ArticlePanels sets `--panel-scale` on it (`panelScale`,
+	   usePanels.ts); the row's font-size, the type ladder, and Tailwind's
+	   `--spacing` all follow it, and nothing outside the row does.
 
-	   The ladder steps repeat the @theme values on purpose: a custom property
-	   computes where it is declared, so only a declaration here, where
-	   `--panel-scale` is set, can pick the scale up. Keep the two lists equal. */
+	   The steps repeat the @theme values on purpose: a custom property
+	   computes where it is declared, so only a redeclaration here can pick
+	   the scale up. Keep the two lists equal. */
 	.panel-scale {
 		font-size: calc(1rem * var(--panel-scale, 1));
 		--spacing: calc(0.25rem * var(--panel-scale, 1));

@@ -4,9 +4,8 @@ import { PANELS, type PanelId } from '../components/PanelRail'
 
 /** Which Panels the Article screen shows, and the tabs a narrow one gets — §8. */
 
-/** Below the md breakpoint the rail shows one Panel at a time. The px value is
- * `--breakpoint-md` (theme.css), and the query is the complement of `md:` —
- * what Tailwind's `max-md:` variant compiles to. */
+/** Below the md breakpoint (`--breakpoint-md`, theme.css) the rail shows one
+ * Panel at a time. The query is the complement of Tailwind's `md:`. */
 const narrowQuery = '(width < 768px)'
 
 export type PanelState = {
@@ -37,11 +36,9 @@ export function usePanels(): PanelState {
 	}
 }
 
-/** How the Panel row's type and spacing scale with room — the `.panel-scale`
- * class in theme.css reads this as `--panel-scale`. Fewer open Panels leave
- * more room: one Panel is generous, two a step down, three or four compact. A
- * narrow window shows one Panel out of necessity, not room, so it stays
- * compact. */
+/** The Panel row's type-and-spacing scale — `.panel-scale` in theme.css reads
+ * it as `--panel-scale`. Fewer open Panels leave more room; a narrow window
+ * shows one Panel out of necessity, not room, so it stays compact. */
 export function panelScale(open: readonly PanelId[], narrow: boolean): number {
 	if (narrow || open.length > 2) return 1
 	return open.length === 1 ? 1.25 : 1.125
