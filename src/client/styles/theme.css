@@ -159,7 +159,8 @@
 		font-family: var(--font-sans);
 		font-weight: 600;
 		line-height: 1.3;
-		letter-spacing: 1px;
+		/* ≈1px at the compact scale, and it grows with the type. */
+		letter-spacing: 0.045em;
 		/* Closer to what it opens than to what it closes, so a heading reads as
 		   the top of the passage under it. */
 		margin-bottom: 0.4em;
