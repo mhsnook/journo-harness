@@ -3,6 +3,7 @@ import { type KeyboardEvent, type ReactNode, useEffect, useState } from 'react'
 import { cx } from '../lib/cx'
 import { Button } from './Button'
 import { GrowingField } from './GrowingField'
+import { Markdown } from './Markdown'
 import { Notice } from './Notice'
 
 export interface ChatMessageProps {
@@ -29,13 +30,8 @@ export function ChatMessage({ from, children, className }: ChatMessageProps) {
 		)
 	}
 	return (
-		<div
-			className={cx(
-				'max-w-[95%] text-13 leading-relaxed whitespace-pre-wrap text-ink',
-				className,
-			)}
-		>
-			{children}
+		<div className={cx('max-w-[95%] text-13 leading-relaxed text-ink', className)}>
+			{typeof children === 'string' ? <Markdown>{children}</Markdown> : children}
 		</div>
 	)
 }
