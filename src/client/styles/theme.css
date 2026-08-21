@@ -159,6 +159,7 @@
 		font-family: var(--font-sans);
 		font-weight: 600;
 		line-height: 1.3;
+		letter-spacing: 1px;
 		/* Closer to what it opens than to what it closes, so a heading reads as
 		   the top of the passage under it. */
 		margin-bottom: 0.4em;
@@ -168,7 +169,6 @@
 	.prose-draft h2 {
 		margin-top: 1.75em;
 		font-size: 1.25em;
-		letter-spacing: -0.01em;
 	}
 
 	.prose-draft h3 {
