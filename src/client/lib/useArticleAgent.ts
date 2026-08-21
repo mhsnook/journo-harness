@@ -1,11 +1,20 @@
 import { useAgent } from 'agents/react'
-import { useMemo, useRef } from 'react'
+import { useMemo, useRef, useState } from 'react'
 
 import type { BlockRow, DraftChange, DraftSaved } from '../../shared/draft'
+import { isFrame } from '../../shared/frame'
+import type { Note, NoteRuling } from '../../shared/note'
 import type { Offer, Ruling } from '../../shared/offer'
 import type { Plan } from '../../shared/plan'
+import {
+	type ReviewFinished,
+	reviewFinishedFrame,
+	type ReviewRequest,
+	type Round,
+} from '../../shared/review'
 import { usePlanChannel } from '../plan/usePlan'
-import type { Article, DraftStore, OfferStore } from './article'
+import type { Article, DraftStore, NoteStore, OfferStore } from './article'
+import { parseFrame } from './frames'
 
 /**
  * Opens one Article Agent and hands out the three things that ride its one
@@ -38,11 +47,25 @@ export function useArticleAgent(articleId: string): ArticleConnection {
 	const socket = useRef<ArticleSocket | null>(null)
 	const channel = usePlanChannel(() => socket.current)
 
+	// The Round a `review_finished` frame last named. State rather than a
+	// listener registry, so nothing holds a mutable set across renders.
+	const [reviewFinished, setReviewFinished] = useState<string | null>(null)
+
 	const agent = useAgent<Plan>({
 		agent: 'article-agent',
 		name: articleId,
 		onStateUpdate: channel.onStateUpdate,
-		onMessage: channel.onMessage,
+		// Parsed once and offered to both readers. A streamed Chat reply is
+		// hundreds of frames, and each reader parsing for itself would double that
+		// work for every one of them.
+		onMessage: (event: MessageEvent) => {
+			const frame = parseFrame(event.data)
+
+			channel.onFrame(frame)
+			if (isFrame<ReviewFinished>(frame, reviewFinishedFrame)) {
+				setReviewFinished(frame.roundId)
+			}
+		},
 	})
 
 	// In render, not an effect: React runs a child's effects first, so the Panels
@@ -73,7 +96,25 @@ export function useArticleAgent(articleId: string): ArticleConnection {
 		[],
 	)
 
-	return { article: { offers, draft, plan: channel.connection }, agent }
+	const notes = useMemo<NoteStore>(
+		() => ({
+			listRounds: () => call<Round[]>(socket, 'listRounds'),
+			listNotes: () => call<Note[]>(socket, 'listNotes'),
+			// A short call even for a thorough pass — `NoteStore.startReview`.
+			startReview: (request: ReviewRequest) =>
+				call<Round>(socket, 'startReview', [request]),
+			setNoteDisposition: (id: string, ruling: NoteRuling) =>
+				call<Note>(socket, 'setNoteDisposition', [id, ruling]),
+			resolveNote: (id: string) => call<Note>(socket, 'resolveNote', [id]),
+			restoreNote: (id: string) => call<Note>(socket, 'restoreNote', [id]),
+		}),
+		[],
+	)
+
+	return {
+		article: { offers, draft, notes, reviewFinished, plan: channel.connection },
+		agent,
+	}
 }
 
 /** How long a save may be in flight before it is called failed. */

@@ -106,10 +106,10 @@ export function ReferenceCard({
 			{variant === 'offer' && !ruled ? (
 				<div className="flex shrink-0 flex-col gap-1.5">
 					<Button size="sm" onClick={onAccept}>
-						Accept
+						accept
 					</Button>
 					<Button size="sm" variant="quiet" onClick={onDecline}>
-						Decline
+						decline
 					</Button>
 				</div>
 			) : null}
@@ -121,7 +121,7 @@ export function ReferenceCard({
 			) : null}
 			{variant === 'ledger' && declined ? (
 				<Button size="sm" variant="link" className="self-start" onClick={onRestore}>
-					Restore
+					restore
 				</Button>
 			) : null}
 		</article>

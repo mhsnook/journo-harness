@@ -8,6 +8,7 @@ import {
 	type UIMessage,
 } from 'ai'
 
+import { reasonFor } from '../../shared/failure'
 import type { Plan } from '../../shared/plan'
 import { chatPackMessages, chatSystemPrompt } from './prompt'
 import { repairToolCall } from './repair'
@@ -77,6 +78,6 @@ export async function chatTurn({
 	// thrashes the retry (§6). The same argument as `plan_refused` in
 	// `src/shared/plan/refusal.ts`.
 	return result.toUIMessageStreamResponse({
-		onError: (error) => (error instanceof Error ? error.message : String(error)),
+		onError: reasonFor,
 	})
 }

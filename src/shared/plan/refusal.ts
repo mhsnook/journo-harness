@@ -1,3 +1,5 @@
+import { isFrame } from '../frame'
+
 /**
  * What the Article Agent sends back when a Plan write does not parse.
  *
@@ -17,11 +19,9 @@ export type PlanRefused = {
 	error: string
 }
 
+export const planRefusedFrame = 'plan_refused'
+
 /** Pick the refusal out of everything else on the multiplexed socket. */
 export function isPlanRefused(frame: unknown): frame is PlanRefused {
-	return (
-		typeof frame === 'object' &&
-		frame !== null &&
-		(frame as { type?: unknown }).type === 'plan_refused'
-	)
+	return isFrame<PlanRefused>(frame, planRefusedFrame)
 }

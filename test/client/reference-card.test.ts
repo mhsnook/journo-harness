@@ -38,23 +38,23 @@ describe('the rulings a Chat card offers', () => {
 	it('offers both while the Offer is Undecided', () => {
 		const html = card('undecided')
 
-		expect(html).toContain('Accept')
-		expect(html).toContain('Decline')
+		expect(html).toContain('>accept<')
+		expect(html).toContain('>decline<')
 	})
 
 	it('offers neither once the Offer is Accepted, and says so', () => {
 		const html = card('accepted')
 
-		expect(html).not.toContain('>Accept<')
-		expect(html).not.toContain('>Decline<')
+		expect(html).not.toContain('>accept<')
+		expect(html).not.toContain('>decline<')
 		expect(html).toContain('accepted')
 	})
 
 	it('offers neither once the Offer is Declined', () => {
 		const html = card('declined')
 
-		expect(html).not.toContain('>Accept<')
-		expect(html).not.toContain('>Decline<')
+		expect(html).not.toContain('>accept<')
+		expect(html).not.toContain('>decline<')
 		expect(html).toContain('declined')
 	})
 })

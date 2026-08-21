@@ -38,15 +38,10 @@ against intent notes, and Plan mode would co-write it like everything else in th
 
 ## Review lenses
 
-The outline designed **Skills** — editorial routines the writer authors in the app as
-natural-language instructions, invoked by name from the Chat composer. That is deferred,
-because nothing in 1a, 1b, or phase 2 has the model writing prose, so a routine that
-rewrites text has nothing to act on.
-
-What is worth keeping is the half that survives: a Review could run through a **lens**,
-so the writer chooses what a Round is looking for rather than always getting the full
-pass. The invocable, writer-authored part comes back if and when the model starts
-producing text.
+Settled and built, in a smaller form than the outline drew. The writer types what a Review
+should look for and may save that prompt as a **Skill**, which is the lens. What is still
+deferred is a Skill that rewrites text: nothing in 1a, 1b, or phase 2 has the model writing
+prose, so a routine that edits the Draft has nothing to act on.
 
 ## The Beat
 

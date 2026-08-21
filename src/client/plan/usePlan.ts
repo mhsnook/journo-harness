@@ -29,7 +29,9 @@ export type PlanChannel = {
 	connection: PlanConnection
 	/** The two `useAgent` handlers the Plan needs. */
 	onStateUpdate: (state: Plan, source: 'server' | 'client') => void
-	onMessage: (event: MessageEvent) => void
+	/** One frame off the socket, already parsed by `useArticleAgent` — the Plan
+	 * reads the ones it recognises and ignores the rest. */
+	onFrame: (frame: unknown) => void
 }
 
 /** `socket` is a getter, because `useAgent` has none to give on the first render
@@ -65,22 +67,9 @@ export function usePlanChannel(socket: () => PlanSocket | null): PlanChannel {
 		if (source === 'server') writer.receive(state)
 	}
 
-	const onMessage = (event: MessageEvent) => {
-		const frame = parse(event.data)
+	const onFrame = (frame: unknown) => {
 		if (isPlanRefused(frame)) setRejected(frame.error)
 	}
 
-	return { connection: { plan, edit, refusal, rejected }, onStateUpdate, onMessage }
-}
-
-/** The socket carries frames this Panel does not read, and a binary one is not
- * JSON at all. */
-function parse(data: unknown): unknown {
-	if (typeof data !== 'string') return null
-
-	try {
-		return JSON.parse(data)
-	} catch {
-		return null
-	}
+	return { connection: { plan, edit, refusal, rejected }, onStateUpdate, onFrame }
 }

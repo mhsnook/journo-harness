@@ -3,11 +3,21 @@ import { type ReactNode, useMemo, useState } from 'react'
 import {
 	ArticleProvider,
 	type DraftStore,
+	type NoteStore,
 	type OfferStore,
 	useArticle,
 } from '../../src/client/lib/article'
 import { createPlanWriter } from '../../src/client/plan/writer'
 import type { BlockRow, DraftChange } from '../../src/shared/draft'
+import {
+	alreadyRuled,
+	missingNote,
+	type Note,
+	type NoteDisposition,
+	notAccepted,
+	notRestorable,
+	restoredTo,
+} from '../../src/shared/note'
 import {
 	missingOffer,
 	notDeclined,
@@ -15,6 +25,7 @@ import {
 	type Ruling,
 } from '../../src/shared/offer'
 import { emptyPlan, type Plan, type Refusal } from '../../src/shared/plan'
+import type { ReviewRequest, Round } from '../../src/shared/review'
 import { offers as seeded, plan as seededPlan } from './content'
 
 /**
@@ -42,6 +53,7 @@ export function MockArticle({ children }: { children: ReactNode }) {
 	// `useDraft` loads once per store.
 	const offers = useMemo(() => memoryOfferStore(seeded), [])
 	const draft = useMemo(() => memoryDraftStore(), [])
+	const notes = useMemo(() => memoryNoteStore(), [])
 
 	const edit = (next: Parameters<typeof writer.edit>[0]) => {
 		setRefusal(null)
@@ -51,7 +63,13 @@ export function MockArticle({ children }: { children: ReactNode }) {
 
 	return (
 		<ArticleProvider
-			value={{ offers, draft, plan: { plan, edit, refusal, rejected: null } }}
+			value={{
+				offers,
+				draft,
+				notes,
+				reviewFinished: null,
+				plan: { plan, edit, refusal, rejected: null },
+			}}
 		>
 			{children}
 		</ArticleProvider>
@@ -104,6 +122,108 @@ export function memoryDraftStore(
 				written: change.blocks.length,
 				removed: change.removed.length,
 			})
+		},
+	}
+}
+
+/**
+ * The Notes and Rounds held in memory, running the real queue and the real
+ * ruling rules.
+ *
+ * `answer` is what a Review comes back with, after a beat — enough for a story
+ * to run the whole loop: ask, wait, read the response, rule on what it found.
+ * Leaving it out leaves every Review running, which is the state a story shows
+ * when it is about the waiting.
+ */
+export function memoryNoteStore(
+	options: {
+		rounds?: readonly Round[]
+		notes?: readonly Note[]
+		answer?: { passages: Round['passages']; notes: readonly Note[] }
+		/** How long a Review takes to come back. */
+		takes?: number
+		/** Called with the Round id when one settles, as the socket frame does. */
+		onFinished?: (roundId: string) => void
+	} = {},
+): NoteStore {
+	const rounds = (options.rounds ?? []).map((round) => ({ ...round }))
+	const rows = (options.notes ?? []).map((note) => ({ ...note }))
+
+	const find = (id: string): Note => {
+		const note = rows.find((held) => held.id === id)
+		if (note === undefined) throw missingNote(id)
+
+		return note
+	}
+
+	const move = (note: Note, disposition: NoteDisposition) => {
+		const moved = {
+			...note,
+			disposition,
+			decidedAt: disposition === 'proposed' ? null : Date.now(),
+		}
+		rows.splice(rows.indexOf(note), 1, moved)
+
+		return Promise.resolve(moved)
+	}
+
+	return {
+		listRounds: () => Promise.resolve(rounds.map((round) => ({ ...round }))),
+		listNotes: () => Promise.resolve(rows.map((note) => ({ ...note }))),
+
+		startReview: (request: ReviewRequest) => {
+			// Minted, not counted off the length: a story seeds Rounds whose ids and
+			// ordinals start past 1.
+			const round: Round = {
+				id: crypto.randomUUID(),
+				ordinal: rounds.reduce((highest, held) => Math.max(highest, held.ordinal), 0) + 1,
+				state: 'running',
+				prompt: request.prompt,
+				depth: request.depth,
+				passages: [],
+				failure: null,
+				startedAt: Date.now(),
+				finishedAt: null,
+			}
+			rounds.push(round)
+
+			const { answer } = options
+			if (answer !== undefined) {
+				setTimeout(() => {
+					rows.push(...answer.notes.map((note) => ({ ...note, roundId: round.id })))
+					rounds.splice(rounds.indexOf(round), 1, {
+						...round,
+						state: 'done',
+						passages: answer.passages,
+						finishedAt: Date.now(),
+					})
+					options.onFinished?.(round.id)
+				}, options.takes ?? 600)
+			}
+
+			return Promise.resolve({ ...round })
+		},
+
+		setNoteDisposition: (id: string, ruling) => {
+			const note = find(id)
+			if (note.disposition !== 'proposed') return Promise.reject(alreadyRuled(note))
+
+			return move(note, ruling)
+		},
+
+		resolveNote: (id: string) => {
+			const note = find(id)
+			if (note.disposition !== 'accepted') return Promise.reject(notAccepted(note))
+
+			return move(note, 'resolved')
+		},
+
+		restoreNote: (id: string) => {
+			const note = find(id)
+			const back = restoredTo(note.disposition)
+			if (back === null) return Promise.reject(notRestorable(note))
+
+			return move(note, back)
 		},
 	}
 }

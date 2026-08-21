@@ -33,7 +33,7 @@ export function NotesRailScreen() {
 									accept
 								</Chip>
 								<Chip variant="muted" interactive>
-									dismiss
+									decline
 								</Chip>
 							</>
 						}
