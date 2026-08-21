@@ -6,9 +6,6 @@
   // The Agents SDK needs the Node.js compatibility layer.
   "compatibility_flags": ["nodejs_compat"],
 
-  // The deployed hostname. custom_domain binds the record and the certificate on
-  // deploy, so the DNS record for it is managed by this file rather than by hand
-  // — msnook.xyz has to be a zone on the deploying account.
   "routes": [
     {
       "pattern": "scribble.msnook.xyz",
@@ -16,11 +13,8 @@
     },
   ],
 
-  // Declaring a route turns workers_dev off, and preview_urls follows
-  // workers_dev unless it is set — so leaving this out takes the per-version
-  // preview URL away with the workers.dev route. Set it back on: the route
-  // above is what production answers on, and a version still needs somewhere to
-  // be looked at before it becomes production.
+  // Deleting this takes the preview URLs with it: a route turns workers_dev off,
+  // and preview_urls follows workers_dev.
   "preview_urls": true,
 
   // Static assets with single-page-application fallback, so a deep link like
@@ -52,14 +46,8 @@
 
   // The article index — architecture.md §9. Its schema lives in ./migrations;
   // `pnpm db:migrate` applies it locally and `db:migrate:remote` to the deploy.
-  // A different account needs its own `wrangler d1 create scribble`, and puts the
-  // name and the id it prints into the two fields below.
-  //
-  // database_id is what wrangler resolves and what the local database is stored
-  // under; database_name is a label beside it. D1 does not rename a database, so
-  // the deployed one still carries the name it was created under and
-  // `wrangler d1 list` disagrees with the line below — deploy.md §The database
-  // name has the swap that settles it.
+  // database_id binds and database_name is a label, so the two can disagree —
+  // deploy.md §The database name.
   "d1_databases": [
     {
       "binding": "DB",
