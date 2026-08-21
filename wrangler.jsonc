@@ -1,10 +1,20 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "journo-harness",
+  "name": "scribble",
   "main": "./src/server/index.ts",
   "compatibility_date": "2026-08-06",
   // The Agents SDK needs the Node.js compatibility layer.
   "compatibility_flags": ["nodejs_compat"],
+
+  // The deployed hostname. custom_domain binds the record and the certificate on
+  // deploy, so the DNS record for it is managed by this file rather than by hand
+  // — msnook.xyz has to be a zone on the deploying account.
+  "routes": [
+    {
+      "pattern": "scribble.msnook.xyz",
+      "custom_domain": true,
+    },
+  ],
 
   // Static assets with single-page-application fallback, so a deep link like
   // /a/:id returns index.html. Worker paths need run_worker_first, or the
@@ -35,7 +45,13 @@
 
   // The article index — architecture.md §9. Its schema lives in ./migrations;
   // `pnpm db:migrate` applies it locally and `db:migrate:remote` to the deploy.
-  // A different account needs its own `wrangler d1 create journo-harness`.
+  // A different account needs its own `wrangler d1 create scribble`, and puts the
+  // name and the id it prints into the two fields below.
+  //
+  // database_name still reads journo-harness because D1 does not rename a
+  // database — the deployed one keeps the name it was created under. The
+  // binding is what the Worker and `pnpm db:migrate` use, so the stale name is
+  // cosmetic and costs nothing to leave standing.
   "d1_databases": [
     {
       "binding": "DB",

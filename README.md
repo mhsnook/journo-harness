@@ -1,4 +1,4 @@
-# Journo Harness
+# Scribble
 
 An AI harness so you can have your own Clippy so good that even you want to use it 🖇️
 
@@ -79,8 +79,10 @@ to it whenever a file lands in `migrations/`:
 pnpm db:migrate:remote
 ```
 
-A different account needs a database of its own: `pnpm wrangler d1 create journo-harness`
-prints an id to paste into `database_id`.
+A different account needs a database of its own: `pnpm wrangler d1 create scribble` prints
+a name and an id to paste into `database_name` and `database_id`. The deployed database is
+still named `journo-harness`, because D1 does not rename one — `pnpm db:migrate` names the
+`DB` binding rather than the database, so the two stay independent.
 
 ```sh
 pnpm deploy     # builds the client, then wrangler deploy
@@ -103,6 +105,11 @@ The search key goes the same way, as a secret rather than a var:
 ```sh
 pnpm wrangler secret put EXA_API_KEY
 ```
+
+The Worker is deployed as `scribble` and serves `scribble.msnook.xyz`, which
+`wrangler.jsonc` binds as a custom domain on every deploy. Deploying to a different account
+needs that `routes` entry changed to a hostname on a zone that account holds, or removed so
+the Worker answers on `workers.dev` alone.
 
 The Worker needs the Workers Paid plan for the model, and Cloudflare Access gates it at the
 edge. Nothing in the app reads the `Cf-Access-Jwt-Assertion` header — localhost has no
