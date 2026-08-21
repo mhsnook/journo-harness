@@ -1,5 +1,5 @@
 {
-  "name": "journo-harness",
+  "name": "scribble-harness",
   "version": "0.1.0",
   "private": true,
   "description": "A writing harness where the writer writes the prose and an AI acts as a guide.",
@@ -11,8 +11,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "deploy": "vite build && wrangler deploy",
-    "db:migrate": "wrangler d1 migrations apply journo-harness --local",
-    "db:migrate:remote": "wrangler d1 migrations apply journo-harness --remote",
+    "db:migrate": "wrangler d1 migrations apply DB --local",
+    "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
     "test": "vite build && vitest run",
     "test:shared": "vitest run --project shared",
     "test:client": "vitest run --project client",

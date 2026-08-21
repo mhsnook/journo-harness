@@ -1,10 +1,21 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "journo-harness",
+  "name": "scribble",
   "main": "./src/server/index.ts",
   "compatibility_date": "2026-08-06",
   // The Agents SDK needs the Node.js compatibility layer.
   "compatibility_flags": ["nodejs_compat"],
+
+  "routes": [
+    {
+      "pattern": "scribble.msnook.xyz",
+      "custom_domain": true,
+    },
+  ],
+
+  // Deleting this takes the preview URLs with it: a route turns workers_dev off,
+  // and preview_urls follows workers_dev.
+  "preview_urls": true,
 
   // Static assets with single-page-application fallback, so a deep link like
   // /a/:id returns index.html. Worker paths need run_worker_first, or the
@@ -35,11 +46,12 @@
 
   // The article index — architecture.md §9. Its schema lives in ./migrations;
   // `pnpm db:migrate` applies it locally and `db:migrate:remote` to the deploy.
-  // A different account needs its own `wrangler d1 create journo-harness`.
+  // database_id binds and database_name is a label, so the two can disagree —
+  // deploy.md §The database name.
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "journo-harness",
+      "database_name": "scribble",
       "database_id": "3372f1ea-f9ae-4c52-b918-d1599d5af8f8",
       "migrations_dir": "./migrations",
     },
