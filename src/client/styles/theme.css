@@ -32,7 +32,8 @@
 	--color-edge: #c2bda9; /* card borders, inputs */
 	--color-strong: #2b2229; /* the one heavy divider per frame */
 
-	/* "You are here": a selected tab, filter or pressed button */
+	/* "You are here": a selected tab, filter or pressed button — and the
+	   headings in the Draft's prose, where it marks structure. */
 	--color-green: #4c6141;
 	--color-green-ink: #eef2e2; /* text sitting on green */
 
@@ -154,9 +155,10 @@
 		margin-top: 1.1em;
 	}
 
-	/* A heading is a different voice from the prose, not a louder one. Bold
-	   serif reads as a stressed sentence, so the sans face carries the headings
-	   instead: the reader sees the structure before they read the words. */
+	/* A heading is a different voice from the prose: the sans face and the
+	   green say "structure" before the reader reads the words, so a heading
+	   never scans as a stressed sentence. Size carries the rank — each level a
+	   visible tick over the one below, and the body below them both. */
 	.prose-draft :is(h1, h2, h3, h4) {
 		font-family: var(--font-sans);
 		font-weight: 600;
@@ -164,22 +166,18 @@
 		/* Closer to what it opens than to what it closes, so a heading reads as
 		   the top of the passage under it. */
 		margin-bottom: 0.4em;
-		color: var(--color-ink);
+		color: var(--color-green);
 	}
 
 	.prose-draft h2 {
 		margin-top: 1.75em;
-		font-size: 1.0625em;
+		font-size: 1.25em;
 		letter-spacing: -0.01em;
 	}
 
-	/* Smaller than the prose rather than larger, and spaced out: a subheading
-	   ranks under its heading, and the sans face still separates it from the
-	   sentences around it. */
 	.prose-draft h3 {
 		margin-top: 1.5em;
-		font-size: 0.9375em;
-		letter-spacing: 0.02em;
+		font-size: 1.125em;
 	}
 
 	/* A heading opening the Draft sits against the top of the surface, not a
