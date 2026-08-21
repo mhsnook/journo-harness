@@ -15,11 +15,6 @@ export interface ChatMessageProps {
 /**
  * One turn. Yours is a bounded block; the guide's runs loose against the Panel
  * so the references and controls it returns can sit at full width underneath it.
- *
- * The guide writes markdown, so a guide turn given text renders it as markdown.
- * Your own turn is kept as you typed it: the asterisks you pasted in are part of
- * what you said, and a message that restyles itself on send is one you have to
- * read twice. A guide turn given elements renders them as they are.
  */
 export function ChatMessage({ from, children, className }: ChatMessageProps) {
 	if (from === 'me') {

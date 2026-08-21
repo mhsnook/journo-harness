@@ -5,29 +5,19 @@ import remend from 'remend'
 
 import { cx } from '../lib/cx'
 
-/**
- * A guide turn arrives as markdown and lands a token at a time, so the text is
- * incomplete on every frame but the last: `**Birds` is two asterisks and a word
- * until its closing pair arrives. `remend` closes whatever the last token left
- * open, which is what stops the marks flickering as the turn streams.
- *
- * Raw HTML is dropped rather than rendered. react-markdown ignores it unless
- * `rehype-raw` is added, and a model's output is not markup we trust.
- *
- * The blocks are styled by `.prose-chat` in theme.css rather than by classes
- * here, because react-markdown renders plain tags — the same arrangement as
- * `.prose-draft` and the editor.
- */
-
 export interface MarkdownProps {
 	/** The markdown source, whole or mid-stream. */
 	children: string
 	className?: string
 }
 
-/** A model can cite a source, and a citation opens away from the harness so the
- * writer does not lose the draft they are reading. */
-function Link({ children, href, ...rest }: AnchorHTMLAttributes<HTMLAnchorElement>) {
+/** A citation opens away from the harness, so the writer does not lose the draft
+ * they are reading. */
+function ExternalLink({
+	children,
+	href,
+	...rest
+}: AnchorHTMLAttributes<HTMLAnchorElement>) {
 	return (
 		<a {...rest} href={href} rel="noreferrer noopener" target="_blank">
 			{children}
@@ -35,7 +25,7 @@ function Link({ children, href, ...rest }: AnchorHTMLAttributes<HTMLAnchorElemen
 	)
 }
 
-const components: Components = { a: Link }
+const components: Components = { a: ExternalLink }
 
 export function Markdown({ children, className }: MarkdownProps) {
 	// `text-only` drops a half-typed link's markup rather than pointing it at a
