@@ -102,7 +102,7 @@ function ArticleWindow({
 					<Notice>{failure}</Notice>
 				</div>
 			)}
-			<ArticlePanels agent={agent} open={panels.open} />
+			<ArticlePanels agent={agent} open={panels.open} scale={panels.scale} />
 		</Screen>
 	)
 }

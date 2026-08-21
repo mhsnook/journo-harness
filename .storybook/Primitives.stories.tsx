@@ -81,7 +81,7 @@ export const PanelToggle: Story = {
 						)
 					}
 				/>
-				<p className="text-[0.8125rem] text-muted">
+				<p className="text-13 text-muted">
 					Open:{' '}
 					{open.length ? open.join(' · ') : 'nothing — the app would keep the draft up'}
 				</p>
@@ -106,7 +106,7 @@ export const Composer: Story = {
 					{sent.map((text, index) => (
 						<li
 							key={index}
-							className="rounded-md bg-hush px-3 py-2 text-[0.8125rem] leading-relaxed whitespace-pre-wrap text-ink"
+							className="rounded-md bg-hush px-3 py-2 text-13 leading-relaxed whitespace-pre-wrap text-ink"
 						>
 							{text}
 						</li>
@@ -171,7 +171,7 @@ export const Research: Story = {
 			<ReferenceCard offer={offers[4]} variant="ledger" compact />
 			<ReferenceCard offer={offers[6]} variant="ledger" compact />
 			<Divider />
-			<p className="max-w-[28rem] text-[0.75rem] leading-relaxed text-muted">
+			<p className="max-w-[28rem] text-12 leading-relaxed text-muted">
 				<strong>The QuoteRow component (2 examples below) is unused.</strong> It was added
 				to show a read-only summary of the Plan Panel, which we stopped using, but may go
 				back to in Phase 2.

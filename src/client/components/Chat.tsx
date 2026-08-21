@@ -20,7 +20,7 @@ export function ChatMessage({ from, children, className }: ChatMessageProps) {
 		return (
 			<div
 				className={cx(
-					'ml-auto max-w-[85%] rounded-lg rounded-br-sm bg-hush px-3 py-2 text-[0.8125rem] leading-relaxed whitespace-pre-wrap text-ink',
+					'ml-auto max-w-[85%] rounded-lg rounded-br-sm bg-hush px-3 py-2 text-13 leading-relaxed whitespace-pre-wrap text-ink',
 					className,
 				)}
 			>
@@ -31,7 +31,7 @@ export function ChatMessage({ from, children, className }: ChatMessageProps) {
 	return (
 		<div
 			className={cx(
-				'max-w-[95%] text-[0.8125rem] leading-relaxed whitespace-pre-wrap text-ink',
+				'max-w-[95%] text-13 leading-relaxed whitespace-pre-wrap text-ink',
 				className,
 			)}
 		>
@@ -132,7 +132,7 @@ export function ChatWorking({ children, className }: ChatWorkingProps) {
 	}, [])
 
 	return (
-		<p className={cx('flex items-center gap-1.5 text-[0.6875rem] text-faint', className)}>
+		<p className={cx('flex items-center gap-1.5 text-11 text-faint', className)}>
 			<span aria-hidden className="size-1.5 animate-pulse rounded-full bg-faint" />
 			{children}
 			{seconds > 0 ? <span className="font-mono">{seconds}s</span> : null}
@@ -158,5 +158,5 @@ export interface ChatNoteProps {
 /** What the Chat did rather than what it said: a Proposal ruled on, a turn
  * looking something up. Quiet, because it is a record and not a turn. */
 export function ChatNote({ children, className }: ChatNoteProps) {
-	return <p className={cx('text-[0.6875rem] text-faint', className)}>{children}</p>
+	return <p className={cx('text-11 text-faint', className)}>{children}</p>
 }

@@ -4,14 +4,17 @@ import { PANELS, type PanelId } from '../components/PanelRail'
 
 /** Which Panels the Article screen shows, and the tabs a narrow one gets — §8. */
 
-/** Two Panels of any use need about this much. Below it, one at a time. */
-const narrowQuery = '(max-width: 56rem)'
+/** Below the md breakpoint (`--breakpoint-md`, theme.css) the rail shows one
+ * Panel at a time. The query is the complement of Tailwind's `md:`. */
+const narrowQuery = '(width < 768px)'
 
 export type PanelState = {
 	/** Which Panels are visible. All four stay mounted. */
 	open: PanelId[]
 	/** The rail is a set of tabs rather than a set of toggles. */
 	narrow: boolean
+	/** The Panel row's type-and-spacing scale — `panelScale`. */
+	scale: number
 	toggle: (panel: PanelId) => void
 }
 
@@ -28,8 +31,17 @@ export function usePanels(): PanelState {
 	return {
 		open,
 		narrow,
+		scale: panelScale(open, narrow),
 		toggle: (panel) => setOpen((held) => nextOpenPanels(held, panel, narrow)),
 	}
+}
+
+/** The Panel row's type-and-spacing scale — `.panel-scale` in theme.css reads
+ * it as `--panel-scale`. Fewer open Panels leave more room; a narrow window
+ * shows one Panel out of necessity, not room, so it stays compact. */
+export function panelScale(open: readonly PanelId[], narrow: boolean): number {
+	if (narrow || open.length > 2) return 1
+	return open.length === 1 ? 1.25 : 1.125
 }
 
 /** Narrow selects; wide toggles, never down to nothing, and always back into the
