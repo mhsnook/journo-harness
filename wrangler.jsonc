@@ -16,6 +16,13 @@
     },
   ],
 
+  // Declaring a route turns workers_dev off, and preview_urls follows
+  // workers_dev unless it is set — so leaving this out takes the per-version
+  // preview URL away with the workers.dev route. Set it back on: the route
+  // above is what production answers on, and a version still needs somewhere to
+  // be looked at before it becomes production.
+  "preview_urls": true,
+
   // Static assets with single-page-application fallback, so a deep link like
   // /a/:id returns index.html. Worker paths need run_worker_first, or the
   // fallback swallows them before the Worker runs.
@@ -48,14 +55,15 @@
   // A different account needs its own `wrangler d1 create scribble`, and puts the
   // name and the id it prints into the two fields below.
   //
-  // database_name still reads journo-harness because D1 does not rename a
-  // database — the deployed one keeps the name it was created under. The
-  // binding is what the Worker and `pnpm db:migrate` use, so the stale name is
-  // cosmetic and costs nothing to leave standing.
+  // database_id is what wrangler resolves and what the local database is stored
+  // under; database_name is a label beside it. D1 does not rename a database, so
+  // the deployed one still carries the name it was created under and
+  // `wrangler d1 list` disagrees with the line below — deploy.md §The database
+  // name has the swap that settles it.
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "journo-harness",
+      "database_name": "scribble",
       "database_id": "3372f1ea-f9ae-4c52-b918-d1599d5af8f8",
       "migrations_dir": "./migrations",
     },
