@@ -219,4 +219,140 @@
 		border-left: 2px solid var(--color-edge);
 		color: var(--color-muted);
 	}
+
+	/* Markdown in a Chat turn. The guide writes lists, headings and tables, and
+	   the Panel is 40% of the screen, so this is `prose-draft` read at chat size:
+	   the same shapes, tighter, and in the sans face the rest of the chrome uses.
+	   The size and the line height come from the message itself, so a turn can
+	   set them once for its text and its markdown together. */
+	.prose-chat > :first-child {
+		margin-top: 0;
+	}
+
+	.prose-chat > :last-child {
+		margin-bottom: 0;
+	}
+
+	.prose-chat p + p {
+		margin-top: 0.75em;
+	}
+
+	/* The space above is what separates a heading from the bold line a model
+	   writes instead of one — at this size the two are the same weight, and only
+	   the gap says which is which. */
+	.prose-chat :is(h1, h2, h3, h4, h5, h6) {
+		margin-top: 1.5em;
+		margin-bottom: 0.4em;
+		font-weight: 600;
+		line-height: 1.3;
+	}
+
+	/* A model reaches for `#` where the turn only needed a strong line, so the
+	   headings sit at the size of the text around them rather than above it. A
+	   chat turn is too short to rank six ways. */
+	.prose-chat :is(h1, h2) {
+		font-size: 1.0625em;
+		letter-spacing: -0.01em;
+	}
+
+	.prose-chat :is(h3, h4, h5, h6) {
+		font-size: 1em;
+		color: var(--color-muted);
+	}
+
+	.prose-chat :is(ul, ol) {
+		margin-top: 0.6em;
+		margin-bottom: 0.6em;
+		padding-left: 1.35em;
+	}
+
+	.prose-chat ul {
+		list-style: disc;
+	}
+
+	.prose-chat ol {
+		list-style: decimal;
+	}
+
+	.prose-chat li + li {
+		margin-top: 0.3em;
+	}
+
+	/* A nested list belongs to the item above it, so it closes up against it. */
+	.prose-chat li > :is(ul, ol) {
+		margin-top: 0.3em;
+		margin-bottom: 0;
+	}
+
+	.prose-chat li::marker {
+		color: var(--color-faint);
+	}
+
+	.prose-chat strong {
+		font-weight: 600;
+	}
+
+	.prose-chat a {
+		color: var(--color-accent-ink);
+		text-decoration: underline;
+		text-underline-offset: 2px;
+	}
+
+	.prose-chat blockquote {
+		margin: 0.75em 0;
+		padding-left: 0.85em;
+		border-left: 2px solid var(--color-edge);
+		color: var(--color-muted);
+	}
+
+	.prose-chat hr {
+		margin: 1em 0;
+		border-top: 1px solid var(--color-rule);
+	}
+
+	.prose-chat code {
+		padding: 0.1em 0.3em;
+		border-radius: 3px;
+		background: var(--color-hush);
+		font-family: var(--font-mono);
+		font-size: 0.9em;
+	}
+
+	/* A block of code is wider than the Panel more often than not, so it scrolls
+	   on its own rather than stretching the transcript under it. */
+	.prose-chat pre {
+		margin: 0.75em 0;
+		padding: 0.6em 0.75em;
+		overflow-x: auto;
+		border: 1px solid var(--color-rule);
+		border-radius: 6px;
+		background: var(--color-sunk);
+	}
+
+	.prose-chat pre code {
+		padding: 0;
+		background: none;
+		font-size: 0.85em;
+	}
+
+	/* Same reason as `pre`: the table scrolls inside the turn instead of pushing
+	   the Panel wider than the Frame it sits in. */
+	.prose-chat table {
+		display: block;
+		margin: 0.75em 0;
+		overflow-x: auto;
+		border-collapse: collapse;
+		font-size: 0.95em;
+	}
+
+	.prose-chat :is(th, td) {
+		padding: 0.3em 0.6em;
+		border: 1px solid var(--color-rule);
+		text-align: left;
+	}
+
+	.prose-chat th {
+		background: var(--color-sunk);
+		font-weight: 600;
+	}
 }

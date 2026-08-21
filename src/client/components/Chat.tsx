@@ -3,6 +3,7 @@ import { type KeyboardEvent, type ReactNode, useEffect, useState } from 'react'
 import { cx } from '../lib/cx'
 import { Button } from './Button'
 import { GrowingField } from './GrowingField'
+import { Markdown } from './Markdown'
 import { Notice } from './Notice'
 
 export interface ChatMessageProps {
@@ -14,6 +15,11 @@ export interface ChatMessageProps {
 /**
  * One turn. Yours is a bounded block; the guide's runs loose against the Panel
  * so the references and controls it returns can sit at full width underneath it.
+ *
+ * The guide writes markdown, so a guide turn given text renders it as markdown.
+ * Your own turn is kept as you typed it: the asterisks you pasted in are part of
+ * what you said, and a message that restyles itself on send is one you have to
+ * read twice. A guide turn given elements renders them as they are.
  */
 export function ChatMessage({ from, children, className }: ChatMessageProps) {
 	if (from === 'me') {
@@ -29,13 +35,8 @@ export function ChatMessage({ from, children, className }: ChatMessageProps) {
 		)
 	}
 	return (
-		<div
-			className={cx(
-				'max-w-[95%] text-13 leading-relaxed whitespace-pre-wrap text-ink',
-				className,
-			)}
-		>
-			{children}
+		<div className={cx('max-w-[95%] text-13 leading-relaxed text-ink', className)}>
+			{typeof children === 'string' ? <Markdown>{children}</Markdown> : children}
 		</div>
 	)
 }
