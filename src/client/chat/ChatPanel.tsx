@@ -168,8 +168,7 @@ const AT_THE_FOOT = 24
  * before the observer can re-pin, so distance from the foot cannot tell the
  * writer's paste apart from the writer scrolling away.
  *
- * Returns the ref for the scrolling element, then — separately, so that reading
- * one during render does not count as touching the ref — the `onScroll` that
+ * Returns the ref for the scrolling element, and separately the `onScroll` that
  * tracks it, whether it is at the foot, and a way back down.
  */
 function useFootOfTranscript(): [

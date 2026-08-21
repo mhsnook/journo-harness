@@ -49,10 +49,8 @@ export function MockArticle({ children }: { children: ReactNode }) {
 		return held
 	})
 
-	// One store per story, since `useOfferLedger` reads rows once per store,
-	// `useDraft` loads once per store, and `useNotes` reads once per store.
-	// Lazy `useState` and not `useMemo`, for the reason `useArticleAgent` gives:
-	// the identity is the contract, and `useMemo` does not promise one.
+	// One store per story, for the reason `useArticleAgent` gives: the three
+	// readers each load once per store identity.
 	const [offers] = useState(() => memoryOfferStore(seeded))
 	const [draft] = useState(() => memoryDraftStore())
 	const [notes] = useState(() => memoryNoteStore())

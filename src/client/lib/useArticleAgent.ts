@@ -42,10 +42,9 @@ export function wakeArticleAgent(articleId: string): void {
 }
 
 export function useArticleAgent(articleId: string): ArticleConnection {
-	// The Plan writer is built once, above the client it writes through, so it
-	// sends via this rather than closing over one generation of the client. An
-	// effect fills it, which a store could not wait for — but nothing writes a
-	// Plan until the writer has typed, long after every effect has run.
+	// The Plan writer is built once, so it reaches the client through this rather
+	// than closing over one. Filled in an effect, which is late enough: nothing
+	// sends a Plan until the writer has typed.
 	const socket = useRef<ArticleSocket | null>(null)
 	const send = useEffectEvent((next: Plan) => socket.current?.setState(next))
 	const channel = usePlanChannel(send)
@@ -81,11 +80,9 @@ export function useArticleAgent(articleId: string): ArticleConnection {
 			agent.call<T>(method, args, timeout === undefined ? undefined : { timeout }),
 	)
 
-	// Lazy `useState` and not `useMemo`: the identity is the contract rather than
-	// a saving. `useOfferLedger` reads its rows once per store, `useDraft` loads
-	// once per store, and `useNotes` reads its rows once per store — so a store
-	// rebuilt mid-session would make all three read again. React reserves the
-	// right to forget a `useMemo`; it promises to keep this.
+	// Lazy `useState` and not `useMemo`, because the identity is the contract:
+	// `useOfferLedger`, `useDraft` and `useNotes` each load once per store, and
+	// React may recompute a `useMemo`.
 	const [offers] = useState<OfferStore>(() => ({
 		listOffers: () => call<Offer[]>('listOffers'),
 		setOfferDisposition: (id: string, ruling: Ruling) =>

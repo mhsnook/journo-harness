@@ -32,17 +32,14 @@ export type PlanChannel = {
 	onFrame: (frame: unknown) => void
 }
 
-/** `send` hands a Plan to the Article Agent. `useArticleAgent` supplies one that
- * stays the same function across a reconnect, since the writer below is built
- * once and outlives any one client. */
+/** `send` reaches whichever client is current. `useArticleAgent` supplies one
+ * that keeps its identity, since the writer below is built once. */
 export function usePlanChannel(send: (plan: Plan) => void): PlanChannel {
 	const [plan, setPlan] = useState<Plan | null>(null)
 	const [refusal, setRefusal] = useState<Refusal | null>(null)
 	const [rejected, setRejected] = useState<string | null>(null)
 
-	// Lazy `useState` rather than a ref filled in on first render: the writer has
-	// to be one per mount, and this is the form that says so without reading a
-	// ref while rendering.
+	// One per mount: the cleanup below disposes on `writer` changing.
 	const [writer] = useState(() =>
 		createPlanWriter({ send, onPlan: setPlan, onRefusal: setRefusal }),
 	)

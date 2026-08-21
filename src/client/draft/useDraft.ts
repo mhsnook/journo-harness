@@ -33,16 +33,13 @@ export function useDraft(store: DraftStore): DraftConnection {
 
 	const editorRef = useRef<Editor | null>(null)
 
-	// An Effect Event, because the writer reads the editor when it saves and the
-	// editor is only there from `attachEditor` onwards. This keeps one identity
-	// for the writer to hold and still reads the ref outside render.
+	// An Effect Event, so the writer can read the editor on save without the ref
+	// being touched during render.
 	const read = useEffectEvent((previous: readonly BlockRow[]) =>
 		editorRef.current === null ? previous : toRows(editorRef.current.state.doc, previous),
 	)
 
-	// Lazy `useState` rather than a ref filled in on first render: the writer has
-	// to be one per mount, and this is the form that says so without reading a
-	// ref while rendering.
+	// One per mount: the cleanup below disposes on `writer` changing.
 	const [writer] = useState(() =>
 		createDraftWriter({
 			read,

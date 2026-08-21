@@ -19,10 +19,8 @@ export function usePanels(): PanelState {
 	const narrow = useNarrow(narrowQuery)
 	const [open, setOpen] = useState<PanelId[]>(['chat', 'plan'])
 
-	// Narrowed down to one here rather than in an effect that trims `open`. The
-	// one it keeps is the same one — the furthest left, which is what the writer
-	// was reading when the window shrank under them — but `open` still holds the
-	// rest, so widening again gives them back rather than leaving the one.
+	// A narrow window shows one Panel, the furthest left. `open` keeps the rest,
+	// so widening gives them back.
 	const shown = narrow && open.length > 1 ? [open[0]] : open
 
 	return {
